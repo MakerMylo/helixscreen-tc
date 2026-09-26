@@ -418,6 +418,7 @@ void FilamentPanel::setup(lv_obj_t* panel, lv_obj_t* parent_screen) {
     // hands a new widget a freed one's address.
     external_spool_container_wired_ = nullptr;
     temp_graph_container_wired_ = nullptr;
+    portrait_column_wired_ = nullptr;
 
     // Rebuild dropdown if tool list changes
     tools_version_observer_ = observe_int_sync<FilamentPanel>(
@@ -593,6 +594,43 @@ void FilamentPanel::bind_widgets() {
     handle_extrude_length_select(extrude_length_);
 
     setup_temp_graph();
+    setup_portrait_graph_fit();
+}
+
+void FilamentPanel::setup_portrait_graph_fit() {
+    lv_obj_t* column = lv_obj_find_by_name(panel_, "portrait_column");
+    if (!column || column == portrait_column_wired_)
+        return;
+    portrait_column_wired_ = column;
+    lv_obj_add_event_cb(
+        column,
+        [](lv_event_t* e) {
+            auto* self = static_cast<FilamentPanel*>(lv_event_get_user_data(e));
+            self->fit_portrait_graph(static_cast<lv_obj_t*>(lv_event_get_current_target(e)));
+        },
+        LV_EVENT_LAYOUT_CHANGED, this);
+}
+
+void FilamentPanel::fit_portrait_graph(lv_obj_t* column) {
+    if (!temp_graph_card_ || lv_obj_get_parent(temp_graph_card_) != column)
+        return;
+
+    const int32_t gap = lv_obj_get_style_pad_row(column, LV_PART_MAIN);
+    int32_t used = 0;
+    const uint32_t count = lv_obj_get_child_count(column);
+    for (uint32_t i = 0; i < count; i++) {
+        lv_obj_t* child = lv_obj_get_child(column, static_cast<int32_t>(i));
+        if (child == temp_graph_card_ || lv_obj_has_flag(child, LV_OBJ_FLAG_HIDDEN))
+            continue;
+        // Each visible sibling brings its own height plus one gap to the graph's side.
+        used += lv_obj_get_height(child) + gap;
+    }
+    const bool fits = lv_obj_get_content_height(column) - used >= kPortraitGraphMinHeight;
+    if (fits == lv_obj_has_flag(temp_graph_card_, LV_OBJ_FLAG_HIDDEN)) {
+        lv_obj_set_flag(temp_graph_card_, LV_OBJ_FLAG_HIDDEN, !fits);
+        spdlog::debug("[{}] Portrait graph {} (remainder {}px)", get_name(),
+                      fits ? "shown" : "hidden", lv_obj_get_content_height(column) - used);
+    }
 }
 
 void FilamentPanel::setup_temp_graph() {

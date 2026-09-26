@@ -2,19 +2,6 @@
 <!-- Copyright (C) 2025-2026 356C LLC -->
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <component>
-  <subjects>
-    <!-- Portrait columns hide the temp graph unless it can get a useful
-         height. Everything else in the portrait column is content-sized
-         (chips, material grid, operations, multi-filament strip), so the
-         graph gets only the remainder: under 60px at 320x480, 40px at
-         480x800 — below the ~60px bar in both. The first portrait column
-         that affords a graph is XLarge on the vertical ladder (>1000px).
-         The portrait clause is guarded because ui_breakpoint_v is keyed on
-         raw vertical resolution regardless of orientation — without the
-         guard this would also hide the graph on short LANDSCAPE panels,
-         where the two-column layout gives the graph its own track. -->
-    <subject_expr name="filament_portrait_graph_cramped" expr="ui_is_portrait eq 1 and ui_breakpoint_v lt 6"/>
-  </subjects>
   <consts>
     <!-- Temperature card spacing -->
     <px name="temp_card_spacing_tiny" value="2"/>
@@ -34,6 +21,15 @@
     <px name="filament_ams_row_h_small" value="64"/>
     <px name="filament_ams_row_h_medium" value="72"/>
     <px name="filament_ams_row_h_large" value="88"/>
+    <!-- Portrait action-row height. The portrait column's slack goes to the
+         temperature graph, so its rows are fixed, and short enough at the
+         small tiers that the graph can still clear its 70px floor. -->
+    <px name="filament_portrait_row_h_micro" value="36"/>
+    <px name="filament_portrait_row_h_tiny" value="40"/>
+    <px name="filament_portrait_row_h_small" value="48"/>
+    <px name="filament_portrait_row_h_medium" value="52"/>
+    <px name="filament_portrait_row_h_large" value="64"/>
+    <px name="filament_portrait_row_h_xlarge" value="72"/>
     <!-- Graph height and flex_grow on temp_graph_card / spool_card are owned
          by FilamentPanel::apply_left_column_sizing() in C++ — the default
          per-breakpoint heights (70/80/140/180/220) live there so the sizing
@@ -76,7 +72,7 @@
                 style_flex_main_place="start" style_flex_cross_place="center" style_pad_gap="#space_sm">
           <lv_obj name="nozzle_chip"
                   width="0" height="content" flex_grow="1" clickable="true" scrollable="false" flex_flow="column"
-                  style_flex_main_place="center" style_flex_cross_place="center" style_pad_all="#space_sm"
+                  style_flex_main_place="center" style_flex_cross_place="start" style_pad_all="#space_sm"
                   style_pad_gap="#space_xxs" style_bg_color="#card_bg" style_bg_opa="255" style_radius="#border_radius">
             <style name="styles.press_wash" selector="pressed"/>
             <event_cb trigger="clicked" callback="on_filament_nozzle_target_tap"/>
@@ -94,7 +90,7 @@
           </lv_obj>
           <lv_obj name="bed_chip"
                   width="0" height="content" flex_grow="1" clickable="true" scrollable="false" flex_flow="column"
-                  style_flex_main_place="center" style_flex_cross_place="center" style_pad_all="#space_sm"
+                  style_flex_main_place="center" style_flex_cross_place="start" style_pad_all="#space_sm"
                   style_pad_gap="#space_xxs" style_bg_color="#card_bg" style_bg_opa="255" style_radius="#border_radius">
             <style name="styles.press_wash" selector="pressed"/>
             <event_cb trigger="clicked" callback="on_filament_bed_target_tap"/>
@@ -110,7 +106,7 @@
           </lv_obj>
           <lv_obj name="chamber_chip"
                   width="0" height="content" flex_grow="1" clickable="true" scrollable="false" flex_flow="column"
-                  style_flex_main_place="center" style_flex_cross_place="center" style_pad_all="#space_sm"
+                  style_flex_main_place="center" style_flex_cross_place="start" style_pad_all="#space_sm"
                   style_pad_gap="#space_xxs" style_bg_color="#card_bg" style_bg_opa="255" style_radius="#border_radius"
                   hidden="true">
             <style name="styles.press_wash" selector="pressed"/>
@@ -133,25 +129,22 @@
         <!-- MATERIAL heading + 3x2 preset grid (shared component) -->
         <filament_material_group/>
 
-        <!-- Temperature graph. Grows into the column's slack; hidden while
-             filament_portrait_graph_cramped (see <subjects> above). Height and
-             flex_grow are set from C++ (apply_left_column_sizing), same as the
-             landscape branch. -->
+        <!-- Temperature graph: this column's flexible remainder. Height and
+             flex_grow come from apply_left_column_sizing(); whether it shows at
+             all is FilamentPanel::fit_portrait_graph(), which hides it when the
+             remainder is too short to read. -->
         <lv_obj name="temp_graph_card"
                 width="100%" height="0" style_pad_all="0" scrollable="false" style_bg_opa="255"
                 style_bg_color="#card_bg">
-          <bind_flag_if_eq subject="filament_portrait_graph_cramped" flag="hidden" ref_value="1"/>
           <!-- Graph container - populated by C++ via TempControlPanel -->
           <lv_obj name="temp_graph_container"
                   width="100%" height="100%" style_pad_all="0" clickable="false" event_bubble="true"/>
         </lv_obj>
 
-        <!-- OPERATIONS heading + action rows (shared component). Portrait
-             sizes it to content: the graph is this column's only flex filler,
-             so the action rows keep their minimum tappable heights and never
-             compete with the graph for slack (two growers split it and the
-             rows end up clipped below their content). -->
-        <filament_operations_group height="content" flex_grow="0"/>
+        <!-- Divider, OPERATIONS and the action rows (shared component), at
+             fixed heights: the graph above takes the column's slack. -->
+        <filament_operations_group height="content"
+                                   flex_grow="0" row_height="#filament_portrait_row_h" row_grow="0" row_min_height="0"/>
 
         <!-- Multi-filament strip (shared component; C++ hides its header row
              in portrait so it reads as a strip, not a card) -->

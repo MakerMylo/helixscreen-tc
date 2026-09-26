@@ -232,6 +232,14 @@ class FilamentPanel : public PanelBase {
     /// the current tree's temp_graph_container. Idempotent per container.
     void setup_temp_graph();
 
+    /// Portrait only: shows the temperature graph when the column's remainder
+    /// is at least kPortraitGraphMinHeight tall, hides it otherwise. Runs on
+    /// the column's LV_EVENT_LAYOUT_CHANGED; the remainder is measured without
+    /// the graph, so hiding it cannot change the answer.
+    void fit_portrait_graph(lv_obj_t* column);
+    void setup_portrait_graph_fit();
+    static constexpr int32_t kPortraitGraphMinHeight = 70;
+
     const char* get_name() const override {
         return "Filament Panel";
     }
@@ -537,6 +545,8 @@ class FilamentPanel : public PanelBase {
     // on every orientation flip; comparing containers keeps the chart, and
     // the open-overlay click handler, created once per widget tree.
     lv_obj_t* temp_graph_container_wired_ = nullptr;
+    // The portrait column fit_portrait_graph() is attached to; same rebind guard.
+    lv_obj_t* portrait_column_wired_ = nullptr;
 
     // Spool card widgets — serves both Multi-Filament (AMS/multi-tool) and
     // External Spool presentations; C++ swaps the visible rows.

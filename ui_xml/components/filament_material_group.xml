@@ -82,10 +82,13 @@
           </ui_button>
         </lv_obj>
         <!-- Cool Down always occupies the third cell; it is disabled, not
-             hidden, while nothing is heating, so the grid never reflows. -->
+             hidden, while nothing is heating, so the grid never reflows. It
+             takes the row's height, which the TPU preset sets, and stacks its
+             icon over a label that wraps rather than truncates. -->
         <ui_button name="btn_cooldown"
-                   width="0" height="100%" flex_grow="1" style_min_height="#button_height"
-                   style_bg_color="#temp_gradient_cold" icon="cooldown" text="Cool Down" translation_tag="Cool Down">
+                   width="0" height="100%" flex_grow="1" style_pad_ver="#space_xs" style_pad_hor="#space_xs"
+                   style_bg_color="#temp_gradient_cold" icon="cooldown" icon_position="top" text="Cool Down"
+                   translation_tag="Cool Down" long_mode="wrap">
           <bind_state_if_eq subject="filament_nozzle_heating" state="disabled" ref_value="0"/>
           <event_cb trigger="clicked" callback="on_filament_cooldown"/>
         </ui_button>

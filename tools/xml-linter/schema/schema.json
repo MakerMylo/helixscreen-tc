@@ -1760,6 +1760,9 @@
       "attributes": {
         "card": {
           "type": "bool"
+        },
+        "bars_align": {
+          "type": "string"
         }
       },
       "inherits": "lv_obj"
@@ -3144,6 +3147,13 @@
     "filament_idle_dark",
     "filament_idle_light",
     "filament_metal",
+    "filament_portrait_row_h",
+    "filament_portrait_row_h_large",
+    "filament_portrait_row_h_medium",
+    "filament_portrait_row_h_micro",
+    "filament_portrait_row_h_small",
+    "filament_portrait_row_h_tiny",
+    "filament_portrait_row_h_xlarge",
     "focus",
     "font_body",
     "font_body_bold",

@@ -2,30 +2,49 @@
 <!-- Copyright (C) 2025-2026 356C LLC -->
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <component>
-  <!-- Filament operations (heading + Load/Unload/Purge + length selector +
-       Extrude/Retract + cold-extrusion warning). Instantiated by both
+  <!-- Filament operations (divider, heading + cold-extrusion warning,
+       Load/Unload/Purge, length selector, Extrude/Retract). Instantiated by both
        orientation branches of filament_panel.xml so the markup exists exactly
        once; the group grows into whatever slack its branch's column gives it. -->
   <styles>
     <!-- Reactive extrude length button state (L040: no inline bg attrs) -->
     <style name="extrude_length_btn_selected" bg_color="#primary" bg_opa="255"/>
     <style name="extrude_length_btn_unselected" bg_color="#primary" bg_opa="40"/>
+    <!-- The heading steps aside for the safety warning without leaving layout -->
+    <style name="operations_heading_masked" text_opa="0"/>
   </styles>
+  <api>
+    <!-- Action-row sizing. Landscape rows grow into the column's slack with
+         #button_height as the floor; portrait passes a fixed height because the
+         graph, not the rows, is that column's flexible remainder. -->
+    <prop name="row_height" type="string" default="0"/>
+    <prop name="row_grow" type="string" default="1"/>
+    <prop name="row_min_height" type="string" default="#button_height"/>
+  </api>
   <view name="operations_group"
         extends="lv_obj" width="100%" height="0" flex_grow="1" style_pad_all="0" scrollable="false" flex_flow="column"
         style_pad_gap="#space_sm">
-    <!-- Filament Operations Header. Hidden at MICRO, and on short portrait
-         columns — the same rule that collapses the temp graph there
-         (filament_portrait_graph_cramped in filament_panel.xml; spelled inline
-         here because the two files cannot share the named subject). -->
-    <text_body text="Operations" translation_tag="Operations" text_transform="uppercase" align="left_mid">
-      <bind_flag_if_lt subject="ui_breakpoint" flag="hidden" ref_value="1"/>
-      <bind_flag_if cond="ui_is_portrait eq 1 and ui_breakpoint_v lt 5" flag="hidden"/>
-    </text_body>
+    <divider_horizontal/>
+    <!-- Heading row. The cold-extrusion warning floats over the heading,
+         one line with dots, rather than taking a row of its own, so the action
+         rows keep the same height whether it shows or not. -->
+    <lv_obj name="operations_heading_row" width="100%" height="content" style_pad_all="0" scrollable="false">
+      <text_body name="operations_heading"
+                 text="Operations" translation_tag="Operations" text_transform="uppercase" align="left_mid">
+        <bind_style name="operations_heading_masked" subject="filament_safety_warning_visible" ref_value="1"/>
+      </text_body>
+      <lv_obj name="safety_warning"
+              width="100%" height="100%" style_pad_all="0" scrollable="false" floating="true" align="left_mid"
+              flex_flow="row" style_flex_main_place="start" style_flex_cross_place="center" style_pad_gap="#space_xs">
+        <bind_flag_if_eq subject="filament_safety_warning_visible" flag="hidden" ref_value="0"/>
+        <icon src="alert" size="xs" variant="warning"/>
+        <text_small width="0" height="100%" flex_grow="1" bind_text="filament_safety_warning_text" long_mode="dots"/>
+      </lv_obj>
+    </lv_obj>
     <!-- Load/Unload/Purge Row (macro-based, no length selector) -->
     <lv_obj width="100%"
-            height="0" flex_grow="1" style_min_height="#button_height" style_pad_all="0" scrollable="false"
-            flex_flow="row" style_flex_main_place="space_between" style_flex_cross_place="center"
+            height="$row_height" flex_grow="$row_grow" style_min_height="$row_min_height" style_pad_all="0"
+            scrollable="false" flex_flow="row" style_flex_main_place="space_between" style_flex_cross_place="center"
             style_pad_gap="#space_sm">
       <ui_button name="btn_load"
                  height="100%" flex_grow="1" icon="arrow_down" text="Load" translation_tag="Load"
@@ -78,8 +97,8 @@
     </lv_obj>
     <!-- Extrude/Retract Row (length-based operations) -->
     <lv_obj width="100%"
-            height="0" flex_grow="1" style_min_height="#button_height" style_pad_all="0" scrollable="false"
-            flex_flow="row" style_flex_main_place="space_between" style_flex_cross_place="center"
+            height="$row_height" flex_grow="$row_grow" style_min_height="$row_min_height" style_pad_all="0"
+            scrollable="false" flex_flow="row" style_flex_main_place="space_between" style_flex_cross_place="center"
             style_pad_gap="#space_sm">
       <ui_button name="btn_extrude"
                  height="100%" flex_grow="1" icon="arrow_down" text="Extrude" translation_tag="Extrude"
@@ -95,15 +114,6 @@
         <bind_state_if_eq subject="filament_operation_in_progress" state="disabled" ref_value="1"/>
         <event_cb trigger="clicked" callback="on_filament_retract"/>
       </ui_button>
-    </lv_obj>
-    <!-- Safety Warning (compact inline - shows when cold) -->
-    <lv_obj name="safety_warning"
-            width="100%" height="content" style_pad_all="0" scrollable="false" flex_flow="row"
-            style_flex_main_place="start" style_flex_cross_place="center" style_flex_track_place="center"
-            style_pad_gap="#space_xs">
-      <bind_flag_if_eq subject="filament_safety_warning_visible" flag="hidden" ref_value="0"/>
-      <icon src="alert" size="sm" variant="warning"/>
-      <text_small bind_text="filament_safety_warning_text"/>
     </lv_obj>
   </view>
 </component>
