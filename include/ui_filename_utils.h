@@ -56,9 +56,10 @@ bool has_printable_extension(const std::string& filename);
 /**
  * @brief Strip G-code file extensions for display
  *
- * Removes common G-code extensions (.gcode, .g, .gco, case-insensitive)
+ * Removes common G-code extensions (.gcode, .g, .gco, .3mf, case-insensitive)
  * for cleaner display in the UI. Strips exactly the extensions
- * has_printable_extension() accepts.
+ * has_printable_extension() accepts; a G-code extension under a .3mf goes
+ * with it, so "Foo.gcode.3mf" becomes "Foo".
  *
  * @param filename The original filename
  * @return Filename without G-code extension, or original if no match
