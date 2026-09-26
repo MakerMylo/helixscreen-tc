@@ -64,6 +64,8 @@ The invariant: **vendor JSON schemas are translated to the generic `ChamberHeate
 | `src/ui/temperature_controller.cpp` | `set_chamber_actions()`, `reset_chamber_fault()`, `set_chamber_filter_fan()`, and the `ensure_limits()` ceiling fallback |
 | `ui_xml/temp_graph_overlay.xml` | Where the diagnostics render: always inside the chamber card, at every size. Landscape is the right column's `chamber_display_card` (fault banner via the shared component, hairline, element row, filter-fan row with a `ui_switch`), compacted at micro landscape (480x272) with a smaller temp readout and tighter padding; portrait is a full-width band between the chart and the preset buttons. The card's border goes `#danger` while faulted/inhibited/offline, and nothing about the heater ever renders under the chart |
 | `ui_xml/components/chamber_fault_banner.xml` | Shared one-row banner: reason text (or "Heater offline") plus a compact Reset that hides while the device is offline. Instantiated by both orientation branches of the chamber card; each ships it and the banner self-hides while healthy |
+| `ui_xml/components/chamber_dryer_row.xml` | Shared one-row dryer control on the chamber card: Start Drying while idle, the live temp against the target plus the countdown and Stop while a cycle runs. Hidden unless `printer_has_chamber_dryer` |
+| `src/ui/ui_chamber_dryer_modal.cpp` + `ui_xml/chamber_dryer_modal.xml` | The start modal: the shared drying presets labelled as the dryer will run them, and the bed-assist switch |
 | `src/api/moonraker_client_mock.cpp` | Mock chamber backend shape (`HELIX_MOCK_OBJECTS` dragonbreath trio), registry-based chamber-status key |
 | `tests/unit/test_chamber_*.cpp` | Backend match/parse, subjects, ceiling, actions, discovery, mock — tags under `[chamber]` |
 
@@ -186,6 +188,9 @@ generic kinds above; they are deliberately not subjects, so nothing can bind a v
 | `printer_has_chamber_heater_diagnostics` | int 0/1 | Capability: the diagnostics surfaces (card block / strip) are built at all |
 | `printer_has_chamber_filter_fan` | int 0/1 | Capability: filter-fan toggle and its readout column |
 | `printer_has_chamber_element_temp` | int 0/1 | Capability: element readout column, from the backend's `reports_element_temp()` |
+| `chamber_dryer_active` | int 0/1 | A drying cycle is running on the appliance |
+| `chamber_dryer_text` | string | The running cycle's readout, "41/55°C  3:12 left" ("" when idle): live chamber temp against the cycle's target, then the appliance's own countdown |
+| `printer_has_chamber_dryer` | int 0/1 | Capability: the dryer row, from the backend's `dryer_capabilities().supported` |
 
 Capability setters round-trip through `PrinterCapabilitiesState`; `set_hardware` raises them exactly when the backend provides the corresponding surface. Backends differ in what they publish, so each readout column on the card follows its own capability — a permanently blank row tells the user nothing. The External badge sits in its own Mode column rather than beside the element temperature, so it survives a backend that reports no element.
 
@@ -305,8 +310,39 @@ Config facts captured: `heater_generic chamber_heater` — `max_temp: 80`, water
 
 ---
 
-## Deferred: Dryer Mode
+## Dryer Mode
 
-Chamber dryer mode (Panda Breath's `PANDA_BREATH_DRY_START`/`STOP` passthrough, DragonBreath's hardware drying with no Klipper surface, a generic hold-N°C-for-M-hours loop) is **deliberately out of scope** for v1 — tracked in [#1299](https://github.com/prestonbrown/helixscreen/issues/1299). It should land as a generic backend capability question reusing the existing dryer UX (Happy Hare dryer panels, AMS environment overlay), not as per-vendor UI.
+A chamber appliance that can dry filament answers three backend questions:
+`dryer_capabilities()` (a `DryerInfo`: supported, temperature range, longest run,
+and `duration_step_min`, the granularity the firmware takes a length in),
+`dryer_start_gcode(temp, minutes)` and `dryer_stop_gcode()`. All three default to
+"no dryer", so only a backend with a drying surface overrides them. The running
+cycle arrives through `parse_diagnostics()` like every other surface
+(`drying_active`, `drying_remaining_s`, `drying_target_c`, `drying_duration_min`).
 
-The two appliance firmwares are not equally blocked, which matters when #1299 is picked up. Stock Panda Breath has **both halves**: the commands above plus live status in the same object the backend already parses — `filament_drying_active`, `filament_temp`, `filament_timer` and a `remaining_seconds` countdown (`work_mode: 3` while a cycle runs). DragonBreath's glue exposes neither a drying command nor drying status through Klipper, even though the appliance itself advertises a `drying` capability on its own HTTP API. So a #1299 implementation can be verified end to end on stock firmware and only stubbed for DragonBreath.
+| Backend | Dryer |
+|---------|-------|
+| Stock Panda Breath | `PANDA_BREATH_DRY_START TEMP= HOURS=` / `PANDA_BREATH_DRY_STOP`; 35-60°C, whole hours 1-12. Status from `filament_drying_active`, `filament_temp`, `filament_timer` (hours), `remaining_seconds` |
+| DragonBreath | None. The glue exposes no drying command or status, though the appliance itself can dry |
+| Generic `heater_generic` | None. A hold-N°C-for-M-hours loop on a plain heater would be a deliberate new UX, not a side effect of the heater panel |
+
+`TemperatureController` owns the actions (`start_chamber_drying`,
+`stop_chamber_drying`) and clamps every request through
+`DryerInfo::clamp_temp` / `clamp_duration`, the same clamp the modal's preset labels
+and the AMS environment overlay use, so the value shown is the value sent. A start
+is refused while a job holds the machine (`allows_during_print` is false for the
+stock cycle).
+
+**Nothing waits on the target.** An appliance alone often plateaus below the
+drying temperature, especially with the bed off, so the readout pairs the live
+chamber temperature with the target and the appliance's own `remaining_seconds`
+ends the cycle. `DryerInfo::is_at_temp()` has no caller on this path.
+
+**Bed assist.** `start_chamber_drying(..., heat_bed)` also sets the bed to
+`chamber_dryer_bed_assist_c()`: 80°C, the bed temperature the stock appliance's own
+auto mode keys on (`auto_hotbedtemp`), capped at the bed's ceiling. The controller
+observes `chamber_dryer_active` and turns the bed off when the cycle ends on the
+appliance's side (only after it has seen the cycle running, so the idle frames
+before the appliance picks up the start end nothing), on Stop, and on a refused
+start. It leaves the bed alone if a job holds the machine by then, or the bed
+target is no longer the one it set. It never moves any axis.
