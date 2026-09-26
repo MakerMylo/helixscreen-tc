@@ -391,6 +391,7 @@ void FilamentPanel::deinit_subjects() {
         prior_nozzle_target_ = 0;
     }
     external_spool_observer_.reset();
+    orientation_observer_.reset();
     ams_loaded_observer_.reset();
     ams_current_slot_observer_.reset();
     // Watches PrinterState's print_state_enum, a subject tests deinit between
@@ -412,66 +413,11 @@ void FilamentPanel::setup(lv_obj_t* panel, lv_obj_t* parent_screen) {
     // Filament macros now resolved via StandardMacros singleton (auto-detected or user-configured)
     spdlog::debug("[{}] Setting up (events handled declaratively via XML)", get_name());
 
-    // Find preset buttons (for visual state updates)
-    const char* preset_names[] = {"preset_pla", "preset_petg", "preset_abs", "preset_tpu"};
-    for (int i = 0; i < 4; i++) {
-        preset_buttons_[i] = lv_obj_find_by_name(panel_, preset_names[i]);
-    }
-
-    // Action buttons (btn_load, btn_unload, btn_purge) - disabled state managed by XML bindings
-
-    // Find safety warning card
-    safety_warning_ = lv_obj_find_by_name(panel_, "safety_warning");
-
-    // Find status icon for dynamic updates
-    status_icon_ = lv_obj_find_by_name(panel_, "status_icon");
-
-    // These are fresh widgets with no status on them, and this panel instance
-    // outlives its widget tree (hot reload, panel rebuild). Forget which arm
-    // update_status() last rendered so the constant-text arms repaint instead of
-    // early-returning against the tree that is already gone.
-    last_status_branch_ = StatusBranch::None;
-
-    // Find temperature labels for color updates
-    nozzle_current_label_ = lv_obj_find_by_name(panel_, "nozzle_current_temp");
-    bed_current_label_ = lv_obj_find_by_name(panel_, "bed_current_temp");
-    chamber_current_label_ = lv_obj_find_by_name(panel_, "chamber_current_temp");
-
-    // Find temp graph for dynamic sizing when bottom card changes
-    temp_graph_card_ = lv_obj_find_by_name(panel_, "temp_graph_card");
-
-    // Find spool card widgets (serves both Multi-Filament and External Spool modes)
-    spool_card_ = lv_obj_find_by_name(panel_, "spool_card");
-    spool_card_header_row_ = lv_obj_find_by_name(panel_, "spool_card_header_row");
-    extruder_selector_group_ = lv_obj_find_by_name(panel_, "extruder_selector_group");
-    extruder_dropdown_ = lv_obj_find_by_name(panel_, "extruder_dropdown");
-    btn_manage_slots_ = lv_obj_find_by_name(panel_, "btn_manage_slots");
-    ams_manage_row_ = lv_obj_find_by_name(panel_, "ams_manage_row");
-
-    // Find external spool row widgets
-    external_spool_row_ = lv_obj_find_by_name(panel_, "external_spool_row");
-    external_spool_container_ = lv_obj_find_by_name(panel_, "external_spool_container");
-    external_spool_material_label_ = lv_obj_find_by_name(panel_, "external_spool_material_label");
-    external_spool_color_label_ = lv_obj_find_by_name(panel_, "external_spool_color_label");
-
-    // Find spool preset widgets
-    spool_preset_row_ = lv_obj_find_by_name(panel_, "spool_preset_row");
-    spool_preset_button_ = lv_obj_find_by_name(panel_, "preset_spool");
-    spool_preset_label_ = lv_obj_find_by_name(panel_, "spool_preset_label");
-    spool_preset_temps_ = lv_obj_find_by_name(panel_, "spool_preset_temps");
-
-    // Setup external spool display (creates canvas, wires observer)
-    setup_external_spool_display();
-
-    // Setup spool preset button (show if active material doesn't match standard presets)
-    update_spool_preset();
-
-    // Populate extruder dropdown and set card visibility
-    populate_extruder_dropdown();
-    update_multi_filament_card_visibility();
-
-    // Seed Load/Unload/Purge gating from current live load state (Task 5).
-    update_filament_op_buttons();
+    // A fresh tree arrives with unknown addresses; drop the rebind guards so
+    // bind_widgets() recreates the canvas and the chart even if the allocator
+    // hands a new widget a freed one's address.
+    external_spool_container_wired_ = nullptr;
+    temp_graph_container_wired_ = nullptr;
 
     // Rebuild dropdown if tool list changes
     tools_version_observer_ = observe_int_sync<FilamentPanel>(
@@ -555,6 +501,84 @@ void FilamentPanel::setup(lv_obj_t* panel, lv_obj_t* parent_screen) {
     // Populate preset button temperature + name labels from filament database
     helix::presets::refresh_subjects();
 
+    // Bind to this tree — widget pointers, canvas, chart, imperative state —
+    // and keep the binding alive across the orientation <if>'s in-place
+    // rebuilds (SDL dev-window rotations; real hardware picks one orientation
+    // at startup).
+    bind_widgets();
+    setup_orientation_rewire_observer();
+
+    // AMS mini status widget is now created declaratively via XML <ams_mini_status/>
+
+    spdlog::debug("[{}] Setup complete!", get_name());
+}
+
+void FilamentPanel::bind_widgets() {
+    if (!panel_)
+        return;
+
+    // Find preset buttons (for visual state updates)
+    const char* preset_names[] = {"preset_pla", "preset_petg", "preset_abs", "preset_tpu"};
+    for (int i = 0; i < 4; i++) {
+        preset_buttons_[i] = lv_obj_find_by_name(panel_, preset_names[i]);
+    }
+
+    // Action buttons (btn_load, btn_unload, btn_purge) - disabled state managed by XML bindings
+
+    // Find safety warning card
+    safety_warning_ = lv_obj_find_by_name(panel_, "safety_warning");
+
+    // Find status icon for dynamic updates
+    status_icon_ = lv_obj_find_by_name(panel_, "status_icon");
+
+    // These are fresh widgets with no status on them, and this panel instance
+    // outlives its widget tree (hot reload, panel rebuild, orientation flip).
+    // Forget which arm update_status() last rendered so the constant-text arms
+    // repaint instead of early-returning against the tree that is already gone.
+    last_status_branch_ = StatusBranch::None;
+
+    // Find temperature labels for color updates. The portrait chips carry the
+    // same names as the landscape rows, so these resolve in either branch.
+    nozzle_current_label_ = lv_obj_find_by_name(panel_, "nozzle_current_temp");
+    bed_current_label_ = lv_obj_find_by_name(panel_, "bed_current_temp");
+    chamber_current_label_ = lv_obj_find_by_name(panel_, "chamber_current_temp");
+
+    // Find temp graph for dynamic sizing when bottom card changes
+    temp_graph_card_ = lv_obj_find_by_name(panel_, "temp_graph_card");
+
+    // Find spool card widgets (serves both Multi-Filament and External Spool modes)
+    spool_card_ = lv_obj_find_by_name(panel_, "spool_card");
+    spool_card_header_row_ = lv_obj_find_by_name(panel_, "spool_card_header_row");
+    extruder_selector_group_ = lv_obj_find_by_name(panel_, "extruder_selector_group");
+    extruder_dropdown_ = lv_obj_find_by_name(panel_, "extruder_dropdown");
+    btn_manage_slots_ = lv_obj_find_by_name(panel_, "btn_manage_slots");
+    ams_manage_row_ = lv_obj_find_by_name(panel_, "ams_manage_row");
+
+    // Find external spool row widgets
+    external_spool_row_ = lv_obj_find_by_name(panel_, "external_spool_row");
+    external_spool_container_ = lv_obj_find_by_name(panel_, "external_spool_container");
+    external_spool_material_label_ = lv_obj_find_by_name(panel_, "external_spool_material_label");
+    external_spool_color_label_ = lv_obj_find_by_name(panel_, "external_spool_color_label");
+
+    // Find spool preset widgets
+    spool_preset_row_ = lv_obj_find_by_name(panel_, "spool_preset_row");
+    spool_preset_button_ = lv_obj_find_by_name(panel_, "preset_spool");
+    spool_preset_label_ = lv_obj_find_by_name(panel_, "spool_preset_label");
+    spool_preset_temps_ = lv_obj_find_by_name(panel_, "spool_preset_temps");
+
+    // Setup external spool display (creates canvas, wires observer)
+    setup_external_spool_display();
+
+    // Setup spool preset button (show if active material doesn't match standard presets)
+    update_spool_preset();
+
+    // Populate extruder dropdown and set card visibility
+    populate_extruder_dropdown();
+    update_multi_filament_card_visibility();
+
+    // Seed Load/Unload/Purge gating from current live load state (Task 5).
+    update_filament_op_buttons();
+
     // Initialize visual state
     update_preset_buttons_visual();
     update_temp_display();
@@ -568,15 +592,21 @@ void FilamentPanel::setup(lv_obj_t* panel, lv_obj_t* parent_screen) {
     // Trigger initial extrude length selection (notifies bind_style observers)
     handle_extrude_length_select(extrude_length_);
 
-    // Setup combined temperature graph if TemperatureService is available
+    setup_temp_graph();
+}
+
+void FilamentPanel::setup_temp_graph() {
+    // Setup combined temperature graph if TemperatureService is available.
+    // Guarded on the container so an orientation flip rebinds once per tree,
+    // never twice into the same one.
+    lv_obj_t* graph_container = lv_obj_find_by_name(panel_, "temp_graph_container");
+    if (!graph_container || graph_container == temp_graph_container_wired_)
+        return;
+    temp_graph_container_wired_ = graph_container;
+
     if (temp_control_panel_) {
-        lv_obj_t* graph_container = lv_obj_find_by_name(panel_, "temp_graph_container");
-        if (graph_container) {
-            temp_control_panel_->setup_mini_combined_graph(graph_container);
-            spdlog::debug("[{}] Temperature graph initialized", get_name());
-        } else {
-            spdlog::warn("[{}] temp_graph_container not found in XML", get_name());
-        }
+        temp_control_panel_->setup_mini_combined_graph(graph_container);
+        spdlog::debug("[{}] Temperature graph initialized", get_name());
     }
 
     // Make the graph card clickable to open the unified temp graph overlay
@@ -593,10 +623,33 @@ void FilamentPanel::setup(lv_obj_t* panel, lv_obj_t* parent_screen) {
             },
             LV_EVENT_CLICKED, this);
     }
+}
 
-    // AMS mini status widget is now created declaratively via XML <ams_mini_status/>
+void FilamentPanel::setup_orientation_rewire_observer() {
+    lv_subject_t* portrait_subject = lv_xml_get_subject(nullptr, "ui_is_portrait");
+    if (!portrait_subject) {
+        spdlog::warn("[{}] ui_is_portrait subject not found; an orientation flip would leave "
+                     "widget pointers on the condemned branch",
+                     get_name());
+        return;
+    }
 
-    spdlog::debug("[{}] Setup complete!", get_name());
+    // observe_int_IMMEDIATE, deliberately not the usual observe_int_sync:
+    // filament_panel.xml's <if cond="ui_is_portrait eq 1"> is ALSO bound to
+    // this subject and its rebuild (xml_frag_rebuild) runs synchronously
+    // inside lv_subject_set_int(). LVGL notifies a subject's observers in
+    // registration order, and the <if>'s observer was added when the panel's
+    // XML tree was created — strictly before setup() registered this one — so
+    // the rebuild always finishes before this callback re-finds the fresh
+    // widgets. A deferred observer would run a tick later, after updates
+    // queued against the panel had already dereferenced the condemned branch.
+    // The immediate registration fire is harmless: bind_widgets() is
+    // idempotent (creation steps compare their container), so re-running it
+    // against the tree setup() just bound creates nothing twice.
+    orientation_observer_ = helix::ui::observe_int_immediate<FilamentPanel>(
+        portrait_subject, this,
+        [](FilamentPanel* self, int /*is_portrait*/) { self->bind_widgets(); },
+        subject_never_freed());
 }
 
 // ============================================================================
@@ -1705,13 +1758,14 @@ void FilamentPanel::update_multi_filament_card_visibility() {
         }
     }
 
-    // Header row (icon + title) hidden in external spool mode
+    // Header row (icon + title) hidden in external spool mode, and in
+    // portrait where the card is a bottom strip that cannot afford the title
+    // line (320x480 leaves it no room above the AMS row).
+    lv_subject_t* portrait_subject = lv_xml_get_subject(nullptr, "ui_is_portrait");
+    const bool portrait = portrait_subject && lv_subject_get_int(portrait_subject) != 0;
     if (spool_card_header_row_) {
-        if (external_spool_mode) {
-            lv_obj_add_flag(spool_card_header_row_, LV_OBJ_FLAG_HIDDEN);
-        } else {
-            lv_obj_remove_flag(spool_card_header_row_, LV_OBJ_FLAG_HIDDEN);
-        }
+        lv_obj_set_flag(spool_card_header_row_, LV_OBJ_FLAG_HIDDEN,
+                        external_spool_mode || portrait);
     }
 
     // Center the external spool row within the card when in external spool mode
@@ -1741,12 +1795,19 @@ void FilamentPanel::setup_external_spool_display() {
     if (!external_spool_container_)
         return;
 
+    // bind_widgets() also runs after an orientation flip's in-place rebuild;
+    // only (re)create the canvas and its observer for a container that is not
+    // the one already wired (setup() clears the guard for each fresh tree).
+    if (external_spool_container_ == external_spool_container_wired_)
+        return;
+
     // Create 48x48 spool canvas inside the container
     external_spool_canvas_ = ui_spool_canvas_create(external_spool_container_, 48);
     if (!external_spool_canvas_) {
         spdlog::warn("[{}] Failed to create external spool canvas", get_name());
         return;
     }
+    external_spool_container_wired_ = external_spool_container_;
     // L071: Canvas absorbs clicks — pass through to parent row's event_cb
     lv_obj_remove_flag(external_spool_canvas_, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_add_flag(external_spool_canvas_, LV_OBJ_FLAG_EVENT_BUBBLE);

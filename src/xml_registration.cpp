@@ -646,6 +646,14 @@ void register_xml_components() {
     register_xml("components/exclude_object_side_list.xml");
     register_xml("print_status_panel.xml");
     register_xml("print_tune_panel.xml");
+    // The material grid, operations group and spool card are shared between
+    // filament_panel's landscape and portrait arrangements (see the
+    // <if>/<else> in filament_panel.xml), so they are their own components
+    // rather than inline markup duplicated per branch. Must be registered
+    // before filament_panel which uses them.
+    register_xml("components/filament_material_group.xml");
+    register_xml("components/filament_operations_group.xml");
+    register_xml("components/filament_spool_card.xml");
     register_xml("filament_panel.xml");
 
     // NOTE: AMS panel (ams_panel.xml) is registered lazily in ui_panel_ams.cpp
