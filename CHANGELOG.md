@@ -5,21 +5,22 @@ All notable changes to HelixScreen will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.0-beta.1] - UNRELEASED
+## [1.1.0-beta.1] - 2026-09-26
 
 <!-- whatsnew
 The first beta of 1.1.
 
-- A rebuilt home screen: square grid, half-cell placement, pages you drag widgets between
+- A rebuilt home screen: square grid, pages you drag widgets between
+- Faster drawing on every board, GPU rendering on the Pi
+- Pressure advance and belt tension, measured on the printer
 - Tool offsets for tool changers, batch load/unload on the Snapmaker U1
-- Chamber heaters like DragonBreath get a diagnostics card
+- Macros remember their parameters
+- Add-on chamber heaters, with diagnostics
 - Your filament edits, the printer and Spoolman stop overwriting each other
-- Fireworks and Bouncing Printer screensavers, and savers on every board
-- USB sticks mount on boards that do not mount them
-- VzBot, FLSUN S1 and the base K2 are recognised
+- Print prep tracking with no config changes
 -->
 
-The first beta of the 1.1 line. It carries everything in 1.0.1 plus about two thousand
+The first beta of the 1.1 line. It carries everything in 1.0.2 plus about two thousand
 changes made on the trunk since 1.0 branched, and most of them land in four places.
 The home screen was rebuilt on a square grid, and editing it finally works the way you
 expect. Tool changers and multi-toolhead machines gained the tools they were missing:
@@ -48,7 +49,10 @@ this build, set the update channel in Settings to Beta.
   its own grid's units, so when you return to 1.1 the home screen comes back rearranged,
   or, from some 1.0 builds, reset to its defaults. Arrange it again in edit mode.
   Everything else survives the round trip.
-- **Display sleep is back to turning the backlight off** (#1594, #1708). 1.0.1 powered
+- **Your 1.0 settings are kept** (#1305). The first start of 1.1 saves your old
+  `settings.json` beside the new one as `settings.json.pre-migration`, before converting
+  it. HelixScreen never reads that copy back; it is there if you want your 1.0 settings.
+- **Display sleep turns the backlight off, as in 1.0.2** (#1594, #1708). 1.0.1 powered
   the panel down at sleep, which left some AD5X, U1, K1, K2 and Pi DSI panels wedged or
   cycling colours on wake. The panel is now powered down only when there is no backlight
   to turn off. The `/display/panel_power_off` setting in settings.json still forces it.
@@ -240,9 +244,10 @@ No widget types were added or removed; most of the existing ones changed.
 **Chamber heaters**
 
 - **Add-on chamber heaters are detected and explained** (#1290) - DragonBreath and Panda
-  Breath heaters are found at startup, each with its own safety ceiling. A diagnostics
-  card under the chamber temperature graph shows any fault with a translated reason and a
-  Reset button, the element temperature, and the filter fan with its own toggle. Like
+  Breath heaters are found at startup, each with its own safety ceiling. On the
+  temperature screen, the chamber card shows any fault with a translated reason and a
+  Reset button, the element temperature, and the filter fan with its own toggle, so the
+  graph keeps the rest of the screen. Like
   every heater, the chamber heater's status also shows how hard it is working as a
   percentage. A heater that has dropped off the network says Offline instead of offering
   a target it cannot reach. The Panda Breath's status format has not been verified on a
@@ -264,6 +269,11 @@ No widget types were added or removed; most of the existing ones changed.
 - **Camera button on remote screens** - running HelixScreen against a printer on another
   machine, the print screen gains a Camera button for the full-screen webcam view. It
   stays hidden on the printer's own screen.
+- **Macros remember their parameters** - save default values for any macro that takes
+  parameters, from edit mode in the Macros panel or a home Macro Button's options. With
+  Ask for parameters on, the form opens already filled in; switch it off and the macro
+  runs straight away with the saved values. Defaults are kept per printer, and a
+  dangerous macro still asks for confirmation.
 
 **Calibration and tuning**
 
@@ -310,6 +320,21 @@ No widget types were added or removed; most of the existing ones changed.
   appear with translated wording.
 - **Snapmaker U1 with the multiACE mod** (#1426) - keeps its filament screen instead of
   being mistaken for a plain ACE setup.
+
+**Small and portrait screens**
+
+- **The Motion screen gives the jog pad more room** - the X, Y and Z position moves into
+  the header, so on a landscape panel the jog pad takes the width the position card used,
+  about a third wider at 480x320. An axis that is not homed shows its position greyed
+  out. On a portrait panel the jog pad sits beside a tall Z column, with the jog modes and
+  levelling buttons in one row underneath.
+- **The Filament screen fits small and portrait panels** - on a portrait panel it becomes
+  one column, and the temperature graph shows only when there is room for it, with a graph
+  button on the spool strip to open it otherwise. The Load, Unload, Purge, Extrude and
+  Retract buttons are full size and stay put whether or not the cold-extrusion warning is
+  showing. Cool Down keeps its place in the material grid, greyed out while nothing is
+  heating. The tool picker shows the tool's number (or the name you gave it), and on the
+  Snapmaker U1 it is labelled Toolhead.
 
 **Display and sound**
 
@@ -508,8 +533,9 @@ No widget types were added or removed; most of the existing ones changed.
   every slot on a box whose size was not yet known, and threw away the record a
   reattached box needed. Clearing a slot left a dangling Spoolman link, and bypass after
   an unload could stay armed forever.
-- **AD5X IFS** (#1631, #1654) - your own colour edit was recorded as if the printer had
-  reported it, and colours set from the stock screen were misread.
+- **AD5X IFS** (#1631, #1654, #1626) - your own colour edit was recorded as if the printer
+  had reported it, colours set from the stock screen were misread, and the filament
+  system screen never showed a runout.
 - **Tool changers: a tool change is no longer reported as a dock fault** - while a tool
   travels between dock and head, its sensors read the same as a fault, and the screen
   raised an error on the first moment of an ordinary swap. Real dock faults still show,
@@ -647,6 +673,134 @@ No widget types were added or removed; most of the existing ones changed.
   filament and U1 fault text is translated in every language.
 - **Text on coloured buttons** (#1648) keeps the theme's tint at readable contrast
   instead of dropping to plain black or white.
+
+## [1.0.2] - 2026-09-25
+
+<!-- whatsnew
+The second patch release on the 1.0 line.
+
+Display sleep is fixed: panels that wedged, glowed or showed a test pattern on AD5X, U1,
+K1, K2 and Pi DSI now sleep by turning the backlight off, and the screen comes back
+properly on wake. Several crashes are gone, including the K1 blank-screen crash and
+crashes after a printer switch. QIDI printers get their .3mf thumbnails back.
+-->
+
+The second patch release on the 1.0 line. The headline is display sleep: 1.0.1 powered the
+panel down alongside the backlight, and on several boards that wedged the panel or lit it
+up instead of turning it off. 1.0.2 goes back to switching the backlight off and powering
+the panel down only where there is no backlight to switch. The rest is mostly stability,
+on K1 class boards and around printer switching, plus QIDI install fixes and readable text
+on coloured buttons.
+
+### Added
+
+- **The filament mapping chip names the material** - the top band of each tool's chip
+  shows the file's material for that tool (PLA, ASA) on the tool's colour, falling back
+  to the tool number when the file names none.
+
+### Fixed
+
+**Display sleep and backlight**
+
+- **Sleep turns the backlight off and leaves the panel powered** - powering the panel down
+  alongside a working backlight wedged or lit up panels on AD5X, U1, K1 and K2 (the K2
+  Plus glowed and flickered white at the edges) and showed a colour test pattern on a Pi 4
+  DSI screen. Sleep now switches the backlight off, and powers the panel down only on
+  boards with no backlight control. `/display/panel_power_off` turns panel power-off back
+  on for a screen that needs it
+  ([#1594](https://github.com/prestonbrown/helixscreen/issues/1594),
+  [#1708](https://github.com/prestonbrown/helixscreen/issues/1708)).
+- **Waking from sleep brings the screen fully back** - after dimming, then the screensaver,
+  then sleep, the panel on screen woke up frozen: its live values and timers stayed
+  stopped, and every later screensaver skipped pausing it.
+- **The K2 brightness slider no longer blacks out the screen at its low end** - the lowest
+  settings map onto the panel's visible range, with a `/display/backlight_floor_percent`
+  setting for other panels that go dark early
+  ([#1709](https://github.com/prestonbrown/helixscreen/issues/1709)).
+- **No false "Failed to load G-code preview"** when a print starts while the display is
+  asleep.
+
+**Crashes and stability**
+
+- **K1 class boards no longer crash drawing a QR code or an image** - a canvas buffer could
+  be mistaken for a PNG and drawn at a nonsense size, and draw buffers could be freed while
+  a render was still reading them
+  ([#1673](https://github.com/prestonbrown/helixscreen/issues/1673)).
+- **Switching printers no longer sets up a crash** - a toast left over from the previous
+  printer stayed on screen forever and crashed the app when tapped
+  ([#1719](https://github.com/prestonbrown/helixscreen/issues/1719)); the motion, console
+  and macros overlays reopened as stale copies, and tapping home on the motion overlay
+  crashed ([#1707](https://github.com/prestonbrown/helixscreen/issues/1707)); and home
+  pages could keep drawing with layout data the switch had freed.
+- **Switching printers no longer leaks memory** - every overlay, the numeric keypad and the
+  AMS panels opened before a switch stayed allocated as hidden copies, several hundred KB
+  each, for the rest of the session. They are freed now.
+- **A brief connection drop no longer raises the connection-failed dialog** - a printer
+  that had connected and lost Moonraker for a few seconds was treated as one that never
+  connected.
+- **Lower CPU use while drawing** on every shipped board, up to a quarter less on some
+  screens.
+
+**Touch**
+
+- **Touch lines up on panels whose driver reports its range sideways** - portrait panels
+  such as the Creator 5 Pro's scale touch correctly
+  ([#1450](https://github.com/prestonbrown/helixscreen/issues/1450)). If you set
+  `HELIX_TOUCH_SWAP_AXES=1` to work around this, remove it, or the axes swap twice.
+
+**Install and uninstall**
+
+- **QIDI printers show .3mf thumbnails again** - with the stock screen stopped, nothing
+  unpacked plate thumbnails from .3mf files, so Fluidd and HelixScreen showed none. A small
+  helper service now does it, set up on install and on update
+  ([#1713](https://github.com/prestonbrown/helixscreen/issues/1713)).
+- **The QIDI installer warns what the stock client carries** - on newer QIDI firmware,
+  stopping it breaks QIDI Studio box sync, QIDI cloud and box filament edits. The installer
+  says so once, and the QIDI guide describes the trade-off.
+- **A failed download no longer leaves a printer with no screen** - the installer downloads
+  and checks the release before it disables the stock UI, which also keeps the network up
+  on boards whose stock UI runs WiFi, like the U1.
+- **Uninstall restores the QIDI and MKS stock screen** instead of leaving the boot splash
+  up until a reboot.
+- **WiFi respects a radio an administrator blocked** - on a machine where WiFi was never
+  set up in HelixScreen, a radio blocked at boot stays blocked
+  ([#1697](https://github.com/prestonbrown/helixscreen/issues/1697)).
+
+**Themes**
+
+- **Text on coloured buttons stays readable** - buttons, badges, AMS lane and slot badges,
+  filament swatches, LED chips, action prompts, the jog pad, screws-tilt indicators and
+  step circles missed readable contrast on most shipped themes. They now pick text that
+  reads on their fill, keeping the theme's tint where it can
+  ([#1496](https://github.com/prestonbrown/helixscreen/issues/1496),
+  [#1648](https://github.com/prestonbrown/helixscreen/issues/1648)).
+- **A theme saved in the editor sticks** when the theme explorer closes, and the explorer's
+  preset picker keeps previewing after the editor has been opened.
+- **Edit mode's trash and configure icons are visible** against their selection pill in
+  light and dark themes.
+
+**Home screen**
+
+- **The add-page tile is labelled** - it reads "Add page" in the current language, and the
+  plus sign no longer looks disabled. The user guide now describes adding and deleting
+  pages as 1.0 does it.
+- **Tapping anywhere on a controls card opens its overlay**, header included.
+
+**Printing and filament systems**
+
+- **The print status thumbnail shows on printers whose Moonraker metadata is broken** - it
+  is read from the gcode header when metadata is missing, as on QIDI Q2 and Max 4.
+- **Calibration files preview** - OrcaSlicer pressure advance, flow and retraction tests no
+  longer render blank.
+- **Snapmaker U1 explains a refused resume** when an extruder's filament type is unset, and
+  offers only a dismiss where Resume would be refused again.
+- **AFC shows only device actions it can run** - single-extruder machines no longer get an
+  "Unknown action" on the LED action, and setups without a hub no longer show a bowden
+  length slider they cannot use.
+- **The printer setup wizard stops reopening on every boot** on ForgeX and zmod AD5M Pro
+  machines after a targeted reconfigure.
+- **Filament remap and Snapmaker filament messages are translated** into all eight
+  languages.
 
 ## [1.0.1] - 2026-09-20
 
@@ -7470,6 +7624,8 @@ Initial tagged release. Foundation for all subsequent development.
 - Automated GitHub Actions release pipeline
 - One-liner installation script with platform auto-detection
 
+[1.1.0-beta.1]: https://github.com/prestonbrown/helixscreen/compare/v1.0.2...v1.1.0-beta.1
+[1.0.2]: https://github.com/prestonbrown/helixscreen/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/prestonbrown/helixscreen/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/prestonbrown/helixscreen/compare/v0.99.118...v1.0.0
 [1.0.0-rc.1]: https://github.com/prestonbrown/helixscreen/compare/v0.99.118...v1.0.0-rc.1
