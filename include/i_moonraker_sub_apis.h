@@ -24,9 +24,9 @@
 #pragma once
 
 #include "advanced_panel_types.h"
+#include "axis_move.h"
 #include "belt_tension_types.h"
 #include "calibration_types.h"
-#include "jog_coalescer.h"
 #include "json_fwd.h"
 #include "moonraker_error.h"
 #include "moonraker_types.h"

@@ -6,9 +6,9 @@
 #include "ui_error_reporting.h"
 #include "ui_notification.h"
 
+#include "axis_move.h"
 #include "gcode_classify.h"
 #include "gcode_homing.h"
-#include "jog_coalescer.h"
 #include "moonraker_client.h"
 #include "moonraker_gcode_guards.h"
 #include "moonraker_types.h"
