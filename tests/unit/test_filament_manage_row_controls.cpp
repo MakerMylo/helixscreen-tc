@@ -24,6 +24,7 @@
 
 #include <lvgl.h>
 #include <memory>
+#include <string>
 
 #include "../catch_amalgamated.hpp"
 
@@ -62,8 +63,7 @@ struct ManageRowHarness {
         hw.parse_objects(objects);
         ToolState::instance().init_tools(hw);
 
-        lv_subject_set_int(AmsState::instance().get_ams_type_subject(),
-                           static_cast<int>(ams_type));
+        lv_subject_set_int(AmsState::instance().get_ams_type_subject(), static_cast<int>(ams_type));
 
         panel = std::make_unique<FilamentPanel>(fx.state(), fx.api());
         panel->init_subjects();
@@ -126,4 +126,48 @@ TEST_CASE_METHOD(LVGLUITestFixture, "Filament manage row: multi-tool with AMS ge
     REQUIRE_FALSE(h.hidden("ams_manage_row"));
     CHECK(h.hidden("btn_manage_slots"));
     CHECK_FALSE(h.hidden("extruder_selector_group"));
+}
+
+TEST_CASE_METHOD(LVGLUITestFixture, "Cool Down keeps its grid cell while nothing is heating",
+                 "[filament][ui][cooldown]") {
+    ManageRowHarness h(*this, {"extruder"}, AmsType::NONE);
+
+    lv_obj_t* cooldown = lv_obj_find_by_name(h.root, "btn_cooldown");
+    REQUIRE(cooldown != nullptr);
+
+    lv_subject_t* heating = lv_xml_get_subject(nullptr, "filament_nozzle_heating");
+    REQUIRE(heating != nullptr);
+
+    lv_subject_set_int(heating, 0);
+    h.fx.process_lvgl(30);
+    // Disabled, never hidden: the material grid must not reflow when the
+    // heaters are cold.
+    CHECK_FALSE(lv_obj_has_flag(cooldown, LV_OBJ_FLAG_HIDDEN));
+    CHECK(lv_obj_has_state(cooldown, LV_STATE_DISABLED));
+
+    lv_subject_set_int(heating, 1);
+    h.fx.process_lvgl(30);
+    CHECK_FALSE(lv_obj_has_flag(cooldown, LV_OBJ_FLAG_HIDDEN));
+    CHECK_FALSE(lv_obj_has_state(cooldown, LV_STATE_DISABLED));
+}
+
+TEST_CASE_METHOD(LVGLUITestFixture, "Closed tool dropdown spells the 1-based tool number",
+                 "[filament][ui][tool]") {
+    ManageRowHarness h(*this, {"extruder", "extruder1"}, AmsType::NONE);
+
+    lv_obj_t* dd = TA::extruder_dropdown(*h.panel);
+    REQUIRE(dd != nullptr);
+
+    // A generated tool name collapses to the lane number in the closed text.
+    const char* closed = lv_dropdown_get_text(dd);
+    REQUIRE(closed != nullptr);
+    CHECK(std::string(closed) == "1");
+
+    // The active tool moving to the second head moves the closed text with it.
+    lv_subject_set_int(ToolState::instance().get_active_tool_subject(), 1);
+    h.fx.process_lvgl(30);
+    REQUIRE(lv_dropdown_get_selected(dd) == 1);
+    closed = lv_dropdown_get_text(dd);
+    REQUIRE(closed != nullptr);
+    CHECK(std::string(closed) == "2");
 }
