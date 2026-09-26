@@ -1662,7 +1662,8 @@ bool MoonrakerClientMock::apply_cfs_box_custom_command(const std::string& gcode)
         }
         reset_idle_timeout();
         dispatch_status_update(
-            {{"toolhead", {{"homed_axes", "xyz"}, {"position", {x, y, pos_z_.load(), 0.0}}}}});
+            {{"toolhead", {{"homed_axes", "xyz"}, {"position", {x, y, pos_z_.load(), 0.0}}}},
+             {"motion_report", {{"live_position", {x, y, pos_z_.load(), 0.0}}}}});
     };
 
     if (cmd == "XYZ_ZERO") {
@@ -3153,7 +3154,8 @@ int MoonrakerClientMock::gcode_script(const std::string& raw_gcode) {
                 // Reset idle timeout when moving
                 reset_idle_timeout();
                 // Dispatch immediate position update (matches real Moonraker)
-                dispatch_status_update({{"toolhead", {{"position", {sx, sy, sz, 0.0}}}}});
+                dispatch_status_update({{"toolhead", {{"position", {sx, sy, sz, 0.0}}}},
+                                        {"motion_report", {{"live_position", {sx, sy, sz, 0.0}}}}});
             }
         }
     }
@@ -5696,7 +5698,8 @@ void MoonrakerClientMock::temperature_simulation_loop() {
               {"extrude_factor", flow / 100.0},
               {"homing_origin", {0.0, 0.0, z_offset, 0.0}}}},
             {"motion_report",
-             {{"live_velocity", feed_mm_s * (speed / 100.0)},
+             {{"live_position", {x, y, z, 0.0}},
+              {"live_velocity", feed_mm_s * (speed / 100.0)},
               {"live_extruder_velocity", extruder_mm_s}}},
             {"fan", {{"speed", fan / 255.0}}},
             {"print_stats",

@@ -1143,6 +1143,17 @@ class PrinterState {
         return motion_state_.get_gcode_position_z_subject();
     }
 
+    // Live position subjects - physical position mid-move (motion_report)
+    lv_subject_t* get_live_position_x_subject() {
+        return motion_state_.get_live_position_x_subject();
+    }
+    lv_subject_t* get_live_position_y_subject() {
+        return motion_state_.get_live_position_y_subject();
+    }
+    lv_subject_t* get_live_position_z_subject() {
+        return motion_state_.get_live_position_z_subject();
+    }
+
     lv_subject_t* get_homed_axes_subject() {
         return motion_state_.get_homed_axes_subject();
     } // "xyz", "xy", etc.

@@ -1209,7 +1209,7 @@ json MoonrakerDiscoverySequence::build_subscription_objects(
     subscription_objects["gcode_move"] =
         json::array({"gcode_position", "speed", "speed_factor", "extrude_factor", "homing_origin"});
     subscription_objects["motion_report"] =
-        json::array({"live_velocity", "live_extruder_velocity"});
+        json::array({"live_position", "live_velocity", "live_extruder_velocity"});
     subscription_objects["display_status"] = json::array({"message", "progress"});
 
     // system_stats was previously subscribed with nullptr but no parser ever
