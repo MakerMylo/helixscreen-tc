@@ -38,6 +38,13 @@
          ladders above resolve for the components in ui_xml/components/ from
          here (top-level declaration only — see bed_mesh_profiles_card.xml). -->
   </consts>
+  <styles>
+    <!-- The portrait spacer swaps what the graph card draws, not its layout
+         slot. bg_opa lives in a bind_style pair (not an inline attr) because
+         an inline style_bg_opa would outrank any bound style. -->
+    <style name="temp_graph_card_shown" bg_opa="255"/>
+    <style name="temp_graph_card_spacer" bg_opa="0"/>
+  </styles>
   <!-- Filament Management Panel -->
   <!-- Landscape: two columns, left (temp status + AMS) and right (material +
        operations). Portrait: one column — temp chips, material, graph,
@@ -131,14 +138,19 @@
 
         <!-- Temperature graph: this column's flexible remainder. Height and
              flex_grow come from apply_left_column_sizing(); whether it shows at
-             all is FilamentPanel::fit_portrait_graph(), which hides it when the
-             remainder is too short to read. -->
+             all is the filament_graph_spacer subject, which
+             FilamentPanel::fit_portrait_graph() sets when the remainder is too
+             short to read. -->
         <lv_obj name="temp_graph_card"
-                width="100%" height="0" style_pad_all="0" scrollable="false" style_bg_opa="255"
-                style_bg_color="#card_bg">
+                width="100%" height="0" style_pad_all="0" scrollable="false" style_bg_color="#card_bg">
+          <bind_style name="temp_graph_card_shown" subject="filament_graph_spacer" ref_value="0"/>
+          <bind_style name="temp_graph_card_spacer" subject="filament_graph_spacer" ref_value="1"/>
+          <bind_flag_if_eq subject="filament_graph_spacer" flag="clickable" ref_value="0"/>
           <!-- Graph container - populated by C++ via TempControlPanel -->
           <lv_obj name="temp_graph_container"
-                  width="100%" height="100%" style_pad_all="0" clickable="false" event_bubble="true"/>
+                  width="100%" height="100%" style_pad_all="0" clickable="false" event_bubble="true">
+            <bind_flag_if_eq subject="filament_graph_spacer" flag="hidden" ref_value="1"/>
+          </lv_obj>
         </lv_obj>
 
         <!-- Divider, OPERATIONS and the action rows (shared component), at
@@ -257,13 +269,19 @@
           <!-- Temperature Graph (combined nozzle + bed). Height and flex_grow
                  are set from C++ (apply_left_column_sizing) so the layout can
                  swap between fixed-graph / growing-spool (AMS) and growing-graph
-                 / content-spool (external spool at MICRO/TINY). -->
+                 / content-spool (external spool at MICRO/TINY). The spacer
+                 subject stays 0 in landscape; the bindings are the same pair
+                 the portrait branch carries. -->
           <lv_obj name="temp_graph_card"
-                  width="100%" height="0" style_pad_all="0" scrollable="false" style_bg_opa="255"
-                  style_bg_color="#card_bg">
+                  width="100%" height="0" style_pad_all="0" scrollable="false" style_bg_color="#card_bg">
+            <bind_style name="temp_graph_card_shown" subject="filament_graph_spacer" ref_value="0"/>
+            <bind_style name="temp_graph_card_spacer" subject="filament_graph_spacer" ref_value="1"/>
+            <bind_flag_if_eq subject="filament_graph_spacer" flag="clickable" ref_value="0"/>
             <!-- Graph container - populated by C++ via TempControlPanel -->
             <lv_obj name="temp_graph_container"
-                    width="100%" height="100%" style_pad_all="0" clickable="false" event_bubble="true"/>
+                    width="100%" height="100%" style_pad_all="0" clickable="false" event_bubble="true">
+              <bind_flag_if_eq subject="filament_graph_spacer" flag="hidden" ref_value="1"/>
+            </lv_obj>
           </lv_obj>
 
           <!-- BOTTOM: Spool card (shared component) -->

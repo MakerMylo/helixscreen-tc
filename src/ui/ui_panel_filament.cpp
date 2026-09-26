@@ -335,6 +335,10 @@ void FilamentPanel::init_subjects() {
         // Cooldown button visibility (1 when nozzle or bed target > 0)
         UI_MANAGED_SUBJECT_INT(nozzle_heating_subject_, 0, "filament_nozzle_heating", subjects_);
 
+        // Portrait graph spacer state; 1 = the graph card draws nothing and the
+        // strip button replaces it. The XML bindings consume this.
+        UI_MANAGED_SUBJECT_INT(graph_spacer_subject_, 0, "filament_graph_spacer", subjects_);
+
         // Extrude length button active states (boolean: 0=inactive, 1=active)
         // Using separate subjects because bind_style doesn't work well with multiple ref_values
         UI_MANAGED_SUBJECT_INT(extrude_length_5mm_active_subject_, 0,
@@ -550,6 +554,7 @@ void FilamentPanel::bind_widgets() {
     temp_graph_card_ = lv_obj_find_by_name(panel_, "temp_graph_card");
     // Fresh tree: the graph starts shown, so the spacer bookkeeping does too.
     portrait_graph_spacer_ = false;
+    lv_subject_set_int(&graph_spacer_subject_, 0);
     btn_temp_graph_ = lv_obj_find_by_name(panel_, "btn_temp_graph");
 
     // Find spool card widgets (serves both Multi-Filament and External Spool modes)
@@ -643,18 +648,10 @@ void FilamentPanel::fit_portrait_graph(lv_obj_t* column) {
 
 void FilamentPanel::set_portrait_graph_spacer(bool spacer) {
     portrait_graph_spacer_ = spacer;
-    if (!temp_graph_card_)
-        return;
-
-    // The card keeps its flex_grow slot either way — only what it draws and
-    // accepts changes, so the column's other rows never move.
-    lv_obj_t* container = lv_obj_find_by_name(temp_graph_card_, "temp_graph_container");
-    if (container)
-        lv_obj_set_flag(container, LV_OBJ_FLAG_HIDDEN, spacer);
-    lv_obj_set_style_bg_opa(temp_graph_card_, spacer ? 0 : 255, 0);
-    lv_obj_set_flag(temp_graph_card_, LV_OBJ_FLAG_CLICKABLE, !spacer);
-    if (btn_temp_graph_)
-        lv_obj_set_flag(btn_temp_graph_, LV_OBJ_FLAG_HIDDEN, !spacer);
+    // The card keeps its flex_grow slot either way — the XML bindings on the
+    // card, its container and the strip button swap only what it draws and
+    // accepts, so the column's other rows never move.
+    lv_subject_set_int(&graph_spacer_subject_, spacer ? 1 : 0);
 }
 
 void FilamentPanel::setup_temp_graph() {
@@ -671,9 +668,10 @@ void FilamentPanel::setup_temp_graph() {
         spdlog::debug("[{}] Temperature graph initialized", get_name());
     }
 
-    // Make the graph card clickable to open the unified temp graph overlay
+    // Click-to-open overlay: the CLICKABLE flag itself comes from the XML
+    // (bind_flag_if_eq on filament_graph_spacer); only the handler is wired
+    // here, once per tree.
     if (temp_graph_card_) {
-        lv_obj_add_flag(temp_graph_card_, LV_OBJ_FLAG_CLICKABLE);
         lv_obj_add_event_cb(
             temp_graph_card_,
             [](lv_event_t* e) {

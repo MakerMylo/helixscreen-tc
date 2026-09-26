@@ -422,6 +422,11 @@ class FilamentPanel : public PanelBase {
     // Cooldown button visibility (1 when nozzle target > 0, 0 otherwise)
     lv_subject_t nozzle_heating_subject_;
 
+    // Portrait spacer state (1 = the graph card is an invisible spacer and the
+    // strip button stands in for it). C++ decides via fit_portrait_graph();
+    // the XML bindings on the card, its container and btn_temp_graph draw it.
+    lv_subject_t graph_spacer_subject_;
+
     // Extrude length button active subjects (boolean: 0=inactive, 1=active)
     // Using separate subjects because bind_style doesn't work with multiple ref_values
     lv_subject_t extrude_length_5mm_active_subject_;
