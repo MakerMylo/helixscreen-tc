@@ -258,15 +258,9 @@ void PrintStatusWidget::attach(lv_obj_t* widget_obj, lv_obj_t* parent_screen) {
     print_card_layout_ = lv_obj_find_by_name(widget_obj_, "print_card_layout");
     print_card_thumb_wrap_ = lv_obj_find_by_name(widget_obj_, "print_card_thumb_wrap");
     print_card_info_ = lv_obj_find_by_name(widget_obj_, "print_card_info");
-    print_card_printing_ = lv_obj_find_by_name(widget_obj_, "print_card_printing");
     print_card_preparing_info_ = lv_obj_find_by_name(widget_obj_, "print_card_preparing_info");
 
     // Library idle state widgets
-    print_card_idle_ = lv_obj_find_by_name(widget_obj_, "print_card_idle");
-    print_card_idle_compact_ = lv_obj_find_by_name(widget_obj_, "print_card_idle_compact");
-    print_card_idle_detailed_ = lv_obj_find_by_name(widget_obj_, "print_card_idle_detailed");
-    print_card_printing_detailed_ =
-        lv_obj_find_by_name(widget_obj_, "print_card_printing_detailed");
     print_card_thumb_compact_ = lv_obj_find_by_name(widget_obj_, "print_card_thumb_compact");
     library_row_last_ = lv_obj_find_by_name(widget_obj_, "library_row_last");
     compact_row_last_ = lv_obj_find_by_name(widget_obj_, "compact_row_last");
@@ -515,12 +509,7 @@ void PrintStatusWidget::detach() {
     print_card_layout_ = nullptr;
     print_card_thumb_wrap_ = nullptr;
     print_card_info_ = nullptr;
-    print_card_printing_ = nullptr;
     print_card_preparing_info_ = nullptr;
-    print_card_idle_ = nullptr;
-    print_card_idle_compact_ = nullptr;
-    print_card_idle_detailed_ = nullptr;
-    print_card_printing_detailed_ = nullptr;
     print_card_thumb_compact_ = nullptr;
     library_row_last_ = nullptr;
     compact_row_last_ = nullptr;
@@ -2209,25 +2198,6 @@ void PrintStatusWidget::DetailedFormatter::attach_arc(lv_obj_t* arc) {
         // Range, angles, styling and the value binding all come from the XML
         // (helix_progress_arc + bind_value="print_progress_display"); this
         // helper only owns what has no declarative equivalent.
-        //
-        // Null arc_widget_ when LVGL destroys the arc, so resize_arc() cannot
-        // reach a freed object. Guard against the layout-rebuild race: the home
-        // panel attaches widget A → detaches A → attaches B in quick
-        // succession; A's deferred LV_EVENT_DELETE fires AFTER B has already
-        // overwritten arc_widget_ with its own arc. An unconditional null here
-        // clobbers B's live arc and leaves resize_arc() with nothing to fit.
-        // Only clear when the deleted object is still the one we're tracking.
-        lv_obj_add_event_cb(
-            arc,
-            [](lv_event_t* e) {
-                if (!s_formatter_)
-                    return;
-                lv_obj_t* deleted = lv_event_get_target_obj(e);
-                if (s_formatter_->arc_widget_ == deleted) {
-                    s_formatter_->arc_widget_ = nullptr;
-                }
-            },
-            LV_EVENT_DELETE, nullptr);
         // Auto-resize + diameter-driven thickness via the shared helper.
         // It hooks LV_EVENT_SIZE_CHANGED on the parent and publishes the
         // tier to our class-level subject, which the XML bind_styles

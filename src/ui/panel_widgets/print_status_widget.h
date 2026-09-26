@@ -8,6 +8,7 @@
 #include "ui_job_queue_modal.h"
 #include "ui_observer_guard.h"
 #include "ui_runout_guidance_modal.h"
+#include "ui_widget_ref.h"
 
 #include "async_lifetime_guard.h"
 #include "panel_widget.h"
@@ -261,28 +262,21 @@ class PrintStatusWidget : public PanelWidget {
         PrintStatusWidget& owner_;
     };
 
-    lv_obj_t* widget_obj_ = nullptr;
-    lv_obj_t* parent_screen_ = nullptr;
+    helix::ui::WidgetRef widget_obj_;
+    helix::ui::WidgetRef parent_screen_;
 
     // Cached widget references (looked up after XML creation)
-    lv_obj_t* print_card_thumb_ = nullptr;          // Idle state thumbnail
-    lv_obj_t* print_card_active_thumb_ = nullptr;   // Active print thumbnail
-    lv_obj_t* print_card_layout_ = nullptr;         // Row/column layout container
-    lv_obj_t* print_card_thumb_wrap_ = nullptr;     // Thumbnail wrapper
-    lv_obj_t* print_card_info_ = nullptr;           // Info section (filename/progress)
-    lv_obj_t* print_card_printing_ = nullptr;       // Active state container (preparing + printing)
-    lv_obj_t* print_card_preparing_info_ = nullptr; // Preparing info section
+    helix::ui::WidgetRef print_card_thumb_;          // Idle state thumbnail
+    helix::ui::WidgetRef print_card_active_thumb_;   // Active print thumbnail
+    helix::ui::WidgetRef print_card_layout_;         // Row/column layout container
+    helix::ui::WidgetRef print_card_thumb_wrap_;     // Thumbnail wrapper
+    helix::ui::WidgetRef print_card_info_;           // Info section (filename/progress)
+    helix::ui::WidgetRef print_card_preparing_info_; // Preparing info section
 
     // Library idle state widgets
-    lv_obj_t* print_card_idle_ = nullptr;          // Full library idle card
-    lv_obj_t* print_card_idle_compact_ = nullptr;  // Compact idle card (1x2)
-    lv_obj_t* print_card_thumb_compact_ = nullptr; // Compact thumbnail
-    lv_obj_t* library_row_last_ = nullptr;         // Print Last row (for graying out)
-    lv_obj_t* compact_row_last_ = nullptr;         // Compact Print Last row (for graying out)
-
-    // Detailed-layout state containers (visibility managed by C++)
-    lv_obj_t* print_card_idle_detailed_ = nullptr;     // Detailed idle hero
-    lv_obj_t* print_card_printing_detailed_ = nullptr; // Detailed active body
+    helix::ui::WidgetRef print_card_thumb_compact_; // Compact thumbnail
+    helix::ui::WidgetRef library_row_last_;         // Print Last row (for graying out)
+    helix::ui::WidgetRef compact_row_last_;         // Compact Print Last row (for graying out)
 
     // Size-dependent subject for XML bindings (1 = column/2x2 mode, 0 = row/wide)
     static inline lv_subject_t column_mode_subject_;
@@ -427,7 +421,7 @@ class PrintStatusWidget : public PanelWidget {
         void resize_arc();
 
       private:
-        lv_obj_t* arc_widget_ = nullptr;
+        helix::ui::WidgetRef arc_widget_;
         std::string current_nozzle_override_ = "auto";
 
         SubjectManager subjects_;
