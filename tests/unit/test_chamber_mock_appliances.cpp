@@ -333,8 +333,8 @@ TEST_CASE_METHOD(HelixTestFixture, "mock materializes the stock panda_breath pai
               std::floor(diag.at("temperature").get<double>()));
         // Fields the stock binding does not have must not be invented here, or
         // the mock would exercise a parse path no device can reach.
-        for (const char* absent : {"fault", "inhibited", "fault_reason", "ptc_temp",
-                                   "fan_percent", "fan_reason", "protocol_error"}) {
+        for (const char* absent : {"fault", "inhibited", "fault_reason", "ptc_temp", "fan_percent",
+                                   "fan_reason", "protocol_error"}) {
             CAPTURE(absent);
             CHECK_FALSE(diag.contains(absent));
         }
@@ -373,4 +373,28 @@ TEST_CASE_METHOD(HelixTestFixture, "HELIX_MOCK_PANDA_BREATH_OFFLINE drops the li
     // The heater section still answers — that is what makes the banner the only
     // signal the reading is dead.
     CHECK(diag.at("temperature").get<double>() > 0.0);
+}
+
+// The stock binding's drying cycle: DRY_START runs work_mode 3 with the
+// requested target and length and a countdown, DRY_STOP ends it (#1299).
+TEST_CASE_METHOD(HelixTestFixture, "mock runs the stock drying cycle",
+                 "[chamber][mock][dryer][1299]") {
+    ScopedEnv objects_env("HELIX_MOCK_OBJECTS", STOCK_PAIR_ENV);
+    MoonrakerClientMock client;
+
+    REQUIRE(client.gcode_script("PANDA_BREATH_DRY_START TEMP=55 HOURS=4") == 0);
+    json diag = first_stock_diagnostics(client);
+    REQUIRE(diag.is_object());
+    CHECK(diag.at("filament_drying_active").get<bool>() == true);
+    CHECK(diag.at("work_mode").get<int>() == 3);
+    CHECK(diag.at("work_on").get<bool>() == true);
+    CHECK(diag.at("filament_temp").get<int>() == 55);
+    CHECK(diag.at("filament_timer").get<int>() == 4);
+    CHECK(diag.at("remaining_seconds").get<int>() > 0);
+    CHECK(diag.at("remaining_seconds").get<int>() <= 4 * 3600);
+
+    REQUIRE(client.gcode_script("PANDA_BREATH_DRY_STOP") == 0);
+    diag = first_stock_diagnostics(client);
+    CHECK(diag.at("filament_drying_active").get<bool>() == false);
+    CHECK(diag.at("remaining_seconds").get<int>() == 0);
 }
