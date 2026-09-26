@@ -693,3 +693,90 @@ TEST_CASE("a one-poll link flap never reaches the banner", "[chamber][subjects][
     CHECK(std::string(lv_subject_get_string(ts.get_chamber_heater_element_temp_text_subject())) ==
           "30.4°C");
 }
+
+// ============================================================================
+// Dryer (#1299)
+// ============================================================================
+
+// The drying cycle reaches two subjects: whether it runs, and the readout the
+// card shows. The readout pairs the live chamber temperature with the cycle's
+// target, since an appliance alone often plateaus below it, and follows every
+// frame; a delta that names only the countdown leaves the running flag alone,
+// and the cycle ending clears both.
+TEST_CASE("stock drying status drives the dryer subjects", "[chamber][subjects][dryer][1299]") {
+    LVGLTestFixture fixture;
+
+    PrinterTemperatureState ts;
+    ts.init_subjects(false);
+    ts.set_chamber_heater_name("heater_generic panda_breath");
+    ts.set_chamber_diagnostics_source("panda_breath", "panda_breath", "");
+
+    auto text = [&ts] {
+        return std::string(lv_subject_get_string(ts.get_chamber_dryer_text_subject()));
+    };
+    const std::string left = lv_tr("left");
+    CHECK(lv_subject_get_int(ts.get_chamber_dryer_active_subject()) == 0);
+
+    // Started, before the appliance has reported a countdown.
+    ts.update_from_status(nlohmann::json::parse(R"({
+        "heater_generic panda_breath": {"temperature": 24.0, "target": 0.0},
+        "panda_breath": {"work_mode": 3, "work_on": true, "filament_drying_active": true,
+                         "filament_temp": 55, "filament_timer": 4, "remaining_seconds": 0}})"));
+    CHECK(lv_subject_get_int(ts.get_chamber_dryer_active_subject()) == 1);
+    CHECK(text() == "24/55°C");
+
+    // 3h 12m left, rounded up to the minute the way the countdown reads.
+    ts.update_from_status(nlohmann::json{{"panda_breath", {{"remaining_seconds", 11481}}}});
+    CHECK(lv_subject_get_int(ts.get_chamber_dryer_active_subject()) == 1);
+    CHECK(text() == "24/55°C  3:12 " + left);
+
+    // A plateau below target is just a number: the chamber moving updates the
+    // readout and nothing else changes.
+    ts.update_from_status(nlohmann::json{{"heater_generic panda_breath", {{"temperature", 41.4}}}});
+    CHECK(lv_subject_get_int(ts.get_chamber_dryer_active_subject()) == 1);
+    CHECK(text() == "41/55°C  3:12 " + left);
+
+    ts.update_from_status(nlohmann::json::parse(R"({"panda_breath": {
+        "work_on": false, "filament_drying_active": false, "remaining_seconds": 0}})"));
+    CHECK(lv_subject_get_int(ts.get_chamber_dryer_active_subject()) == 0);
+    CHECK(text().empty());
+}
+
+// The dryer capability follows the backend the resolved heater matched, like
+// every other chamber surface: stock has one, DragonBreath does not.
+TEST_CASE("set_hardware raises the dryer capability for a backend with one",
+          "[chamber][subjects][state][hardware][dryer][1299]") {
+    lv_init_safe();
+    helix::PrinterState& state = get_printer_state();
+    helix::PrinterStateTestAccess::reset(state);
+    state.init_subjects(false);
+
+    auto& settings = helix::SettingsManager::instance();
+    settings.init_subjects();
+    settings.set_chamber_sensor_assignment("auto");
+    settings.set_chamber_heater_assignment("auto");
+    auto& caps = helix::PrinterStateTestAccess::get_capabilities_state(state);
+
+    helix::PrinterDiscovery stock;
+    stock.parse_objects(
+        nlohmann::json{"heater_generic panda_breath", "panda_breath", "extruder", "heater_bed"});
+    state.set_hardware(stock);
+    CHECK(lv_subject_get_int(caps.get_printer_has_chamber_dryer_subject()) == 1);
+
+    helix::PrinterDiscovery dragon;
+    dragon.parse_objects(nlohmann::json{"heater_generic dragonbreath", "dragonbreath",
+                                        "output_pin dragonbreath_filter", "extruder",
+                                        "heater_bed"});
+    state.set_hardware(dragon);
+    CHECK(lv_subject_get_int(caps.get_printer_has_chamber_dryer_subject()) == 0);
+
+    // A manual override to another heater detaches the backend's surfaces.
+    state.set_hardware(stock);
+    REQUIRE(lv_subject_get_int(caps.get_printer_has_chamber_dryer_subject()) == 1);
+    settings.set_chamber_heater_assignment("none");
+    state.set_hardware(stock);
+    CHECK(lv_subject_get_int(caps.get_printer_has_chamber_dryer_subject()) == 0);
+
+    settings.set_chamber_heater_assignment("auto");
+    settings.set_chamber_sensor_assignment("auto");
+}

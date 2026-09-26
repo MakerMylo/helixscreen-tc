@@ -132,6 +132,8 @@ void PrinterTemperatureState::init_subjects(bool register_xml) {
     chamber_heater_element_temp_text_lifetime_ = std::make_shared<bool>(true);
     INIT_SUBJECT_STRING(chamber_filter_fan_percent_text, "--", subjects_, register_xml);
     chamber_filter_fan_percent_text_lifetime_ = std::make_shared<bool>(true);
+    INIT_SUBJECT_INT(chamber_dryer_active, 0, subjects_, register_xml);
+    INIT_SUBJECT_STRING(chamber_dryer_text, "", subjects_, register_xml);
 
     // Extruder version subject (bumped when extruder list changes)
     INIT_SUBJECT_INT(extruder_version, 0, subjects_, register_xml);
@@ -661,6 +663,15 @@ void PrinterTemperatureState::update_from_status(const nlohmann::json& status) {
                     lv_subject_set_int(&chamber_heater_externally_controlled_,
                                        *d->externally_controlled ? 1 : 0);
                 }
+                if (d->drying_active.has_value()) {
+                    chamber_dryer_running_ = *d->drying_active;
+                }
+                if (d->drying_remaining_s.has_value()) {
+                    chamber_dryer_remaining_s_ = *d->drying_remaining_s;
+                }
+                if (d->drying_target_c.has_value()) {
+                    chamber_dryer_target_c_ = *d->drying_target_c;
+                }
                 if (d->link_error.has_value() && !d->link_error->empty()) {
                     spdlog::debug("[PrinterTemperatureState] Chamber heater link error: "
                                   "backend={} detail={}",
@@ -690,6 +701,12 @@ void PrinterTemperatureState::update_from_status(const nlohmann::json& status) {
         lv_subject_set_int(&chamber_filter_fan_on_, running);
     }
 
+    // The dryer readout carries the live chamber temperature, so it follows
+    // every frame, not only the ones that mention the cycle.
+    if (chamber_dryer_running_ || lv_subject_get_int(&chamber_dryer_active_) != 0) {
+        publish_chamber_dryer();
+    }
+
     // Effective chamber setpoint + control mode: delegate to the single source of
     // truth in ui_temperature_utils so the display and data layers can never
     // diverge. Recomputed on EVERY status update so external sets (Mainsail/
@@ -700,6 +717,29 @@ void PrinterTemperatureState::update_from_status(const nlohmann::json& status) {
         chamber_fan_resting_deci_);
     lv_subject_set_int(&chamber_effective_target_, sp.deci);
     lv_subject_set_int(&chamber_mode_, sp.mode);
+}
+
+// The actual chamber temperature sits beside the cycle's target: an appliance
+// alone often plateaus below target, and the readout shows that as a number
+// rather than a stall. Nothing waits on the target; the appliance's own
+// countdown ends the cycle. The countdown uses the AMS dryer's "H:MM left",
+// minutes rounded up so the last minute reads 0:01, and is omitted until the
+// device reports one.
+void PrinterTemperatureState::publish_chamber_dryer() {
+    lv_subject_set_int(&chamber_dryer_active_, chamber_dryer_running_ ? 1 : 0);
+    if (!chamber_dryer_running_) {
+        lv_subject_copy_string(&chamber_dryer_text_, "");
+        return;
+    }
+    const int current_c = static_cast<int>(std::lround(lv_subject_get_int(&chamber_temp_) / 10.0));
+    std::string text = chamber_dryer_target_c_ > 0
+                           ? fmt::format("{}/{}°C", current_c, chamber_dryer_target_c_)
+                           : fmt::format("{}°C", current_c);
+    const int minutes = (chamber_dryer_remaining_s_ + 59) / 60;
+    if (minutes > 0) {
+        text += fmt::format("  {}:{:02d} {}", minutes / 60, minutes % 60, lv_tr("left"));
+    }
+    lv_subject_copy_string(&chamber_dryer_text_, text.c_str());
 }
 
 } // namespace helix

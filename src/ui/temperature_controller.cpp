@@ -5,9 +5,11 @@
 #include "ui_error_reporting.h"
 #include "ui_temperature_utils.h"
 
+#include "chamber_heater_backend.h"
 #include "filament_database.h"
 #include "i_moonraker_api.h"
 #include "lvgl/src/others/translation/lv_translation.h"
+#include "observer_factory.h"
 #include "printer_state.h"
 #include "spdlog/spdlog.h"
 
@@ -278,6 +280,118 @@ void TemperatureController::reset_chamber_fault() {
         spdlog::info("[TemperatureController] Chamber fault reset");
         api_->execute_gcode(chamber_reset_gcode_, nullptr, nullptr);
     }
+}
+
+void TemperatureController::set_chamber_dryer(const chamber::ChamberHeaterBackend* backend,
+                                              bool has_heated_bed) {
+    chamber_dryer_backend_ = backend;
+    chamber_dryer_has_bed_ = has_heated_bed;
+    // The cycle can end on the appliance's side (its timer, its own button),
+    // so the bed assist follows the reported state rather than our commands.
+    if (!dryer_active_observer_ && chamber_dryer().supported) {
+        dryer_active_observer_ = ui::observe_int_sync<TemperatureController>(
+            state_.get_chamber_dryer_active_subject(), this,
+            [](TemperatureController* self, int active) {
+                self->on_chamber_dryer_active(active != 0);
+            },
+            state_.get_subjects_lifetime());
+    }
+}
+
+DryerInfo TemperatureController::chamber_dryer() const {
+    return chamber_dryer_backend_ ? chamber_dryer_backend_->dryer_capabilities() : DryerInfo{};
+}
+
+// 80 C is the bed temperature the stock appliance's own auto mode keys on
+// (auto_hotbedtemp), the vendor's figure for a bed that is helping the
+// chamber; a bed that cannot reach it gets its own ceiling.
+int TemperatureController::chamber_dryer_bed_assist_c() const {
+    if (!chamber_dryer_has_bed_) {
+        return 0;
+    }
+    constexpr int kBedAssistC = 80;
+    const int bed_max = static_cast<int>(keypad_range(HeaterType::Bed).max);
+    return bed_max > 0 ? std::min(kBedAssistC, bed_max) : kBedAssistC;
+}
+
+void TemperatureController::start_chamber_drying(float temp_c, int duration_min, bool heat_bed) {
+    const DryerInfo dryer = chamber_dryer();
+    if (!api_ || !dryer.supported) {
+        return;
+    }
+    lv_subject_t* job = state_.get_job_holds_machine_subject();
+    const bool job_active = job && lv_subject_get_int(job) != 0;
+    if (job_active && !dryer.allows_during_print) {
+        spdlog::info("[TemperatureController] Chamber drying refused: a job holds the machine");
+        return;
+    }
+    const std::string gcode = chamber_dryer_backend_->dryer_start_gcode(
+        dryer.clamp_temp(temp_c), dryer.clamp_duration(duration_min));
+    spdlog::info("[TemperatureController] Chamber drying start: {}", gcode);
+    auto tok = lifetime_.token();
+    api_->execute_gcode(gcode, nullptr, [this, tok](const MoonrakerError&) {
+        if (tok.expired()) {
+            return;
+        }
+        tok.defer("TemperatureController::drying_refused",
+                  [this]() { end_bed_assist("drying start refused"); });
+    });
+
+    const int bed_c = chamber_dryer_bed_assist_c();
+    if (!heat_bed || bed_c <= 0) {
+        return;
+    }
+    if (job_active) {
+        spdlog::info("[TemperatureController] Bed assist refused: a job holds the machine");
+        return;
+    }
+    bed_assist_ = {true, false, bed_c};
+    set_target(HeaterType::Bed, bed_c);
+}
+
+void TemperatureController::stop_chamber_drying() {
+    if (!api_ || !chamber_dryer().supported) {
+        return;
+    }
+    spdlog::info("[TemperatureController] Chamber drying stop");
+    api_->execute_gcode(std::string(chamber_dryer_backend_->dryer_stop_gcode()), nullptr, nullptr);
+    end_bed_assist("drying stopped");
+}
+
+void TemperatureController::on_chamber_dryer_active(bool running) {
+    if (!bed_assist_.armed) {
+        return;
+    }
+    if (running) {
+        bed_assist_.seen_running = true;
+    } else if (bed_assist_.seen_running) {
+        end_bed_assist("drying cycle ended");
+    }
+}
+
+// The bed goes off only while it is still ours: a print that started since, or
+// a different target someone set by hand, owns the bed now. A target still
+// reading 0 is ours too: the confirming frame may not have arrived yet, and an
+// off sent to a cold bed costs nothing.
+void TemperatureController::end_bed_assist(const char* why) {
+    if (!bed_assist_.armed) {
+        return;
+    }
+    const int target_c = bed_assist_.target_c;
+    bed_assist_ = {};
+    lv_subject_t* job = state_.get_job_holds_machine_subject();
+    if (job && lv_subject_get_int(job) != 0) {
+        spdlog::info("[TemperatureController] Bed assist ended ({}): a job owns the bed", why);
+        return;
+    }
+    lv_subject_t* bed_target = state_.get_bed_target_subject();
+    const int bed_target_deci = bed_target ? lv_subject_get_int(bed_target) : 0;
+    if (bed_target_deci != 0 && bed_target_deci != target_c * 10) {
+        spdlog::info("[TemperatureController] Bed assist ended ({}): target changed since", why);
+        return;
+    }
+    spdlog::info("[TemperatureController] Bed assist off ({})", why);
+    set_target(HeaterType::Bed, 0);
 }
 
 void TemperatureController::set_chamber_filter_fan(bool on) {

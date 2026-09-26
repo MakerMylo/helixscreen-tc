@@ -1740,6 +1740,7 @@ struct DryerInfo {
     float min_temp_c = 35.0f;          ///< Minimum settable temperature
     float max_temp_c = 70.0f;          ///< Maximum settable temperature
     int max_duration_min = 720;        ///< Maximum drying time (12h default)
+    int duration_step_min = 1;         ///< Granularity the firmware takes a duration in
     bool supports_fan_control = false; ///< Can fan speed be set independently?
 
     /**
@@ -1757,6 +1758,33 @@ struct DryerInfo {
      */
     bool supports_live_temp = false;     ///< Target temp re-sends without stopping
     bool supports_live_duration = false; ///< Remaining time changes without stopping
+
+    /// @p temp_c inside this dryer's settable range. A bound of 0 is unset and
+    /// clamps nothing on its side. Every surface offering a preset clamps
+    /// through here, so the value it shows is the value it sends.
+    [[nodiscard]] float clamp_temp(float temp_c) const {
+        if (max_temp_c > 0.0f && temp_c > max_temp_c) {
+            temp_c = max_temp_c;
+        }
+        if (min_temp_c > 0.0f && temp_c < min_temp_c) {
+            temp_c = min_temp_c;
+        }
+        return temp_c;
+    }
+
+    /// @p minutes rounded UP to whole duration steps, at least one step and at
+    /// most max_duration_min. Rounding up keeps a preset from drying for less
+    /// time than it names.
+    [[nodiscard]] int clamp_duration(int minutes) const {
+        const int step = duration_step_min > 0 ? duration_step_min : 1;
+        int steps = (std::max(minutes, 0) + step - 1) / step;
+        steps = std::max(steps, 1);
+        int clamped = steps * step;
+        if (max_duration_min > 0 && clamped > max_duration_min) {
+            clamped = (max_duration_min / step) * step;
+        }
+        return clamped;
+    }
 
     /**
      * @brief Get progress as percentage

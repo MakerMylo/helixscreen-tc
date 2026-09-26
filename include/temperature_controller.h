@@ -3,6 +3,7 @@
 #pragma once
 
 #include "ui_heater_config.h" // helix::HeaterType, HEATER_TYPE_COUNT
+#include "ui_observer_guard.h"
 
 #include "async_lifetime_guard.h"
 #include "heater_limits.h"
@@ -15,7 +16,11 @@
 
 namespace helix {
 class PrinterState;
+struct DryerInfo;
+namespace chamber {
+class ChamberHeaterBackend;
 }
+} // namespace helix
 class IMoonrakerAPI;
 
 namespace helix {
@@ -128,6 +133,27 @@ class TemperatureController {
     /// backend has no filter pin or the api is gone.
     void set_chamber_filter_fan(bool on);
 
+    /// Chamber filament dryer (#1299): the matched backend whose drying cycle
+    /// the actions below drive. nullptr, or a backend without one, disables it.
+    /// @p has_heated_bed enables the bed assist.
+    void set_chamber_dryer(const chamber::ChamberHeaterBackend* backend,
+                           bool has_heated_bed = false);
+
+    /// What the chamber's drying cycle accepts; supported=false when none.
+    [[nodiscard]] DryerInfo chamber_dryer() const;
+
+    /// Bed target the assist sets, in C; 0 when there is no heated bed.
+    [[nodiscard]] int chamber_dryer_bed_assist_c() const;
+
+    /// Start a drying cycle, clamped to chamber_dryer(). No-op without a dryer.
+    /// @p heat_bed also heats the bed to chamber_dryer_bed_assist_c(), which the
+    /// cycle ending turns back off; refused while a job holds the machine.
+    void start_chamber_drying(float temp_c, int duration_min, bool heat_bed = false);
+
+    /// End the running drying cycle, and the bed assist with it. No-op without
+    /// a dryer.
+    void stop_chamber_drying();
+
   private:
     friend struct TemperatureControllerTestAccess;
     void set_configured_max(HeaterType type, int deg);
@@ -151,6 +177,20 @@ class TemperatureController {
     std::string chamber_reset_gcode_;
     std::string chamber_filter_fan_pin_;
     double conservative_chamber_max_ = 0;
+    const chamber::ChamberHeaterBackend* chamber_dryer_backend_ = nullptr;
+    bool chamber_dryer_has_bed_ = false;
+
+    /// The bed the dryer heated, owed an off when the cycle ends. seen_running
+    /// holds the off back until the cycle has actually been reported running,
+    /// so the idle frames before the appliance picks up the start do not end it.
+    struct BedAssist {
+        bool armed = false;
+        bool seen_running = false;
+        int target_c = 0;
+    } bed_assist_;
+    ObserverGuard dryer_active_observer_;
+    void on_chamber_dryer_active(bool running);
+    void end_bed_assist(const char* why);
 };
 
 /// Null-safe face of TemperatureController::effective_keypad_max(): the shared
