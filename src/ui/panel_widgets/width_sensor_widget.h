@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include "ui_widget_ref.h"
+
 #include "panel_widget.h"
 
 namespace helix {
@@ -20,7 +22,7 @@ class WidthSensorWidget : public PanelWidget {
     }
 
   private:
-    lv_obj_t* widget_obj_ = nullptr;
+    helix::ui::WidgetRef widget_obj_;
 };
 
 } // namespace helix

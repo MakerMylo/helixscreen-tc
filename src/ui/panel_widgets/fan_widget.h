@@ -5,6 +5,7 @@
 
 #include "ui_context_menu.h"
 #include "ui_observer_guard.h"
+#include "ui_widget_ref.h"
 
 #include "async_lifetime_guard.h"
 #include "panel_widget.h"
@@ -96,11 +97,11 @@ class FanWidget : public PanelWidget {
     /// parses this tile's component; a binding whose subject is missing at
     /// parse time is dropped permanently.
     TileSizing sizing_;
-    lv_obj_t* widget_obj_ = nullptr;
-    lv_obj_t* parent_screen_ = nullptr;
-    lv_obj_t* speed_label_ = nullptr;
-    lv_obj_t* name_label_ = nullptr;
-    lv_obj_t* fan_icon_ = nullptr;
+    helix::ui::WidgetRef widget_obj_;
+    helix::ui::WidgetRef parent_screen_;
+    helix::ui::WidgetRef speed_label_;
+    helix::ui::WidgetRef name_label_;
+    helix::ui::WidgetRef fan_icon_;
 
     nlohmann::json config_;
     std::string selected_fan_; // object_name (e.g., "heater_fan hotend_fan")
@@ -115,7 +116,7 @@ class FanWidget : public PanelWidget {
     FanPicker picker_{*this};
 
     // Cached fan-control overlay opened on normal tap
-    lv_obj_t* fan_control_panel_ = nullptr;
+    helix::ui::WidgetRef fan_control_panel_;
 
     void auto_select_first_fan();
     void bind_speed_observer();

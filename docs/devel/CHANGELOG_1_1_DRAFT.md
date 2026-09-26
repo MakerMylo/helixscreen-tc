@@ -162,6 +162,16 @@ what gets saved.
 
 ### Changed
 
+- **The filament panel fits small and portrait screens** - the Load/Unload/Purge and
+  Extrude/Retract buttons grow into the space the right column used to leave empty, and a divider
+  separates the material presets from the operations. Cool Down is now a fixed cell in the preset
+  grid, dimmed while nothing is heating, so no button moves when a heater starts or stops; the
+  cold-extrusion warning takes the Operations heading's line for the same reason. The tool
+  picker's caption uses the printer's own word ("Toolhead" on the U1) and the closed dropdown shows
+  just the number, or the tool's own name if it has one. In portrait the panel is a single column:
+  temperatures, presets, the temperature graph when there is room for it, operations, then the
+  lane strip and tool picker.
+
 - **Emptying a page in edit mode removes it from your saved layout** (#1638) - moving a page's
   last widget to another page, or removing it, deletes the empty page. The main page stays, and
   so does a page still holding widgets that are greyed out because their hardware is not detected.
@@ -214,6 +224,11 @@ what gets saved.
   failure.
 
 ### Fixed
+
+- **Tool-change and preheat toasts name the tool the way its button does** - picking Toolhead 4
+  on a Snapmaker U1 toasted "Switched to T3", and a single-tool preheat said "Preheat: T0 + bed
+  set". Both now read the tool's display label ("Switched to Toolhead 4", "Preheat: Tool 1 + bed
+  set"); the G-code form stays in the console and the macros where it belongs.
 
 - **No ACE Pro slot ever showed as loaded on the Kobra S1 fork (#1069)** - that driver
   ("ACEPRO") states the loaded tool only through its manager object's `current_index`, a field

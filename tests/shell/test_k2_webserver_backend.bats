@@ -221,10 +221,12 @@ write_fake_webserver() {
 # once; on timeout dump the log so the mismatch is readable.
 await_launch_count() {
     local want="$1" got=""
-    for _ in 1 2 3 4 5; do
+    # 20s: under a full parallel bats run the restart's second launch can take
+    # well over 5s. A match returns at once, so the bound costs a passing run nothing.
+    for _ in $(seq 80); do
         got="$(grep -c "launched web-server" "$BATS_TEST_TMPDIR/servers.log" || true)"
         [ "$got" -eq "$want" ] && return 0
-        sleep 1
+        sleep 0.25
     done
     echo "expected $want launched web-server lines, saw $got:" >&2
     cat "$BATS_TEST_TMPDIR/servers.log" >&2

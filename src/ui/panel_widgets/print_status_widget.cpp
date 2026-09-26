@@ -5,6 +5,7 @@
 
 #include "ui_error_reporting.h"
 #include "ui_event_safety.h"
+#include "ui_filename_utils.h"
 #include "ui_format_utils.h"
 #include "ui_nav_manager.h"
 #include "ui_overlay_temp_graph.h"
@@ -258,15 +259,9 @@ void PrintStatusWidget::attach(lv_obj_t* widget_obj, lv_obj_t* parent_screen) {
     print_card_layout_ = lv_obj_find_by_name(widget_obj_, "print_card_layout");
     print_card_thumb_wrap_ = lv_obj_find_by_name(widget_obj_, "print_card_thumb_wrap");
     print_card_info_ = lv_obj_find_by_name(widget_obj_, "print_card_info");
-    print_card_printing_ = lv_obj_find_by_name(widget_obj_, "print_card_printing");
     print_card_preparing_info_ = lv_obj_find_by_name(widget_obj_, "print_card_preparing_info");
 
     // Library idle state widgets
-    print_card_idle_ = lv_obj_find_by_name(widget_obj_, "print_card_idle");
-    print_card_idle_compact_ = lv_obj_find_by_name(widget_obj_, "print_card_idle_compact");
-    print_card_idle_detailed_ = lv_obj_find_by_name(widget_obj_, "print_card_idle_detailed");
-    print_card_printing_detailed_ =
-        lv_obj_find_by_name(widget_obj_, "print_card_printing_detailed");
     print_card_thumb_compact_ = lv_obj_find_by_name(widget_obj_, "print_card_thumb_compact");
     library_row_last_ = lv_obj_find_by_name(widget_obj_, "library_row_last");
     compact_row_last_ = lv_obj_find_by_name(widget_obj_, "compact_row_last");
@@ -515,12 +510,7 @@ void PrintStatusWidget::detach() {
     print_card_layout_ = nullptr;
     print_card_thumb_wrap_ = nullptr;
     print_card_info_ = nullptr;
-    print_card_printing_ = nullptr;
     print_card_preparing_info_ = nullptr;
-    print_card_idle_ = nullptr;
-    print_card_idle_compact_ = nullptr;
-    print_card_idle_detailed_ = nullptr;
-    print_card_printing_detailed_ = nullptr;
     print_card_thumb_compact_ = nullptr;
     library_row_last_ = nullptr;
     compact_row_last_ = nullptr;
@@ -1997,6 +1987,61 @@ void PrintStatusWidget::DetailedFormatter::update_tool_label() {
     lv_subject_copy_string(&nozzle_tool_label_subject_, nozzle_tool_label_buf_);
 }
 
+namespace helix {
+
+LastPrintText describe_last_print(const PrintHistoryJob& job, double now_s) {
+    LastPrintText text;
+    text.filename = helix::gcode::get_display_filename(job.filename);
+
+    // Moonraker leaves end_time null, parsed as 0, on in_progress rows and on
+    // rows it marks interrupted at startup (prestonbrown/helixscreen#1713).
+    const double when_s = job.end_time > 0 ? job.end_time : job.start_time;
+    const long delta_s = static_cast<long>(now_s - when_s);
+    if (job.status == PrintJobStatus::COMPLETED) {
+        // Each branch is a whole sentence with the number as a placeholder. The
+        // unit stays inside the key rather than being appended, because a locale
+        // may put it before the number or attach a particle to it.
+        if (when_s <= 0) {
+            text.when = lv_tr("Completed");
+        } else if (delta_s < 60) {
+            text.when = lv_tr("Completed just now");
+        } else if (delta_s < 3600) {
+            text.when = fmt::format(lv_tr("Completed {}m ago"), delta_s / 60);
+        } else if (delta_s < 86400) {
+            text.when = fmt::format(lv_tr("Completed {}h ago"), delta_s / 3600);
+        } else {
+            text.when = fmt::format(lv_tr("Completed {}d ago"), delta_s / 86400);
+        }
+    } else {
+        // The idle tile never shows the running print, so an in_progress row
+        // here is one Moonraker has not finalised: it gets no status word.
+        const bool ended =
+            job.status == PrintJobStatus::CANCELLED || job.status == PrintJobStatus::ERROR;
+        const char* status = ended ? lv_tr(status_to_label(job.status)) : "";
+        const std::string age =
+            when_s > 0
+                ? ui::format_relative_time(static_cast<uint64_t>(std::max(0L, delta_s)) * 1000)
+                : "";
+        text.when = (*status && !age.empty()) ? fmt::format("{} • {}", status, age) : status + age;
+    }
+
+    const std::string duration = job.print_duration > 0 ? job.duration_str
+                                 : job.total_duration > 0
+                                     ? helix::format::duration(static_cast<int>(job.total_duration))
+                                     : "";
+    const bool has_filament = job.filament_used > 0 && !job.filament_str.empty();
+    if (has_filament && !duration.empty()) {
+        text.meta = fmt::format(lv_tr("{} filament • {}"), job.filament_str, duration);
+    } else if (has_filament) {
+        text.meta = fmt::format(lv_tr("{} filament"), job.filament_str);
+    } else {
+        text.meta = duration;
+    }
+    return text;
+}
+
+} // namespace helix
+
 void PrintStatusWidget::DetailedFormatter::update_idle_fields() {
     auto* hm = get_print_history_manager();
     // The tile's whole job is to offer a reprint, so it describes the newest
@@ -2012,41 +2057,14 @@ void PrintStatusWidget::DetailedFormatter::update_idle_fields() {
         lv_subject_set_int(&idle_has_last_subject_, 0);
         return;
     }
-    const PrintHistoryJob& job = *newest;
-    snprintf(idle_filename_buf_, sizeof(idle_filename_buf_), "%s", job.filename.c_str());
-    lv_subject_copy_string(&idle_filename_subject_, idle_filename_buf_);
-
-    double now_s =
+    const double now_s =
         std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count();
-    long delta_s = static_cast<long>(now_s - job.end_time);
-    // Each branch is a whole sentence with the number as a placeholder. The unit
-    // stays inside the key rather than being appended, because a locale may put
-    // it before the number or attach a particle to it.
-    std::string when;
-    if (delta_s < 60) {
-        when = lv_tr("Completed just now");
-    } else if (delta_s < 3600) {
-        when = fmt::format(lv_tr("Completed {}m ago"), delta_s / 60);
-    } else if (delta_s < 86400) {
-        when = fmt::format(lv_tr("Completed {}h ago"), delta_s / 3600);
-    } else {
-        when = fmt::format(lv_tr("Completed {}d ago"), delta_s / 86400);
-    }
-    snprintf(idle_when_buf_, sizeof(idle_when_buf_), "%s", when.c_str());
+    const LastPrintText text = describe_last_print(*newest, now_s);
+    snprintf(idle_filename_buf_, sizeof(idle_filename_buf_), "%s", text.filename.c_str());
+    lv_subject_copy_string(&idle_filename_subject_, idle_filename_buf_);
+    snprintf(idle_when_buf_, sizeof(idle_when_buf_), "%s", text.when.c_str());
     lv_subject_copy_string(&idle_when_subject_, idle_when_buf_);
-
-    if (!job.filament_str.empty() && !job.duration_str.empty()) {
-        const std::string meta =
-            fmt::format(lv_tr("{} filament • {}"), job.filament_str, job.duration_str);
-        snprintf(idle_meta_buf_, sizeof(idle_meta_buf_), "%s", meta.c_str());
-    } else if (!job.duration_str.empty()) {
-        snprintf(idle_meta_buf_, sizeof(idle_meta_buf_), "%s", job.duration_str.c_str());
-    } else if (job.total_duration > 0) {
-        int d = static_cast<int>(job.total_duration);
-        snprintf(idle_meta_buf_, sizeof(idle_meta_buf_), "%dh %02dm", d / 3600, (d % 3600) / 60);
-    } else {
-        idle_meta_buf_[0] = '\0';
-    }
+    snprintf(idle_meta_buf_, sizeof(idle_meta_buf_), "%s", text.meta.c_str());
     lv_subject_copy_string(&idle_meta_subject_, idle_meta_buf_);
     lv_subject_set_int(&idle_has_last_subject_, 1);
 }
@@ -2209,25 +2227,6 @@ void PrintStatusWidget::DetailedFormatter::attach_arc(lv_obj_t* arc) {
         // Range, angles, styling and the value binding all come from the XML
         // (helix_progress_arc + bind_value="print_progress_display"); this
         // helper only owns what has no declarative equivalent.
-        //
-        // Null arc_widget_ when LVGL destroys the arc, so resize_arc() cannot
-        // reach a freed object. Guard against the layout-rebuild race: the home
-        // panel attaches widget A → detaches A → attaches B in quick
-        // succession; A's deferred LV_EVENT_DELETE fires AFTER B has already
-        // overwritten arc_widget_ with its own arc. An unconditional null here
-        // clobbers B's live arc and leaves resize_arc() with nothing to fit.
-        // Only clear when the deleted object is still the one we're tracking.
-        lv_obj_add_event_cb(
-            arc,
-            [](lv_event_t* e) {
-                if (!s_formatter_)
-                    return;
-                lv_obj_t* deleted = lv_event_get_target_obj(e);
-                if (s_formatter_->arc_widget_ == deleted) {
-                    s_formatter_->arc_widget_ = nullptr;
-                }
-            },
-            LV_EVENT_DELETE, nullptr);
         // Auto-resize + diameter-driven thickness via the shared helper.
         // It hooks LV_EVENT_SIZE_CHANGED on the parent and publishes the
         // tier to our class-level subject, which the XML bind_styles

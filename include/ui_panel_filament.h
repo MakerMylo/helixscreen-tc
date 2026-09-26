@@ -8,6 +8,7 @@
 #include "ui_heater_config.h"
 #include "ui_observer_guard.h"
 #include "ui_panel_base.h"
+#include "ui_widget_ref.h"
 
 #include "active_material_provider.h"
 #include "async_lifetime_guard.h"
@@ -209,6 +210,49 @@ class FilamentPanel : public PanelBase {
      */
     void setup(lv_obj_t* panel, lv_obj_t* parent_screen) override;
 
+    /**
+     * @brief (Re)bind this panel instance to its current widget tree.
+     *
+     * filament_panel.xml branches on <if cond="ui_is_portrait eq 1">, which is
+     * reactive: an orientation flip tears the active branch down and rebuilds
+     * the other in place. setup() runs only when a whole new tree is created,
+     * so this method holds everything that touches widgets — pointer finds,
+     * canvas/chart creation, imperative state pushes — and runs both from
+     * setup() and from the ui_is_portrait observer registered in
+     * setup_orientation_rewire_observer(). The creation steps are idempotent
+     * on their container, so the observer's immediate registration fire (which
+     * rebinds the tree setup() just bound) creates nothing twice.
+     */
+    void bind_widgets();
+
+    /// Owns the ui_is_portrait observer that calls bind_widgets() after the
+    /// XML <if> rebuild. Registration order is load-bearing — see the .cpp.
+    void setup_orientation_rewire_observer();
+
+    /// Creates the mini combined graph and the open-overlay click wiring in
+    /// the current tree's temp_graph_container. Idempotent per container.
+    void setup_temp_graph();
+
+    /// Portrait only: shows the temperature graph when the column's remainder
+    /// is at least kPortraitGraphMinHeight tall; otherwise the card stays in
+    /// the flex flow as an invisible spacer so the column's slack lands
+    /// between the material grid and the Operations divider, keeping the
+    /// multi-filament strip pinned to the bottom. Runs on the column's
+    /// LV_EVENT_LAYOUT_CHANGED; the remainder is measured without the graph,
+    /// so re-styling the card cannot change the answer.
+    void fit_portrait_graph(lv_obj_t* column);
+    void setup_portrait_graph_fit();
+    /// Applies or lifts the spacer state: container hidden, card background
+    /// and clickability removed, and the strip's graph button shown in the
+    /// graph's place.
+    void set_portrait_graph_spacer(bool spacer);
+    static constexpr int32_t kPortraitGraphMinHeight = 70;
+
+    /// Opens the full temperature graph overlay. The graph card's click
+    /// handler and the strip's btn_temp_graph share this one entry point.
+    void open_temp_graph_overlay();
+    static void on_temp_graph_clicked(lv_event_t* e);
+
     const char* get_name() const override {
         return "Filament Panel";
     }
@@ -342,6 +386,13 @@ class FilamentPanel : public PanelBase {
     ObserverGuard active_tool_observer_;
     void update_nozzle_label();
 
+    // Tool selector caption (the active backend's noun: "Tool", "Toolhead").
+    // The closed dropdown's own text is owned by sync_tool_dropdown_text().
+    lv_subject_t tool_noun_subject_;
+    char tool_noun_buf_[32] = {};
+    void update_tool_noun();
+    void sync_tool_dropdown_text();
+
     // Left card temperature subjects (current and target for nozzle/bed)
     lv_subject_t nozzle_current_subject_;
     lv_subject_t nozzle_target_subject_;
@@ -371,6 +422,11 @@ class FilamentPanel : public PanelBase {
 
     // Cooldown button visibility (1 when nozzle target > 0, 0 otherwise)
     lv_subject_t nozzle_heating_subject_;
+
+    // Portrait spacer state (1 = the graph card is an invisible spacer and the
+    // strip button stands in for it). C++ decides via fit_portrait_graph();
+    // the XML bindings on the card, its container and btn_temp_graph draw it.
+    lv_subject_t graph_spacer_subject_;
 
     // Extrude length button active subjects (boolean: 0=inactive, 1=active)
     // Using separate subjects because bind_style doesn't work with multiple ref_values
@@ -501,8 +557,22 @@ class FilamentPanel : public PanelBase {
     // Temperature graph (managed by TemperatureService)
     TemperatureService* temp_control_panel_ = nullptr;
 
+    // Graph button on the multi-filament strip; portrait-only stand-in for a
+    // graph too short to draw. Lives in filament_spool_card.xml.
+    helix::ui::WidgetRef btn_temp_graph_;
+
     // Temperature graph (for dynamic sizing when bottom card changes)
     lv_obj_t* temp_graph_card_ = nullptr;
+    // The container the mini graph was last built into. bind_widgets() runs
+    // on every orientation flip; comparing containers keeps the chart, and
+    // the open-overlay click handler, created once per widget tree.
+    helix::ui::WidgetRef temp_graph_container_wired_;
+    // The portrait column fit_portrait_graph() is attached to; same rebind guard.
+    helix::ui::WidgetRef portrait_column_wired_;
+    // Whether the portrait graph card currently carries the spacer state.
+    // Every fresh tree starts with the graph shown, so bind_widgets() resets
+    // it alongside re-finding the card.
+    bool portrait_graph_spacer_ = false;
 
     // Spool card widgets — serves both Multi-Filament (AMS/multi-tool) and
     // External Spool presentations; C++ swaps the visible rows.
@@ -524,6 +594,9 @@ class FilamentPanel : public PanelBase {
     lv_obj_t* external_spool_row_ = nullptr;
     lv_obj_t* external_spool_container_ = nullptr;
     lv_obj_t* external_spool_canvas_ = nullptr;
+    // The container the spool canvas was last created in; same rebind guard
+    // as temp_graph_container_wired_.
+    helix::ui::WidgetRef external_spool_container_wired_;
     lv_obj_t* external_spool_material_label_ = nullptr;
     lv_obj_t* external_spool_color_label_ = nullptr;
     ObserverGuard external_spool_observer_;
@@ -541,6 +614,8 @@ class FilamentPanel : public PanelBase {
     ObserverGuard chamber_temp_observer_;   ///< Chamber temperature observer
     ObserverGuard chamber_target_observer_; ///< Chamber target temperature observer
     ObserverGuard ams_action_observer_; ///< Ends operation guard when AMS action returns to idle
+    ObserverGuard
+        orientation_observer_; ///< Rebinds widgets after the portrait/landscape <if> rebuild
 
     //
     // === Private Helpers ===

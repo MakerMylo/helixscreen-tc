@@ -257,3 +257,17 @@ TEST_CASE("A spent transient budget cools down, then gives up", "[watchdog][rest
     REQUIRE(decide_restart_action(ExecFailureClass::TRANSIENT, count, counters.cooldown_rounds)
                 .action == RestartAction::GIVE_UP);
 }
+
+TEST_CASE("Only an update restart under a restarting service is handed off",
+          "[watchdog][restart]") {
+    // helixscreen.service restarts on exit and re-runs ExecStartPre (#1713).
+    CHECK(hand_clean_exit_to_service_manager(true, "1"));
+
+    // Nothing declared a restarting service: exiting leaves a dead screen.
+    CHECK_FALSE(hand_clean_exit_to_service_manager(true, nullptr));
+    CHECK_FALSE(hand_clean_exit_to_service_manager(true, ""));
+
+    // An ordinary clean exit (Restart App, SIGTERM fast exit) respawns in place.
+    CHECK_FALSE(hand_clean_exit_to_service_manager(false, "1"));
+    CHECK_FALSE(hand_clean_exit_to_service_manager(false, nullptr));
+}

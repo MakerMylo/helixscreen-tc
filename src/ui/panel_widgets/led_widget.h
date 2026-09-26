@@ -4,6 +4,7 @@
 #pragma once
 
 #include "ui_observer_guard.h"
+#include "ui_widget_ref.h"
 
 #include "async_lifetime_guard.h"
 #include "panel_widget.h"
@@ -55,9 +56,9 @@ class LedWidget : public PanelWidget {
     PrinterState& printer_state_;
     IMoonrakerAPI* api_;
 
-    lv_obj_t* widget_obj_ = nullptr;
-    lv_obj_t* parent_screen_ = nullptr;
-    lv_obj_t* light_icon_ = nullptr;
+    helix::ui::WidgetRef widget_obj_;
+    helix::ui::WidgetRef parent_screen_;
+    helix::ui::WidgetRef light_icon_;
 
     bool light_on_ = false;
 

@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include "ui_widget_ref.h"
+
 #include "panel_widget.h"
 
 #include <memory>
@@ -46,10 +48,10 @@ class ClogDetectionWidget : public PanelWidget {
     void build_carousel_pages();
 
     nlohmann::json config_;
-    lv_obj_t* widget_obj_ = nullptr;
-    lv_obj_t* carousel_ = nullptr;
-    lv_obj_t* clog_page_ = nullptr;
-    lv_obj_t* buffer_page_ = nullptr;
+    helix::ui::WidgetRef widget_obj_;
+    helix::ui::WidgetRef carousel_;
+    helix::ui::WidgetRef clog_page_;
+    helix::ui::WidgetRef buffer_page_;
     std::unique_ptr<ui::UiClogBar> clog_bar_;
     std::unique_ptr<ui::UiBufferMeter> buffer_meter_;
     std::unique_ptr<ClogDetectionConfigModal> config_modal_;

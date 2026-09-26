@@ -147,6 +147,10 @@ struct AmsMiniStatusData {
     // Hosts that already supply a surface set it false.
     bool card = true;
 
+    // Where the lane bars sit along the widget's width (XML attribute
+    // "bars_align": "center", the default, or "start").
+    lv_flex_align_t bars_align = LV_FLEX_ALIGN_CENTER;
+
     // Child objects
     lv_obj_t* container = nullptr;        // Main container
     lv_obj_t* bars_container = nullptr;   // Container for slot bars
@@ -204,7 +208,7 @@ static lv_obj_t* ensure_unit_row(AmsMiniStatusData* data, int unit_index) {
     if (!row->row_container) {
         row->row_container = ams_draw::create_transparent_container(data->bars_container);
         lv_obj_set_flex_flow(row->row_container, LV_FLEX_FLOW_ROW);
-        lv_obj_set_flex_align(row->row_container, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_END,
+        lv_obj_set_flex_align(row->row_container, data->bars_align, LV_FLEX_ALIGN_END,
                               LV_FLEX_ALIGN_CENTER);
         lv_obj_set_style_pad_column(row->row_container, theme_manager_get_spacing("space_xxs"),
                                     LV_PART_MAIN);
@@ -367,7 +371,7 @@ static void rebuild_bars(AmsMiniStatusData* data) {
         // bars_container becomes a column, each unit gets its own row
 
         lv_obj_set_flex_flow(data->bars_container, LV_FLEX_FLOW_COLUMN);
-        lv_obj_set_flex_align(data->bars_container, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER,
+        lv_obj_set_flex_align(data->bars_container, LV_FLEX_ALIGN_CENTER, data->bars_align,
                               LV_FLEX_ALIGN_CENTER);
         lv_obj_set_style_pad_row(data->bars_container, gap, LV_PART_MAIN);
         // Reset column padding (not used in column flow)
@@ -471,7 +475,7 @@ static void rebuild_bars(AmsMiniStatusData* data) {
 
         // Restore bars_container to row flex flow
         lv_obj_set_flex_flow(data->bars_container, LV_FLEX_FLOW_ROW);
-        lv_obj_set_flex_align(data->bars_container, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_END,
+        lv_obj_set_flex_align(data->bars_container, data->bars_align, LV_FLEX_ALIGN_END,
                               LV_FLEX_ALIGN_CENTER);
         lv_obj_set_style_pad_column(data->bars_container, gap, LV_PART_MAIN);
         lv_obj_set_style_pad_row(data->bars_container, 0, LV_PART_MAIN);
@@ -1535,6 +1539,16 @@ static void ui_ams_mini_status_xml_apply(lv_xml_parser_state_t* state, const cha
     if (card_str) {
         data->card = lv_xml_to_bool(card_str);
         apply_spools_card_surface(data);
+    }
+
+    const char* bars_align_str = lv_xml_get_value_of(attrs, "bars_align");
+    if (bars_align_str) {
+        data->bars_align =
+            lv_streq(bars_align_str, "start") ? LV_FLEX_ALIGN_START : LV_FLEX_ALIGN_CENTER;
+        // The bars sit in a content-wide container that the widget's own row
+        // places, and the multi-unit layout fills that container; both follow.
+        lv_obj_set_style_flex_main_place(obj, data->bars_align, LV_PART_MAIN);
+        lv_obj_set_style_flex_main_place(data->bars_container, data->bars_align, LV_PART_MAIN);
     }
 }
 

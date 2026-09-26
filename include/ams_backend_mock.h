@@ -593,6 +593,14 @@ class AmsBackendMock : public AmsBackend {
         }
     }
 
+    /// Mirrors AmsBackendSnapmaker::tool_noun() for the Snapmaker persona;
+    /// every other type this mock simulates uses the base class's Tool.
+    [[nodiscard]] helix::ui::LaneNoun tool_noun() const override {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return system_info_.type == AmsType::SNAPMAKER ? helix::ui::LaneNoun::Toolhead
+                                                       : helix::ui::LaneNoun::Tool;
+    }
+
     /**
      * @brief Enable multi-unit mode for testing overview panel
      *

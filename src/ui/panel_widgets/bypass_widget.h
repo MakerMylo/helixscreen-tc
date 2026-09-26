@@ -6,6 +6,7 @@
 #include "ui_ams_context_menu.h"
 #include "ui_bypass_toggle_controller.h"
 #include "ui_observer_guard.h"
+#include "ui_widget_ref.h"
 
 #include "panel_widget.h"
 #include "src/ui/panel_widgets/tile_sizing.h"
@@ -61,8 +62,8 @@ class BypassWidget : public PanelWidget {
     /// this tile's component; a binding whose subject is missing at parse time
     /// is dropped permanently.
     TileSizing sizing_{"bypass", TileSizing::Content{"", "", "Bypass", false}};
-    lv_obj_t* widget_obj_ = nullptr;
-    lv_obj_t* parent_screen_ = nullptr;
+    helix::ui::WidgetRef widget_obj_;
+    helix::ui::WidgetRef parent_screen_;
     helix::ui::BypassToggleController toggle_;
     /// Lazily created on first tap and reused, like the AMS panels' own.
     std::unique_ptr<helix::ui::AmsContextMenu> context_menu_;
