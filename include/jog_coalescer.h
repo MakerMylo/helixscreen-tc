@@ -22,6 +22,16 @@ struct AxisMove {
     }
 };
 
+/** Absolute multi-axis target in mm; an unset axis is not commanded. */
+struct AxisTarget {
+    std::optional<double> x;
+    std::optional<double> y;
+    std::optional<double> z;
+    bool any() const {
+        return x.has_value() || y.has_value() || z.has_value();
+    }
+};
+
 /**
  * Serializes jog moves: one RPC in flight, further taps accumulate
  * algebraically into pending deltas and flush as ONE combined move when the

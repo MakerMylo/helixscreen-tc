@@ -26,6 +26,7 @@
 #include "advanced_panel_types.h"
 #include "belt_tension_types.h"
 #include "calibration_types.h"
+#include "jog_coalescer.h"
 #include "json_fwd.h"
 #include "moonraker_error.h"
 #include "moonraker_types.h"
@@ -84,6 +85,12 @@ class IMotionAPI {
 
     virtual void move_to_position(char axis, double position, double feedrate,
                                   SuccessCallback on_success, ErrorCallback on_error) = 0;
+
+    /// Absolute multi-axis move: Z moves first (a lift clears the bed before
+    /// travel), then XY combined on one G0. An empty target completes
+    /// immediately without an RPC.
+    virtual void move_to(const helix::AxisTarget& target, double xy_feedrate, double z_feedrate,
+                         SuccessCallback on_success, ErrorCallback on_error) = 0;
 };
 
 /**

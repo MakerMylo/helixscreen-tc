@@ -284,6 +284,62 @@ void MoonrakerMotionAPI::move_to_position(char axis, double position, double fee
     execute_gcode(gcode, on_success, on_error);
 }
 
+void MoonrakerMotionAPI::move_to(const helix::AxisTarget& target, double xy_feedrate,
+                                 double z_feedrate, SuccessCallback on_success,
+                                 ErrorCallback on_error) {
+    if (reject_non_finite({target.x.value_or(0.0), target.y.value_or(0.0), target.z.value_or(0.0),
+                           xy_feedrate, z_feedrate},
+                          "move_to", on_error)) {
+        return;
+    }
+
+    // Per-axis position safety (same limits as move_to_position), only for
+    // axes this target actually commands.
+    const struct {
+        char axis;
+        std::optional<double> pos;
+    } axes[] = {{'X', target.x}, {'Y', target.y}, {'Z', target.z}};
+    for (const auto& a : axes) {
+        if (a.pos && !is_safe_position(*a.pos, safety_limits_)) {
+            NOTIFY_ERROR("Position {:.1f}mm is out of range. Valid: {:.1f}mm to {:.1f}mm.", *a.pos,
+                         safety_limits_.min_absolute_position_mm,
+                         safety_limits_.max_absolute_position_mm);
+            if (on_error) {
+                MoonrakerError err = MoonrakerError::validation_error(
+                    "move_to", "Position " + std::to_string(*a.pos) +
+                                   "mm exceeds safety limits on axis " + std::string(1, a.axis) +
+                                   " (" + std::to_string(safety_limits_.min_absolute_position_mm) +
+                                   "-" + std::to_string(safety_limits_.max_absolute_position_mm) +
+                                   "mm)");
+                on_error(err);
+            }
+            return;
+        }
+    }
+    for (double f : {xy_feedrate, z_feedrate}) {
+        if (f != 0 && !is_safe_feedrate(f, safety_limits_)) {
+            NOTIFY_ERROR("Speed {:.0f}mm/min is too fast. Maximum: {:.0f}mm/min.", f,
+                         safety_limits_.max_feedrate_mm_min);
+            if (on_error) {
+                MoonrakerError err = MoonrakerError::validation_error(
+                    "move_to", "Feedrate " + std::to_string(f) + "mm/min exceeds safety limits");
+                on_error(err);
+            }
+            return;
+        }
+    }
+
+    std::string gcode = generate_absolute_move_gcode(target, xy_feedrate, z_feedrate);
+    if (gcode.empty()) {
+        if (on_success) {
+            on_success(); // nothing to do — treat as trivially complete
+        }
+        return;
+    }
+    spdlog::info("[Motion API] Absolute move (G-code: {})", gcode);
+    execute_gcode(gcode, on_success, on_error);
+}
+
 // ============================================================================
 // G-code Generation Helpers
 // ============================================================================
@@ -363,6 +419,46 @@ std::string MoonrakerMotionAPI::generate_relative_move_gcode(double dx, double d
         }
     }
     gcode << "\nG90";
+    return gcode.str();
+}
+
+std::string MoonrakerMotionAPI::generate_absolute_move_gcode(const helix::AxisTarget& target,
+                                                             double xy_feedrate,
+                                                             double z_feedrate) {
+    const double vals[] = {target.x.value_or(0.0), target.y.value_or(0.0), target.z.value_or(0.0),
+                           xy_feedrate, z_feedrate};
+    for (double v : vals) {
+        if (std::isnan(v) || std::isinf(v)) {
+            spdlog::warn("[Motion API] generate_absolute_move_gcode: Rejecting G-code "
+                         "generation: invalid value (NaN/Inf)");
+            return "";
+        }
+    }
+    if (!target.any()) {
+        return "";
+    }
+
+    std::ostringstream gcode;
+    gcode << "G90";
+    // Z first: a lift must clear the bed before any XY travel.
+    if (target.z) {
+        gcode << "\nG0 Z" << format_gcode_value(*target.z);
+        if (z_feedrate > 0) {
+            gcode << " F" << format_gcode_value(z_feedrate);
+        }
+    }
+    if (target.x || target.y) {
+        gcode << "\nG0";
+        if (target.x) {
+            gcode << " X" << format_gcode_value(*target.x);
+        }
+        if (target.y) {
+            gcode << " Y" << format_gcode_value(*target.y);
+        }
+        if (xy_feedrate > 0) {
+            gcode << " F" << format_gcode_value(xy_feedrate);
+        }
+    }
     return gcode.str();
 }
 
