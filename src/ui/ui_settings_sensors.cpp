@@ -933,15 +933,6 @@ void SensorSettingsOverlay::populate_load_cells() {
             continue;
         }
 
-        // Store klipper_name as user data for callbacks. The helper owns the
-        // copy and frees it on LV_EVENT_DELETE; the row is created here, so the
-        // user_data slot is ours (L069).
-        if (!helix::ui::set_owned_user_string(row, sensor.klipper_name)) {
-            spdlog::error("[{}] Failed to attach sensor name to row: {}", get_name(),
-                          sensor.klipper_name);
-            continue;
-        }
-
         spdlog::debug("[{}]   Created row for load_cell: {}", get_name(), sensor.sensor_name);
     }
 }

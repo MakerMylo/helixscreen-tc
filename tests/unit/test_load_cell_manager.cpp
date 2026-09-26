@@ -6,19 +6,15 @@
  * @brief Unit tests for LoadCellManager
  *
  * Tests cover:
- * - Type helpers: role/type string conversion
- * - Sensor discovery from Klipper object names (adxl345, lis2dw, lis3dh, mpu9250, icm20948)
- * - Role assignment (INPUT_SHAPER)
+ * - Sensor discovery from Klipper object names (load_cell)
+ * - Role assignment (SPOOL_WEIGHT)
  * - State updates from Moonraker status JSON
- * - Subject value correctness for UI binding
- * - Config persistence
  */
 
 #include "../ui_test_utils.h"
 #include "ams_state.h"
 #include "config.h"
 #include "load_cell_manager.h"
-#include "load_cell_types.h"
 
 #include <spdlog/spdlog.h>
 
@@ -78,8 +74,6 @@ class LoadCellTestFixture {
         // Initialize subjects after reset (reset_for_testing deinits subjects)
         mgr().init_subjects();
 
-        // Reset `remaining_weight_g`.
-        // FIXME: Doesn't work. `remaining_weight_g` is `0.0` instead of `-1.0` after reset.
         Config::get_instance()->reset_to_defaults();
         AmsState::instance().clear_external_spool_info();
     }
@@ -107,10 +101,8 @@ class LoadCellTestFixture {
         mgr().update_from_status(status);
     }
 
-    SlotInfo ams_state_spool_info() {
-        const auto spool_info = AmsState::instance().raw_external_spool_info();
-        REQUIRE(spool_info.has_value());
-        return *spool_info;
+    std::optional<SlotInfo> ams_state_spool_info() {
+        return AmsState::instance().raw_external_spool_info();
     }
 
   private:
@@ -130,44 +122,60 @@ TEST_CASE_METHOD(LoadCellTestFixture, "LoadCellManager - state updates", "[load_
     discover_test_sensors();
 
     SECTION("Discovers unnamed and named sensors") {
-        discover_test_sensors();
-
         REQUIRE(mgr().sensor_count() == 2);
+    }
+
+    SECTION("Treats a single unnamed load cell as spool weight") {
+        std::vector<std::string> klipper_objects = {"load_cell"};
+        mgr().discover(klipper_objects);
+        REQUIRE(mgr().sensor_count() == 1);
+
+        update_sensor_state("load_cell", 300.0);
+        REQUIRE(ams_state_spool_info()->remaining_weight_g == 300.0);
+    }
+
+    SECTION("Treats a single named load cell as spool weight, regardless of its name") {
+        std::vector<std::string> klipper_objects = {"load_cell name_does_not_matter"};
+        mgr().discover(klipper_objects);
+        REQUIRE(mgr().sensor_count() == 1);
+
+        update_sensor_state("load_cell name_does_not_matter", 300.0);
+        REQUIRE(ams_state_spool_info()->remaining_weight_g == 300.0);
     }
 
     SECTION("Publishes spool weight update to AmsState") {
         update_sensor_state("load_cell spool_weight", 300.0);
-        REQUIRE(ams_state_spool_info().remaining_weight_g == 300.0);
+        REQUIRE(ams_state_spool_info()->remaining_weight_g == 300.0);
     }
 
-    SECTION("Does not publish spool weight update for load cells that don't have the SPOOL_WEIGHT "
-            "role") {
+    SECTION("Does not publish spool weight update for load cells "
+            "that don't have the SPOOL_WEIGHT role") {
         update_sensor_state("load_cell", 300.0);
-        // FIXME: This should be `-1`, why doesn't `AmsState::clear_external_spool_info()`
-        //        reset it?
-        REQUIRE(ams_state_spool_info().remaining_weight_g == 0);
+        REQUIRE(!ams_state_spool_info().has_value());
     }
 
     SECTION("Publishes update only if spool weight decreased by at least 0.5 g") {
+        REQUIRE(!ams_state_spool_info().has_value());
+
         update_sensor_state("load_cell spool_weight", 300.0);
-        REQUIRE(ams_state_spool_info().remaining_weight_g == 300.0);
+        REQUIRE(ams_state_spool_info()->remaining_weight_g == 300.0);
 
         update_sensor_state("load_cell spool_weight", 299.6);
-        REQUIRE(ams_state_spool_info().remaining_weight_g == 300.0);
+        REQUIRE(ams_state_spool_info()->remaining_weight_g == 300.0);
 
         update_sensor_state("load_cell spool_weight", 299.5);
-        REQUIRE(ams_state_spool_info().remaining_weight_g == 299.5);
+        REQUIRE(ams_state_spool_info()->remaining_weight_g == 299.5);
     }
 
     SECTION("Publishes update only if spool weight increased by at least 1 g") {
         update_sensor_state("load_cell spool_weight", 300.0);
-        REQUIRE(ams_state_spool_info().remaining_weight_g == 300.0);
+        REQUIRE(ams_state_spool_info()->remaining_weight_g == 300.0);
 
         update_sensor_state("load_cell spool_weight", 300.9);
-        REQUIRE(ams_state_spool_info().remaining_weight_g == 300.0);
+        REQUIRE(ams_state_spool_info()->remaining_weight_g == 300.0);
 
         update_sensor_state("load_cell spool_weight", 301.0);
-        REQUIRE(ams_state_spool_info().remaining_weight_g == 301.0);
+        REQUIRE(ams_state_spool_info()->remaining_weight_g == 301.0);
     }
 
     SECTION("Empty status update is handled") {

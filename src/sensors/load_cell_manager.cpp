@@ -146,14 +146,14 @@ void LoadCellManager::update_from_status(const nlohmann::json& status) {
             // nulls (or wrong types during firmware restarts) don't throw
             // type_error.302 and crash the process.
             if (auto it = sensor_data.find("force_g"); it != sensor_data.end() && it->is_number()) {
-                state.force_g = it->get<float>();
+                state.force_g = std::make_optional(it->get<float>());
             }
 
             // Check for state change
-            if (state.force_g != old_state.force_g) {
+            if (state.force_g && state.force_g != old_state.force_g) {
                 any_changed = true;
                 spdlog::trace("[LoadCellManager] Load cell {} updated: force_g={:.1f}",
-                              sensor.sensor_name, state.force_g);
+                              sensor.sensor_name, *state.force_g);
             }
         }
 
@@ -324,7 +324,7 @@ void LoadCellManager::update_subjects() {
             if (it == states_.end() || !it->second.available) {
                 // Sensor transiently unavailable.
             } else {
-                spool_weight = std::make_optional(it->second.force_g);
+                spool_weight = it->second.force_g;
             }
         }
     }

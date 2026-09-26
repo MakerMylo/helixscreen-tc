@@ -30,8 +30,8 @@ struct LoadCellConfig {
 
 /// @brief Runtime state for a load cell
 struct LoadCellState {
-    float force_g = 0.0f;   ///< Force in grams
-    bool available = false; ///< Sensor available in current config
+    std::optional<float> force_g = std::nullopt; ///< Force in grams
+    bool available = false;                      ///< Sensor available in current config
 };
 
 /// @brief Convert role enum to config string
