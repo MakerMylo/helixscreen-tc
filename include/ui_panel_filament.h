@@ -8,6 +8,7 @@
 #include "ui_heater_config.h"
 #include "ui_observer_guard.h"
 #include "ui_panel_base.h"
+#include "ui_widget_ref.h"
 
 #include "active_material_provider.h"
 #include "async_lifetime_guard.h"
@@ -556,22 +557,22 @@ class FilamentPanel : public PanelBase {
     // Temperature graph (managed by TemperatureService)
     TemperatureService* temp_control_panel_ = nullptr;
 
+    // Graph button on the multi-filament strip; portrait-only stand-in for a
+    // graph too short to draw. Lives in filament_spool_card.xml.
+    helix::ui::WidgetRef btn_temp_graph_;
+
     // Temperature graph (for dynamic sizing when bottom card changes)
     lv_obj_t* temp_graph_card_ = nullptr;
     // The container the mini graph was last built into. bind_widgets() runs
     // on every orientation flip; comparing containers keeps the chart, and
     // the open-overlay click handler, created once per widget tree.
-    lv_obj_t* temp_graph_container_wired_ = nullptr;
+    helix::ui::WidgetRef temp_graph_container_wired_;
     // The portrait column fit_portrait_graph() is attached to; same rebind guard.
-    lv_obj_t* portrait_column_wired_ = nullptr;
+    helix::ui::WidgetRef portrait_column_wired_;
     // Whether the portrait graph card currently carries the spacer state.
     // Every fresh tree starts with the graph shown, so bind_widgets() resets
     // it alongside re-finding the card.
     bool portrait_graph_spacer_ = false;
-
-    // Graph button on the multi-filament strip; portrait-only stand-in for a
-    // graph too short to draw. Lives in filament_spool_card.xml.
-    lv_obj_t* btn_temp_graph_ = nullptr;
 
     // Spool card widgets — serves both Multi-Filament (AMS/multi-tool) and
     // External Spool presentations; C++ swaps the visible rows.
@@ -595,7 +596,7 @@ class FilamentPanel : public PanelBase {
     lv_obj_t* external_spool_canvas_ = nullptr;
     // The container the spool canvas was last created in; same rebind guard
     // as temp_graph_container_wired_.
-    lv_obj_t* external_spool_container_wired_ = nullptr;
+    helix::ui::WidgetRef external_spool_container_wired_;
     lv_obj_t* external_spool_material_label_ = nullptr;
     lv_obj_t* external_spool_color_label_ = nullptr;
     ObserverGuard external_spool_observer_;
