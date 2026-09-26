@@ -924,7 +924,7 @@ These cut across many screens and are high-value fixes:
 - **Numeric keypad overlay** doesn't fit vertically at 480x320 -- bottom rows are cut off. This affects every panel that uses the keypad for numeric input.
 - **Many modals** don't respect viewport height -- content clips at top and bottom on small screens.
 - **Navbar icons** are clipped at 480x320, outlines overlap, and click targets may overlap each other.
-- **Temperature labels** collide with values on the controls and filament panels.
+- **Temperature labels** collide with values on the controls panel.
 - **Settings dropdown menus** are hardcoded too wide for small screens.
 
 ### Broken / Needs Major Rework (at 480x320)
@@ -933,7 +933,6 @@ These are the most impactful fixes:
 
 - **Print Select list view** -- The most broken screen. Padding is wrong, row sizing is off, horizontal overflow everywhere.
 - **Print Status overlay** -- Action buttons, temperature cards, and metadata are all fighting for space. Nothing fits.
-- **Filament panel** -- Multi-filament card is invisible, material buttons crush the operations section.
 
 ### Needs Moderate Fixes (at 480x320)
 
@@ -958,6 +957,8 @@ Things that work but could look better:
 These panels work well and can serve as reference for how to do things right:
 
 - Motion overlay
+- Filament panel (landscape and portrait; `ui_xml/filament_panel.xml#filament_panel` branches in
+  place on `ui_is_portrait`)
 - Advanced settings
 - Settings panel (except dropdown widths)
 - Theme view and edit

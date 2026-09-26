@@ -141,7 +141,7 @@ These macros power the buttons you see on the Controls and Filament panels:
 
 | Button | Where it appears | What it does by default |
 |--------|-----------------|------------------------|
-| **Cooldown** | Preheat widget (when heaters are on), Filament panel | Turns off extruder and bed heaters |
+| **Cooldown** | Preheat widget (when heaters are on), Filament panel (always shown, dimmed while the nozzle isn't heating) | Turns off extruder and bed heaters |
 | **Load Filament** | Filament panel | Runs `LOAD_FILAMENT` |
 | **Unload Filament** | Filament panel | Runs `UNLOAD_FILAMENT` |
 | **Custom Macro 1** | Controls panel | Runs `HELIX_CLEAN_NOZZLE` (label: "Clean Nozzle") |
