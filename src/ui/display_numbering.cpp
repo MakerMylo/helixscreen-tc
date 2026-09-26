@@ -58,6 +58,14 @@ bool is_generated_tool_name(std::string_view name) {
     return true;
 }
 
+std::string tool_short_label(std::string_view name, int index) {
+    if (index < 0)
+        return {};
+    if (is_generated_tool_name(name))
+        return lane_number_text(index);
+    return std::string(name);
+}
+
 int lane_number(int index) {
     if (index < 0)
         return -1;

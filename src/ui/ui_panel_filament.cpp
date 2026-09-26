@@ -203,6 +203,7 @@ FilamentPanel::FilamentPanel(PrinterState& printer_state, IMoonrakerAPI* api)
             self->update_nozzle_label();
             if (self->extruder_dropdown_ && tool_idx >= 0) {
                 lv_dropdown_set_selected(self->extruder_dropdown_, static_cast<uint32_t>(tool_idx));
+                self->sync_tool_dropdown_text();
             }
             if (self->temp_control_panel_) {
                 const auto* tool = helix::ToolState::instance().active_tool();
@@ -301,6 +302,10 @@ void FilamentPanel::init_subjects() {
         // Nozzle label (dynamic for multi-tool)
         UI_MANAGED_SUBJECT_STRING(nozzle_label_subject_, nozzle_label_buf_, lv_tr("Nozzle"),
                                   "filament_nozzle_label", subjects_);
+
+        // Tool selector caption (backend noun: "Tool" / "Toolhead")
+        UI_MANAGED_SUBJECT_STRING(tool_noun_subject_, tool_noun_buf_, lv_tr("Tool"),
+                                  "filament_tool_noun", subjects_);
 
         // Left card temperature subjects (current and target for nozzle/bed)
         UI_MANAGED_SUBJECT_STRING(nozzle_current_subject_, nozzle_current_buf_, nozzle_current_buf_,
@@ -759,6 +764,29 @@ void FilamentPanel::update_nozzle_label() {
     if (subjects_initialized_) {
         lv_subject_copy_string(&nozzle_label_subject_, nozzle_label_buf_);
     }
+}
+
+void FilamentPanel::update_tool_noun() {
+    auto noun = helix::ui::noun_text(helix::ui::active_tool_noun());
+    std::snprintf(tool_noun_buf_, sizeof(tool_noun_buf_), "%s", noun.c_str());
+    if (subjects_initialized_) {
+        lv_subject_copy_string(&tool_noun_subject_, tool_noun_buf_);
+    }
+}
+
+void FilamentPanel::sync_tool_dropdown_text() {
+    // The closed dropdown shows the short label, not the full option string the
+    // open list carries; every selection change routes through here so the two
+    // can never disagree.
+    if (!extruder_dropdown_)
+        return;
+    const auto& tools = helix::ToolState::instance().tools();
+    const int selected = static_cast<int>(lv_dropdown_get_selected(extruder_dropdown_));
+    std::string label;
+    if (selected >= 0 && selected < static_cast<int>(tools.size())) {
+        label = helix::ui::tool_short_label(tools[selected].name, selected);
+    }
+    lv_dropdown_set_text(extruder_dropdown_, label.c_str());
 }
 
 void FilamentPanel::update_all_temps() {
@@ -1859,6 +1887,8 @@ void FilamentPanel::populate_extruder_dropdown() {
     if (active >= 0 && active < ts.tool_count()) {
         lv_dropdown_set_selected(extruder_dropdown_, static_cast<uint32_t>(active));
     }
+    update_tool_noun();
+    sync_tool_dropdown_text();
 
     spdlog::debug("[{}] Extruder dropdown populated: {} tools, active=T{}", get_name(),
                   ts.tool_count(), active);
@@ -1971,6 +2001,7 @@ void FilamentPanel::handle_extruder_changed() {
 
     int selected = static_cast<int>(lv_dropdown_get_selected(extruder_dropdown_));
     auto& ts = helix::ToolState::instance();
+    sync_tool_dropdown_text();
 
     // Re-evaluate button gating for the newly-selected tool immediately, even if
     // it's already the active tool (no tool change issued below).
@@ -2015,6 +2046,7 @@ void FilamentPanel::handle_extruder_changed() {
                             lv_dropdown_set_selected(panel->extruder_dropdown_,
                                                      static_cast<uint32_t>(active));
                         }
+                        panel->sync_tool_dropdown_text();
                     }
                 },
                 this);

@@ -342,6 +342,13 @@ class FilamentPanel : public PanelBase {
     ObserverGuard active_tool_observer_;
     void update_nozzle_label();
 
+    // Tool selector caption (the active backend's noun: "Tool", "Toolhead").
+    // The closed dropdown's own text is owned by sync_tool_dropdown_text().
+    lv_subject_t tool_noun_subject_;
+    char tool_noun_buf_[32] = {};
+    void update_tool_noun();
+    void sync_tool_dropdown_text();
+
     // Left card temperature subjects (current and target for nozzle/bed)
     lv_subject_t nozzle_current_subject_;
     lv_subject_t nozzle_target_subject_;

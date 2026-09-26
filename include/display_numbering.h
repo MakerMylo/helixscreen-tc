@@ -45,6 +45,18 @@ std::string tool_label(int gcode_tool);
 bool is_generated_tool_name(std::string_view name);
 
 /**
+ * @brief The closed tool dropdown's label for the tool at @p index.
+ *
+ * A generated "T<n>" name collapses to its 1-based display number ("4"); a
+ * configured name is the machine's physical label and is shown verbatim
+ * ("Left"). The open list keeps the full display_label ("Tool 4 · Left"), so
+ * the closed control stays narrow without losing the chosen name.
+ *
+ * @return empty when @p index is negative
+ */
+std::string tool_short_label(std::string_view name, int index);
+
+/**
  * @brief Convert a storage index to the number a user sees.
  *
  * The only + 1 in the codebase. Every display path routes through this so a
