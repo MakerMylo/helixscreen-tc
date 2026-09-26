@@ -2813,6 +2813,25 @@ bool has_z_offset(const nlohmann::json& n, double want) {
     }
     return gm["homing_origin"][2].get<double>() == Catch::Approx(want);
 }
+
+/// True when `n` carries a motion_report live_position whose Z (index 2)
+/// equals `want`. Real printers report live_position in gcode space, so the
+/// mock folds the gcode z offset into it (gcode_position stays plain).
+bool live_position_z_is(const nlohmann::json& n, double want) {
+    if (!n.contains("params") || !n["params"].is_array() || n["params"].empty()) {
+        return false;
+    }
+    const auto& p0 = n["params"][0];
+    if (!p0.is_object() || !p0.contains("motion_report")) {
+        return false;
+    }
+    const auto& mr = p0["motion_report"];
+    if (!mr.contains("live_position") || !mr["live_position"].is_array() ||
+        mr["live_position"].size() < 3 || !mr["live_position"][2].is_number()) {
+        return false;
+    }
+    return mr["live_position"][2].get<double>() == Catch::Approx(want);
+}
 } // namespace
 
 TEST_CASE("MoonrakerClientMock Z offset tracking", "[slow][mock][offset]") {
@@ -2849,6 +2868,17 @@ TEST_CASE("MoonrakerClientMock Z offset tracking", "[slow][mock][offset]") {
         mock.gcode_script("SET_GCODE_OFFSET Z=-0.2");
         REQUIRE(fixture.wait_for_matching(
             [](const nlohmann::json& n) { return has_z_offset(n, -0.2); }, 2000));
+    }
+
+    SECTION("live_position reports gcode space: commanded Z plus the offset") {
+        mock.gcode_script("SET_GCODE_OFFSET Z=0.15");
+        REQUIRE(fixture.wait_for_matching(
+            [](const nlohmann::json& n) { return has_z_offset(n, 0.15); }, 2000));
+        fixture.reset();
+
+        mock.gcode_script("G0 Z10");
+        REQUIRE(fixture.wait_for_matching(
+            [](const nlohmann::json& n) { return live_position_z_is(n, 10.15); }, 2000));
     }
 
     (void)sub_id; // Callback auto-unregisters when mock destructs
