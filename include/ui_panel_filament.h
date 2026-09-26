@@ -233,12 +233,24 @@ class FilamentPanel : public PanelBase {
     void setup_temp_graph();
 
     /// Portrait only: shows the temperature graph when the column's remainder
-    /// is at least kPortraitGraphMinHeight tall, hides it otherwise. Runs on
-    /// the column's LV_EVENT_LAYOUT_CHANGED; the remainder is measured without
-    /// the graph, so hiding it cannot change the answer.
+    /// is at least kPortraitGraphMinHeight tall; otherwise the card stays in
+    /// the flex flow as an invisible spacer so the column's slack lands
+    /// between the material grid and the Operations divider, keeping the
+    /// multi-filament strip pinned to the bottom. Runs on the column's
+    /// LV_EVENT_LAYOUT_CHANGED; the remainder is measured without the graph,
+    /// so re-styling the card cannot change the answer.
     void fit_portrait_graph(lv_obj_t* column);
     void setup_portrait_graph_fit();
+    /// Applies or lifts the spacer state: container hidden, card background
+    /// and clickability removed, and the strip's graph button shown in the
+    /// graph's place.
+    void set_portrait_graph_spacer(bool spacer);
     static constexpr int32_t kPortraitGraphMinHeight = 70;
+
+    /// Opens the full temperature graph overlay. The graph card's click
+    /// handler and the strip's btn_temp_graph share this one entry point.
+    void open_temp_graph_overlay();
+    static void on_temp_graph_clicked(lv_event_t* e);
 
     const char* get_name() const override {
         return "Filament Panel";
@@ -547,6 +559,14 @@ class FilamentPanel : public PanelBase {
     lv_obj_t* temp_graph_container_wired_ = nullptr;
     // The portrait column fit_portrait_graph() is attached to; same rebind guard.
     lv_obj_t* portrait_column_wired_ = nullptr;
+    // Whether the portrait graph card currently carries the spacer state.
+    // Every fresh tree starts with the graph shown, so bind_widgets() resets
+    // it alongside re-finding the card.
+    bool portrait_graph_spacer_ = false;
+
+    // Graph button on the multi-filament strip; portrait-only stand-in for a
+    // graph too short to draw. Lives in filament_spool_card.xml.
+    lv_obj_t* btn_temp_graph_ = nullptr;
 
     // Spool card widgets — serves both Multi-Filament (AMS/multi-tool) and
     // External Spool presentations; C++ swaps the visible rows.

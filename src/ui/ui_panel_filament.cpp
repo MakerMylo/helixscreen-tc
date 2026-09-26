@@ -154,6 +154,8 @@ FilamentPanel::FilamentPanel(PrinterState& printer_state, IMoonrakerAPI* api)
         {"on_extruder_dropdown_changed", on_extruder_dropdown_changed},
         // External spool edit
         {"on_external_spool_edit", on_external_spool_edit_clicked},
+        // Strip graph button (portrait, when the graph card is a spacer)
+        {"filament_temp_graph_cb", on_temp_graph_clicked},
     });
 
     // Subscribe to PrinterState temperatures using bundle pattern
@@ -546,6 +548,9 @@ void FilamentPanel::bind_widgets() {
 
     // Find temp graph for dynamic sizing when bottom card changes
     temp_graph_card_ = lv_obj_find_by_name(panel_, "temp_graph_card");
+    // Fresh tree: the graph starts shown, so the spacer bookkeeping does too.
+    portrait_graph_spacer_ = false;
+    btn_temp_graph_ = lv_obj_find_by_name(panel_, "btn_temp_graph");
 
     // Find spool card widgets (serves both Multi-Filament and External Spool modes)
     spool_card_ = lv_obj_find_by_name(panel_, "spool_card");
@@ -625,12 +630,31 @@ void FilamentPanel::fit_portrait_graph(lv_obj_t* column) {
         // Each visible sibling brings its own height plus one gap to the graph's side.
         used += lv_obj_get_height(child) + gap;
     }
-    const bool fits = lv_obj_get_content_height(column) - used >= kPortraitGraphMinHeight;
-    if (fits == lv_obj_has_flag(temp_graph_card_, LV_OBJ_FLAG_HIDDEN)) {
-        lv_obj_set_flag(temp_graph_card_, LV_OBJ_FLAG_HIDDEN, !fits);
-        spdlog::debug("[{}] Portrait graph {} (remainder {}px)", get_name(),
-                      fits ? "shown" : "hidden", lv_obj_get_content_height(column) - used);
-    }
+    const int32_t remainder = lv_obj_get_content_height(column) - used;
+    const bool fits = remainder >= kPortraitGraphMinHeight;
+    // Toggle only on change: the spacer state touches nothing outside the
+    // card, so applying it cannot re-fire this callback in a loop.
+    if (fits != portrait_graph_spacer_)
+        return;
+    set_portrait_graph_spacer(!fits);
+    spdlog::debug("[{}] Portrait graph {} (remainder {}px)", get_name(),
+                  fits ? "shown" : "replaced by spacer", remainder);
+}
+
+void FilamentPanel::set_portrait_graph_spacer(bool spacer) {
+    portrait_graph_spacer_ = spacer;
+    if (!temp_graph_card_)
+        return;
+
+    // The card keeps its flex_grow slot either way — only what it draws and
+    // accepts changes, so the column's other rows never move.
+    lv_obj_t* container = lv_obj_find_by_name(temp_graph_card_, "temp_graph_container");
+    if (container)
+        lv_obj_set_flag(container, LV_OBJ_FLAG_HIDDEN, spacer);
+    lv_obj_set_style_bg_opa(temp_graph_card_, spacer ? 0 : 255, 0);
+    lv_obj_set_flag(temp_graph_card_, LV_OBJ_FLAG_CLICKABLE, !spacer);
+    if (btn_temp_graph_)
+        lv_obj_set_flag(btn_temp_graph_, LV_OBJ_FLAG_HIDDEN, !spacer);
 }
 
 void FilamentPanel::setup_temp_graph() {
@@ -655,12 +679,19 @@ void FilamentPanel::setup_temp_graph() {
             [](lv_event_t* e) {
                 auto* self = static_cast<FilamentPanel*>(lv_event_get_user_data(e));
                 if (self) {
-                    get_global_temp_graph_overlay().open(TempGraphOverlay::Mode::GraphOnly,
-                                                         self->parent_screen_);
+                    self->open_temp_graph_overlay();
                 }
             },
             LV_EVENT_CLICKED, this);
     }
+}
+
+void FilamentPanel::open_temp_graph_overlay() {
+    get_global_temp_graph_overlay().open(TempGraphOverlay::Mode::GraphOnly, parent_screen_);
+}
+
+void FilamentPanel::on_temp_graph_clicked(lv_event_t* /*e*/) {
+    get_global_filament_panel().open_temp_graph_overlay();
 }
 
 void FilamentPanel::setup_orientation_rewire_observer() {

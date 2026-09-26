@@ -12,6 +12,8 @@
  * needs a backend, so it is the single-tool affordance (#1350).
  */
 
+#include "ui_ams_mini_status.h"
+#include "ui_overlay_temp_graph.h"
 #include "ui_panel_filament.h"
 
 #include "../lvgl_test_fixture.h"
@@ -20,6 +22,7 @@
 #include "ams_state.h"
 #include "ams_types.h"
 #include "printer_discovery.h"
+#include "theme_manager.h"
 #include "tool_state.h"
 
 #include <lvgl.h>
@@ -170,4 +173,76 @@ TEST_CASE_METHOD(LVGLUITestFixture, "Closed tool dropdown spells the 1-based too
     closed = lv_dropdown_get_text(dd);
     REQUIRE(closed != nullptr);
     CHECK(std::string(closed) == "2");
+}
+
+TEST_CASE_METHOD(LVGLUITestFixture,
+                 "Portrait small screen turns the graph card into a spacer with a strip button",
+                 "[filament][ui][portrait]") {
+    // 320x480 is portrait: the refresh re-derives the breakpoint tokens from
+    // the display, and the subject picks the XML branch (the fixture's
+    // LayoutManager stays on its landscape default, so refresh_orientation
+    // alone would not flip it).
+    lv_display_t* disp = lv_display_get_default();
+    ScopedResolution res(disp, 320, 480);
+    theme_manager_refresh_layout_constants(disp);
+    lv_subject_set_int(lv_xml_get_subject(nullptr, "ui_is_portrait"), 1);
+    // The fixture registers fewer custom widgets than the app; the strip's
+    // AMS mini status needs its registration or the element silently
+    // creates nothing.
+    ui_ams_mini_status_init();
+    ManageRowHarness h(*this, {"extruder", "extruder1"}, AmsType::AFC);
+    // The fixture's screen was created at the default geometry; size the
+    // panel itself so the column's real remainder drives the fit decision.
+    // 400 mirrors what a 320x480 device leaves the panel after its chrome —
+    // at the full 480 the column has room and the graph legitimately shows.
+    lv_obj_set_size(h.root, 320, 400);
+    lv_obj_update_layout(h.root);
+
+    lv_obj_t* card = lv_obj_find_by_name(h.root, "temp_graph_card");
+    lv_obj_t* container = lv_obj_find_by_name(h.root, "temp_graph_container");
+    lv_obj_t* btn = lv_obj_find_by_name(h.root, "btn_temp_graph");
+    REQUIRE(card != nullptr);
+    REQUIRE(container != nullptr);
+    REQUIRE(btn != nullptr);
+
+    // Too little room for the graph: the card stays in the flow as an
+    // invisible spacer instead of vanishing and dropping the strip to
+    // mid-column.
+    CHECK(lv_obj_has_flag(container, LV_OBJ_FLAG_HIDDEN));
+    CHECK_FALSE(lv_obj_has_flag(card, LV_OBJ_FLAG_HIDDEN));
+    CHECK(lv_obj_get_style_bg_opa(card, LV_PART_MAIN) == 0);
+    CHECK_FALSE(lv_obj_has_flag(card, LV_OBJ_FLAG_CLICKABLE));
+
+    // The strip button replaces the tappable card, left of the AMS mini
+    // status widget.
+    CHECK_FALSE(lv_obj_has_flag(btn, LV_OBJ_FLAG_HIDDEN));
+    lv_obj_t* mini = lv_obj_find_by_name(h.root, "ams_mini_status");
+    REQUIRE(mini != nullptr);
+    lv_area_t btn_area, mini_area;
+    lv_obj_get_coords(btn, &btn_area);
+    lv_obj_get_coords(mini, &mini_area);
+    CHECK(btn_area.x1 < mini_area.x1);
+
+    // The button opens the same overlay the graph card opens. The XML
+    // callback routes through the global panel singleton (like every static
+    // callback in this file), and the harness panel is a local instance — so
+    // observe the call at the overlay: open() resyncs its mode subject to
+    // GraphOnly, and nothing else in this test touches it.
+    get_global_temp_graph_overlay().init_subjects();
+    lv_subject_t* mode = lv_xml_get_subject(nullptr, "temp_graph_mode");
+    REQUIRE(mode != nullptr);
+    lv_subject_set_int(mode, 3);
+    lv_obj_send_event(btn, LV_EVENT_CLICKED, nullptr);
+    h.fx.process_lvgl(30);
+    CHECK(lv_subject_get_int(mode) == 0);
+}
+
+TEST_CASE_METHOD(LVGLUITestFixture, "Strip graph button stays hidden in landscape",
+                 "[filament][ui][portrait]") {
+    ManageRowHarness h(*this, {"extruder"}, AmsType::AFC);
+
+    lv_obj_t* btn = lv_obj_find_by_name(h.root, "btn_temp_graph");
+    REQUIRE(btn != nullptr);
+    h.fx.process_lvgl(30);
+    CHECK(lv_obj_has_flag(btn, LV_OBJ_FLAG_HIDDEN));
 }
