@@ -67,6 +67,23 @@ class PrintStatusWidgetTestAccess {
     static time_t last_print_source_modified(const PrintStatusWidget& widget) {
         return widget.get_last_print_source_modified();
     }
+
+    // The cached tree: the root and the children every deferred path writes to.
+    static lv_obj_t* widget_obj(const PrintStatusWidget& widget) {
+        return widget.widget_obj_;
+    }
+
+    static lv_obj_t* thumb(const PrintStatusWidget& widget) {
+        return widget.print_card_thumb_;
+    }
+
+    static lv_obj_t* active_thumb(const PrintStatusWidget& widget) {
+        return widget.print_card_active_thumb_;
+    }
+
+    static lv_obj_t* library_row_last(const PrintStatusWidget& widget) {
+        return widget.library_row_last_;
+    }
 };
 
 } // namespace helix

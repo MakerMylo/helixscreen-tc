@@ -176,13 +176,13 @@ void FanStackWidget::attach_stack(lv_obj_t* /*widget_obj*/) {
 
     // Set initial text — text_small is a registered widget so XML inner content
     // isn't reliably applied. Observers update with real values on next tick.
-    for (auto* label : {part_label_, hotend_label_, aux_label_}) {
+    for (lv_obj_t* label : {part_label_.get(), hotend_label_.get(), aux_label_.get()}) {
         if (label)
             lv_label_set_text(label, "0%");
     }
 
     // Set rotation pivots on icons (center of 16px icon)
-    for (auto* icon : {part_icon_, hotend_icon_, aux_icon_})
+    for (lv_obj_t* icon : {part_icon_.get(), hotend_icon_.get(), aux_icon_.get()})
         set_icon_pivot(icon);
 
     setup_common_observers([this]() { refresh_all_animations(); }, [this]() { bind_fans(); });
@@ -229,7 +229,7 @@ void FanStackWidget::detach() {
 
         // Cancel running animations — just delete the anim, don't touch
         // the object's style (it's about to be destroyed by lv_obj_clean).
-        for (auto* icon : {part_icon_, hotend_icon_, aux_icon_})
+        for (lv_obj_t* icon : {part_icon_.get(), hotend_icon_.get(), aux_icon_.get()})
             if (icon)
                 lv_anim_delete(icon, helix::ui::fan_spin_anim_cb);
         for (auto& page : carousel_pages_)
@@ -314,7 +314,7 @@ void FanStackWidget::on_size_changed(int colspan, int rowspan, int width_px, int
     const lv_font_t* icon_font = (bigger || icon_above) ? &mdi_icons_24 : &mdi_icons_16;
 
     // Apply text font to all speed labels
-    for (auto* label : {part_label_, hotend_label_, aux_label_}) {
+    for (lv_obj_t* label : {part_label_.get(), hotend_label_.get(), aux_label_.get()}) {
         if (label)
             lv_obj_set_style_text_font(label, text_font, 0);
     }
@@ -322,7 +322,7 @@ void FanStackWidget::on_size_changed(int colspan, int rowspan, int width_px, int
     // Apply icon font to fan icons. The icon widget (ui_icon_xml_create,
     // ui_icon.cpp) is itself an lv_label — there is no child glyph object to
     // reach through.
-    for (auto* icon : {part_icon_, hotend_icon_, aux_icon_}) {
+    for (lv_obj_t* icon : {part_icon_.get(), hotend_icon_.get(), aux_icon_.get()}) {
         if (icon)
             lv_obj_set_style_text_font(icon, icon_font, 0);
     }
@@ -439,7 +439,7 @@ void FanStackWidget::on_size_changed(int colspan, int rowspan, int width_px, int
         // its row and clip - and right-align the number inside that box, so
         // every row ends at the same right edge and the leveled block reads
         // as justified across the widest line's width rather than left-packed.
-        for (auto* label : {part_label_, hotend_label_, aux_label_}) {
+        for (lv_obj_t* label : {part_label_.get(), hotend_label_.get(), aux_label_.get()}) {
             if (!label)
                 continue;
             lv_point_t worst = {0, 0};
