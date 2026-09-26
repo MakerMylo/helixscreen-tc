@@ -176,14 +176,7 @@ bool is_uploaded_rewrite_path(const std::string& path) {
 }
 
 bool is_3mf(const std::string& name) {
-    if (name.size() < 4) {
-        return false;
-    }
-    std::string suffix = name.substr(name.size() - 4);
-    for (char& c : suffix) {
-        c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-    }
-    return suffix == ".3mf";
+    return ends_with_ci(name, ".3mf");
 }
 
 } // namespace helix::gcode
