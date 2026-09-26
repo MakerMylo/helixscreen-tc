@@ -235,17 +235,19 @@
               style_pad_gap="#space_md">
         <!-- Material Selection Header -->
         <text_body text="Material" translation_tag="Material" text_transform="uppercase" align="left_mid"/>
-        <!-- Material Preset Buttons (2x2 Grid: PLA, PETG, ABS, TPU) -->
+        <!-- Material Preset Buttons (3x2 grid: PLA/PETG/ABS + TPU/Spool/Cool Down).
+             Every cell is width=0 + flex_grow=1 so the three shares are exact
+             thirds regardless of what is visible inside them. -->
         <lv_obj name="preset_grid"
                 width="100%" height="content" style_pad_all="0" scrollable="false" flex_flow="column"
                 style_flex_main_place="start" style_flex_cross_place="center" style_pad_gap="#space_sm">
           <!-- Row 1: PLA, PETG, ABS -->
           <lv_obj width="100%"
-                  height="content" style_pad_all="0" scrollable="false" flex_flow="row"
-                  style_flex_main_place="space_between" style_flex_cross_place="center" style_pad_gap="#space_md">
+                  height="content" style_pad_all="0" scrollable="false" flex_flow="row" style_flex_main_place="start"
+                  style_flex_cross_place="center" style_pad_gap="#space_md">
             <ui_button name="preset_pla"
-                       height="content" flex_grow="1" layout="column" state_trickle="true" style_pad_ver="#space_sm"
-                       style_pad_gap="#temp_preset_btn_spacing">
+                       width="0" height="content" flex_grow="1" layout="column" state_trickle="true"
+                       style_pad_ver="#space_sm" style_pad_gap="#temp_preset_btn_spacing">
               <event_cb trigger="short_clicked" callback="on_filament_preset_pla"/>
               <event_cb trigger="long_pressed" callback="on_filament_preset_pla_hold"/>
               <text_body bind_text="preset_material_0_name" style_text_color:checked="#text"/>
@@ -254,8 +256,8 @@
                           style_text_color:checked="#text"/>
             </ui_button>
             <ui_button name="preset_petg"
-                       height="content" flex_grow="1" layout="column" state_trickle="true" style_pad_ver="#space_sm"
-                       style_pad_gap="#temp_preset_btn_spacing">
+                       width="0" height="content" flex_grow="1" layout="column" state_trickle="true"
+                       style_pad_ver="#space_sm" style_pad_gap="#temp_preset_btn_spacing">
               <event_cb trigger="short_clicked" callback="on_filament_preset_petg"/>
               <event_cb trigger="long_pressed" callback="on_filament_preset_petg_hold"/>
               <text_body bind_text="preset_material_1_name" style_text_color:checked="#text"/>
@@ -264,8 +266,8 @@
                           style_text_color:checked="#text"/>
             </ui_button>
             <ui_button name="preset_abs"
-                       height="content" flex_grow="1" layout="column" state_trickle="true" style_pad_ver="#space_sm"
-                       style_pad_gap="#temp_preset_btn_spacing">
+                       width="0" height="content" flex_grow="1" layout="column" state_trickle="true"
+                       style_pad_ver="#space_sm" style_pad_gap="#temp_preset_btn_spacing">
               <event_cb trigger="short_clicked" callback="on_filament_preset_abs"/>
               <event_cb trigger="long_pressed" callback="on_filament_preset_abs_hold"/>
               <text_body bind_text="preset_material_2_name" style_text_color:checked="#text"/>
@@ -274,13 +276,14 @@
                           style_text_color:checked="#text"/>
             </ui_button>
           </lv_obj>
-          <!-- Row 2: TPU + Spool preset (spool hidden by default) -->
+          <!-- Row 2: TPU, Spool preset, Cool Down. The spool button hides
+               inside its cell, so its third of the row is never vacated. -->
           <lv_obj name="spool_preset_row"
                   width="100%" height="content" style_pad_all="0" scrollable="false" flex_flow="row"
-                  style_flex_main_place="space_between" style_flex_cross_place="center" style_pad_gap="#space_md">
+                  style_flex_main_place="start" style_flex_cross_place="center" style_pad_gap="#space_md">
             <ui_button name="preset_tpu"
-                       height="content" flex_grow="1" layout="column" state_trickle="true" style_pad_ver="#space_sm"
-                       style_pad_gap="#temp_preset_btn_spacing">
+                       width="0" height="content" flex_grow="1" layout="column" state_trickle="true"
+                       style_pad_ver="#space_sm" style_pad_gap="#temp_preset_btn_spacing">
               <event_cb trigger="short_clicked" callback="on_filament_preset_tpu"/>
               <event_cb trigger="long_pressed" callback="on_filament_preset_tpu_hold"/>
               <text_body bind_text="preset_material_3_name" style_text_color:checked="#text"/>
@@ -288,24 +291,29 @@
                           style_text_align="center" style_text_color="#text_muted"
                           style_text_color:checked="#text"/>
             </ui_button>
-            <ui_button name="preset_spool"
-                       height="content" flex_grow="1" layout="column" state_trickle="true" style_pad_ver="#space_sm"
-                       style_pad_gap="#temp_preset_btn_spacing" hidden="true">
-              <event_cb trigger="clicked" callback="on_filament_preset_spool"/>
-              <text_body name="spool_preset_label" text="" style_text_color:checked="#text"/>
-              <text_small name="spool_preset_temps"
-                          text="" style_text_align="center" style_text_color="#text_muted"
-                          style_text_color:checked="#text"/>
+            <lv_obj name="spool_preset_cell"
+                    width="0" height="content" flex_grow="1" style_pad_all="0" scrollable="false" flex_flow="column">
+              <ui_button name="preset_spool"
+                         width="100%" height="content" layout="column" state_trickle="true" style_pad_ver="#space_sm"
+                         style_pad_gap="#temp_preset_btn_spacing" hidden="true">
+                <event_cb trigger="clicked" callback="on_filament_preset_spool"/>
+                <text_body name="spool_preset_label"
+                           text="" style_text_color:checked="#text" long_mode="dots"/>
+                <text_small name="spool_preset_temps"
+                            text="" style_text_align="center" style_text_color="#text_muted"
+                            style_text_color:checked="#text"/>
+              </ui_button>
+            </lv_obj>
+            <!-- Cool Down always occupies the third cell; it is disabled, not
+                 hidden, while nothing is heating, so the grid never reflows. -->
+            <ui_button name="btn_cooldown"
+                       width="0" height="100%" flex_grow="1" style_min_height="#button_height"
+                       style_bg_color="#temp_gradient_cold" icon="cooldown" text="Cool Down" translation_tag="Cool Down">
+              <bind_state_if_eq subject="filament_nozzle_heating" state="disabled" ref_value="0"/>
+              <event_cb trigger="clicked" callback="on_filament_cooldown"/>
             </ui_button>
           </lv_obj>
         </lv_obj>
-        <!-- Cooldown Button (visible when heating) -->
-        <ui_button name="btn_cooldown"
-                   width="100%" height="#button_height" style_bg_color="#temp_gradient_cold" icon="cooldown"
-                   text="Cool Down" translation_tag="Cool Down">
-          <bind_flag_if_eq subject="filament_nozzle_heating" flag="hidden" ref_value="0"/>
-          <event_cb trigger="clicked" callback="on_filament_cooldown"/>
-        </ui_button>
       </lv_obj>
       <!-- BOTTOM GROUP: Operations (second flex child, pushed to bottom by space_between) -->
       <lv_obj name="operations_group"
