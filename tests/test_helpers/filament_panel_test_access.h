@@ -81,6 +81,16 @@ struct FilamentPanelTestAccess {
         return p.extruder_dropdown_;
     }
 
+    /// Raw member pointers, for asserting an orientation flip re-finds them
+    /// into the rebuilt tree (compare against lv_obj_find_by_name).
+    static lv_obj_t* temp_graph_card(FilamentPanel& p) {
+        return p.temp_graph_card_;
+    }
+
+    static lv_obj_t* btn_temp_graph(FilamentPanel& p) {
+        return p.btn_temp_graph_;
+    }
+
     // --- Operation timeout / on-button op state (#1183) ---------------------
     // The op-state subjects are the ones filament_panel.xml binds to each op
     // button's bind_op_state: 0 = idle, 1 = busy/spinner, 2 = done/checkmark.

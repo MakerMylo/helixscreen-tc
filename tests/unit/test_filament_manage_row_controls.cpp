@@ -208,6 +208,9 @@ TEST_CASE_METHOD(LVGLUITestFixture,
     // Too little room for the graph: the card stays in the flow as an
     // invisible spacer instead of vanishing and dropping the strip to
     // mid-column.
+    lv_subject_t* spacer = lv_xml_get_subject(nullptr, "filament_graph_spacer");
+    REQUIRE(spacer != nullptr);
+    CHECK(lv_subject_get_int(spacer) == 1);
     CHECK(lv_obj_has_flag(container, LV_OBJ_FLAG_HIDDEN));
     CHECK_FALSE(lv_obj_has_flag(card, LV_OBJ_FLAG_HIDDEN));
     CHECK(lv_obj_get_style_bg_opa(card, LV_PART_MAIN) == 0);
@@ -245,4 +248,77 @@ TEST_CASE_METHOD(LVGLUITestFixture, "Strip graph button stays hidden in landscap
     REQUIRE(btn != nullptr);
     h.fx.process_lvgl(30);
     CHECK(lv_obj_has_flag(btn, LV_OBJ_FLAG_HIDDEN));
+}
+
+TEST_CASE_METHOD(LVGLUITestFixture,
+                 "Orientation flip rewires the panel's widget pointers into the rebuilt tree",
+                 "[filament][ui][portrait]") {
+    // Landscape first. The subject is global and a prior case may have left
+    // it at 1, so set it before the tree is built.
+    lv_subject_t* portrait = lv_xml_get_subject(nullptr, "ui_is_portrait");
+    REQUIRE(portrait != nullptr);
+    lv_subject_set_int(portrait, 0);
+    ui_ams_mini_status_init();
+    ManageRowHarness h(*this, {"extruder", "extruder1"}, AmsType::AFC);
+
+    lv_obj_t* landscape_dropdown = TA::extruder_dropdown(*h.panel);
+    lv_obj_t* landscape_card = TA::temp_graph_card(*h.panel);
+    REQUIRE(landscape_dropdown != nullptr);
+    REQUIRE(landscape_card != nullptr);
+    REQUIRE(lv_obj_find_by_name(h.root, "portrait_column") == nullptr);
+
+    // Flip to portrait: the <if> rebuilds synchronously inside set_int and the
+    // immediate observer re-runs bind_widgets() before set_int returns — the
+    // condemned branch is already detached here, so anything the panel queues
+    // next dereferences live widgets. Asserting BEFORE the pump is what pins
+    // the immediate dispatch; a deferred rebind would still be holding the
+    // detached landscape pointers at this point.
+    lv_subject_set_int(portrait, 1);
+    {
+        lv_obj_t* dd_now = lv_obj_find_by_name(h.root, "extruder_dropdown");
+        lv_obj_t* card_now = lv_obj_find_by_name(h.root, "temp_graph_card");
+        REQUIRE(dd_now != nullptr);
+        REQUIRE(card_now != nullptr);
+        CHECK(TA::extruder_dropdown(*h.panel) == dd_now);
+        CHECK(TA::temp_graph_card(*h.panel) == card_now);
+    }
+    // The pump lets the condemned branch's async deletion finish.
+    h.fx.process_lvgl(30);
+
+    lv_obj_t* column = lv_obj_find_by_name(h.root, "portrait_column");
+    REQUIRE(column != nullptr);
+    lv_obj_t* dd = lv_obj_find_by_name(h.root, "extruder_dropdown");
+    lv_obj_t* card = lv_obj_find_by_name(h.root, "temp_graph_card");
+    lv_obj_t* btn = lv_obj_find_by_name(h.root, "btn_temp_graph");
+    REQUIRE(dd != nullptr);
+    REQUIRE(card != nullptr);
+    REQUIRE(btn != nullptr);
+    // The members must point into the NEW tree — not just be non-null, or a
+    // rebind that never ran would still pass on the condemned branch's
+    // addresses while the panel draws from freed widgets.
+    CHECK(TA::extruder_dropdown(*h.panel) == dd);
+    CHECK(TA::temp_graph_card(*h.panel) == card);
+    CHECK(TA::btn_temp_graph(*h.panel) == btn);
+    CHECK(TA::extruder_dropdown(*h.panel) != landscape_dropdown);
+    CHECK(TA::temp_graph_card(*h.panel) != landscape_card);
+
+    // Flip back: same rewiring into the rebuilt landscape tree, and the
+    // spacer subject is 0 again — a portrait spacer state must not survive
+    // into a fresh tree.
+    lv_subject_set_int(portrait, 0);
+    h.fx.process_lvgl(30);
+
+    lv_obj_t* dd2 = lv_obj_find_by_name(h.root, "extruder_dropdown");
+    lv_obj_t* card2 = lv_obj_find_by_name(h.root, "temp_graph_card");
+    lv_obj_t* btn2 = lv_obj_find_by_name(h.root, "btn_temp_graph");
+    REQUIRE(dd2 != nullptr);
+    REQUIRE(card2 != nullptr);
+    REQUIRE(btn2 != nullptr);
+    CHECK(TA::extruder_dropdown(*h.panel) == dd2);
+    CHECK(TA::temp_graph_card(*h.panel) == card2);
+    CHECK(TA::btn_temp_graph(*h.panel) == btn2);
+    lv_subject_t* spacer = lv_xml_get_subject(nullptr, "filament_graph_spacer");
+    REQUIRE(spacer != nullptr);
+    CHECK(lv_subject_get_int(spacer) == 0);
+    REQUIRE(lv_obj_find_by_name(h.root, "portrait_column") == nullptr);
 }
