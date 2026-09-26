@@ -31,10 +31,11 @@
          graph card collapsed to a spacer. -->
     <lv_obj name="spool_strip_row"
             width="100%" height="content" style_pad_all="0" scrollable="false" flex_flow="row"
-            style_flex_main_place="start" style_flex_cross_place="center" style_pad_gap="#space_xs">
+            style_flex_main_place="start" style_flex_cross_place="center" style_pad_gap="#space_lg">
       <!-- Portrait-only stand-in for a temperature graph too short to draw -->
       <ui_button name="btn_temp_graph"
-                 width="#button_height" height="#button_height" icon="chart_line" variant="secondary" hidden="true">
+                 width="#button_height" height="#button_height" icon="chart_line" variant="secondary"
+                 style_bg_color="#elevated_bg" style_margin_right="#space_lg" hidden="true">
         <event_cb trigger="clicked" callback="filament_temp_graph_cb"/>
       </ui_button>
 
