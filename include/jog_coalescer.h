@@ -99,9 +99,15 @@ class JogCoalescer {
         return predict(current, &AxisTarget::z, &AxisMove::dz);
     }
 
+    /** Z where a target enqueued now would start: after the in-flight move,
+     *  ignoring pending travel, which on_target() discards. */
+    double target_start_z(double current) const {
+        return predict(current, &AxisTarget::z, &AxisMove::dz, false);
+    }
+
   private:
-    double predict(double current, std::optional<double> AxisTarget::*axis,
-                   double AxisMove::*delta) const {
+    double predict(double current, std::optional<double> AxisTarget::*axis, double AxisMove::*delta,
+                   bool include_pending = true) const {
         double v = current;
         const auto apply = [&v, axis, delta](const CoalescedMove& m) {
             if (const auto* t = std::get_if<AxisTarget>(&m)) {
@@ -113,7 +119,9 @@ class JogCoalescer {
             }
         };
         apply(inflight_);
-        apply(pending_);
+        if (include_pending) {
+            apply(pending_);
+        }
         return v;
     }
 

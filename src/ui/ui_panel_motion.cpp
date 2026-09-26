@@ -777,10 +777,7 @@ void MotionPanel::dispatch_target(const helix::AxisTarget& target) {
         target, static_cast<double>(bounds.x_min), static_cast<double>(bounds.x_max),
         static_cast<double>(bounds.y_min), static_cast<double>(bounds.y_max), z_range);
 
-    // Captured before on_target: once the target sits in the queue,
-    // predicted_z includes its destination, and the descending check would
-    // always read as "not descending".
-    target_start_z_ = jog_coalescer_.predicted_z(current_z_);
+    target_start_z_ = jog_coalescer_.target_start_z(current_z_);
     if (auto immediate = jog_coalescer_.on_target(clamped)) {
         send_jog_move(*immediate);
     } else {

@@ -394,3 +394,19 @@ TEST_CASE("JogCoalescer: a pending target feeds the prediction, a later delta re
     CHECK_FALSE(c.on_tap({5.0, 0.0, 0.0}).has_value()); // delta replaces pending target
     CHECK(c.predicted_x(0.0) == 15.0);                  // in-flight target 10 + delta 5
 }
+
+TEST_CASE("JogCoalescer: a new target starts where the in-flight move ends, not the pending one",
+          "[jog_coalescer]") {
+    JogCoalescer c;
+    CHECK(c.target_start_z(3.0) == 3.0); // idle: the current position
+
+    REQUIRE(c.on_target(target(0.0, 0.0, 10.0)).has_value());     // in flight to Z 10
+    CHECK_FALSE(c.on_target(target(0.0, 0.0, 50.0)).has_value()); // pending, about to be replaced
+    CHECK(c.predicted_z(3.0) == 50.0);
+    CHECK(c.target_start_z(3.0) == 10.0);
+
+    JogCoalescer d;
+    REQUIRE(d.on_tap({0.0, 0.0, 2.0}).has_value());     // delta in flight
+    CHECK_FALSE(d.on_tap({0.0, 0.0, 7.0}).has_value()); // pending delta, discarded by a target
+    CHECK(d.target_start_z(3.0) == 5.0);
+}
