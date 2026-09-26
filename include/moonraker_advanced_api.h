@@ -75,28 +75,6 @@ OperationTimeoutGuard* armed_idle_grace();
  */
 class MoonrakerAdvancedAPI : public IAdvancedAPI {
   public:
-    // ========== Timeout constants for long-running G-code commands ==========
-    static constexpr uint32_t CALIBRATION_TIMEOUT_MS =
-        300000; // 5 min - BED_MESH_CALIBRATE, SCREWS_TILT_CALCULATE
-    /// A printer-shipped calibration sequence does its own heating, homing and
-    /// wipe inside the one script, so its clock starts at heat-begin rather than
-    /// at probe-begin. CALIBRATION_TIMEOUT_MS measures only the probing and
-    /// times out mid-probe here — which flips the panel to ERROR and cools the
-    /// machine while it is still measuring.
-    static constexpr uint32_t SELF_PREPARED_CALIBRATION_TIMEOUT_MS = 900000; // 15 min
-    static constexpr uint32_t LEVELING_TIMEOUT_MS = 600000; // 10 min - QGL, Z_TILT_ADJUST
-    static constexpr uint32_t SHAPER_TIMEOUT_MS =
-        600000; // 10 min - SHAPER_CALIBRATE, MEASURE_AXES_NOISE. Analysis alone
-                // measured ~3m50s per axis on a Creality K1C host; the analysis
-                // phase shows a spinner + elapsed time, so the longer wait is
-                // not silent.
-    static constexpr uint32_t PID_TIMEOUT_MS =
-        1200000; // 20 min - PID_CALIBRATE (slow-cooling beds, e.g. AD5M Pro, exceed 15 min)
-    static constexpr uint32_t MPC_TIMEOUT_MS = 1200000; // 20 min - MPC_CALIBRATE
-    static constexpr uint32_t PROBING_TIMEOUT_MS =
-        180000; // 3 min - PROBE_CALIBRATE, Z_ENDSTOP_CALIBRATE
-    static constexpr uint32_t BELT_TENSION_TIMEOUT_MS = 120000; // 2 min per path
-
     using SuccessCallback = std::function<void()>;
     using ErrorCallback = std::function<void(const MoonrakerError&)>;
 
@@ -418,6 +396,28 @@ class MoonrakerAdvancedAPI : public IAdvancedAPI {
     void start_mpc_calibrate(const std::string& heater, int target_temp, int fan_breakpoints,
                              MPCCalibrateCallback on_complete, ErrorCallback on_error,
                              MPCProgressCallback on_progress = nullptr) override;
+
+    /**
+     * @brief Run one automatic pressure-advance calibration
+     *
+     * Sends `proc.start_gcode` and watches the console for `proc.result_pattern`,
+     * whose first capture is the measured K. Which firmware this is, what the
+     * command is called and what its output looks like are all decided by
+     * helix::pacal::procedure_for() - this method knows none of it.
+     *
+     * As with PID_CALIBRATE the console result line, not the RPC reply, is the
+     * authority for completion: a run that outlives its RPC timeout is still
+     * running, and the collector stays registered to catch the result.
+     *
+     * @param proc Resolved procedure from helix::pacal
+     * @param on_complete Called with the measured K on success
+     * @param on_error Called on refusal or failure
+     * @param on_progress Best-effort per-attempt progress; may never fire
+     */
+    std::function<void()> start_pa_calibrate(const helix::pacal::Procedure& proc,
+                                             PACalibrateCallback on_complete,
+                                             ErrorCallback on_error,
+                                             PAProgressCallback on_progress = nullptr) override;
 
     // ========================================================================
     // Machine Limits Operations

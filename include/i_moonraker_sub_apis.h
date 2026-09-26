@@ -29,6 +29,7 @@
 #include "json_fwd.h"
 #include "moonraker_error.h"
 #include "moonraker_types.h"
+#include "pa_calibration.h"
 #include "print_history_data.h"
 #include "spoolman_types.h"
 
@@ -236,6 +237,28 @@ class IHistoryAPI {
  */
 class IAdvancedAPI {
   public:
+    // ========== Timeout constants for long-running G-code commands ==========
+    static constexpr uint32_t CALIBRATION_TIMEOUT_MS =
+        300000; // 5 min - BED_MESH_CALIBRATE, SCREWS_TILT_CALCULATE
+    /// A printer-shipped calibration sequence does its own heating, homing and
+    /// wipe inside the one script, so its clock starts at heat-begin rather than
+    /// at probe-begin. CALIBRATION_TIMEOUT_MS measures only the probing and
+    /// times out mid-probe here — which flips the panel to ERROR and cools the
+    /// machine while it is still measuring.
+    static constexpr uint32_t SELF_PREPARED_CALIBRATION_TIMEOUT_MS = 900000; // 15 min
+    static constexpr uint32_t LEVELING_TIMEOUT_MS = 600000; // 10 min - QGL, Z_TILT_ADJUST
+    static constexpr uint32_t SHAPER_TIMEOUT_MS =
+        600000; // 10 min - SHAPER_CALIBRATE, MEASURE_AXES_NOISE. Analysis alone
+                // measured ~3m50s per axis on a Creality K1C host; the analysis
+                // phase shows a spinner + elapsed time, so the longer wait is
+                // not silent.
+    static constexpr uint32_t PID_TIMEOUT_MS =
+        1200000; // 20 min - PID_CALIBRATE (slow-cooling beds, e.g. AD5M Pro, exceed 15 min)
+    static constexpr uint32_t MPC_TIMEOUT_MS = 1200000; // 20 min - MPC_CALIBRATE
+    static constexpr uint32_t PROBING_TIMEOUT_MS =
+        180000; // 3 min - PROBE_CALIBRATE, Z_ENDSTOP_CALIBRATE
+    static constexpr uint32_t BELT_TENSION_TIMEOUT_MS = 120000; // 2 min per path
+
     using SuccessCallback = std::function<void()>;
     using ErrorCallback = std::function<void(const MoonrakerError&)>;
     using BedMeshProgressCallback = std::function<void(int current, int total)>;
@@ -244,6 +267,14 @@ class IAdvancedAPI {
     using HeaterControlTypeCallback = std::function<void(const std::string& control_type)>;
     using PIDProgressCallback = std::function<void(int sample, float tolerance)>;
     using PIDCalibrateCallback = std::function<void(float kp, float ki, float kd)>;
+
+    /// Measured pressure advance (Klipper's K). One number is the whole result.
+    using PACalibrateCallback = std::function<void(float k)>;
+    /// Best-effort per-attempt progress: how many candidate measurements the
+    /// firmware has reported so far, against how many a run typically makes,
+    /// and the candidate K that attempt tried. `k_so_far` is <= 0 when the
+    /// firmware reports an attempt without a value.
+    using PAProgressCallback = std::function<void(int attempt, int expected, float k_so_far)>;
 
     /// Result struct for MPC calibration
     struct MPCResult {
@@ -346,6 +377,16 @@ class IAdvancedAPI {
                                      int fan_breakpoints, MPCCalibrateCallback on_complete,
                                      ErrorCallback on_error,
                                      MPCProgressCallback on_progress = nullptr) = 0;
+
+    /// Run one automatic pressure-advance calibration. `proc` carries the
+    /// already-resolved command and console patterns (helix::pacal), so this
+    /// layer stays firmware-agnostic: it sends, it watches, it reports.
+    /// Returns a cancel handle that stops listening; no callback fires after
+    /// it. The firmware still finishes the run it is in.
+    virtual std::function<void()> start_pa_calibrate(const helix::pacal::Procedure& proc,
+                                                     PACalibrateCallback on_complete,
+                                                     ErrorCallback on_error,
+                                                     PAProgressCallback on_progress = nullptr) = 0;
 
     virtual void get_machine_limits(helix::MachineLimitsCallback on_success,
                                     ErrorCallback on_error) = 0;

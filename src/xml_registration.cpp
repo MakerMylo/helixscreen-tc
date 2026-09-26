@@ -436,10 +436,10 @@ void register_xml_components() {
     register_xml("components/nozzle_icon.xml");
     register_xml("components/heater_icon.xml");
     register_xml("components/heater_status.xml");
-    // Chamber-heater diagnostics card — instantiated by temp_graph_overlay's
-    // graph column (must be registered before temp_graph_overlay.xml, which
-    // is loaded later in this function).
-    register_xml("components/chamber_diagnostics_card.xml");
+    // Chamber-heater fault banner - instantiated by both orientation
+    // branches of the chamber card inside temp_graph_overlay, so it must
+    // load before temp_graph_overlay.xml, later here.
+    register_xml("components/chamber_fault_banner.xml");
     // Shared progress arc widget — diameter-driven stroke thickness, see
     // include/ui_progress_arc.h for the C++ companion (attach_progress_arc).
     register_xml("components/helix_progress_arc.xml");
@@ -616,11 +616,6 @@ void register_xml_components() {
     register_xml("components/home_next_page_slot.xml");
     register_xml("home_panel.xml");
     register_xml("controls_panel.xml");
-    // The X/Y/Z position card is shared between motion_panel.xml's landscape
-    // and portrait arrangements (see the <if>/<else> there), so it is its own
-    // component rather than markup duplicated per branch. Must be registered
-    // before motion_panel.xml, which uses it.
-    register_xml("components/motion_position_card.xml");
     register_xml("motion_panel.xml");
     // TempGraphOverlay is the only temperature overlay; there are no per-heater
     // nozzle/bed/chamber_temp_panel.xml components. TemperatureService::setup_panel()
@@ -727,6 +722,7 @@ void register_xml_components() {
     register_xml("calibration_zoffset_panel.xml");
     register_xml("calibration_pid_panel.xml");
     register_xml("calibration_tool_offset_panel.xml");
+    register_xml("calibration_pa_panel.xml");
 
     // Bed mesh modals (must be registered before bed_mesh_panel which uses them)
     register_xml("bed_mesh_calibrate_modal.xml");

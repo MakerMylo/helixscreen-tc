@@ -183,6 +183,27 @@ Components are reusable UI pieces defined with the `<component>` tag.
 | `color` | Hex colors | `default="0xff4444"` |
 | `subject` | Subject references | For data binding |
 
+#### Slot Injection into a Component Instance
+
+A component can expose a named widget as a slot for the instantiating screen to
+fill. Nest a `<component_name-slot_name>` tag inside the instantiation; the
+engine splits the tag at the first `-`, requires the prefix to be a registered
+component, and re-parents the tag's children into the widget named `slot_name`
+inside that instance:
+
+```xml
+<header_bar title="Motion">
+    <header_bar-header_content>
+        <lv_label name="my_readout" bind_text="some_subject"/>
+    </header_bar-header_content>
+</header_bar>
+```
+
+`header_bar` does this with its `header_content` strip (between the title
+region and the action buttons). A slot widget should be `width="content"` and
+not clickable, so an unfilled slot costs its container no layout and steals no
+taps.
+
 ### 2. Subjects (Reactive Data)
 
 Subjects are observable data containers that automatically update bound widgets.
@@ -628,7 +649,7 @@ The bare `$i` sigil is a whole-value substitution: `text="$i"` becomes the index
 
 > ⚠️ **Resolve-once.** A `${expr}` is evaluated **once, when the widget is created** — subject operands are read at that moment and the composed value does **not** update if the subject changes later. A `<repeat count="subject">` rebuild re-runs composition; a standalone attribute does not. For a value that must track a subject live, use a `bind_*` binding, not composition.
 
-`<repeat>` is intercepted directly by the XML view parser (it creates no widget of its own), so its body must be well-formed markup that would be valid where the `<repeat>` sits. Nesting `<repeat>` inside another `<repeat>` is not yet supported.
+`<repeat>` is intercepted directly by the XML view parser (it creates no widget of its own), so its body must be well-formed markup that would be valid where the `<repeat>` sits. Nesting a `<repeat>` or `<if>` inside a `<repeat>` body is not supported. The engine logs `<repeat> nested inside <repeat> in '<file>' is not supported; skipping it`, skips the inner block, and still expands the outer one. Keep the inner loop in C++, or give the inner level its own component.
 
 #### Structural conditionals with `<if>` / `<else>`
 
@@ -645,7 +666,7 @@ subject-referencing cond rebuilds repeatedly rather than once:
 
 > ⚠️ **A reactively-rebuilt `<if>` must be the last child of its parent, or the only child of a dedicated container** — the same ordering constraint as [`<repeat>`](#repeating-fragments-with-repeat). On rebuild, LVGL appends the freshly-built body to the *end* of the parent's child list, so static siblings that come after the `<if>` in the document stay put while the rebuilt body lands after them, silently reordering the layout on every flip. A static `<if>` never rebuilds, so this only matters for a subject-referencing `cond`.
 
-Nested `<if>` (an `<if>` inside another `<if>`/`<repeat>` body) is not yet supported, same as nested `<repeat>`.
+Nested `<if>` (an `<if>` inside another `<if>` or `<repeat>` body) is not supported either: it is logged and skipped the same way.
 
 ### 4. Observer Cleanup in DELETE Handlers
 
@@ -918,6 +939,16 @@ When using `flex_grow`, the parent MUST have explicit height:
 <lv_obj flex_flow="column" height="100%"
         style_flex_main_place="center" style_flex_cross_place="center">
     <lv_label text="Centered"/>
+</lv_obj>
+
+<!-- Row of mixed-height children in a taller container: cross_place alone
+     centers each child within a track only as tall as the tallest child, and
+     that track sits at the TOP of the container, so the children read as
+     top-aligned. track_place positions the track itself. -->
+<lv_obj flex_flow="row" height="100%"
+        style_flex_cross_place="center" style_flex_track_place="center">
+    <lv_label text="X"/>
+    <lv_label text="235.00"/>
 </lv_obj>
 
 <!-- Single child: use align, NOT flex (flex conflicts with align) -->

@@ -74,6 +74,18 @@ void slot_error_state(const SlotInfo& slot, bool& has_error, int& severity) {
         static_cast<int>(slot.error.has_value() ? slot.error->severity : SlotError::Severity::INFO);
 }
 
+/// @p subject with @p lifetime set to @p owner_token, or nullptr with an
+/// emptied token when there is no subject to observe.
+lv_subject_t* with_lifetime(lv_subject_t* subject, SubjectLifetime owner_token,
+                            SubjectLifetime& lifetime) {
+    if (subject) {
+        lifetime = std::move(owner_token);
+    } else {
+        lifetime.reset();
+    }
+    return subject;
+}
+
 struct AsyncSyncData {
     int backend_index;
     bool full_sync;
@@ -735,7 +747,8 @@ void AmsState::register_xml_subject_names() {
     // MUST mirror the registration list in init_subjects(): same names, same
     // order, same loops. A name registered there but not here stays
     // unpublished after a register_xml=false first init
-    // (prestonbrown/helixscreen#1374).
+    // (prestonbrown/helixscreen#1374). scripts/check_ams_xml_mirror.py fails
+    // the commit when the two name sets differ.
 
     // Backend selector subjects
     helix::xml::register_subject_in_current_scope("backend_count", &backend_count_);
@@ -1389,11 +1402,9 @@ lv_subject_t* AmsState::get_slot_fill_subject(int slot_index) {
     return &slot_fills_[slot_index];
 }
 
-// Per-slot LIVE state subjects. These are static-array (singleton-lifetime)
-// subjects, so the (slot, SubjectLifetime&) overloads return an EMPTY lifetime
-// token — the documented contract for static subjects (ui_observer_guard.h),
-// always-alive, no dynamic recreation. The empty-token overload exists for
-// call-site symmetry with the project's dynamic-subject accessors.
+// Per-slot LIVE state subjects. The arrays live in the singleton but are
+// registered with subjects_, so deinit_subjects() frees their observers; the
+// (slot, SubjectLifetime&) overloads hand out get_subjects_lifetime() (#1700).
 lv_subject_t* AmsState::get_slot_segment_subject(int slot_index) {
     if (slot_index < 0 || slot_index >= MAX_SLOTS) {
         return nullptr;
@@ -1402,8 +1413,7 @@ lv_subject_t* AmsState::get_slot_segment_subject(int slot_index) {
 }
 
 lv_subject_t* AmsState::get_slot_segment_subject(int slot_index, SubjectLifetime& lifetime) {
-    lifetime.reset(); // static subject — empty (always-alive) token
-    return get_slot_segment_subject(slot_index);
+    return with_lifetime(get_slot_segment_subject(slot_index), get_subjects_lifetime(), lifetime);
 }
 
 lv_subject_t* AmsState::get_slot_toolhead_present_subject(int slot_index) {
@@ -1415,8 +1425,8 @@ lv_subject_t* AmsState::get_slot_toolhead_present_subject(int slot_index) {
 
 lv_subject_t* AmsState::get_slot_toolhead_present_subject(int slot_index,
                                                           SubjectLifetime& lifetime) {
-    lifetime.reset(); // static subject — empty (always-alive) token
-    return get_slot_toolhead_present_subject(slot_index);
+    return with_lifetime(get_slot_toolhead_present_subject(slot_index), get_subjects_lifetime(),
+                         lifetime);
 }
 
 lv_subject_t* AmsState::get_slot_active_loaded_subject(int slot_index) {
@@ -1427,8 +1437,8 @@ lv_subject_t* AmsState::get_slot_active_loaded_subject(int slot_index) {
 }
 
 lv_subject_t* AmsState::get_slot_active_loaded_subject(int slot_index, SubjectLifetime& lifetime) {
-    lifetime.reset(); // static subject — empty (always-alive) token
-    return get_slot_active_loaded_subject(slot_index);
+    return with_lifetime(get_slot_active_loaded_subject(slot_index), get_subjects_lifetime(),
+                         lifetime);
 }
 
 lv_subject_t* AmsState::get_unit_temp_subject(int unit_index) {
@@ -1559,8 +1569,7 @@ lv_subject_t* AmsState::get_slot_color_subject(int backend_index, int slot_index
                                                SubjectLifetime& lifetime) {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (backend_index == 0) {
-        lifetime.reset(); // static subject — empty (always-alive) token
-        return get_slot_color_subject(slot_index);
+        return with_lifetime(get_slot_color_subject(slot_index), get_subjects_lifetime(), lifetime);
     }
     int sec_idx = backend_index - 1;
     if (sec_idx < 0 || sec_idx >= static_cast<int>(secondary_slot_subjects_.size())) {
@@ -1575,8 +1584,8 @@ lv_subject_t* AmsState::get_slot_status_subject(int backend_index, int slot_inde
                                                 SubjectLifetime& lifetime) {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (backend_index == 0) {
-        lifetime.reset(); // static subject — empty (always-alive) token
-        return get_slot_status_subject(slot_index);
+        return with_lifetime(get_slot_status_subject(slot_index), get_subjects_lifetime(),
+                             lifetime);
     }
     int sec_idx = backend_index - 1;
     if (sec_idx < 0 || sec_idx >= static_cast<int>(secondary_slot_subjects_.size())) {
@@ -1591,8 +1600,7 @@ lv_subject_t* AmsState::get_slot_fill_subject(int backend_index, int slot_index,
                                               SubjectLifetime& lifetime) {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (backend_index == 0) {
-        lifetime.reset(); // static subject — empty (always-alive) token
-        return get_slot_fill_subject(slot_index);
+        return with_lifetime(get_slot_fill_subject(slot_index), get_subjects_lifetime(), lifetime);
     }
     int sec_idx = backend_index - 1;
     if (sec_idx < 0 || sec_idx >= static_cast<int>(secondary_slot_subjects_.size())) {
@@ -1613,10 +1621,10 @@ lv_subject_t* AmsState::backend_slot_subject(int backend_index, int slot_index,
                                              std::vector<lv_subject_t> BackendSlotSubjects::*member,
                                              lv_subject_t* primary) {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    lifetime.reset();
     if (backend_index == 0) {
-        return primary; // static subject: empty (always-alive) token
+        return with_lifetime(primary, get_subjects_lifetime(), lifetime);
     }
+    lifetime.reset();
     int sec_idx = backend_index - 1;
     if (sec_idx < 0 || sec_idx >= static_cast<int>(secondary_slot_subjects_.size())) {
         return nullptr;
