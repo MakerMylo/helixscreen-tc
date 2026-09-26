@@ -1,7 +1,10 @@
 // Copyright (C) 2025-2026 356C LLC
 // SPDX-License-Identifier: GPL-3.0-or-later
 // tests/unit/test_move_relative_gcode.cpp
+#include "../../include/moonraker_client.h"
 #include "../../include/moonraker_motion_api.h"
+#include "../../include/printer_state.h"
+#include "../ui_test_utils.h"
 
 #include <limits>
 
@@ -80,4 +83,192 @@ TEST_CASE("generate_relative_move_gcode: compact formatting for ordinary values"
           "G91\nG0 X-10 F3000\nG90");
     CHECK(MoonrakerMotionAPI::generate_relative_move_gcode(0.0, 0.0, 0.05, 6000.0, 600.0) ==
           "G91\nG0 Z0.05 F600\nG90");
+}
+
+// ============================================================================
+// Absolute multi-axis moves (generate_absolute_move_gcode / move_to)
+// ============================================================================
+
+using helix::AxisTarget;
+
+TEST_CASE("generate_absolute_move_gcode: Z line precedes the combined XY line", "[motion][gcode]") {
+    AxisTarget t;
+    t.x = 100.0;
+    t.y = 50.0;
+    t.z = 10.0;
+    CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode(t, 6000.0, 600.0) ==
+          "G90\nG0 Z10 F600\nG0 X100 Y50 F6000");
+}
+
+TEST_CASE("generate_absolute_move_gcode: descent to a known lower Z travels XY first",
+          "[motion][gcode]") {
+    AxisTarget t;
+    t.x = 100.0;
+    t.y = 50.0;
+    t.z = 5.0; // below current_z 10: travel first, descend last
+    CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode(t, 6000.0, 600.0, 10.0) ==
+          "G90\nG0 X100 Y50 F6000\nG0 Z5 F600");
+}
+
+TEST_CASE("generate_absolute_move_gcode: ascent, equal Z and unknown Z keep Z first",
+          "[motion][gcode]") {
+    AxisTarget t;
+    t.x = 100.0;
+    t.z = 15.0;
+    const char* expected = "G90\nG0 Z15 F600\nG0 X100 F6000";
+    CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode(t, 6000.0, 600.0, 10.0) == expected);
+    // Equal Z is not a descent.
+    CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode(t, 6000.0, 600.0, 15.0) == expected);
+    // Unknown current_z: Z first, as always.
+    CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode(t, 6000.0, 600.0) == expected);
+    CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode(t, 6000.0, 600.0, std::nullopt) ==
+          expected);
+}
+
+TEST_CASE("generate_absolute_move_gcode: current_z never reorders a Z-only or XY-only move",
+          "[motion][gcode]") {
+    AxisTarget z_only;
+    z_only.z = 5.0;
+    CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode(z_only, 6000.0, 600.0, 10.0) ==
+          "G90\nG0 Z5 F600");
+    AxisTarget xy_only;
+    xy_only.x = 100.0;
+    xy_only.y = 50.0;
+    CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode(xy_only, 6000.0, 600.0, 10.0) ==
+          "G90\nG0 X100 Y50 F6000");
+}
+
+TEST_CASE("generate_absolute_move_gcode: XY only", "[motion][gcode]") {
+    AxisTarget t;
+    t.x = 100.0;
+    t.y = 50.0;
+    CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode(t, 6000.0, 600.0) ==
+          "G90\nG0 X100 Y50 F6000");
+    // Either axis alone also lands on the combined line.
+    AxisTarget x_only;
+    x_only.x = -5.0;
+    CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode(x_only, 6000.0, 600.0) ==
+          "G90\nG0 X-5 F6000");
+}
+
+TEST_CASE("generate_absolute_move_gcode: Z only", "[motion][gcode]") {
+    AxisTarget t;
+    t.z = 12.5;
+    CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode(t, 6000.0, 600.0) ==
+          "G90\nG0 Z12.5 F600");
+}
+
+TEST_CASE("generate_absolute_move_gcode: empty target produces empty script", "[motion][gcode]") {
+    CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode(AxisTarget{}, 6000.0, 600.0).empty());
+}
+
+TEST_CASE("generate_absolute_move_gcode: NaN/Inf rejected", "[motion][gcode]") {
+    AxisTarget t;
+    t.x = std::numeric_limits<double>::quiet_NaN();
+    CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode(t, 6000.0, 600.0).empty());
+    AxisTarget inf_z;
+    inf_z.z = std::numeric_limits<double>::infinity();
+    CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode(inf_z, 6000.0, 600.0).empty());
+    AxisTarget bad_feed;
+    bad_feed.x = 10.0;
+    CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode(
+              bad_feed, std::numeric_limits<double>::quiet_NaN(), 600.0)
+              .empty());
+}
+
+TEST_CASE("generate_absolute_move_gcode: feedrate term omitted when 0", "[motion][gcode]") {
+    AxisTarget t;
+    t.x = 100.0;
+    t.z = 10.0;
+    CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode(t, 0.0, 0.0) == "G90\nG0 Z10\nG0 X100");
+}
+
+TEST_CASE("generate_absolute_move_gcode: single-axis bytes stay plain", "[motion][gcode]") {
+    // The single-axis path keeps default ostream formatting; these pin it so
+    // rerouting it through the multi-axis formatter (which would emit
+    // "1234567" as itself but "1e-06" differently) cannot pass silently.
+    CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode('Z', 10.0, 600.0) == "G90\nG0 Z10 F600");
+    CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode('X', 100.5, 3000.0) ==
+          "G90\nG0 X100.5 F3000");
+    CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode('E', 5.0, 0.0) == "G90\nG0 E5");
+    CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode('Y', -2.25, 120.0) ==
+          "G90\nG0 Y-2.25 F120");
+}
+
+namespace {
+
+/// Local fixtures for the move_to instance-path validation tests: validation
+/// fires before any network I/O, so a disconnected client is sufficient.
+struct MoveToTestFixture {
+    MoveToTestFixture() {
+        lv_init_safe();
+        state.init_subjects(false);
+    }
+    helix::PrinterState state;
+    helix::MoonrakerClient client;
+    SafetyLimits limits{};
+};
+
+} // namespace
+
+TEST_CASE_METHOD(MoveToTestFixture, "move_to rejects an out-of-range axis value",
+                 "[motion][gcode]") {
+    bool errored = false;
+    MoonrakerMotionAPI motion(client, state, limits);
+
+    AxisTarget t;
+    t.x = 2000.0; // over the 1000mm default ceiling
+    t.y = 50.0;
+    motion.move_to(t, 6000.0, 600.0, nullptr, [&errored](const MoonrakerError& err) {
+        errored = true;
+        CHECK(err.type == MoonrakerErrorType::VALIDATION_ERROR);
+    });
+    CHECK(errored);
+}
+
+TEST_CASE_METHOD(MoveToTestFixture, "move_to: empty target succeeds without an RPC",
+                 "[motion][gcode]") {
+    bool succeeded = false;
+    MoonrakerMotionAPI motion(client, state, limits);
+    motion.move_to(AxisTarget{}, 6000.0, 600.0, [&succeeded]() { succeeded = true; }, nullptr);
+    CHECK(succeeded);
+}
+
+TEST_CASE_METHOD(MoveToTestFixture,
+                 "move_to: an unused feedrate is not validated: XY-only ignores z_feedrate",
+                 "[motion][gcode]") {
+    bool validation_error = false;
+    MoonrakerMotionAPI motion(client, state, limits);
+    AxisTarget t;
+    t.x = 100.0; // no z: the z_feedrate is never spent
+    motion.move_to(t, 6000.0, limits.max_feedrate_mm_min * 10.0, nullptr,
+                   [&validation_error](const MoonrakerError& err) {
+                       if (err.type == MoonrakerErrorType::VALIDATION_ERROR) {
+                           validation_error = true;
+                       }
+                   });
+    CHECK_FALSE(validation_error);
+}
+
+TEST_CASE_METHOD(MoveToTestFixture, "move_to: a used feedrate is validated, both bounds",
+                 "[motion][gcode]") {
+    limits.min_feedrate_mm_min = 60.0;
+    MoonrakerMotionAPI motion(client, state, limits);
+    AxisTarget t;
+    t.x = 100.0;
+
+    bool too_fast = false;
+    motion.move_to(t, limits.max_feedrate_mm_min * 10.0, 600.0, nullptr,
+                   [&too_fast](const MoonrakerError& err) {
+                       too_fast = true;
+                       CHECK(err.type == MoonrakerErrorType::VALIDATION_ERROR);
+                   });
+    CHECK(too_fast);
+
+    bool too_slow = false;
+    motion.move_to(t, 30.0, 600.0, nullptr, [&too_slow](const MoonrakerError& err) {
+        too_slow = true;
+        CHECK(err.type == MoonrakerErrorType::VALIDATION_ERROR);
+    });
+    CHECK(too_slow);
 }

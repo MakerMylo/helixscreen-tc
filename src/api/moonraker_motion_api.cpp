@@ -6,9 +6,9 @@
 #include "ui_error_reporting.h"
 #include "ui_notification.h"
 
+#include "axis_move.h"
 #include "gcode_classify.h"
 #include "gcode_homing.h"
-#include "jog_coalescer.h"
 #include "moonraker_client.h"
 #include "moonraker_gcode_guards.h"
 #include "moonraker_types.h"
@@ -284,6 +284,72 @@ void MoonrakerMotionAPI::move_to_position(char axis, double position, double fee
     execute_gcode(gcode, on_success, on_error);
 }
 
+void MoonrakerMotionAPI::move_to(const helix::AxisTarget& target, double xy_feedrate,
+                                 double z_feedrate, SuccessCallback on_success,
+                                 ErrorCallback on_error, std::optional<double> current_z) {
+    if (reject_non_finite({target.x.value_or(0.0), target.y.value_or(0.0), target.z.value_or(0.0),
+                           xy_feedrate, z_feedrate},
+                          "move_to", on_error)) {
+        return;
+    }
+
+    // Per-axis position safety (same limits as move_to_position), only for
+    // axes this target actually commands.
+    const struct {
+        char axis;
+        std::optional<double> pos;
+    } axes[] = {{'X', target.x}, {'Y', target.y}, {'Z', target.z}};
+    for (const auto& a : axes) {
+        if (a.pos && !is_safe_position(*a.pos, safety_limits_)) {
+            NOTIFY_ERROR("Position {:.1f}mm is out of range. Valid: {:.1f}mm to {:.1f}mm.", *a.pos,
+                         safety_limits_.min_absolute_position_mm,
+                         safety_limits_.max_absolute_position_mm);
+            if (on_error) {
+                MoonrakerError err = MoonrakerError::validation_error(
+                    "move_to", "Position " + std::to_string(*a.pos) +
+                                   "mm exceeds safety limits on axis " + std::string(1, a.axis) +
+                                   " (" + std::to_string(safety_limits_.min_absolute_position_mm) +
+                                   "-" + std::to_string(safety_limits_.max_absolute_position_mm) +
+                                   "mm)");
+                on_error(err);
+            }
+            return;
+        }
+    }
+    // Each feedrate is validated only when the target actually moves those
+    // axes: an XY-only target never spends its z_feedrate.
+    const struct {
+        double feedrate;
+        bool used;
+    } feeds[] = {{xy_feedrate, target.x.has_value() || target.y.has_value()},
+                 {z_feedrate, target.z.has_value()}};
+    for (const auto& fd : feeds) {
+        if (fd.used && fd.feedrate != 0 && !is_safe_feedrate(fd.feedrate, safety_limits_)) {
+            NOTIFY_ERROR("Speed {:.0f}mm/min is out of range. Valid: {:.0f} to {:.0f}mm/min.",
+                         fd.feedrate, safety_limits_.min_feedrate_mm_min,
+                         safety_limits_.max_feedrate_mm_min);
+            if (on_error) {
+                MoonrakerError err = MoonrakerError::validation_error(
+                    "move_to", "Feedrate " + std::to_string(fd.feedrate) + "mm/min out of range (" +
+                                   std::to_string(safety_limits_.min_feedrate_mm_min) + " to " +
+                                   std::to_string(safety_limits_.max_feedrate_mm_min) + "mm/min)");
+                on_error(err);
+            }
+            return;
+        }
+    }
+
+    std::string gcode = generate_absolute_move_gcode(target, xy_feedrate, z_feedrate, current_z);
+    if (gcode.empty()) {
+        if (on_success) {
+            on_success(); // nothing to do: treat as trivially complete
+        }
+        return;
+    }
+    spdlog::info("[Motion API] Absolute move (G-code: {})", gcode);
+    execute_gcode(gcode, on_success, on_error);
+}
+
 // ============================================================================
 // G-code Generation Helpers
 // ============================================================================
@@ -363,6 +429,59 @@ std::string MoonrakerMotionAPI::generate_relative_move_gcode(double dx, double d
         }
     }
     gcode << "\nG90";
+    return gcode.str();
+}
+
+std::string MoonrakerMotionAPI::generate_absolute_move_gcode(const helix::AxisTarget& target,
+                                                             double xy_feedrate, double z_feedrate,
+                                                             std::optional<double> current_z) {
+    const double vals[] = {target.x.value_or(0.0), target.y.value_or(0.0), target.z.value_or(0.0),
+                           xy_feedrate, z_feedrate};
+    for (double v : vals) {
+        if (std::isnan(v) || std::isinf(v)) {
+            spdlog::warn("[Motion API] generate_absolute_move_gcode: Rejecting G-code "
+                         "generation: invalid value (NaN/Inf)");
+            return "";
+        }
+    }
+    if (!target.any()) {
+        return "";
+    }
+
+    std::ostringstream z_block;
+    if (target.z) {
+        z_block << "\nG0 Z" << format_gcode_value(*target.z);
+        if (z_feedrate > 0) {
+            z_block << " F" << format_gcode_value(z_feedrate);
+        }
+    }
+    std::ostringstream xy_block;
+    if (target.x || target.y) {
+        xy_block << "\nG0";
+        if (target.x) {
+            xy_block << " X" << format_gcode_value(*target.x);
+        }
+        if (target.y) {
+            xy_block << " Y" << format_gcode_value(*target.y);
+        }
+        if (xy_feedrate > 0) {
+            xy_block << " F" << format_gcode_value(xy_feedrate);
+        }
+    }
+
+    // Z first lifts clear of the bed before travel. A descent to a known lower
+    // Z reverses that: travel XY at the safe height, then descend, so the
+    // toolhead never drags the lift across the bed.
+    const bool descend_last =
+        target.z && (target.x || target.y) && current_z && *target.z < *current_z;
+
+    std::ostringstream gcode;
+    gcode << "G90";
+    if (descend_last) {
+        gcode << xy_block.str() << z_block.str();
+    } else {
+        gcode << z_block.str() << xy_block.str();
+    }
     return gcode.str();
 }
 

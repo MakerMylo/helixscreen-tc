@@ -38,6 +38,11 @@ void PrinterMotionState::init_subjects(bool register_xml) {
     INIT_SUBJECT_INT(gcode_position_y, 0, subjects_, register_xml);
     INIT_SUBJECT_INT(gcode_position_z, 0, subjects_, register_xml);
 
+    // Live position subjects (physical position mid-move, motion_report)
+    INIT_SUBJECT_INT(live_position_x, 0, subjects_, register_xml);
+    INIT_SUBJECT_INT(live_position_y, 0, subjects_, register_xml);
+    INIT_SUBJECT_INT(live_position_z, 0, subjects_, register_xml);
+
     INIT_SUBJECT_STRING(homed_axes, "", subjects_, register_xml);
 
     // Speed/Flow subjects (percentages)
@@ -217,6 +222,26 @@ void PrinterMotionState::update_from_status(const nlohmann::json& status) {
     // Update motion_report data (live toolhead and extruder velocity)
     if (status.contains("motion_report")) {
         const auto& mr = status["motion_report"];
+        if (mr.contains("live_position") && mr["live_position"].is_array()) {
+            const auto& pos = mr["live_position"];
+            // Where the nozzle physically is, mesh and z-offset included,
+            // updating during moves. Stored as centimillimeters like the
+            // toolhead/gcode positions.
+            if (pos.size() >= 3 && pos[0].is_number() && pos[1].is_number() && pos[2].is_number()) {
+                int new_x = helix::units::to_centimm(pos[0].get<double>());
+                int new_y = helix::units::to_centimm(pos[1].get<double>());
+                int new_z = helix::units::to_centimm(pos[2].get<double>());
+                if (lv_subject_get_int(&live_position_x_) != new_x) {
+                    lv_subject_set_int(&live_position_x_, new_x);
+                }
+                if (lv_subject_get_int(&live_position_y_) != new_y) {
+                    lv_subject_set_int(&live_position_y_, new_y);
+                }
+                if (lv_subject_get_int(&live_position_z_) != new_z) {
+                    lv_subject_set_int(&live_position_z_, new_z);
+                }
+            }
+        }
         if (mr.contains("live_extruder_velocity") && mr["live_extruder_velocity"].is_number()) {
             int vel_centimm = static_cast<int>(mr["live_extruder_velocity"].get<double>() * 100.0);
             if (lv_subject_get_int(&live_extruder_velocity_) != vel_centimm) {

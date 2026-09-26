@@ -138,6 +138,10 @@ class MotionPanel : public OverlayBase {
     bool callbacks_registered_ = false;
 
     helix::JogCoalescer jog_coalescer_;
+    /// Z the toolhead will sit at when the latest target's script starts,
+    /// captured at enqueue time. Feeds move_to's travel-before-descend
+    /// ordering; delta moves ignore it.
+    double target_start_z_ = 0.0;
     /// Per-axis "blocked at limit" latch, indexed with helix::axis_index().
     /// Repeated attempts against a limit must not each raise a toast, and
     /// hold-to-repeat makes that a flood rather than a nuisance.
@@ -145,8 +149,11 @@ class MotionPanel : public OverlayBase {
 
     // Route a tap/flush through the coalescer and send if idle.
     void dispatch_jog(const helix::AxisMove& delta);
-    // Send one relative move; ack/error callbacks re-enter the coalescer.
-    void send_jog_move(const helix::AxisMove& move);
+    // Route an absolute target through the coalescer and send if idle.
+    void dispatch_target(const helix::AxisTarget& target);
+    // Send one coalesced move (delta or target); ack/error callbacks re-enter
+    // the coalescer.
+    void send_jog_move(const helix::JogCoalescer::CoalescedMove& move);
 
     ObserverGuard position_x_observer_;
     ObserverGuard position_y_observer_;

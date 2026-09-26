@@ -600,7 +600,8 @@ void MotionPanel::handle_z_button(const char* name) {
     // Bounds are in gcode space, so this must follow the inversion above.
     const auto bounds = get_printer_state().get_axis_bounds();
     if (bounds.has_z && helix::axis_is_homed(get_printer_state(), helix::Axis::Z)) {
-        distance = clamp_axis_and_warn(helix::Axis::Z, current_z_, jog_coalescer_.uncommitted_z(),
+        distance = clamp_axis_and_warn(helix::Axis::Z, current_z_,
+                                       jog_coalescer_.predicted_z(current_z_) - current_z_,
                                        distance, bounds.z_min, bounds.z_max);
         if (distance == 0.0) {
             return;
@@ -704,11 +705,13 @@ void MotionPanel::jog(JogDirection direction, float distance_mm) {
     double ddy = static_cast<double>(dy);
 
     if (ddx != 0.0 && bounds.has_x && helix::axis_is_homed(get_printer_state(), helix::Axis::X)) {
-        ddx = clamp_axis_and_warn(helix::Axis::X, current_x_, jog_coalescer_.uncommitted_x(), ddx,
+        ddx = clamp_axis_and_warn(helix::Axis::X, current_x_,
+                                  jog_coalescer_.predicted_x(current_x_) - current_x_, ddx,
                                   bounds.x_min, bounds.x_max);
     }
     if (ddy != 0.0 && bounds.has_y && helix::axis_is_homed(get_printer_state(), helix::Axis::Y)) {
-        ddy = clamp_axis_and_warn(helix::Axis::Y, current_y_, jog_coalescer_.uncommitted_y(), ddy,
+        ddy = clamp_axis_and_warn(helix::Axis::Y, current_y_,
+                                  jog_coalescer_.predicted_y(current_y_) - current_y_, ddy,
                                   bounds.y_min, bounds.y_max);
     }
 
@@ -749,13 +752,43 @@ void MotionPanel::dispatch_jog(const helix::AxisMove& delta) {
     if (auto immediate = jog_coalescer_.on_tap(delta)) {
         send_jog_move(*immediate);
     } else {
-        spdlog::debug("[{}] Jog coalesced: pending x={:+.2f} y={:+.2f} z={:+.2f}", get_name(),
-                      jog_coalescer_.uncommitted_x(), jog_coalescer_.uncommitted_y(),
-                      jog_coalescer_.uncommitted_z());
+        spdlog::debug("[{}] Jog coalesced: predicted x={:+.2f} y={:+.2f} z={:+.2f}", get_name(),
+                      jog_coalescer_.predicted_x(current_x_),
+                      jog_coalescer_.predicted_y(current_y_),
+                      jog_coalescer_.predicted_z(current_z_));
     }
 }
 
-void MotionPanel::send_jog_move(const helix::AxisMove& move) {
+void MotionPanel::dispatch_target(const helix::AxisTarget& target) {
+    // Soft-stop for absolute moves, same bounds source the jog clamp uses: a
+    // set axis without a known envelope cannot be clamped, and sending it
+    // unclamped would trust exactly the value that is missing.
+    const auto bounds = get_printer_state().get_axis_bounds();
+    if ((target.x && !bounds.has_x) || (target.y && !bounds.has_y) || (target.z && !bounds.has_z)) {
+        NOTIFY_INFO(lv_tr("Toolhead position unknown"));
+        return;
+    }
+    std::optional<std::pair<double, double>> z_range;
+    if (bounds.has_z) {
+        z_range =
+            std::make_pair(static_cast<double>(bounds.z_min), static_cast<double>(bounds.z_max));
+    }
+    const helix::AxisTarget clamped = helix::clamp_target_to_bounds(
+        target, static_cast<double>(bounds.x_min), static_cast<double>(bounds.x_max),
+        static_cast<double>(bounds.y_min), static_cast<double>(bounds.y_max), z_range);
+
+    target_start_z_ = jog_coalescer_.target_start_z(current_z_);
+    if (auto immediate = jog_coalescer_.on_target(clamped)) {
+        send_jog_move(*immediate);
+    } else {
+        spdlog::debug("[{}] Target coalesced: predicted x={:+.2f} y={:+.2f} z={:+.2f}", get_name(),
+                      jog_coalescer_.predicted_x(current_x_),
+                      jog_coalescer_.predicted_y(current_y_),
+                      jog_coalescer_.predicted_z(current_z_));
+    }
+}
+
+void MotionPanel::send_jog_move(const helix::JogCoalescer::CoalescedMove& move) {
     IMoonrakerAPI* api = get_moonraker_api();
     if (!api) {
         jog_coalescer_.on_error();
@@ -763,25 +796,30 @@ void MotionPanel::send_jog_move(const helix::AxisMove& move) {
     }
     auto& settings = SettingsManager::instance();
     // Storage keeps the user's choice; emission is clamped to what the printer
-    // currently permits, or move_relative would reject the jog outright.
+    // currently permits, or move_relative/move_to would reject the move outright.
     const SafetyLimits& limits = api->get_safety_limits();
     const double xy_feedrate = static_cast<double>(helix::effective_jog_speed_mm_min(
         settings.get_jog_speed_xy(), limits.min_feedrate_mm_min, limits.max_feedrate_mm_min));
     const double z_feedrate = static_cast<double>(helix::effective_jog_speed_mm_min(
         settings.get_jog_speed_z(), limits.min_feedrate_mm_min, limits.max_feedrate_mm_min));
 
-    api->motion().move_relative(
-        move.dx, move.dy, move.dz, xy_feedrate, z_feedrate,
-        lifetime_.bg_cb("MotionPanel::on_jog_ack",
-                        [this]() {
-                            if (auto flush = jog_coalescer_.on_ack()) {
-                                send_jog_move(*flush);
-                            }
-                        }),
-        lifetime_.bg_cb("MotionPanel::on_jog_error", [this](const MoonrakerError& err) {
-            jog_coalescer_.on_error();
-            NOTIFY_ERROR(lv_tr("Jog failed: {}"), clean_gcode_error(err.user_message()));
-        }));
+    auto on_ack = lifetime_.bg_cb("MotionPanel::on_jog_ack", [this]() {
+        if (auto flush = jog_coalescer_.on_ack()) {
+            send_jog_move(*flush);
+        }
+    });
+    auto on_error = lifetime_.bg_cb("MotionPanel::on_jog_error", [this](const MoonrakerError& err) {
+        jog_coalescer_.on_error();
+        NOTIFY_ERROR(lv_tr("Jog failed: {}"), clean_gcode_error(err.user_message()));
+    });
+
+    if (const auto* delta = std::get_if<helix::AxisMove>(&move)) {
+        api->motion().move_relative(delta->dx, delta->dy, delta->dz, xy_feedrate, z_feedrate,
+                                    std::move(on_ack), std::move(on_error));
+    } else if (const auto* target = std::get_if<helix::AxisTarget>(&move)) {
+        api->motion().move_to(*target, xy_feedrate, z_feedrate, std::move(on_ack),
+                              std::move(on_error), target_start_z_);
+    }
 }
 
 void MotionPanel::home(char axis) {

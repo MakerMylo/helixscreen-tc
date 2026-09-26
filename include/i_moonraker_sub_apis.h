@@ -24,6 +24,7 @@
 #pragma once
 
 #include "advanced_panel_types.h"
+#include "axis_move.h"
 #include "belt_tension_types.h"
 #include "calibration_types.h"
 #include "json_fwd.h"
@@ -84,6 +85,16 @@ class IMotionAPI {
 
     virtual void move_to_position(char axis, double position, double feedrate,
                                   SuccessCallback on_success, ErrorCallback on_error) = 0;
+
+    /// Absolute multi-axis move: XY combines on one G0, Z gets its own. Z moves
+    /// first (a lift clears the bed before travel), EXCEPT when the target
+    /// descends below a known current_z, where XY travels first and Z descends
+    /// last. An empty target completes immediately without an RPC.
+    /// current_z is the Z the toolhead sits at when this script starts; pass
+    /// nullopt when unknown and Z always moves first.
+    virtual void move_to(const helix::AxisTarget& target, double xy_feedrate, double z_feedrate,
+                         SuccessCallback on_success, ErrorCallback on_error,
+                         std::optional<double> current_z = std::nullopt) = 0;
 };
 
 /**

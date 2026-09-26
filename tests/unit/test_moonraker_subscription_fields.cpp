@@ -110,7 +110,8 @@ TEST_CASE("Subscription: core motion objects subscribe every field their parsers
         REQUIRE(has_field(subs, "gcode_move", "homing_origin"));
     }
 
-    SECTION("motion_report — printer_motion_state.cpp line 171") {
+    SECTION("motion_report - PrinterMotionState motion_report parser") {
+        REQUIRE(has_field(subs, "motion_report", "live_position"));
         REQUIRE(has_field(subs, "motion_report", "live_velocity"));
         REQUIRE(has_field(subs, "motion_report", "live_extruder_velocity"));
     }

@@ -222,6 +222,47 @@ TEST_CASE("Motion characterization: live_velocity updates from motion_report",
     }
 }
 
+TEST_CASE("Motion characterization: live_position updates from motion_report",
+          "[characterization][motion][position]") {
+    lv_init_safe();
+
+    PrinterState& state = get_printer_state();
+    PrinterStateTestAccess::reset(state);
+    state.init_subjects(false);
+
+    SECTION("stores all three axes as centimillimeters") {
+        json status = {{"motion_report", {{"live_position", {150.5, 200.3, 10.7}}}}};
+        state.update_from_status(status);
+
+        REQUIRE(lv_subject_get_int(state.get_live_position_x_subject()) == 15050);
+        REQUIRE(lv_subject_get_int(state.get_live_position_y_subject()) == 20030);
+        REQUIRE(lv_subject_get_int(state.get_live_position_z_subject()) == 1070);
+    }
+
+    SECTION("a malformed array leaves the subjects unchanged") {
+        state.update_from_status(
+            {{"motion_report", {{"live_position", {12.0, 34.0}}}}}); // too short
+        state.update_from_status(
+            {{"motion_report", {{"live_position", {nullptr, 34.0, 56.0}}}}}); // null element
+
+        REQUIRE(lv_subject_get_int(state.get_live_position_x_subject()) == 0);
+        REQUIRE(lv_subject_get_int(state.get_live_position_y_subject()) == 0);
+        REQUIRE(lv_subject_get_int(state.get_live_position_z_subject()) == 0);
+    }
+
+    SECTION("a frame without live_position leaves the subjects unchanged") {
+        state.update_from_status({{"motion_report", {{"live_position", {12.0, 34.0, 56.0}}}}});
+        REQUIRE(lv_subject_get_int(state.get_live_position_x_subject()) == 1200);
+
+        // Delta frames omit unchanged fields; the next frame carries only
+        // velocity and must not blank what the last one set.
+        state.update_from_status({{"motion_report", {{"live_velocity", 42.0}}}});
+        REQUIRE(lv_subject_get_int(state.get_live_position_x_subject()) == 1200);
+        REQUIRE(lv_subject_get_int(state.get_live_position_y_subject()) == 3400);
+        REQUIRE(lv_subject_get_int(state.get_live_position_z_subject()) == 5600);
+    }
+}
+
 TEST_CASE("Motion characterization: flow_factor updates from JSON",
           "[characterization][motion][flow]") {
     lv_init_safe();

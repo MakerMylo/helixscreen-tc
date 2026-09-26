@@ -83,6 +83,19 @@ class PrinterMotionState {
         return &gcode_position_z_;
     }
 
+    // Live position accessors - where the nozzle physically is mid-move
+    // (centimillimeters, from motion_report.live_position: includes bed mesh
+    // and z-offset, updates during moves)
+    lv_subject_t* get_live_position_x_subject() {
+        return &live_position_x_;
+    }
+    lv_subject_t* get_live_position_y_subject() {
+        return &live_position_y_;
+    }
+    lv_subject_t* get_live_position_z_subject() {
+        return &live_position_z_;
+    }
+
     lv_subject_t* get_homed_axes_subject() {
         return &homed_axes_;
     }
@@ -150,6 +163,11 @@ class PrinterMotionState {
     lv_subject_t gcode_position_x_{};
     lv_subject_t gcode_position_y_{};
     lv_subject_t gcode_position_z_{};
+
+    // Live position subjects (physical position mid-move, motion_report)
+    lv_subject_t live_position_x_{};
+    lv_subject_t live_position_y_{};
+    lv_subject_t live_position_z_{};
 
     lv_subject_t homed_axes_{};
     char homed_axes_buf_[8]{};

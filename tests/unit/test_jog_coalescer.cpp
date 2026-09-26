@@ -14,7 +14,7 @@ TEST_CASE("JogCoalescer: first tap sends immediately", "[jog_coalescer]") {
     REQUIRE(send.has_value());
     CHECK(send->dx == 1.0);
     CHECK(c.in_flight());
-    CHECK(c.uncommitted_x() == 1.0); // in-flight counts as uncommitted
+    CHECK(c.predicted_x(0.0) == 1.0); // in-flight counts as uncommitted
 }
 
 TEST_CASE("JogCoalescer: taps while in flight accumulate, ack flushes once", "[jog_coalescer]") {
@@ -22,17 +22,17 @@ TEST_CASE("JogCoalescer: taps while in flight accumulate, ack flushes once", "[j
     REQUIRE(c.on_tap({1.0, 0.0, 0.0}).has_value());
     CHECK_FALSE(c.on_tap({1.0, 0.0, 0.0}).has_value());
     CHECK_FALSE(c.on_tap({1.0, 0.0, 0.0}).has_value());
-    CHECK(c.uncommitted_x() == 3.0); // 1 in flight + 2 pending
+    CHECK(c.predicted_x(0.0) == 3.0); // 1 in flight + 2 pending
 
     auto flush = c.on_ack();
     REQUIRE(flush.has_value());
-    CHECK(flush->dx == 2.0); // both pending taps in ONE move
+    CHECK(std::get<AxisMove>(*flush).dx == 2.0); // both pending taps in ONE move
     CHECK(c.in_flight());
 
     auto done = c.on_ack();
     CHECK_FALSE(done.has_value()); // nothing pending -> idle
     CHECK_FALSE(c.in_flight());
-    CHECK(c.uncommitted_x() == 0.0);
+    CHECK(c.predicted_x(0.0) == 0.0);
 }
 
 TEST_CASE("JogCoalescer: reversal cancels pending algebraically", "[jog_coalescer]") {
@@ -52,9 +52,9 @@ TEST_CASE("JogCoalescer: multi-axis pending flushes as one move", "[jog_coalesce
     c.on_tap({0.0, 0.0, 0.5});
     auto flush = c.on_ack();
     REQUIRE(flush.has_value());
-    CHECK(flush->dx == 0.0);
-    CHECK(flush->dy == -2.0);
-    CHECK(flush->dz == 0.5);
+    CHECK(std::get<AxisMove>(*flush).dx == 0.0);
+    CHECK(std::get<AxisMove>(*flush).dy == -2.0);
+    CHECK(std::get<AxisMove>(*flush).dz == 0.5);
 }
 
 TEST_CASE("JogCoalescer: error drops pending and goes idle", "[jog_coalescer]") {
@@ -63,7 +63,7 @@ TEST_CASE("JogCoalescer: error drops pending and goes idle", "[jog_coalescer]") 
     c.on_tap({5.0, 0.0, 0.0});
     c.on_error();
     CHECK_FALSE(c.in_flight());
-    CHECK(c.uncommitted_x() == 0.0);
+    CHECK(c.predicted_x(0.0) == 0.0);
     // Next tap sends immediately again
     CHECK(c.on_tap({1.0, 0.0, 0.0}).has_value());
 }
@@ -74,7 +74,7 @@ TEST_CASE("JogCoalescer: reset clears everything", "[jog_coalescer]") {
     c.on_tap({2.0, 0.0, 0.0});
     c.reset();
     CHECK_FALSE(c.in_flight());
-    CHECK(c.uncommitted_x() == 0.0);
+    CHECK(c.predicted_x(0.0) == 0.0);
 }
 
 TEST_CASE("JogCoalescer: float-residue reversal nets to idle, no residual flush",
@@ -214,6 +214,44 @@ TEST_CASE("effective_jog_speed_mm_min: stored above the ceiling clamps to the ce
     CHECK(helix::effective_jog_speed_mm_min(50000, 0.0, 30000.0) == 30000);
 }
 
+TEST_CASE("clamp_target_to_bounds: set axes clamp into range, unset axes untouched",
+          "[jog_coalescer]") {
+    using helix::AxisTarget;
+    AxisTarget t;
+    t.x = 100.0; // inside [0, 200]
+    t.z = 15.0;  // inside [0, 20]
+    const auto r = helix::clamp_target_to_bounds(t, 0.0, 200.0, 0.0, 180.0, {{0.0, 20.0}});
+    REQUIRE(r.x.has_value());
+    CHECK(*r.x == Catch::Approx(100.0));
+    REQUIRE(r.z.has_value());
+    CHECK(*r.z == Catch::Approx(15.0));
+    CHECK_FALSE(r.y.has_value());
+}
+
+TEST_CASE("clamp_target_to_bounds: out-of-range targets clamp to the near edge",
+          "[jog_coalescer]") {
+    using helix::AxisTarget;
+    AxisTarget t;
+    t.x = 250.0; // above the max
+    t.y = -30.0; // below the min
+    t.z = 99.0;  // above the z max
+    const auto r = helix::clamp_target_to_bounds(t, 0.0, 200.0, -10.0, 180.0, {{0.0, 20.0}});
+    CHECK(*r.x == Catch::Approx(200.0));
+    CHECK(*r.y == Catch::Approx(-10.0));
+    CHECK(*r.z == Catch::Approx(20.0));
+}
+
+TEST_CASE("clamp_target_to_bounds: a set z passes through unclamped with no z range",
+          "[jog_coalescer]") {
+    using helix::AxisTarget;
+    AxisTarget t;
+    t.x = 100.0;
+    t.z = 99.0; // far outside any plausible envelope; nothing to clamp against
+    const auto r = helix::clamp_target_to_bounds(t, 0.0, 200.0, 0.0, 180.0, std::nullopt);
+    CHECK(*r.x == Catch::Approx(100.0));
+    CHECK(*r.z == Catch::Approx(99.0));
+}
+
 TEST_CASE("effective_jog_speed_mm_min: stored below the floor clamps to the floor",
           "[jog_coalescer]") {
     CHECK(helix::effective_jog_speed_mm_min(30, 60.0, 30000.0) == 60);
@@ -232,4 +270,143 @@ TEST_CASE("jog_refused_for_unknown_position: refuses unless envelope and positio
     CHECK(helix::jog_refused_for_unknown_position(true, false) == true);
     CHECK(helix::jog_refused_for_unknown_position(false, true) == true);
     CHECK(helix::jog_refused_for_unknown_position(false, false) == true);
+}
+
+// ============================================================================
+// Absolute targets: latest target wins
+// ============================================================================
+
+using helix::AxisTarget;
+
+namespace {
+
+AxisTarget target(double x, double y, double z) {
+    AxisTarget t;
+    t.x = x;
+    t.y = y;
+    t.z = z;
+    return t;
+}
+
+} // namespace
+
+TEST_CASE("JogCoalescer: first target sends immediately", "[jog_coalescer]") {
+    JogCoalescer c;
+    auto send = c.on_target(target(10.0, 20.0, 5.0));
+    REQUIRE(send.has_value());
+    CHECK(*send->x == 10.0);
+    CHECK(*send->y == 20.0);
+    CHECK(*send->z == 5.0);
+    CHECK(c.in_flight());
+}
+
+TEST_CASE("JogCoalescer: a pending target is replaced wholesale", "[jog_coalescer]") {
+    JogCoalescer c;
+    REQUIRE(c.on_target(target(10.0, 20.0, 5.0)).has_value());
+    // Second target overwrites the first entirely, never merges per-axis.
+    AxisTarget x_only;
+    x_only.x = 30.0;
+    CHECK_FALSE(c.on_target(x_only).has_value());
+    auto flush = c.on_ack();
+    REQUIRE(flush.has_value());
+    const auto& t = std::get<AxisTarget>(*flush);
+    REQUIRE(t.x.has_value());
+    REQUIRE_FALSE(t.y.has_value()); // the first target's y=20 is gone
+    REQUIRE_FALSE(t.z.has_value());
+    CHECK(*t.x == 30.0);
+    CHECK(c.in_flight());
+}
+
+TEST_CASE("JogCoalescer: a delta arriving while a target is pending discards it",
+          "[jog_coalescer]") {
+    JogCoalescer c;
+    REQUIRE(c.on_target(target(10.0, 20.0, 5.0)).has_value());
+    CHECK_FALSE(c.on_target(target(99.0, 99.0, 99.0)).has_value()); // pending target
+    CHECK_FALSE(c.on_tap({1.0, 0.0, 0.0}).has_value());             // delta wins pending
+
+    auto flush = c.on_ack();
+    REQUIRE(flush.has_value());
+    const auto& m = std::get<AxisMove>(*flush);
+    CHECK(m.dx == 1.0);
+    CHECK(m.dy == 0.0);
+    CHECK(m.dz == 0.0);
+}
+
+TEST_CASE("JogCoalescer: a target arriving while a delta is pending discards it",
+          "[jog_coalescer]") {
+    JogCoalescer c;
+    REQUIRE(c.on_tap({1.0, 0.0, 0.0}).has_value());
+    CHECK_FALSE(c.on_tap({2.0, 0.0, 0.0}).has_value()); // pending delta sum 3
+    CHECK_FALSE(c.on_target(target(7.0, 8.0, 9.0)).has_value());
+
+    auto flush = c.on_ack();
+    REQUIRE(flush.has_value());
+    const auto& t = std::get<AxisTarget>(*flush);
+    CHECK(*t.x == 7.0);
+    CHECK(*t.y == 8.0);
+    CHECK(*t.z == 9.0);
+}
+
+TEST_CASE("JogCoalescer: pending target survives across an ack as the flush", "[jog_coalescer]") {
+    JogCoalescer c;
+    REQUIRE(c.on_tap({1.0, 0.0, 0.0}).has_value());
+    CHECK_FALSE(c.on_target(target(50.0, 60.0, 70.0)).has_value());
+
+    auto flush = c.on_ack();
+    REQUIRE(flush.has_value());
+    REQUIRE(std::holds_alternative<AxisTarget>(*flush));
+
+    // The flushed target is now in flight; going idle needs a second ack.
+    auto done = c.on_ack();
+    CHECK_FALSE(done.has_value());
+    CHECK_FALSE(c.in_flight());
+}
+
+TEST_CASE("JogCoalescer: predicted position with a target in flight and a delta pending",
+          "[jog_coalescer]") {
+    JogCoalescer c;
+    REQUIRE(c.on_target(target(100.0, 200.0, 30.0)).has_value()); // in flight
+    CHECK_FALSE(c.on_tap({2.0, 0.0, -1.0}).has_value());          // pending delta
+
+    CHECK(c.predicted_x(90.0) == 102.0); // target lands, then delta adds
+    CHECK(c.predicted_y(180.0) == 200.0);
+    CHECK(c.predicted_z(25.0) == 29.0);
+}
+
+TEST_CASE("JogCoalescer: unset target axes pass the current position through", "[jog_coalescer]") {
+    JogCoalescer c;
+    AxisTarget z_only;
+    z_only.z = 15.0;
+    REQUIRE(c.on_target(z_only).has_value());
+
+    CHECK(c.predicted_x(42.0) == 42.0); // x untouched by a z-only target
+    CHECK(c.predicted_y(-3.0) == -3.0);
+    CHECK(c.predicted_z(0.0) == 15.0);
+}
+
+TEST_CASE("JogCoalescer: a pending target feeds the prediction, a later delta revises it",
+          "[jog_coalescer]") {
+    JogCoalescer c;
+    REQUIRE(c.on_target(target(10.0, 0.0, 0.0)).has_value());     // in flight
+    CHECK_FALSE(c.on_target(target(80.0, 0.0, 0.0)).has_value()); // pending
+    CHECK(c.predicted_x(0.0) == 80.0);                            // latest target wins
+
+    CHECK_FALSE(c.on_tap({5.0, 0.0, 0.0}).has_value()); // delta replaces pending target
+    CHECK(c.predicted_x(0.0) == 15.0);                  // in-flight target 10 + delta 5
+}
+
+TEST_CASE("JogCoalescer: a new target starts where the in-flight move ends, not the pending one",
+          "[jog_coalescer]") {
+    JogCoalescer c;
+    CHECK(c.target_start_z(3.0) == 3.0); // idle: the current position
+
+    REQUIRE(c.on_target(target(0.0, 0.0, 10.0)).has_value());     // in flight to Z 10
+    CHECK_FALSE(c.on_target(target(0.0, 0.0, 50.0)).has_value()); // pending, about to be replaced
+    CHECK(c.predicted_z(3.0) == 50.0);
+    CHECK(c.target_start_z(3.0) == 10.0);
+
+    JogCoalescer d;
+    REQUIRE(d.on_tap({0.0, 0.0, 2.0}).has_value());     // delta in flight
+    CHECK_FALSE(d.on_tap({0.0, 0.0, 7.0}).has_value()); // pending delta, discarded by a target
+    CHECK(d.target_start_z(3.0) == 5.0);
 }

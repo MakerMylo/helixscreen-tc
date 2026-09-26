@@ -2,41 +2,40 @@
 // include/jog_coalescer.h
 #pragma once
 
+#include "axis_move.h"
+
 #include <algorithm>
 #include <cmath>
 #include <optional>
+#include <variant>
 
 namespace helix {
-
-/** Relative multi-axis jog delta in mm. */
-struct AxisMove {
-    double dx = 0.0;
-    double dy = 0.0;
-    double dz = 0.0;
-    // Mixed-magnitude float cancellation can leave ~1e-17 residue in an
-    // accumulated delta; treat anything below this as zero so a near-null move
-    // (which would serialize in scientific notation) never flushes.
-    static constexpr double EPSILON_MM = 1e-6;
-    bool any() const {
-        return std::abs(dx) > EPSILON_MM || std::abs(dy) > EPSILON_MM || std::abs(dz) > EPSILON_MM;
-    }
-};
 
 /**
  * Serializes jog moves: one RPC in flight, further taps accumulate
  * algebraically into pending deltas and flush as ONE combined move when the
- * in-flight move acks. Main-thread only — callers marshal acks/errors onto
+ * in-flight move acks. An absolute target pending behind a move REPLACES
+ * whatever was pending (latest target wins; a pending delta is discarded),
+ * and a delta arriving while a target is pending discards that target.
+ * Main-thread only; callers marshal acks/errors onto
  * the UI thread before touching this.
  */
 class JogCoalescer {
   public:
+    /** Either a relative delta or an absolute target. */
+    using CoalescedMove = std::variant<AxisMove, AxisTarget>;
+
     /** Tap arrived. Returns the move to send NOW if idle; nullopt if it was
      *  accumulated behind the in-flight move. */
     std::optional<AxisMove> on_tap(const AxisMove& delta) {
         if (in_flight_) {
-            pending_.dx += delta.dx;
-            pending_.dy += delta.dy;
-            pending_.dz += delta.dz;
+            if (auto* pending = std::get_if<AxisMove>(&pending_)) {
+                pending->dx += delta.dx;
+                pending->dy += delta.dy;
+                pending->dz += delta.dz;
+            } else {
+                pending_ = delta; // a delta discards a pending target
+            }
             return std::nullopt;
         }
         in_flight_ = true;
@@ -44,17 +43,31 @@ class JogCoalescer {
         return delta;
     }
 
+    /** Absolute target arrived. Returns the target to send NOW if idle;
+     *  nullopt if it replaced something behind the in-flight move. A pending
+     *  target is overwritten wholesale, never merged per-axis. */
+    std::optional<AxisTarget> on_target(const AxisTarget& target) {
+        if (in_flight_) {
+            pending_ = target;
+            return std::nullopt;
+        }
+        in_flight_ = true;
+        inflight_ = target;
+        return target;
+    }
+
     /** In-flight move acked. Returns the pending flush to send (stays in
      *  flight) or nullopt (now idle). */
-    std::optional<AxisMove> on_ack() {
-        if (pending_.any()) {
-            inflight_ = pending_;
-            pending_ = {};
-            return inflight_;
+    std::optional<CoalescedMove> on_ack() {
+        if (pending_empty()) {
+            in_flight_ = false;
+            inflight_ = AxisMove{};
+            pending_ = AxisMove{};
+            return std::nullopt;
         }
-        in_flight_ = false;
-        inflight_ = {};
-        return std::nullopt;
+        inflight_ = pending_;
+        pending_ = AxisMove{};
+        return inflight_;
     }
 
     /** In-flight move failed: drop pending, go idle. */
@@ -65,30 +78,63 @@ class JogCoalescer {
     /** Drop all state (panel deactivate, print start, UI teardown). */
     void reset() {
         in_flight_ = false;
-        inflight_ = {};
-        pending_ = {};
+        inflight_ = AxisMove{};
+        pending_ = AxisMove{};
     }
 
     bool in_flight() const {
         return in_flight_;
     }
 
-    /** Travel not yet reflected in the position subjects: in-flight + pending.
-     *  Used to predict position for envelope clamping. */
-    double uncommitted_x() const {
-        return inflight_.dx + pending_.dx;
+    /** Predicted axis position once in-flight and pending travel land: a
+     *  target with the axis set sets it, a delta adds, anything else passes
+     *  `current` through. Used for envelope clamping. */
+    double predicted_x(double current) const {
+        return predict(current, &AxisTarget::x, &AxisMove::dx);
     }
-    double uncommitted_y() const {
-        return inflight_.dy + pending_.dy;
+    double predicted_y(double current) const {
+        return predict(current, &AxisTarget::y, &AxisMove::dy);
     }
-    double uncommitted_z() const {
-        return inflight_.dz + pending_.dz;
+    double predicted_z(double current) const {
+        return predict(current, &AxisTarget::z, &AxisMove::dz);
+    }
+
+    /** Z where a target enqueued now would start: after the in-flight move,
+     *  ignoring pending travel, which on_target() discards. */
+    double target_start_z(double current) const {
+        return predict(current, &AxisTarget::z, &AxisMove::dz, false);
     }
 
   private:
+    double predict(double current, std::optional<double> AxisTarget::*axis, double AxisMove::*delta,
+                   bool include_pending = true) const {
+        double v = current;
+        const auto apply = [&v, axis, delta](const CoalescedMove& m) {
+            if (const auto* t = std::get_if<AxisTarget>(&m)) {
+                if (t->*axis) {
+                    v = *(t->*axis);
+                }
+            } else {
+                v += std::get<AxisMove>(m).*delta;
+            }
+        };
+        apply(inflight_);
+        if (include_pending) {
+            apply(pending_);
+        }
+        return v;
+    }
+
+    bool pending_empty() const {
+        if (const auto* pending = std::get_if<AxisMove>(&pending_)) {
+            return !pending->any();
+        }
+        return !std::get<AxisTarget>(pending_).any();
+    }
+
     bool in_flight_ = false;
-    AxisMove inflight_{};
-    AxisMove pending_{};
+    CoalescedMove inflight_{};
+    CoalescedMove pending_{};
 };
 
 /**
