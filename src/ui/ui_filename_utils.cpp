@@ -67,6 +67,12 @@ std::string get_filename_basename(const std::string& path) {
 }
 
 std::string strip_gcode_extension(const std::string& filename) {
+    // A QIDI print file is "Name.gcode.3mf": the whole double extension goes.
+    if (filename.size() > 4 && is_3mf(filename)) {
+        const std::string inner = filename.substr(0, filename.size() - 4);
+        return is_3mf(inner) ? inner : strip_gcode_extension(inner);
+    }
+
     for (const auto& ext : printable_extensions()) {
         if (ends_with_ci(filename, ext)) {
             return filename.substr(0, filename.size() - ext.size());
@@ -167,6 +173,10 @@ std::string make_rewritten_gcode_path(const std::string& display_filename) {
 
 bool is_uploaded_rewrite_path(const std::string& path) {
     return path.find(helix_temp_prefix) != std::string::npos;
+}
+
+bool is_3mf(const std::string& name) {
+    return ends_with_ci(name, ".3mf");
 }
 
 } // namespace helix::gcode

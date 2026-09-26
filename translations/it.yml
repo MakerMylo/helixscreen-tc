@@ -3712,6 +3712,7 @@ translations:
   '{} disabled': '{} disabilitato'
   '{} enabled': '{} abilitato'
   '{} failed: {}': '{} non riuscito: {}'
+  '{} filament': '{} di filamento'
   '{} filament sensors available': '{} sensori filamento disponibili'
   '{} filament • {}': '{} di filamento • {}'
   '{} heater turned off': Riscaldatore {} spento
