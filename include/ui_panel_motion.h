@@ -145,8 +145,11 @@ class MotionPanel : public OverlayBase {
 
     // Route a tap/flush through the coalescer and send if idle.
     void dispatch_jog(const helix::AxisMove& delta);
-    // Send one relative move; ack/error callbacks re-enter the coalescer.
-    void send_jog_move(const helix::AxisMove& move);
+    // Route an absolute target through the coalescer and send if idle.
+    void dispatch_target(const helix::AxisTarget& target);
+    // Send one coalesced move (delta or target); ack/error callbacks re-enter
+    // the coalescer.
+    void send_jog_move(const helix::JogCoalescer::CoalescedMove& move);
 
     ObserverGuard position_x_observer_;
     ObserverGuard position_y_observer_;
