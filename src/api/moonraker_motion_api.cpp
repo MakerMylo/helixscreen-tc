@@ -316,13 +316,23 @@ void MoonrakerMotionAPI::move_to(const helix::AxisTarget& target, double xy_feed
             return;
         }
     }
-    for (double f : {xy_feedrate, z_feedrate}) {
-        if (f != 0 && !is_safe_feedrate(f, safety_limits_)) {
-            NOTIFY_ERROR("Speed {:.0f}mm/min is too fast. Maximum: {:.0f}mm/min.", f,
+    // Each feedrate is validated only when the target actually moves those
+    // axes: an XY-only target never spends its z_feedrate.
+    const struct {
+        double feedrate;
+        bool used;
+    } feeds[] = {{xy_feedrate, target.x.has_value() || target.y.has_value()},
+                 {z_feedrate, target.z.has_value()}};
+    for (const auto& fd : feeds) {
+        if (fd.used && fd.feedrate != 0 && !is_safe_feedrate(fd.feedrate, safety_limits_)) {
+            NOTIFY_ERROR("Speed {:.0f}mm/min is out of range. Valid: {:.0f} to {:.0f}mm/min.",
+                         fd.feedrate, safety_limits_.min_feedrate_mm_min,
                          safety_limits_.max_feedrate_mm_min);
             if (on_error) {
                 MoonrakerError err = MoonrakerError::validation_error(
-                    "move_to", "Feedrate " + std::to_string(f) + "mm/min exceeds safety limits");
+                    "move_to", "Feedrate " + std::to_string(fd.feedrate) + "mm/min out of range (" +
+                                   std::to_string(safety_limits_.min_feedrate_mm_min) + " to " +
+                                   std::to_string(safety_limits_.max_feedrate_mm_min) + "mm/min)");
                 on_error(err);
             }
             return;

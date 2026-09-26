@@ -233,3 +233,42 @@ TEST_CASE_METHOD(MoveToTestFixture, "move_to: empty target succeeds without an R
     motion.move_to(AxisTarget{}, 6000.0, 600.0, [&succeeded]() { succeeded = true; }, nullptr);
     CHECK(succeeded);
 }
+
+TEST_CASE_METHOD(MoveToTestFixture,
+                 "move_to: an unused feedrate is not validated: XY-only ignores z_feedrate",
+                 "[motion][gcode]") {
+    bool validation_error = false;
+    MoonrakerMotionAPI motion(client, state, limits);
+    AxisTarget t;
+    t.x = 100.0; // no z: the z_feedrate is never spent
+    motion.move_to(t, 6000.0, limits.max_feedrate_mm_min * 10.0, nullptr,
+                   [&validation_error](const MoonrakerError& err) {
+                       if (err.type == MoonrakerErrorType::VALIDATION_ERROR) {
+                           validation_error = true;
+                       }
+                   });
+    CHECK_FALSE(validation_error);
+}
+
+TEST_CASE_METHOD(MoveToTestFixture, "move_to: a used feedrate is validated, both bounds",
+                 "[motion][gcode]") {
+    limits.min_feedrate_mm_min = 60.0;
+    MoonrakerMotionAPI motion(client, state, limits);
+    AxisTarget t;
+    t.x = 100.0;
+
+    bool too_fast = false;
+    motion.move_to(t, limits.max_feedrate_mm_min * 10.0, 600.0, nullptr,
+                   [&too_fast](const MoonrakerError& err) {
+                       too_fast = true;
+                       CHECK(err.type == MoonrakerErrorType::VALIDATION_ERROR);
+                   });
+    CHECK(too_fast);
+
+    bool too_slow = false;
+    motion.move_to(t, 30.0, 600.0, nullptr, [&too_slow](const MoonrakerError& err) {
+        too_slow = true;
+        CHECK(err.type == MoonrakerErrorType::VALIDATION_ERROR);
+    });
+    CHECK(too_slow);
+}
