@@ -485,6 +485,7 @@
                   <event_cb trigger="value_changed" callback="on_chamber_filter_fan_clicked"/>
                 </ui_switch>
               </lv_obj>
+              <chamber_dryer_row name="dryer_row"/>
             </lv_obj>
           </ui_card>
           <!-- The card grows downward from the top on a fault; this spacer
@@ -621,6 +622,7 @@
                   <event_cb trigger="value_changed" callback="on_chamber_filter_fan_clicked"/>
                 </ui_switch>
               </lv_obj>
+              <chamber_dryer_row name="dryer_row"/>
               <chamber_fault_banner name="fault_banner"/>
             </lv_obj>
           </ui_card>
