@@ -214,6 +214,44 @@ TEST_CASE("effective_jog_speed_mm_min: stored above the ceiling clamps to the ce
     CHECK(helix::effective_jog_speed_mm_min(50000, 0.0, 30000.0) == 30000);
 }
 
+TEST_CASE("clamp_target_to_bounds: set axes clamp into range, unset axes untouched",
+          "[jog_coalescer]") {
+    using helix::AxisTarget;
+    AxisTarget t;
+    t.x = 100.0; // inside [0, 200]
+    t.z = 15.0;  // inside [0, 20]
+    const auto r = helix::clamp_target_to_bounds(t, 0.0, 200.0, 0.0, 180.0, {{0.0, 20.0}});
+    REQUIRE(r.x.has_value());
+    CHECK(*r.x == Catch::Approx(100.0));
+    REQUIRE(r.z.has_value());
+    CHECK(*r.z == Catch::Approx(15.0));
+    CHECK_FALSE(r.y.has_value());
+}
+
+TEST_CASE("clamp_target_to_bounds: out-of-range targets clamp to the near edge",
+          "[jog_coalescer]") {
+    using helix::AxisTarget;
+    AxisTarget t;
+    t.x = 250.0; // above the max
+    t.y = -30.0; // below the min
+    t.z = 99.0;  // above the z max
+    const auto r = helix::clamp_target_to_bounds(t, 0.0, 200.0, -10.0, 180.0, {{0.0, 20.0}});
+    CHECK(*r.x == Catch::Approx(200.0));
+    CHECK(*r.y == Catch::Approx(-10.0));
+    CHECK(*r.z == Catch::Approx(20.0));
+}
+
+TEST_CASE("clamp_target_to_bounds: a set z passes through unclamped with no z range",
+          "[jog_coalescer]") {
+    using helix::AxisTarget;
+    AxisTarget t;
+    t.x = 100.0;
+    t.z = 99.0; // far outside any plausible envelope; nothing to clamp against
+    const auto r = helix::clamp_target_to_bounds(t, 0.0, 200.0, 0.0, 180.0, std::nullopt);
+    CHECK(*r.x == Catch::Approx(100.0));
+    CHECK(*r.z == Catch::Approx(99.0));
+}
+
 TEST_CASE("effective_jog_speed_mm_min: stored below the floor clamps to the floor",
           "[jog_coalescer]") {
     CHECK(helix::effective_jog_speed_mm_min(30, 60.0, 30000.0) == 60);

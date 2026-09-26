@@ -2,6 +2,7 @@
 // include/axis_move.h
 #pragma once
 
+#include <algorithm>
 #include <cmath>
 #include <optional>
 #include <utility>
@@ -31,5 +32,24 @@ struct AxisTarget {
         return x.has_value() || y.has_value() || z.has_value();
     }
 };
+
+/** Clamp each SET axis of an absolute target into its range; unset axes pass
+ *  through untouched. The z range is optional as a whole: without it a set z
+ *  passes through unclamped (the caller decides separately whether that is
+ *  grounds to refuse the move). */
+inline AxisTarget clamp_target_to_bounds(AxisTarget target, double x_min, double x_max,
+                                         double y_min, double y_max,
+                                         std::optional<std::pair<double, double>> z_range) {
+    if (target.x) {
+        target.x = std::clamp(*target.x, x_min, x_max);
+    }
+    if (target.y) {
+        target.y = std::clamp(*target.y, y_min, y_max);
+    }
+    if (target.z && z_range) {
+        target.z = std::clamp(*target.z, z_range->first, z_range->second);
+    }
+    return target;
+}
 
 } // namespace helix

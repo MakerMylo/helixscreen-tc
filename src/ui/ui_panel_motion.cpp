@@ -760,11 +760,28 @@ void MotionPanel::dispatch_jog(const helix::AxisMove& delta) {
 }
 
 void MotionPanel::dispatch_target(const helix::AxisTarget& target) {
+    // Soft-stop for absolute moves, same bounds source the jog clamp uses: a
+    // set axis without a known envelope cannot be clamped, and sending it
+    // unclamped would trust exactly the value that is missing.
+    const auto bounds = get_printer_state().get_axis_bounds();
+    if ((target.x && !bounds.has_x) || (target.y && !bounds.has_y) || (target.z && !bounds.has_z)) {
+        NOTIFY_INFO(lv_tr("Toolhead position unknown"));
+        return;
+    }
+    std::optional<std::pair<double, double>> z_range;
+    if (bounds.has_z) {
+        z_range =
+            std::make_pair(static_cast<double>(bounds.z_min), static_cast<double>(bounds.z_max));
+    }
+    const helix::AxisTarget clamped = helix::clamp_target_to_bounds(
+        target, static_cast<double>(bounds.x_min), static_cast<double>(bounds.x_max),
+        static_cast<double>(bounds.y_min), static_cast<double>(bounds.y_max), z_range);
+
     // Captured before on_target: once the target sits in the queue,
     // predicted_z includes its destination, and the descending check would
     // always read as "not descending".
     target_start_z_ = jog_coalescer_.predicted_z(current_z_);
-    if (auto immediate = jog_coalescer_.on_target(target)) {
+    if (auto immediate = jog_coalescer_.on_target(clamped)) {
         send_jog_move(*immediate);
     } else {
         spdlog::debug("[{}] Target coalesced: predicted x={:+.2f} y={:+.2f} z={:+.2f}", get_name(),
