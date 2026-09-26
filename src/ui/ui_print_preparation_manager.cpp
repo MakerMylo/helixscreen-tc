@@ -480,6 +480,12 @@ void PrintPreparationManager::scan_file_for_operations(const std::string& filena
         return;
     }
 
+    if (helix::gcode::is_3mf(filename)) {
+        answer_printer_stop_check(filename,
+                                  printer_stop_not_run("a .3mf project holds no G-code to scan"));
+        return;
+    }
+
     // Build path for download
     std::string file_path = current_path.empty() ? filename : current_path + "/" + filename;
 
