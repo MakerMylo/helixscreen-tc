@@ -4,6 +4,7 @@
 #pragma once
 
 #include "ui_observer_guard.h"
+#include "ui_widget_ref.h"
 
 #include "async_lifetime_guard.h"
 #include "panel_widget.h"
@@ -31,21 +32,21 @@ class ActiveSpoolWidget : public PanelWidget {
   private:
     IMoonrakerAPI* api_;
 
-    lv_obj_t* widget_obj_ = nullptr;
-    lv_obj_t* parent_screen_ = nullptr;
+    helix::ui::WidgetRef widget_obj_;
+    helix::ui::WidgetRef parent_screen_;
 
     // Compact mode elements
-    lv_obj_t* spool_compact_ = nullptr;
+    helix::ui::WidgetRef spool_compact_;
 
     // Wide mode elements
-    lv_obj_t* wide_layout_ = nullptr;
-    lv_obj_t* spool_wide_ = nullptr;
-    lv_obj_t* material_label_ = nullptr;
-    lv_obj_t* brand_color_label_ = nullptr;
-    lv_obj_t* weight_label_ = nullptr;
+    helix::ui::WidgetRef wide_layout_;
+    helix::ui::WidgetRef spool_wide_;
+    helix::ui::WidgetRef material_label_;
+    helix::ui::WidgetRef brand_color_label_;
+    helix::ui::WidgetRef weight_label_;
 
     // No-spool label
-    lv_obj_t* no_spool_label_ = nullptr;
+    helix::ui::WidgetRef no_spool_label_;
 
     ObserverGuard spool_color_observer_;
     ObserverGuard current_slot_observer_;
