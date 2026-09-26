@@ -286,7 +286,7 @@ void MoonrakerMotionAPI::move_to_position(char axis, double position, double fee
 
 void MoonrakerMotionAPI::move_to(const helix::AxisTarget& target, double xy_feedrate,
                                  double z_feedrate, SuccessCallback on_success,
-                                 ErrorCallback on_error) {
+                                 ErrorCallback on_error, std::optional<double> current_z) {
     if (reject_non_finite({target.x.value_or(0.0), target.y.value_or(0.0), target.z.value_or(0.0),
                            xy_feedrate, z_feedrate},
                           "move_to", on_error)) {
@@ -329,10 +329,10 @@ void MoonrakerMotionAPI::move_to(const helix::AxisTarget& target, double xy_feed
         }
     }
 
-    std::string gcode = generate_absolute_move_gcode(target, xy_feedrate, z_feedrate);
+    std::string gcode = generate_absolute_move_gcode(target, xy_feedrate, z_feedrate, current_z);
     if (gcode.empty()) {
         if (on_success) {
-            on_success(); // nothing to do — treat as trivially complete
+            on_success(); // nothing to do: treat as trivially complete
         }
         return;
     }
@@ -423,8 +423,8 @@ std::string MoonrakerMotionAPI::generate_relative_move_gcode(double dx, double d
 }
 
 std::string MoonrakerMotionAPI::generate_absolute_move_gcode(const helix::AxisTarget& target,
-                                                             double xy_feedrate,
-                                                             double z_feedrate) {
+                                                             double xy_feedrate, double z_feedrate,
+                                                             std::optional<double> current_z) {
     const double vals[] = {target.x.value_or(0.0), target.y.value_or(0.0), target.z.value_or(0.0),
                            xy_feedrate, z_feedrate};
     for (double v : vals) {
@@ -438,26 +438,39 @@ std::string MoonrakerMotionAPI::generate_absolute_move_gcode(const helix::AxisTa
         return "";
     }
 
-    std::ostringstream gcode;
-    gcode << "G90";
-    // Z first: a lift must clear the bed before any XY travel.
+    std::ostringstream z_block;
     if (target.z) {
-        gcode << "\nG0 Z" << format_gcode_value(*target.z);
+        z_block << "\nG0 Z" << format_gcode_value(*target.z);
         if (z_feedrate > 0) {
-            gcode << " F" << format_gcode_value(z_feedrate);
+            z_block << " F" << format_gcode_value(z_feedrate);
         }
     }
+    std::ostringstream xy_block;
     if (target.x || target.y) {
-        gcode << "\nG0";
+        xy_block << "\nG0";
         if (target.x) {
-            gcode << " X" << format_gcode_value(*target.x);
+            xy_block << " X" << format_gcode_value(*target.x);
         }
         if (target.y) {
-            gcode << " Y" << format_gcode_value(*target.y);
+            xy_block << " Y" << format_gcode_value(*target.y);
         }
         if (xy_feedrate > 0) {
-            gcode << " F" << format_gcode_value(xy_feedrate);
+            xy_block << " F" << format_gcode_value(xy_feedrate);
         }
+    }
+
+    // Z first lifts clear of the bed before travel. A descent to a known lower
+    // Z reverses that: travel XY at the safe height, then descend, so the
+    // toolhead never drags the lift across the bed.
+    const bool descend_last =
+        target.z && (target.x || target.y) && current_z && *target.z < *current_z;
+
+    std::ostringstream gcode;
+    gcode << "G90";
+    if (descend_last) {
+        gcode << xy_block.str() << z_block.str();
+    } else {
+        gcode << z_block.str() << xy_block.str();
     }
     return gcode.str();
 }

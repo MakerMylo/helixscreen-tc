@@ -760,6 +760,10 @@ void MotionPanel::dispatch_jog(const helix::AxisMove& delta) {
 }
 
 void MotionPanel::dispatch_target(const helix::AxisTarget& target) {
+    // Captured before on_target: once the target sits in the queue,
+    // predicted_z includes its destination, and the descending check would
+    // always read as "not descending".
+    target_start_z_ = jog_coalescer_.predicted_z(current_z_);
     if (auto immediate = jog_coalescer_.on_target(target)) {
         send_jog_move(*immediate);
     } else {
@@ -800,7 +804,7 @@ void MotionPanel::send_jog_move(const helix::JogCoalescer::CoalescedMove& move) 
                                     std::move(on_ack), std::move(on_error));
     } else if (const auto* target = std::get_if<helix::AxisTarget>(&move)) {
         api->motion().move_to(*target, xy_feedrate, z_feedrate, std::move(on_ack),
-                              std::move(on_error));
+                              std::move(on_error), target_start_z_);
     }
 }
 

@@ -138,6 +138,11 @@ class MotionPanel : public OverlayBase {
     bool callbacks_registered_ = false;
 
     helix::JogCoalescer jog_coalescer_;
+    /// Z the toolhead will sit at when the pending target's script starts,
+    /// captured at enqueue time (before the target itself enters the queue, so
+    /// its own z does not count). Feeds move_to's travel-before-descend
+    /// ordering; delta moves ignore it.
+    double target_start_z_ = 0.0;
     /// Per-axis "blocked at limit" latch, indexed with helix::axis_index().
     /// Repeated attempts against a limit must not each raise a toast, and
     /// hold-to-repeat makes that a flood rather than a nuisance.

@@ -100,6 +100,44 @@ TEST_CASE("generate_absolute_move_gcode: Z line precedes the combined XY line", 
           "G90\nG0 Z10 F600\nG0 X100 Y50 F6000");
 }
 
+TEST_CASE("generate_absolute_move_gcode: descent to a known lower Z travels XY first",
+          "[motion][gcode]") {
+    AxisTarget t;
+    t.x = 100.0;
+    t.y = 50.0;
+    t.z = 5.0; // below current_z 10: travel first, descend last
+    CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode(t, 6000.0, 600.0, 10.0) ==
+          "G90\nG0 X100 Y50 F6000\nG0 Z5 F600");
+}
+
+TEST_CASE("generate_absolute_move_gcode: ascent, equal Z and unknown Z keep Z first",
+          "[motion][gcode]") {
+    AxisTarget t;
+    t.x = 100.0;
+    t.z = 15.0;
+    const char* expected = "G90\nG0 Z15 F600\nG0 X100 F6000";
+    CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode(t, 6000.0, 600.0, 10.0) == expected);
+    // Equal Z is not a descent.
+    CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode(t, 6000.0, 600.0, 15.0) == expected);
+    // Unknown current_z: Z first, as always.
+    CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode(t, 6000.0, 600.0) == expected);
+    CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode(t, 6000.0, 600.0, std::nullopt) ==
+          expected);
+}
+
+TEST_CASE("generate_absolute_move_gcode: current_z never reorders a Z-only or XY-only move",
+          "[motion][gcode]") {
+    AxisTarget z_only;
+    z_only.z = 5.0;
+    CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode(z_only, 6000.0, 600.0, 10.0) ==
+          "G90\nG0 Z5 F600");
+    AxisTarget xy_only;
+    xy_only.x = 100.0;
+    xy_only.y = 50.0;
+    CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode(xy_only, 6000.0, 600.0, 10.0) ==
+          "G90\nG0 X100 Y50 F6000");
+}
+
 TEST_CASE("generate_absolute_move_gcode: XY only", "[motion][gcode]") {
     AxisTarget t;
     t.x = 100.0;
