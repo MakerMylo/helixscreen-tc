@@ -221,6 +221,15 @@ TEST_CASE_METHOD(LVGLUITestFixture,
     CHECK_FALSE(shown(h, "callout_chip_fan"));
     const std::string nozzle = helix::ui::temperature::heater_display(1800, 2200).temp;
     CHECK(text_of(h, "callout_chip_toolhead") == nozzle + "  50%");
+    // Reads nozzle, fan, text, like the two chips it merges.
+    lv_obj_update_layout(h.root());
+    lv_obj_t* toolhead = h.child("callout_chip_toolhead");
+    lv_obj_t* nozzle_icon = lv_obj_find_by_name(toolhead, "nozzle_icon");
+    lv_obj_t* fan_icon = lv_obj_find_by_name(toolhead, "callout_toolhead_fan_icon");
+    REQUIRE(nozzle_icon);
+    REQUIRE(fan_icon);
+    CHECK(lv_obj_get_x(nozzle_icon) < lv_obj_get_x(fan_icon));
+    CHECK(lv_obj_get_x(fan_icon) < lv_obj_get_x(lv_obj_find_by_name(toolhead, "chip_text")));
 }
 
 TEST_CASE_METHOD(LVGLUITestFixture, "callouts: single cell hides the whole layer",

@@ -89,8 +89,9 @@
         <activity_chip name="callout_chip_toolhead" text_subject="callout_toolhead_text">
           <bind_flag_if_eq subject="callout_toolhead_merged" flag="hidden" ref_value="0"/>
           <event_cb trigger="clicked" callback="printer_callout_nozzle_cb"/>
-          <nozzle_icon size="xs"/>
+          <!-- row_reverse draws children last-first: nozzle, fan, text -->
           <icon name="callout_toolhead_fan_icon" src="fan" size="xs"/>
+          <nozzle_icon size="xs"/>
         </activity_chip>
       </lv_obj>
 
