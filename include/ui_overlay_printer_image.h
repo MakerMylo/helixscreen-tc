@@ -94,6 +94,8 @@ class PrinterImageOverlay : public OverlayBase {
     void update_tag_state();
     void handle_tag_parts();
     void handle_reset_tags();
+    /// Delete the user's tags for `key`, after the reset is confirmed.
+    void reset_tags(const std::string& key);
 
     //
     // === Members ===

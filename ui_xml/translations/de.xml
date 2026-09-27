@@ -2310,6 +2310,8 @@
   <translation tag="Remove the spools" de="Spulen entnehmen"/>
   <translation tag="Remove the spools from the bed" de="Spulen vom Heizbett nehmen"/>
   <translation tag="Remove the spools now?" de="Spulen jetzt entnehmen?"/>
+  <translation tag="Remove your tags for this image?" de="Deine Markierungen für dieses Bild entfernen?"/>
+  <translation tag="Remove your tags for this image? Its chips go back to the shipped positions." de="Deine Markierungen für dieses Bild entfernen? Die Anzeigen kehren an ihre ursprünglichen Positionen zurück."/>
   <translation tag="Rename" de="Umbenennen"/>
   <translation tag="Rename Fan" de="Lüfter umbenennen"/>
   <translation tag="Rename Mesh Profile" de="Netzprofil umbenennen"/>

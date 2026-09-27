@@ -2310,6 +2310,8 @@
   <translation tag="Remove the spools" ru="Снимите катушки"/>
   <translation tag="Remove the spools from the bed" ru="Снимите катушки со стола"/>
   <translation tag="Remove the spools now?" ru="Снять катушки сейчас?"/>
+  <translation tag="Remove your tags for this image?" ru="Удалить ваши отметки для этого изображения?"/>
+  <translation tag="Remove your tags for this image? Its chips go back to the shipped positions." ru="Удалить ваши отметки для этого изображения? Метки вернутся на исходные места."/>
   <translation tag="Rename" ru="Переименовать"/>
   <translation tag="Rename Fan" ru="Переименовать вентилятор"/>
   <translation tag="Rename Mesh Profile" ru="Переименовать профиль сетки"/>

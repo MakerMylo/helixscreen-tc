@@ -2571,6 +2571,8 @@ translations:
 
   Remove the spools now?: ¿Retirar las bobinas ahora?
 
+  Remove your tags for this image?: '¿Quitar sus marcas de esta imagen?'
+  Remove your tags for this image? Its chips go back to the shipped positions.: '¿Quitar sus marcas de esta imagen? Las etiquetas vuelven a sus posiciones de fábrica.'
   Rename: Renombrar
   Rename Fan: Renombrar Ventilador
   Rename Mesh Profile: Renombrar Perfil de Malla

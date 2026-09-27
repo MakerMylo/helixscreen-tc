@@ -2398,6 +2398,8 @@ translations:
 
   Remove the spools now?: 现在取下料盘吗?
 
+  Remove your tags for this image?: 删除此图片的标记？
+  Remove your tags for this image? Its chips go back to the shipped positions.: 删除此图片的标记？标签将回到出厂位置。
   Rename: 重命名
   Rename Fan: 重命名风扇
   Rename Mesh Profile: 重命名网格配置

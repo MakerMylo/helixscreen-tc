@@ -15,6 +15,7 @@
 
 #include "ui_error_reporting.h"
 #include "ui_event_safety.h"
+#include "ui_modal.h"
 #include "ui_nav_manager.h"
 #include "ui_overlay_printer_image_tagger.h"
 #include "ui_update_queue.h"
@@ -280,11 +281,23 @@ void PrinterImageOverlay::handle_reset_tags() {
     if (!target) {
         return;
     }
-    if (!reset_user_image_regions(target->key)) {
+    const char* message =
+        has_shipped_image_regions(target->key)
+            ? lv_tr("Remove your tags for this image? Its chips go back to the shipped positions.")
+            : lv_tr("Remove your tags for this image?");
+    helix::ui::ConfirmOptions opts;
+    opts.owner_token = object_lifetime_.token();
+    helix::ui::modal_confirm(
+        lv_tr("Reset tags"), message, ModalSeverity::Info, lv_tr("Reset"),
+        [key = target->key]() { get_printer_image_overlay().reset_tags(key); }, opts);
+}
+
+void PrinterImageOverlay::reset_tags(const std::string& key) {
+    if (!reset_user_image_regions(key)) {
         NOTIFY_ERROR(lv_tr("Could not reset the printer image tags"));
         return;
     }
-    spdlog::info("[{}] Reset tags for '{}'", get_name(), target->key);
+    spdlog::info("[{}] Reset tags for '{}'", get_name(), key);
     helix::PrinterImageManager::instance().notify_image_changed();
     update_tag_state();
 }

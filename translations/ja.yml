@@ -2407,6 +2407,8 @@ translations:
 
   Remove the spools now?: 今スプールを取り出しますか?
 
+  Remove your tags for this image?: この画像のタグを削除しますか？
+  Remove your tags for this image? Its chips go back to the shipped positions.: この画像のタグを削除しますか？チップは出荷時の位置に戻ります。
   Rename: 名前を変更
   Rename Fan: ファン名を変更
   Rename Mesh Profile: メッシュプロファイルの名前を変更

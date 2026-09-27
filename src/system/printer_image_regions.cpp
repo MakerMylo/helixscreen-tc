@@ -143,11 +143,15 @@ const ImageRegions* lookup_user_image_regions(std::string_view key, int natural_
     return r && r->src_w == natural_w && r->src_h == natural_h ? r : nullptr;
 }
 
+bool has_shipped_image_regions(std::string_view key) {
+    load(shipped(), asset_path("assets/images/printers/regions.json"), "shipped");
+    return entry_for(shipped(), key) != nullptr;
+}
+
 const ImageRegions* lookup_image_regions(std::string_view key, int natural_w, int natural_h) {
     if (const ImageRegions* r = lookup_user_image_regions(key, natural_w, natural_h))
         return r;
-    load(shipped(), asset_path("assets/images/printers/regions.json"), "shipped");
-    return entry_for(shipped(), key);
+    return has_shipped_image_regions(key) ? entry_for(shipped(), key) : nullptr;
 }
 
 bool save_user_image_regions(const std::string& key, const ImageRegions& regions) {

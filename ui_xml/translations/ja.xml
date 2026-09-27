@@ -2310,6 +2310,8 @@
   <translation tag="Remove the spools" ja="スプールを取り出す"/>
   <translation tag="Remove the spools from the bed" ja="ベッドからスプールを取り出す"/>
   <translation tag="Remove the spools now?" ja="今スプールを取り出しますか?"/>
+  <translation tag="Remove your tags for this image?" ja="この画像のタグを削除しますか？"/>
+  <translation tag="Remove your tags for this image? Its chips go back to the shipped positions." ja="この画像のタグを削除しますか？チップは出荷時の位置に戻ります。"/>
   <translation tag="Rename" ja="名前を変更"/>
   <translation tag="Rename Fan" ja="ファン名を変更"/>
   <translation tag="Rename Mesh Profile" ja="メッシュプロファイルの名前を変更"/>

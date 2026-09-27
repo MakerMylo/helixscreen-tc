@@ -2310,6 +2310,8 @@
   <translation tag="Remove the spools" it="Togli le bobine"/>
   <translation tag="Remove the spools from the bed" it="Togli le bobine dal piano"/>
   <translation tag="Remove the spools now?" it="Togliere le bobine adesso?"/>
+  <translation tag="Remove your tags for this image?" it="Rimuovere i tuoi contrassegni per questa immagine?"/>
+  <translation tag="Remove your tags for this image? Its chips go back to the shipped positions." it="Rimuovere i tuoi contrassegni per questa immagine? Le etichette tornano alle posizioni predefinite."/>
   <translation tag="Rename" it="Rinomina"/>
   <translation tag="Rename Fan" it="Rinomina ventola"/>
   <translation tag="Rename Mesh Profile" it="Rinomina profilo mesh"/>

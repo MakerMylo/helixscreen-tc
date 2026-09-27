@@ -114,6 +114,8 @@ TEST_CASE("user regions: a user entry overrides the shipped entry for its key on
     REQUIRE(mine != nullptr);
     CHECK(mine->nozzle.x == Catch::Approx(0.4f));
     CHECK(lookup_image_regions("custom:other", 300, 200) == nullptr);
+    CHECK(has_shipped_image_regions("voron-v2"));
+    CHECK_FALSE(has_shipped_image_regions("custom:mine"));
 }
 
 TEST_CASE("user regions: an entry tagged on an image of another size is ignored",

@@ -43,6 +43,9 @@ const ImageRegions* lookup_image_regions(std::string_view key, int natural_w, in
 /// placed on an image of another size (the photo was replaced since).
 const ImageRegions* lookup_user_image_regions(std::string_view key, int natural_w, int natural_h);
 
+/// Whether regions.json tags `key`, whatever the user has saved over it.
+bool has_shipped_image_regions(std::string_view key);
+
 /// Store the user's tags for `key` in <config dir>/printer_image_regions.json,
 /// replacing any earlier entry for it. False when the file cannot be written.
 bool save_user_image_regions(const std::string& key, const ImageRegions& regions);
