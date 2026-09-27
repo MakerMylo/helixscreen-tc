@@ -459,11 +459,13 @@ src/ui/ui_panel_base.cpp
 src/ui/ui_panel_common.cpp
 src/ui/ui_panel_console.cpp
 src/ui/ui_panel_controls.cpp
+src/ui/ui_motors_off.cpp
 src/ui/ui_panel_filament.cpp
 src/ui/ui_panel_history_dashboard.cpp
 src/ui/ui_panel_history_list.cpp
 src/ui/ui_panel_home.cpp
 src/ui/ui_panel_macros.cpp
+src/motion_presets.cpp
 src/ui/ui_panel_motion.cpp
 src/ui/ui_panel_power.cpp
 src/ui/ui_panel_print_select.cpp

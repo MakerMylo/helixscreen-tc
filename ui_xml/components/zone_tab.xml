@@ -7,6 +7,16 @@
     <prop name="state_subject" type="string" default=""/>
     <prop name="active_subject" type="string" default=""/>
     <prop name="tab_index" type="string" default=""/>
+    <!-- Optional leading icon; omitted entirely when empty (zone tabs carry a
+         state dot instead, motion tabs carry no per-tab state). -->
+    <prop name="icon" type="string" default=""/>
+    <!-- Click routing: every tab strip that is not the AMS environment picker
+         needs its own callback, so the name is a prop like the subjects. -->
+    <prop name="callback" type="string" default="on_zone_tab_clicked"/>
+    <!-- "row" lays the dot/icon beside the label; "column" stacks icon above
+         label for narrow vertical rails. -->
+    <prop name="layout" type="string" default="row"/>
+    <prop name="cross_place" type="string" default="start"/>
   </api>
   <styles>
     <!-- Two styles, not one plus an inline attribute: an inline `style_bg_opa` would
@@ -21,11 +31,16 @@
     <bind_style_if_eq name="zone_tab_selected" subject="$active_subject" ref_value="1"/>
     <bind_style_if_eq name="zone_tab_idle" subject="$active_subject" ref_value="0"/>
     <lv_obj width="content"
-            height="content" flex_flow="row" style_pad_gap="#space_xs" scrollable="false" clickable="false">
+            height="content" flex_flow="$layout" style_pad_gap="#space_xs" scrollable="false" clickable="false"
+            style_flex_cross_place="$cross_place">
+      <icon name="tab_icon" src="$icon" size="sm" hidden_if_empty="$icon"/>
       <!-- The dot carries the other zone's state, so it is readable without selecting it.
            An icon's src is a parse-time attribute, so each state gets its own icon and the
-           state subject decides which one is visible. Idle shows none. -->
-      <lv_obj name="tab_dot" width="content" height="content" scrollable="false" clickable="false">
+           state subject decides which one is visible. Idle shows none. The wrapper is
+           collapsed when the caller passes no state subject: an empty container would
+           still claim the flex gap and push the label off-centre. -->
+      <lv_obj name="tab_dot"
+              width="content" height="content" scrollable="false" clickable="false" hidden_if_empty="$state_subject">
         <icon src="progress_clock" size="xs" variant="secondary" hidden="true">
           <bind_flag_if_not_eq subject="$state_subject" flag="hidden" ref_value="1"/>
         </icon>
@@ -41,6 +56,6 @@
       </lv_obj>
       <text_body name="tab_label" width="content" bind_text="$label_subject"/>
     </lv_obj>
-    <event_cb trigger="clicked" callback="on_zone_tab_clicked" user_data="$tab_index"/>
+    <event_cb trigger="clicked" callback="$callback" user_data="$tab_index"/>
   </view>
 </component>
