@@ -22,9 +22,11 @@
           <event_cb trigger="clicked" callback="on_printer_image_tagger_tap"/>
         </lv_image>
 
-        <!-- Review: sample chips laid out by C++ exactly as the home widget
-             pins them on these points (review_callout_layout). The toolhead chip
-             stands in for nozzle and fan when they sit close together. -->
+        <!-- Review: sample chips laid out by C++ with the home widget's pinning
+             rules (review_callout_layout), over this view rather than the tile.
+             The toolhead chip stands in for nozzle and fan when they sit close
+             together. C++ finds each chip and its shown subject by part name
+             (review_chip_name, review_chip_shown_subject). -->
         <lv_obj name="tagger_review_layer"
                 width="100%" height="100%" style_pad_all="0" style_bg_opa="0" style_border_width="0" scrollable="false"
                 clickable="false" hidden="true">

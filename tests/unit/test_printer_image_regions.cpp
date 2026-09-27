@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+#include "ui_overlay_printer_image_tagger.h"
 
 #include "../test_helpers/config_dir_guard.h"
 #include "../test_helpers/printer_image_regions_test_access.h"
@@ -13,6 +14,7 @@
 #include "hv/json.hpp"
 
 using namespace helix;
+using namespace helix::settings;
 
 TEST_CASE("parse_image_regions: required, optional and malformed entries",
           "[printer_image][regions]") {
@@ -379,4 +381,46 @@ TEST_CASE("user regions: reset with no user entry writes nothing",
     reload_user_image_regions();
     CHECK(reset_user_image_regions("custom:none"));
     CHECK_FALSE(std::filesystem::exists(cfg.dir / "printer_image_regions.json"));
+}
+
+TEST_CASE("tagger_tap_point: screen taps map through the image box, letterboxed on either axis",
+          "[printer_image][image_tagger]") {
+    // A 400x200 box at (10, 50) holding a square image: bars left and right.
+    const lv_area_t wide{10, 50, 10 + 400 - 1, 50 + 200 - 1}; // image 200x200 at x 110
+    const auto p = tagger_tap_point(wide, {110 + 50, 50 + 150}, 100, 100);
+    REQUIRE(p);
+    CHECK(p->x == Catch::Approx(0.25f));
+    CHECK(p->y == Catch::Approx(0.75f));
+    CHECK_FALSE(tagger_tap_point(wide, {109, 100}, 100, 100));
+    CHECK_FALSE(tagger_tap_point(wide, {310, 100}, 100, 100));
+
+    // A 200x400 box at (30, 20) holding a 2:1 image: bars above and below.
+    const lv_area_t tall{30, 20, 30 + 200 - 1, 20 + 400 - 1}; // image 200x100 at y 170
+    const auto q = tagger_tap_point(tall, {30 + 150, 20 + 150 + 25}, 200, 100);
+    REQUIRE(q);
+    CHECK(q->x == Catch::Approx(0.75f));
+    CHECK(q->y == Catch::Approx(0.25f));
+    CHECK_FALSE(tagger_tap_point(tall, {100, 20 + 149}, 200, 100));
+    CHECK_FALSE(tagger_tap_point(tall, {100, 20 + 250}, 200, 100));
+}
+
+TEST_CASE("review chips: every part's chip and shown subject is in the tagger XML",
+          "[printer_image][image_tagger]") {
+    CHECK(review_chip_name(CalloutKind::Nozzle) == "tagger_chip_nozzle");
+    CHECK(review_chip_name(CalloutKind::Bed) == "tagger_chip_bed");
+    CHECK(review_chip_name(CalloutKind::Chamber) == "tagger_chip_chamber");
+    CHECK(review_chip_name(CalloutKind::Fan) == "tagger_chip_fan");
+    CHECK(review_chip_name(CalloutKind::Light) == "tagger_chip_light");
+    CHECK(review_chip_name(CalloutKind::Toolhead) == "tagger_chip_toolhead");
+    CHECK(review_chip_shown_subject(CalloutKind::Fan) == "printer_image_tagger_fan_shown");
+
+    std::ifstream f("ui_xml/printer_image_tagger_overlay.xml");
+    REQUIRE(f.good());
+    const std::string xml((std::istreambuf_iterator<char>(f)), {});
+    for (int k = 0; k <= static_cast<int>(CalloutKind::Toolhead); ++k) {
+        const auto kind = static_cast<CalloutKind>(k);
+        INFO(review_chip_name(kind));
+        CHECK(xml.find("name=\"" + review_chip_name(kind) + "\"") != std::string::npos);
+        CHECK(xml.find("subject=\"" + review_chip_shown_subject(kind) + "\"") != std::string::npos);
+    }
 }

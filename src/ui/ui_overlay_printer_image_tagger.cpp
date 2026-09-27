@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <cstring>
 #include <memory>
+#include <type_traits>
 
 namespace helix::settings {
 
@@ -56,18 +57,28 @@ const char* prompt_text(TagPrompt p) {
     return lv_tr("Check the chips, then save");
 }
 
-// Review chips and their shown subjects, indexed by CalloutKind.
-constexpr const char* kChipNames[] = {"tagger_chip_nozzle",  "tagger_chip_bed",
-                                      "tagger_chip_chamber", "tagger_chip_fan",
-                                      "tagger_chip_light",   "tagger_chip_toolhead"};
-constexpr const char* kChipShownSubjects[] = {
-    "printer_image_tagger_nozzle_shown",  "printer_image_tagger_bed_shown",
-    "printer_image_tagger_chamber_shown", "printer_image_tagger_fan_shown",
-    "printer_image_tagger_light_shown",   "printer_image_tagger_toolhead_shown"};
+/// Each review chip's part, in CalloutKind order.
+constexpr const char* kChipParts[] = {"nozzle", "bed", "chamber", "fan", "light", "toolhead"};
+constexpr size_t kChipCount = std::size(kChipParts);
 
 std::unique_ptr<PrinterImageTaggerOverlay> g_tagger_overlay;
 
 } // namespace
+
+std::string review_chip_name(CalloutKind k) {
+    return std::string("tagger_chip_") + kChipParts[static_cast<size_t>(k)];
+}
+
+std::string review_chip_shown_subject(CalloutKind k) {
+    return std::string("printer_image_tagger_") + kChipParts[static_cast<size_t>(k)] + "_shown";
+}
+
+std::optional<NormPoint> tagger_tap_point(const lv_area_t& image_box, lv_point_t tap, int natural_w,
+                                          int natural_h) {
+    const CalloutRect fit = fit_image(lv_area_get_width(&image_box), lv_area_get_height(&image_box),
+                                      natural_w, natural_h);
+    return image_point_at(fit, tap.x - image_box.x1, tap.y - image_box.y1);
+}
 
 PrinterImageTaggerOverlay& get_printer_image_tagger_overlay() {
     if (!g_tagger_overlay) {
@@ -97,8 +108,11 @@ void PrinterImageTaggerOverlay::init_subjects() {
     UI_MANAGED_SUBJECT_INT(reviewing_subject_, 0, "printer_image_tagger_reviewing", subjects_);
     UI_MANAGED_SUBJECT_INT(can_skip_subject_, 0, "printer_image_tagger_can_skip", subjects_);
     UI_MANAGED_SUBJECT_INT(can_undo_subject_, 0, "printer_image_tagger_can_undo", subjects_);
-    for (size_t k = 0; k < std::size(chip_shown_); ++k) {
-        UI_MANAGED_SUBJECT_INT(chip_shown_[k], 0, kChipShownSubjects[k], subjects_);
+    static_assert(std::extent_v<decltype(chip_shown_)> == kChipCount);
+    for (size_t k = 0; k < kChipCount; ++k) {
+        UI_MANAGED_SUBJECT_INT(chip_shown_[k], 0,
+                               review_chip_shown_subject(static_cast<CalloutKind>(k)).c_str(),
+                               subjects_);
     }
     subjects_initialized_ = true;
 }
@@ -181,8 +195,9 @@ void PrinterImageTaggerOverlay::place_review_chips() {
     lv_obj_update_layout(layer);
     CalloutChipWidths widths{};
     int chip_h = 0;
-    for (size_t k = 0; k < std::size(kChipNames); ++k) {
-        if (lv_obj_t* chip = lv_obj_find_by_name(layer, kChipNames[k])) {
+    for (size_t k = 0; k < kChipCount; ++k) {
+        const std::string name = review_chip_name(static_cast<CalloutKind>(k));
+        if (lv_obj_t* chip = lv_obj_find_by_name(layer, name.c_str())) {
             widths[k] = lv_obj_get_width(chip);
             chip_h = std::max(chip_h, static_cast<int>(lv_obj_get_height(chip)));
         }
@@ -191,16 +206,16 @@ void PrinterImageTaggerOverlay::place_review_chips() {
         session_.regions(target_.natural_w, target_.natural_h), lv_obj_get_width(img),
         lv_obj_get_height(img), widths, chip_h, theme_manager_get_spacing("space_xs"));
 
-    bool shown[std::size(kChipNames)] = {};
+    bool shown[kChipCount] = {};
     for (const CalloutChipOut& c : out.chips) {
         const auto k = static_cast<size_t>(c.kind);
-        if (lv_obj_t* chip = lv_obj_find_by_name(layer, kChipNames[k])) {
+        if (lv_obj_t* chip = lv_obj_find_by_name(layer, review_chip_name(c.kind).c_str())) {
             // DECLARATIVE_OK: measured callout layout
             lv_obj_set_pos(chip, c.rect.x, c.rect.y);
             shown[k] = true;
         }
     }
-    for (size_t k = 0; k < std::size(chip_shown_); ++k) {
+    for (size_t k = 0; k < kChipCount; ++k) {
         lv_subject_set_int(&chip_shown_[k], shown[k] ? 1 : 0);
     }
 }
@@ -215,9 +230,7 @@ void PrinterImageTaggerOverlay::handle_tap() {
     lv_indev_get_point(indev, &p);
     lv_area_t a;
     lv_obj_get_coords(img, &a);
-    const CalloutRect fit = fit_image(lv_area_get_width(&a), lv_area_get_height(&a),
-                                      target_.natural_w, target_.natural_h);
-    const auto pt = image_point_at(fit, p.x - a.x1, p.y - a.y1);
+    const auto pt = tagger_tap_point(a, p, target_.natural_w, target_.natural_h);
     if (!pt) {
         return; // a tap in the letterbox, off the image
     }

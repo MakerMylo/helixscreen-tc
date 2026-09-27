@@ -4,6 +4,7 @@
 
 #include "overlay_base.h"
 #include "printer_image_regions.h"
+#include "src/ui/panel_widgets/callout_layout.h"
 
 #include <optional>
 #include <string>
@@ -21,6 +22,16 @@ struct ImageTagTarget {
 /// The displayed image, or nullopt when it has no regions key or its size
 /// cannot be read. The picker and the tagger both decide from this.
 std::optional<ImageTagTarget> displayed_image_tag_target();
+
+/// Where a tap at screen point `tap` lands on an image drawn contain-fit in
+/// `image_box` (screen coordinates), or nullopt for a tap in the letterbox.
+std::optional<NormPoint> tagger_tap_point(const lv_area_t& image_box, lv_point_t tap, int natural_w,
+                                          int natural_h);
+
+/// The review chip for `k`'s part in printer_image_tagger_overlay.xml, and the
+/// subject that shows it.
+std::string review_chip_name(CalloutKind k);
+std::string review_chip_shown_subject(CalloutKind k);
 
 /**
  * @brief Full-screen overlay for tapping the parts of the displayed printer image
