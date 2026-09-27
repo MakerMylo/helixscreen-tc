@@ -145,7 +145,8 @@ which returns a `CalloutMode`, the image rect, and each chip's rect and leader l
   chip heights); both sides (each side band of the centred image fits a chip column, each
   chip on the side nearer its point); one side (the image moves to the near edge and every
   chip stacks in the far band); pinned (tagged image, no band: chips sit on their points,
-  and nozzle + fan merge into one toolhead chip); docked (untagged image: chips in the
+  nozzle + fan merge into one toolhead chip, and chips that would overlap slide apart);
+  docked (untagged image: chips in the
   free band, else along the bottom edge, never a line). A tile taller than the image's
   aspect runs the same ladder with bands above and below.
 - **The budget decides the mode; the active chips get positions.** `CalloutLayoutInput`
@@ -170,10 +171,29 @@ which returns a `CalloutMode`, the image rect, and each chip's rect and leader l
   rescheduled. An exact copy is shown 1:1: `show_exact_copy()` sets the inner align to
   CENTER, then `LV_SCALE_NONE`, then the source, because LVGL keeps the scale CONTAIN
   computed until the align changes and refuses a scale while CONTAIN is still set.
+- **Pinned chips slide apart.** After the pinned chips are placed on their points (and
+  after the toolhead merge and docking), `callout_detail::slide_apart()`
+  (`src/ui/panel_widgets/callout_layout.h#slide_apart`) groups chips whose
+  x-ranges intersect into columns and spreads each column vertically with the same
+  `spread_1d()` the side bands use, within `[gap, area_h - gap]`. Chips that do not collide
+  keep their point-centred positions.
+- **Leader lines are elbows.** Each line is three points: the tagged point, an elbow, and
+  the middle of the chip's inner edge. From the point it runs at 45 degrees toward the
+  chip's height, then straight into the chip: level into a side-band chip, vertical into a
+  chip above or below the image. When 45 degrees would leave less than `min_line` of
+  straight run, the diagonal steepens to keep that stub, and it never runs back past the
+  point. `callout_detail::leader_elbow()`
+  (`src/ui/panel_widgets/callout_layout.h#leader_elbow`) is the rule;
+  `stack()` records the elbow in `CalloutChipOut::line_xm` / `line_ym`.
 - **Leader lines keep their points alive.** `<leader_line>` (`include/ui_leader_line.h`)
-  is a bare `lv_line`, and `lv_line` keeps the pointer it is given, so each line's two
-  points live in the widget (`callout_line_pts_`, one pair per `CalloutKind` that can draw
+  is a bare `lv_line`, and `lv_line` keeps the pointer it is given, so each line's three
+  points live in the widget (`callout_line_pts_`, one set per `CalloutKind` that can draw
   a line) for as long as the line exists.
+- **A chip's shown int has three values.** `callout_<kind>_shown` is 0 hidden, 1 active,
+  2 residual: a heater that is off but still above 50C. XML hides a chip on `eq 0`, and
+  `activity_chip` takes the chip's shown subject as `shown_subject` and binds a
+  `#text_subtle` style on its label for 2, so a residual chip's text is greyed with no C++
+  styling (the chip text is already `#text_muted`).
 - **Where the points come from.** Each shipped image's nozzle, bed edge, part fan, chamber
   and light are hand-tagged, normalized over the source PNG, in
   `assets/images/printers/regions.json`; `assets/images/printers/README.md` documents the
