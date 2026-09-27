@@ -15,6 +15,8 @@
 #include "printer_image_regions.h"
 #include "printer_state.h"
 #include "src/ui/panel_widgets/printer_image_widget.h"
+#include "src/ui/panel_widgets/text_measure.h"
+#include "tool_state.h"
 
 #include "../catch_amalgamated.hpp"
 
@@ -255,6 +257,104 @@ TEST_CASE_METHOD(LVGLUITestFixture, "callouts: a detached widget stops publishin
     lv_subject_set_int(state().get_bed_target_subject(), 600);
     settle();
     CHECK(lv_subject_get_int(bed_shown) == 0);
+    set_image_regions_for_testing({});
+}
+
+TEST_CASE_METHOD(LVGLUITestFixture, "callouts: a chip narrower than its text dots the label",
+                 "[printer_image][callouts]") {
+    prepare_tagged_widget();
+    PanelWidgetHarness<PrinterImageWidget> h(test_screen());
+    h.resize(4, 4, 160, 160);
+    lv_subject_set_int(state().get_bed_temp_subject(), 400);
+    lv_subject_set_int(state().get_bed_target_subject(), 600);
+    settle();
+    lv_obj_t* chip = h.child("callout_chip_bed");
+    lv_obj_t* label = lv_obj_find_by_name(chip, "chip_text");
+    REQUIRE(label);
+    // Squeeze the chip well below its text, as clamp_into does on a narrow area.
+    lv_obj_set_width(chip, 40);
+    lv_obj_update_layout(h.root());
+    lv_area_t chip_box, label_box;
+    lv_obj_get_content_coords(chip, &chip_box);
+    lv_obj_get_coords(label, &label_box);
+    CHECK(label_box.x1 >= chip_box.x1);
+    CHECK(label_box.x2 <= chip_box.x2);
+    CHECK(lv_label_get_long_mode(label) == LV_LABEL_LONG_MODE_DOTS);
+    set_image_regions_for_testing({});
+}
+
+TEST_CASE_METHOD(LVGLUITestFixture, "callouts: a laid-out chip is not narrower than its text",
+                 "[printer_image][callouts]") {
+    prepare_tagged_widget();
+    PanelWidgetHarness<PrinterImageWidget> h(test_screen());
+    h.resize(4, 4, 160, 160);
+    lv_subject_set_int(state().get_bed_temp_subject(), 400);
+    lv_subject_set_int(state().get_bed_target_subject(), 600);
+    settle();
+    lv_obj_update_layout(h.root());
+    lv_obj_t* label = lv_obj_find_by_name(h.child("callout_chip_bed"), "chip_text");
+    CHECK(lv_obj_get_width(label) >=
+          helix::ui::measure_text_px(lv_label_get_text(label),
+                                     lv_obj_get_style_text_font(label, LV_PART_MAIN)));
+    set_image_regions_for_testing({});
+}
+
+// The chip label collapses while its chip is content-sized, so a chip has to be
+// measured in the same tick that shows it, before any timer runs.
+TEST_CASE_METHOD(LVGLUITestFixture, "callouts: a chip is sized the moment it appears",
+                 "[printer_image][callouts]") {
+    prepare_tagged_widget();
+    PanelWidgetHarness<PrinterImageWidget> h(test_screen());
+    h.resize(4, 4, 160, 160);
+    lv_subject_set_int(state().get_bed_target_subject(), 0);
+    lv_subject_set_int(state().get_bed_temp_subject(), 250);
+    settle();
+    lv_obj_update_layout(h.root());
+    lv_subject_set_int(state().get_bed_target_subject(), 600);
+    helix::ui::UpdateQueueTestAccess::drain_all(helix::ui::UpdateQueue::instance());
+    lv_obj_t* chip = h.child("callout_chip_bed");
+    REQUIRE_FALSE(lv_obj_has_flag(chip, LV_OBJ_FLAG_HIDDEN));
+    lv_obj_update_layout(h.root());
+    lv_obj_t* label = lv_obj_find_by_name(chip, "chip_text");
+    CHECK(lv_obj_get_width(label) >=
+          helix::ui::measure_text_px(lv_label_get_text(label),
+                                     lv_obj_get_style_text_font(label, LV_PART_MAIN)));
+    set_image_regions_for_testing({});
+}
+
+// A multi-tool printer draws the tool number beside the nozzle glyph; the chip
+// has to budget for it or the temperature is cut.
+TEST_CASE_METHOD(LVGLUITestFixture, "callouts: the nozzle chip budgets the tool badge",
+                 "[printer_image][callouts]") {
+    prepare_tagged_widget();
+    // The badge binds ToolState's subjects, which must exist before the XML parses.
+    struct ToolSubjects {
+        ToolSubjects() {
+            ToolState::instance().init_subjects(true);
+        }
+        ~ToolSubjects() {
+            ToolState::instance().deinit_subjects();
+        }
+    } tool_subjects;
+    auto& tools = ToolState::instance();
+    lv_subject_copy_string(tools.get_tool_badge_text_subject(), "12");
+    lv_subject_set_int(tools.get_show_tool_badge_subject(), 1);
+    PanelWidgetHarness<PrinterImageWidget> h(test_screen());
+    h.resize(4, 4, 160, 160);
+    lv_subject_set_int(state().get_fan_speed_subject(), 0);
+    lv_subject_set_int(state().get_active_extruder_temp_subject(), 1800);
+    lv_subject_set_int(state().get_active_extruder_target_subject(), 2200);
+    settle();
+    lv_obj_update_layout(h.root());
+    lv_obj_t* chip = h.child("callout_chip_nozzle");
+    REQUIRE_FALSE(lv_obj_has_flag(chip, LV_OBJ_FLAG_HIDDEN));
+    lv_obj_t* badge = lv_obj_find_by_name(chip, "tool_badge");
+    REQUIRE(badge);
+    REQUIRE_FALSE(lv_obj_has_flag(badge, LV_OBJ_FLAG_HIDDEN));
+    lv_obj_t* label = lv_obj_find_by_name(chip, "chip_text");
+    CHECK(lv_obj_get_width(label) >=
+          helix::ui::measure_text_px(lv_label_get_text(label),
+                                     lv_obj_get_style_text_font(label, LV_PART_MAIN)));
     set_image_regions_for_testing({});
 }
 

@@ -2,7 +2,10 @@
 <!-- Copyright (C) 2025-2026 356C LLC -->
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <!-- A small pill: an icon (nested as the instance's plain children) beside one
-     line of bound text. Sized to content; the owner positions and widths it.
+     line of bound text. The owner positions and widths it; the label takes
+     the width the icons leave (flex_grow) and ends in dots when that is too
+     narrow. Content-sized, the label collapses to nothing, so a shown chip
+     always carries a measured width.
      Pill styling (colors, padding, row_reverse) lives in styles.activity_chip
      so an icon-only chip with no label can borrow the identical look. -->
 <component>
@@ -11,6 +14,6 @@
   </api>
   <view extends="lv_obj" width="content" height="content" scrollable="false" clickable="true">
     <style name="styles.activity_chip"/>
-    <text_small name="chip_text" bind_text="$text_subject" long_mode="dots"/>
+    <text_small name="chip_text" bind_text="$text_subject" long_mode="dots" flex_grow="1"/>
   </view>
 </component>

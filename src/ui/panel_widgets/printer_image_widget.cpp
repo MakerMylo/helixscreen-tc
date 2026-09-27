@@ -30,6 +30,7 @@
 #include "subject_debug_registry.h"
 #include "text_measure.h"
 #include "theme_manager.h"
+#include "tool_state.h"
 #include "ui/fan_spin_animation.h"
 #include "wizard_config_paths.h"
 
@@ -701,6 +702,16 @@ void PrinterImageWidget::arm_callout_observers() {
     auto& display = DisplaySettingsManager::instance();
     callout_observers_.push_back(helix::ui::observe_int_sync<PrinterImageWidget>(
         display.subject_animations_enabled(), this, on_change, display.get_subjects_lifetime()));
+    // The nozzle glyph draws the tool number beside it on a multi-tool printer,
+    // which widens the nozzle and toolhead chips. Looked up by the names the
+    // badge binds, so where ToolState never registered them there is no badge.
+    const SubjectLifetime tools_life = ToolState::instance().get_subjects_lifetime();
+    callout_observers_.push_back(helix::ui::observe_int_sync<PrinterImageWidget>(
+        lv_xml_get_subject(nullptr, "show_tool_badge"), this,
+        [](PrinterImageWidget* w, int) { w->schedule_callout_layout(); }, tools_life));
+    callout_observers_.push_back(helix::ui::observe_string<PrinterImageWidget>(
+        lv_xml_get_subject(nullptr, "tool_badge_text"), this,
+        [](PrinterImageWidget* w, const char*) { w->schedule_callout_layout(); }, tools_life));
 
     const auto chip = [&](const char* name) { return lv_obj_find_by_name(widget_obj_, name); };
     callout_spin_pct_ = -1; // fresh icons: the next update sets their spin
@@ -776,8 +787,12 @@ void PrinterImageWidget::update_callouts() {
                 helix::ui::fan_spin_stop(icon);
         }
     }
+    // Laid out now, not on the deferred timer: a chip that just appeared has no
+    // measured width yet, and its label collapses until it gets one. This reads
+    // the geometry the last layout pass left and forces none; a tree not laid
+    // out yet reads a zero area and stays ImageOnly until attach()'s timer.
     if (changed)
-        schedule_callout_layout();
+        apply_callout_layout();
 }
 
 void PrinterImageWidget::on_size_changed(int colspan, int rowspan, int /*width_px*/,
@@ -898,7 +913,19 @@ void PrinterImageWidget::apply_callout_layout() {
     };
 
     const std::string widest_heater = helix::ui::temperature::heater_display(9990, 9990).temp;
-    const int toolhead_icons = icon_px("heater") + col_gap + icon_px("fan");
+    // The tool badge sits in the nozzle glyph's own row, after its column gap,
+    // in the font the badge label renders; hidden on a single-tool printer.
+    int nozzle_icons = icon_px("heater");
+    if (lv_obj_t* nozzle = lv_obj_find_by_name(widget_obj_, "callout_chip_nozzle")) {
+        lv_obj_t* badge = lv_obj_find_by_name(nozzle, "tool_badge");
+        if (badge && !lv_obj_has_flag(badge, LV_OBJ_FLAG_HIDDEN)) {
+            nozzle_icons +=
+                lv_obj_get_style_pad_column(lv_obj_get_parent(badge), LV_PART_MAIN) +
+                helix::ui::measure_text_px(lv_label_get_text(badge),
+                                           lv_obj_get_style_text_font(badge, LV_PART_MAIN));
+        }
+    }
+    const int toolhead_icons = nozzle_icons + col_gap + icon_px("fan");
     const auto text = [](lv_subject_t* s) { return std::string(lv_subject_get_string(s)); };
     auto& ps = get_printer_state();
 
@@ -912,7 +939,7 @@ void PrinterImageWidget::apply_callout_layout() {
         bool capable;
     };
     const Chip chips[] = {
-        {CalloutKind::Nozzle, "callout_chip_nozzle", &s_callout_nozzle_shown, icon_px("heater"),
+        {CalloutKind::Nozzle, "callout_chip_nozzle", &s_callout_nozzle_shown, nozzle_icons,
          text(&s_callout_nozzle_text), widest_heater, true},
         {CalloutKind::Bed, "callout_chip_bed", &s_callout_bed_shown, icon_px("radiator"),
          text(&s_callout_bed_text), widest_heater, true},
