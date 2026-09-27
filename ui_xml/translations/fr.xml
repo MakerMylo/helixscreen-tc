@@ -2692,6 +2692,7 @@
   <translation tag="Spoolman was not configured." fr="Spoolman n&apos;était pas configuré."/>
   <translation tag="Spoolman: %zu Spool%s" fr="Spoolman : %zu bobine%s"/>
   <translation tag="Spoolman: %zu/%zu Spool%s" fr="Spoolman : %zu/%zu bobine%s"/>
+  <translation tag="Spools are on the bed: tap the drying banner to confirm they are off, then restart." fr="Des bobines sont sur le plateau : touchez le bandeau de séchage pour confirmer qu&apos;elles sont retirées, puis redémarrez."/>
   <translation tag="Spools on the bed: start drying, or confirm none were placed" fr="Bobines sur le plateau : démarrez le séchage ou confirmez qu&apos;aucune n&apos;a été posée"/>
   <translation tag="Spools removed" fr="Bobines retirées"/>
   <translation tag="Square Corner Velocity" fr="Vitesse dans les angles"/>

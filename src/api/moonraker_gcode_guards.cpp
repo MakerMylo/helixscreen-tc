@@ -4,9 +4,19 @@
 #include "moonraker_gcode_guards.h"
 
 #include "gcode_homing.h"
+#include "lvgl/src/others/translation/lv_translation.h"
 #include "printer_state.h"
 #include "spdlog/spdlog.h"
 #include "spool_latch_gate.h"
+
+namespace helix {
+
+const char* spool_latch_restart_message() {
+    return lv_tr("Spools are on the bed: tap the drying banner to confirm they are off, then "
+                 "restart.");
+}
+
+} // namespace helix
 
 namespace helix::api {
 
@@ -73,6 +83,19 @@ bool reject_job_while_spools_on_bed(const helix::PrinterState* state, const char
     spdlog::warn("[Moonraker API] Refusing {} while spools are on the bed", method);
     if (on_error) {
         on_error(MoonrakerError::not_ready(method, helix::kSpoolLatchMessage));
+    }
+    return true;
+}
+
+bool reject_restart_while_spools_on_bed(
+    const helix::PrinterState* state, const char* method,
+    const std::function<void(const MoonrakerError&)>& on_error) {
+    if (!state || !state->spool_latch_active()) {
+        return false;
+    }
+    spdlog::warn("[Moonraker API] Refusing {} while spools are on the bed", method);
+    if (on_error) {
+        on_error(MoonrakerError::not_ready(method, helix::spool_latch_restart_message()));
     }
     return true;
 }

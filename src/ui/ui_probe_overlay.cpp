@@ -24,6 +24,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include <memory>
+
 #include "hv/json.hpp"
 
 using json = nlohmann::json;
@@ -112,14 +114,17 @@ bool probe_send_gcode(const char* gcode, const char* label) {
         return false;
     }
     spdlog::debug("[Probe] Sending {}: {}", label, gcode);
-    bool refused = false;
-    api->execute_gcode(gcode, nullptr, [&refused](const MoonrakerError& err) {
-        refused = true;
+    // The error callback can run long after this returns (an RPC error or a
+    // timeout), so it owns its flag rather than reaching into this frame. Read
+    // right after the call, the flag says whether the gate refused on the spot.
+    auto refused = std::make_shared<bool>(false);
+    api->execute_gcode(gcode, nullptr, [refused](const MoonrakerError& err) {
+        *refused = true;
         helix::ui::queue_update("Probe::send_refused", [msg = err.message] {
             ToastManager::instance().show(ToastSeverity::ERROR, msg.c_str(), 6000);
         });
     });
-    return !refused;
+    return !*refused;
 }
 
 } // namespace helix::ui

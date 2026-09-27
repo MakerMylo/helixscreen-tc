@@ -2692,6 +2692,7 @@
   <translation tag="Spoolman was not configured." de="Spoolman war nicht konfiguriert."/>
   <translation tag="Spoolman: %zu Spool%s" de="Spoolman: %zu Spule%s"/>
   <translation tag="Spoolman: %zu/%zu Spool%s" de="Spoolman: %zu/%zu Spule%s"/>
+  <translation tag="Spools are on the bed: tap the drying banner to confirm they are off, then restart." de="Spulen liegen auf dem Heizbett: Tippe auf das Trocknungsbanner, um zu bestätigen, dass sie entnommen sind, und starte dann neu."/>
   <translation tag="Spools on the bed: start drying, or confirm none were placed" de="Spulen auf dem Heizbett: Trocknung starten oder bestätigen, dass keine eingelegt wurden"/>
   <translation tag="Spools removed" de="Spulen entnommen"/>
   <translation tag="Square Corner Velocity" de="Eckgeschwindigkeit"/>

@@ -16,6 +16,11 @@ namespace helix {
 inline constexpr const char* kSpoolLatchMessage =
     "Spools are on the bed: remove them and confirm before moving the printer";
 
+/// A restart's refusal says where to go: restarting releases the steppers, so
+/// it waits for the spools to be confirmed off. Translated; defined beside the
+/// send-layer guards.
+const char* spool_latch_restart_message();
+
 /// First whitespace-delimited token of each non-blank, non-comment line, upper-cased.
 inline std::vector<std::string> gcode_line_tokens(std::string_view script) {
     std::vector<std::string> tokens;

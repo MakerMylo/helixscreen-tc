@@ -3004,6 +3004,8 @@ translations:
   Spoolman was not configured.: Spoolman non era configurato.
   'Spoolman: %zu Spool%s': 'Spoolman: %zu bobina%s'
   'Spoolman: %zu/%zu Spool%s': 'Spoolman: %zu/%zu bobina%s'
+  'Spools are on the bed: tap the drying banner to confirm they are off, then restart.': "Ci sono bobine sul piano: tocca il banner dell'essiccazione per confermare di averle tolte, poi riavvia."
+
   'Spools on the bed: start drying, or confirm none were placed': "Bobine sul piano: avvia l'essiccazione o conferma di non averne appoggiata nessuna"
 
   Spools removed: Bobine tolte

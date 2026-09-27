@@ -2793,6 +2793,8 @@ translations:
   Spoolman was not configured.: Spoolman 未配置。
   'Spoolman: %zu Spool%s': 'Spoolman: %zu 个线轴%s'
   'Spoolman: %zu/%zu Spool%s': 'Spoolman: %zu/%zu 个线轴%s'
+  'Spools are on the bed: tap the drying banner to confirm they are off, then restart.': 热床上有料盘:点击烘干横幅确认已取下,然后再重启。
+
   'Spools on the bed: start drying, or confirm none were placed': 料盘在热床上:开始烘干,或确认未放置料盘
 
   Spools removed: 料盘已取下

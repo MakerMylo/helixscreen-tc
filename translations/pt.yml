@@ -3010,6 +3010,8 @@ translations:
   Spoolman was not configured.: Spoolman não estava configurado.
   'Spoolman: %zu Spool%s': 'Spoolman: %zu Bobina%s'
   'Spoolman: %zu/%zu Spool%s': 'Spoolman: %zu/%zu Bobina%s'
+  'Spools are on the bed: tap the drying banner to confirm they are off, then restart.': 'Há carretéis na mesa: toque no aviso de secagem para confirmar que foram retirados e depois reinicie.'
+
   'Spools on the bed: start drying, or confirm none were placed': 'Carretéis na mesa: inicie a secagem ou confirme que nenhum foi colocado'
 
   Spools removed: Carretéis retirados

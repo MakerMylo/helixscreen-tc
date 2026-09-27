@@ -142,7 +142,8 @@ void PrinterRecoveryService::recover(SuccessCallback on_success, ErrorCallback o
     // release the steppers just the same (prestonbrown/helixscreen#1730).
     if (get_printer_state().spool_latch_active()) {
         spdlog::warn("[Recovery] Refusing firmware restart while spools are on the bed");
-        on_error(MoonrakerError::not_ready("printer.firmware_restart", kSpoolLatchMessage));
+        on_error(
+            MoonrakerError::not_ready("printer.firmware_restart", spool_latch_restart_message()));
         return;
     }
 

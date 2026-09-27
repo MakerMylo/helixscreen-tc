@@ -18,6 +18,11 @@
 #include "../ui_test_utils.h"
 #include "app_globals.h"
 
+#include <algorithm>
+#include <optional>
+#include <string>
+#include <vector>
+
 #include "../catch_amalgamated.hpp"
 
 using namespace helix;
@@ -215,7 +220,7 @@ TEST_CASE_METHOD(SpoolLatchFixture, "the restart paths refuse while spools are o
     SECTION("firmware restart") {
         api->restart_firmware([] {}, on_error());
         CHECK(error_called);
-        CHECK(captured_error.message.find("Spools are on the bed") != std::string::npos);
+        CHECK(captured_error.message.find("tap the drying banner") != std::string::npos);
     }
     SECTION("Klipper restart") {
         api->restart_klipper([] {}, on_error());
@@ -229,4 +234,56 @@ TEST_CASE_METHOD(SpoolLatchFixture, "the restart paths refuse while spools are o
         api->execute_gcode("M112", nullptr, on_error());
         CHECK_FALSE(error_called);
     }
+}
+
+namespace {
+
+/// Holds a gcode send's error callback so a test can fire it after the sender
+/// has returned, the way a real RPC error or timeout arrives.
+class DeferredErrorClient : public MoonrakerClientMock {
+  public:
+    using MoonrakerClientMock::MoonrakerClientMock;
+    std::function<void(const MoonrakerError&)> held_error;
+
+    helix::RequestId send_jsonrpc(
+        const std::string& method, const nlohmann::json& params,
+        std::function<void(const nlohmann::json&)> success_cb,
+        std::function<void(const MoonrakerError&)> error_cb, uint32_t timeout_ms = 0,
+        bool silent = false,
+        std::optional<helix::rpc_error_policy::CallerIntent> intent = std::nullopt) override {
+        if (method == "printer.gcode.script") {
+            held_error = std::move(error_cb);
+            return 1;
+        }
+        return MoonrakerClientMock::send_jsonrpc(method, params, std::move(success_cb),
+                                                 std::move(error_cb), timeout_ms, silent, intent);
+    }
+};
+
+} // namespace
+
+TEST_CASE_METHOD(LVGLTestFixture,
+                 "a probe command's late error writes into nothing it returned from",
+                 "[spool_latch][probe][1730]") {
+    DeferredErrorClient client(MoonrakerClientMock::PrinterType::VORON_24);
+    PrinterState state;
+    state.init_subjects(false);
+    state.set_klippy_state_sync(KlippyState::READY);
+    MoonrakerAPI api(client, state);
+    IMoonrakerAPI* previous = get_moonraker_api();
+    set_moonraker_api(&api);
+    std::vector<std::string> toasts;
+    helix::ui::set_test_toast_hook(
+        [&](ToastSeverity, const std::string& m, uint32_t) { toasts.push_back(m); });
+
+    REQUIRE(helix::ui::probe_send_gcode("BEACON_CALIBRATE", "Beacon Calibrate"));
+    REQUIRE(client.held_error);
+
+    // The sender's frame is gone; the error still reaches the user.
+    client.held_error(MoonrakerError::not_ready("printer.gcode.script", "probe timed out"));
+    helix::ui::UpdateQueue::instance().drain();
+    CHECK(std::find(toasts.begin(), toasts.end(), "probe timed out") != toasts.end());
+
+    helix::ui::set_test_toast_hook(nullptr);
+    set_moonraker_api(previous);
 }

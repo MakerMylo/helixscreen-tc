@@ -2975,6 +2975,8 @@ translations:
   Spoolman was not configured.: Spoolman не был настроен.
   'Spoolman: %zu Spool%s': 'Spoolman: %zu катушк%s'
   'Spoolman: %zu/%zu Spool%s': 'Spoolman: %zu/%zu катушк%s'
+  'Spools are on the bed: tap the drying banner to confirm they are off, then restart.': 'На столе катушки: нажмите на баннер сушки, чтобы подтвердить, что они сняты, затем перезапустите.'
+
   'Spools on the bed: start drying, or confirm none were placed': 'Катушки на столе: начните сушку или подтвердите, что ничего не положено'
 
   Spools removed: Катушки сняты
