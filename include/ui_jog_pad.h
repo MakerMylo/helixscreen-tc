@@ -8,7 +8,9 @@
 #include <lvgl.h>
 
 // Jog pad event callbacks
-typedef void (*jog_pad_jog_cb_t)(helix::JogDirection direction, float distance_mm, void* user_data);
+// The jog callback returns whether a hold-to-repeat under way may keep
+// repeating this zone (false = the jog was refused or fully clamped).
+typedef bool (*jog_pad_jog_cb_t)(helix::JogDirection direction, float distance_mm, void* user_data);
 typedef void (*jog_pad_home_cb_t)(void* user_data);
 
 /**
@@ -30,10 +32,23 @@ lv_obj_t* ui_jog_pad_create(lv_obj_t* parent);
  * Set jog callback (called when directional zone is clicked)
  *
  * @param obj Jog pad object
- * @param cb Callback function (direction, distance_mm, user_data)
+ * @param cb Callback function (direction, distance_mm, user_data); returns
+ *           false to stop a hold-to-repeat in progress
  * @param user_data Optional user data passed to callback
  */
 void ui_jog_pad_set_jog_callback(lv_obj_t* obj, jog_pad_jog_cb_t cb, void* user_data);
+
+/**
+ * Cancel any hold-to-repeat under way on the pad.
+ *
+ * The owner calls this when a jog error arrives asynchronously or the panel
+ * deactivates: the repeat's next tick would re-send a jog the owner already
+ * refused on the printer's behalf.
+ *
+ * @param obj Jog pad object
+ */
+// NAMESPACE_OK: joins this header's global ui_jog_pad_* free-function API
+void ui_jog_pad_stop_repeat(lv_obj_t* obj);
 
 /**
  * Set home callback (called when center button is clicked)

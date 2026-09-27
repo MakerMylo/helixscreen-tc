@@ -107,6 +107,9 @@ static std::string clean_gcode_error(const std::string& msg) {
 
 // Forward declarations for XML event callbacks
 static void on_motion_z_button(lv_event_t* e);
+static void on_motion_z_button_pressed(lv_event_t* e);
+static void on_motion_z_button_released(lv_event_t* e);
+static void on_motion_z_button_press_lost(lv_event_t* e);
 static void on_motion_qgl(lv_event_t* e);
 static void on_motion_z_tilt(lv_event_t* e);
 static void on_jog_mode_fine(lv_event_t* e);
@@ -157,6 +160,9 @@ MotionPanel::MotionPanel() {
 MotionPanel::~MotionPanel() {
     // SubjectManager (subjects_) handles deinit automatically via RAII
     // No need to call deinit_subjects() manually
+    // StaticPanelRegistry::destroy_all() can run before lv_deinit(), so the
+    // hold timer must be cancelled here too, not only in the cleanup hooks.
+    stop_hold_repeat();
 }
 
 // ============================================================================
@@ -277,6 +283,11 @@ void MotionPanel::register_callbacks() {
 
     // Register unified Z-axis button callback (user_data from XML distinguishes buttons)
     lv_xml_register_event_cb(nullptr, "on_motion_z_button", on_motion_z_button);
+    // Hold-to-repeat arms on press and stops on release / press lost
+    lv_xml_register_event_cb(nullptr, "on_motion_z_button_pressed", on_motion_z_button_pressed);
+    lv_xml_register_event_cb(nullptr, "on_motion_z_button_released", on_motion_z_button_released);
+    lv_xml_register_event_cb(nullptr, "on_motion_z_button_press_lost",
+                             on_motion_z_button_press_lost);
 
     // Register leveling button callbacks (delegate to ControlsPanel singleton)
     lv_xml_register_event_cb(nullptr, "on_motion_qgl", on_motion_qgl);
@@ -350,6 +361,7 @@ void MotionPanel::on_deactivating(DeactivateReason reason) {
     // in_flight forever, and re-arm the edge warnings.
     jog_coalescer_.reset();
     edge_warned_.fill(false);
+    stop_hold_repeat();
 }
 
 void MotionPanel::on_ui_destroyed() {
@@ -360,6 +372,29 @@ void MotionPanel::on_ui_destroyed() {
     jog_pad_ = nullptr;
     parent_screen_ = nullptr;
     jog_coalescer_.reset();
+    stop_hold_repeat();
+}
+
+// ============================================================================
+// Hold-to-Repeat (Z buttons; the pad owns its own repeat)
+// ============================================================================
+
+void MotionPanel::begin_z_hold(const char* button_name) {
+    if (!button_name)
+        return;
+    snprintf(z_hold_button_, sizeof(z_hold_button_), "%s", button_name);
+    z_hold_timer_.begin(&MotionPanel::z_hold_fire, this);
+}
+
+bool MotionPanel::z_hold_fire(void* user_data) {
+    auto* self = static_cast<MotionPanel*>(user_data);
+    return self->handle_z_button(self->z_hold_button_);
+}
+
+void MotionPanel::stop_hold_repeat() {
+    z_hold_timer_.cancel();
+    if (jog_pad_)
+        ui_jog_pad_stop_repeat(jog_pad_);
 }
 
 // ============================================================================
@@ -561,13 +596,13 @@ void MotionPanel::update_z_display() {
 // Z Button Handler
 // ============================================================================
 
-void MotionPanel::handle_z_button(const char* name) {
+bool MotionPanel::handle_z_button(const char* name) {
     spdlog::debug("[{}] Z button callback fired! Button name: '{}'", get_name(),
                   name ? name : "(null)");
 
     if (!name) {
         spdlog::error("[{}] Button has no name!", get_name());
-        return;
+        return false;
     }
 
     // Z distance from current jog mode (Fine: 0.1/1, Coarse: 1/10, Turbo: 10/50)
@@ -586,7 +621,7 @@ void MotionPanel::handle_z_button(const char* name) {
         distance = -large_dist;
     } else {
         spdlog::error("[{}] Unknown button name: '{}'", get_name(), name);
-        return;
+        return false;
     }
 
     // For bed-moves printers (CoreXY etc), invert direction so arrows match physical motion:
@@ -604,24 +639,25 @@ void MotionPanel::handle_z_button(const char* name) {
                                        jog_coalescer_.predicted_z(current_z_) - current_z_,
                                        distance, bounds.z_min, bounds.z_max);
         if (distance == 0.0) {
-            return;
+            return false;
         }
     }
 
     spdlog::debug("[{}] Z jog: {:+.2f}mm (bed_moves={})", get_name(), distance, bed_moves_);
 
-    dispatch_jog({0.0, 0.0, distance});
+    return dispatch_jog({0.0, 0.0, distance});
 }
 
 // ============================================================================
 // Jog Pad Callbacks
 // ============================================================================
 
-void MotionPanel::jog_pad_jog_cb(JogDirection direction, float distance_mm, void* user_data) {
+bool MotionPanel::jog_pad_jog_cb(JogDirection direction, float distance_mm, void* user_data) {
     auto* self = static_cast<MotionPanel*>(user_data);
-    if (self) {
-        self->jog(direction, distance_mm);
+    if (!self) {
+        return false;
     }
+    return self->jog(direction, distance_mm);
 }
 
 void MotionPanel::jog_pad_home_cb(void* user_data) {
@@ -655,7 +691,7 @@ void MotionPanel::set_position(float x, float y, float z) {
     update_z_display(); // Also copies to pos_z_subject_
 }
 
-void MotionPanel::jog(JogDirection direction, float distance_mm) {
+bool MotionPanel::jog(JogDirection direction, float distance_mm) {
     const char* dir_names[] = {"N(+Y)",    "S(-Y)",    "E(+X)",    "W(-X)",
                                "NE(+X+Y)", "NW(-X+Y)", "SE(+X-Y)", "SW(-X-Y)"};
 
@@ -716,9 +752,9 @@ void MotionPanel::jog(JogDirection direction, float distance_mm) {
     }
 
     if (ddx == 0.0 && ddy == 0.0) {
-        return;
+        return false;
     }
-    dispatch_jog({ddx, ddy, 0.0});
+    return dispatch_jog({ddx, ddy, 0.0});
 }
 
 double MotionPanel::clamp_axis_and_warn(helix::Axis axis, double current, double uncommitted,
@@ -748,25 +784,24 @@ double MotionPanel::clamp_axis_and_warn(helix::Axis axis, double current, double
     return result.allowed;
 }
 
-void MotionPanel::dispatch_jog(const helix::AxisMove& delta) {
+bool MotionPanel::dispatch_jog(const helix::AxisMove& delta) {
     if (auto immediate = jog_coalescer_.on_tap(delta)) {
-        send_jog_move(*immediate);
-    } else {
-        spdlog::debug("[{}] Jog coalesced: predicted x={:+.2f} y={:+.2f} z={:+.2f}", get_name(),
-                      jog_coalescer_.predicted_x(current_x_),
-                      jog_coalescer_.predicted_y(current_y_),
-                      jog_coalescer_.predicted_z(current_z_));
+        return send_jog_move(*immediate);
     }
+    spdlog::debug("[{}] Jog coalesced: predicted x={:+.2f} y={:+.2f} z={:+.2f}", get_name(),
+                  jog_coalescer_.predicted_x(current_x_), jog_coalescer_.predicted_y(current_y_),
+                  jog_coalescer_.predicted_z(current_z_));
+    return true;
 }
 
-void MotionPanel::dispatch_target(const helix::AxisTarget& target) {
+bool MotionPanel::dispatch_target(const helix::AxisTarget& target) {
     // Soft-stop for absolute moves, same bounds source the jog clamp uses: a
     // set axis without a known envelope cannot be clamped, and sending it
     // unclamped would trust exactly the value that is missing.
     const auto bounds = get_printer_state().get_axis_bounds();
     if ((target.x && !bounds.has_x) || (target.y && !bounds.has_y) || (target.z && !bounds.has_z)) {
         NOTIFY_INFO(lv_tr("Toolhead position unknown"));
-        return;
+        return false;
     }
     std::optional<std::pair<double, double>> z_range;
     if (bounds.has_z) {
@@ -779,20 +814,19 @@ void MotionPanel::dispatch_target(const helix::AxisTarget& target) {
 
     target_start_z_ = jog_coalescer_.target_start_z(current_z_);
     if (auto immediate = jog_coalescer_.on_target(clamped)) {
-        send_jog_move(*immediate);
-    } else {
-        spdlog::debug("[{}] Target coalesced: predicted x={:+.2f} y={:+.2f} z={:+.2f}", get_name(),
-                      jog_coalescer_.predicted_x(current_x_),
-                      jog_coalescer_.predicted_y(current_y_),
-                      jog_coalescer_.predicted_z(current_z_));
+        return send_jog_move(*immediate);
     }
+    spdlog::debug("[{}] Target coalesced: predicted x={:+.2f} y={:+.2f} z={:+.2f}", get_name(),
+                  jog_coalescer_.predicted_x(current_x_), jog_coalescer_.predicted_y(current_y_),
+                  jog_coalescer_.predicted_z(current_z_));
+    return true;
 }
 
-void MotionPanel::send_jog_move(const helix::JogCoalescer::CoalescedMove& move) {
+bool MotionPanel::send_jog_move(const helix::JogCoalescer::CoalescedMove& move) {
     IMoonrakerAPI* api = get_moonraker_api();
     if (!api) {
         jog_coalescer_.on_error();
-        return;
+        return false;
     }
     auto& settings = SettingsManager::instance();
     // Storage keeps the user's choice; emission is clamped to what the printer
@@ -810,6 +844,9 @@ void MotionPanel::send_jog_move(const helix::JogCoalescer::CoalescedMove& move) 
     });
     auto on_error = lifetime_.bg_cb("MotionPanel::on_jog_error", [this](const MoonrakerError& err) {
         jog_coalescer_.on_error();
+        // The printer refused the move: a hold-to-repeat still ticking would
+        // re-send it every interval and raise one error toast per tick.
+        stop_hold_repeat();
         NOTIFY_ERROR(lv_tr("Jog failed: {}"), clean_gcode_error(err.user_message()));
     });
 
@@ -820,6 +857,7 @@ void MotionPanel::send_jog_move(const helix::JogCoalescer::CoalescedMove& move) 
         api->motion().move_to(*target, xy_feedrate, z_feedrate, std::move(on_ack),
                               std::move(on_error), target_start_z_);
     }
+    return true;
 }
 
 void MotionPanel::home(char axis) {
@@ -856,10 +894,42 @@ void MotionPanel::home(char axis) {
 
 static void on_motion_z_button(lv_event_t* e) {
     LVGL_SAFE_EVENT_CB_BEGIN("[MotionPanel] on_motion_z_button");
+    MotionPanel& panel = get_global_motion_panel();
+    // A hold that repeated must not add one extra jog on release; a plain
+    // tap (no repeat) jogs exactly once through this path as before.
+    const bool swallow = panel.z_hold_timer().swallow_click();
+    panel.z_hold_timer().cancel();
+    if (!swallow) {
+        const char* button_id = static_cast<const char*>(lv_event_get_user_data(e));
+        if (button_id) {
+            panel.handle_z_button(button_id);
+        }
+    } else {
+        spdlog::debug("[MotionPanel] Z click swallowed after hold repeat");
+    }
+    LVGL_SAFE_EVENT_CB_END();
+}
+
+static void on_motion_z_button_pressed(lv_event_t* e) {
+    LVGL_SAFE_EVENT_CB_BEGIN("[MotionPanel] on_motion_z_button_pressed");
     const char* button_id = static_cast<const char*>(lv_event_get_user_data(e));
     if (button_id) {
-        get_global_motion_panel().handle_z_button(button_id);
+        get_global_motion_panel().begin_z_hold(button_id);
     }
+    LVGL_SAFE_EVENT_CB_END();
+}
+
+static void on_motion_z_button_released(lv_event_t* e) {
+    LVGL_SAFE_EVENT_CB_BEGIN("[MotionPanel] on_motion_z_button_released");
+    (void)e;
+    get_global_motion_panel().z_hold_timer().release();
+    LVGL_SAFE_EVENT_CB_END();
+}
+
+static void on_motion_z_button_press_lost(lv_event_t* e) {
+    LVGL_SAFE_EVENT_CB_BEGIN("[MotionPanel] on_motion_z_button_press_lost");
+    (void)e;
+    get_global_motion_panel().z_hold_timer().cancel();
     LVGL_SAFE_EVENT_CB_END();
 }
 

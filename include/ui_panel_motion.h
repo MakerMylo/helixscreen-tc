@@ -6,6 +6,7 @@
 #include "ui_observer_guard.h"
 
 #include "axis.h"
+#include "hold_repeat_timer.h"
 #include "jog_coalescer.h"
 #include "overlay_base.h"
 #include "subject_managed_panel.h"
@@ -86,10 +87,26 @@ class MotionPanel : public OverlayBase {
     helix::JogMode get_jog_mode() const {
         return current_mode_;
     }
-    void jog(helix::JogDirection direction, float distance_mm);
+
+    /// Jog one zone. Returns false when nothing was dispatched (fully clamped
+    /// at a limit, or the send was refused) - a hold-to-repeat reading false
+    /// stops repeating.
+    bool jog(helix::JogDirection direction, float distance_mm);
     void home(char axis);
-    void handle_z_button(const char* name);
+
+    /// Jog one Z button. Same false-means-refused contract as jog().
+    bool handle_z_button(const char* name);
     void set_jog_mode(helix::JogMode mode); // Switch between Fine/Coarse/Turbo jog mode
+
+    /// The Z hold timer, for the XML pressed/released/press_lost callbacks.
+    /// Also the test seam: poll() drives the repeat without a periodic timer,
+    /// which the unit-test harness never runs.
+    helix::HoldRepeatTimer& z_hold_timer() {
+        return z_hold_timer_;
+    }
+
+    /// Arm the Z hold repeat for a named button press (the XML pressed event).
+    void begin_z_hold(const char* button_name);
 
     /// Clamp one axis against its bounds, raising at most one warning per
     /// approach. Returns the permitted delta, 0.0 when fully blocked.
@@ -147,13 +164,25 @@ class MotionPanel : public OverlayBase {
     /// hold-to-repeat makes that a flood rather than a nuisance.
     std::array<bool, 3> edge_warned_{};
 
-    // Route a tap/flush through the coalescer and send if idle.
-    void dispatch_jog(const helix::AxisMove& delta);
+    /// Hold-to-repeat for the four Z buttons. The pad owns its own repeat
+    /// (it is the only one that can see the press point move between zones);
+    /// both use helix::HoldRepeatTimer so the timing logic is shared.
+    helix::HoldRepeatTimer z_hold_timer_;
+    char z_hold_button_[16] = {};
+
+    /// stop_hold_repeat() sweeps both this timer and the pad's on every
+    /// teardown path.
+    void stop_hold_repeat();
+    static bool z_hold_fire(void* user_data);
+
+    // Route a tap/flush through the coalescer and send if idle. Returns
+    // whether the move was dispatched or accepted as pending.
+    bool dispatch_jog(const helix::AxisMove& delta);
     // Route an absolute target through the coalescer and send if idle.
-    void dispatch_target(const helix::AxisTarget& target);
+    bool dispatch_target(const helix::AxisTarget& target);
     // Send one coalesced move (delta or target); ack/error callbacks re-enter
-    // the coalescer.
-    void send_jog_move(const helix::JogCoalescer::CoalescedMove& move);
+    // the coalescer. Returns false when there is no API to send through.
+    bool send_jog_move(const helix::JogCoalescer::CoalescedMove& move);
 
     ObserverGuard position_x_observer_;
     ObserverGuard position_y_observer_;
@@ -170,7 +199,7 @@ class MotionPanel : public OverlayBase {
     // API layer; this makes the pad visibly unavailable to match.
     void update_jog_pad_enabled();
 
-    static void jog_pad_jog_cb(helix::JogDirection direction, float distance_mm, void* user_data);
+    static bool jog_pad_jog_cb(helix::JogDirection direction, float distance_mm, void* user_data);
     static void jog_pad_home_cb(void* user_data);
     // Position observers use lambda-based observer factory (no static callbacks needed)
 
