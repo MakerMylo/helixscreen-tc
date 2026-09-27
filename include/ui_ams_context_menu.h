@@ -308,10 +308,11 @@ class AmsContextMenu : public ContextMenu {
 
     /// One slot's Load/Unload decision, in the terms the menu renders from.
     struct SlotOpDecision {
-        bool is_loaded = false;       ///< the open-time snapshot OR the live accessors
-        bool live_loaded = false;     ///< the live half alone, for the diagnostic log
-        bool toolhead_unload = false; ///< the narrowed loaded signal both gates use
-        std::optional<bool> presence; ///< slot_presence(), tri-state
+        bool is_loaded = false;          ///< the open-time snapshot OR the live accessors
+        bool live_loaded = false;        ///< the live half alone, for the diagnostic log
+        bool toolhead_unload = false;    ///< the narrowed loaded signal; the Load gate
+        bool parked_in_toolhead = false; ///< slot_filament_parked_in_toolhead(); Unload only
+        std::optional<bool> presence;    ///< slot_presence(), tri-state
         UnloadMode unload_mode = UnloadMode::Unavailable;
         bool unload_enabled = false;
         bool can_load = false;

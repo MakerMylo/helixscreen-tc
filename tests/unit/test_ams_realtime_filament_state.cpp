@@ -115,6 +115,8 @@ TEST_CASE_METHOD(LVGLTestFixture,
     // Slot 0 active (LOADED), slots 1 & 3 hold filament (AVAILABLE), slot 2 empty.
     json status = json{
         {"toolhead", json{{"extruder", "extruder"}}}, // active tool = slot 0
+        {"filament_feed left",
+         json{{"extruder0", json{{"filament_detected", true}, {"channel_state", "load_finish"}}}}},
         {"print_task_config", json{{"filament_exist", json::array({true, true, false, true})}}}};
     SnapmakerRealtimeTestAccess::handle_status(backend, status);
 
@@ -176,6 +178,8 @@ TEST_CASE_METHOD(LVGLTestFixture, "AmsState publishes per-slot LIVE subjects on 
     // Drive a known state: slot 0 LOADED, slot 1 AVAILABLE, slot 2 empty.
     json status = json{
         {"toolhead", json{{"extruder", "extruder"}}},
+        {"filament_feed left",
+         json{{"extruder0", json{{"filament_detected", true}, {"channel_state", "load_finish"}}}}},
         {"print_task_config", json{{"filament_exist", json::array({true, true, false, false})}}}};
     SnapmakerRealtimeTestAccess::handle_status(*backend_ptr, status);
 
@@ -314,6 +318,8 @@ TEST_CASE_METHOD(LVGLTestFixture, "Active-loaded subject is the single highlight
 
     json loaded = json{
         {"toolhead", json{{"extruder", "extruder"}}},
+        {"filament_feed left",
+         json{{"extruder0", json{{"filament_detected", true}, {"channel_state", "load_finish"}}}}},
         {"print_task_config", json{{"filament_exist", json::array({true, false, false, false})}}}};
     SnapmakerRealtimeTestAccess::handle_status(*backend_ptr, loaded);
     ams.sync_from_backend();
@@ -616,6 +622,8 @@ TEST_CASE_METHOD(LVGLTestFixture, "AMS clears filament_loaded after unload compl
     // Load slot 0: active tool = extruder0, filament present.
     json loaded = json{
         {"toolhead", json{{"extruder", "extruder"}}},
+        {"filament_feed left",
+         json{{"extruder0", json{{"filament_detected", true}, {"channel_state", "load_finish"}}}}},
         {"print_task_config", json{{"filament_exist", json::array({true, false, false, false})}}}};
     SnapmakerRealtimeTestAccess::handle_status(*backend_ptr, loaded);
     ams.sync_from_backend();

@@ -308,16 +308,13 @@ PathSegment AmsBackendSnapmaker::get_slot_filament_segment(int slot_index) const
     if (slot_index < 0 || slot_index >= NUM_TOOLS)
         return PathSegment::NONE;
 
-    // Filament is threaded all the way into THIS tool's nozzle only when the
-    // channel_state latch says load_finish. The per-tool motion sensor
-    // (sensor_filament_present_) is NOT a reliable "at toolhead" signal on
-    // current firmware — after an unload it lingers present (the tip parks at
-    // the toolhead sensor while retracting out of the melt zone), so keying
-    // NOZZLE off it left unloaded lanes rendering as fully loaded (the whole
-    // point of the channel_state fix). PARALLEL multi-toolhead machine: each
-    // tool feeds its own dedicated nozzle, so a loaded tool always has filament
-    // at its own nozzle — render NOZZLE.
-    if (loaded_at_toolhead_[slot_index]) {
+    // Filament in THIS tool's toolhead draws to its own nozzle (PARALLEL: each
+    // tool feeds a dedicated nozzle): loaded per the channel_state latch, or
+    // parked short of the nozzle per the toolhead switch. The same answer as
+    // filament_loaded for the picked tool, so the aggregate and per-slot paths
+    // agree. The switch alone cannot say "loaded" (it still reads filament
+    // after an unload), which is why parked stays distinct from the latch.
+    if (loaded_at_toolhead_[slot_index] || parked_in_toolhead_locked(slot_index)) {
         return PathSegment::NOZZLE;
     }
 
@@ -559,13 +556,7 @@ bool AmsBackendSnapmaker::can_unload_from_toolhead(int slot_index) const {
     if (!slot || !slot->is_present()) {
         return false;
     }
-    // Filament must be AT this toolhead, not merely parked in the buffer. The
-    // channel_state latch reads true only between load_finish and the next
-    // unload_finish/wait_insert/preload_finish. The per-tool motion sensor
-    // (e{N}_filament) is NOT a reliable load signal on current firmware — it
-    // stays true after an unload — so it must not gate Unload. Without the
-    // latch the menu kept offering Unload for an already-unloaded tool. See the
-    // header note + the u1_channel_state_reference.md live capture.
+    // Loaded to the nozzle: the channel_state latch. See the header note.
     return loaded_at_toolhead_[slot_index];
 }
 
@@ -574,8 +565,16 @@ bool AmsBackendSnapmaker::slot_has_filament_at_toolhead(int slot_index) const {
     if (slot_index < 0 || slot_index >= NUM_TOOLS) {
         return false;
     }
-    // channel_state latch, NOT the motion sensor — see can_unload_from_toolhead.
+    // channel_state latch, NOT the toolhead switch; see the header note.
     return loaded_at_toolhead_[slot_index];
+}
+
+bool AmsBackendSnapmaker::slot_filament_parked_in_toolhead(int slot_index) const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (slot_index < 0 || slot_index >= NUM_TOOLS) {
+        return false;
+    }
+    return parked_in_toolhead_locked(slot_index);
 }
 
 bool AmsBackendSnapmaker::slot_is_actively_loaded(int slot_index) const {
@@ -632,7 +631,7 @@ AmsBackend::FilamentOpEligibility AmsBackendSnapmaker::slot_op_eligibility(int s
     if (load && loaded) {
         return E::AlreadyLoaded;
     }
-    if (!load && !loaded) {
+    if (!load && !loaded && !slot_filament_parked_in_toolhead(slot_index)) {
         return E::NotLoaded;
     }
     // Eligible on state; now the feeder has to be able to act.
@@ -1336,17 +1335,14 @@ void AmsBackendSnapmaker::handle_status_update(const nlohmann::json& notificatio
             if (status.contains(key) && status[key].is_object()) {
                 auto new_state = parse_extruder_state(status[key]);
 
-                // Update slot status based on extruder state (only if pin state changed)
+                // A parked tool is not the loaded one. LOADED itself is written
+                // only by the per-frame recompute after the sensor parse: an
+                // active pin says the tool is on the carriage, not that it has
+                // filament at the nozzle.
                 auto* slot = system_info_.units[0].get_slot(i);
-                if (slot) {
-                    SlotStatus prev = slot->status;
-                    if (new_state.active_pin) {
-                        slot->status = SlotStatus::LOADED;
-                    } else if (new_state.park_pin) {
-                        slot->status = SlotStatus::AVAILABLE;
-                    }
-                    if (slot->status != prev)
-                        changed = true;
+                if (slot && new_state.park_pin && slot->status != SlotStatus::AVAILABLE) {
+                    slot->status = SlotStatus::AVAILABLE;
+                    changed = true;
                 }
 
                 extruder_states_[i] = std::move(new_state);
@@ -1387,16 +1383,11 @@ void AmsBackendSnapmaker::handle_status_update(const nlohmann::json& notificatio
                     prev_slot->status = SlotStatus::AVAILABLE;
                 }
             }
+            // A pick alone says nothing about filament; the active tool's
+            // LOADED status and filament_loaded are derived after the sensor
+            // parse, from the latch and the toolhead switch.
             system_info_.current_tool = active;
             system_info_.current_slot = active; // 1:1 tool-to-slot on Snapmaker
-            system_info_.filament_loaded = (active >= 0);
-            // Mark active tool's slot as LOADED
-            if (active >= 0 && active < NUM_TOOLS) {
-                auto* slot = system_info_.units[0].get_slot(active);
-                if (slot && slot->status != SlotStatus::EMPTY) {
-                    slot->status = SlotStatus::LOADED;
-                }
-            }
             changed = true;
         }
 
@@ -1796,42 +1787,23 @@ void AmsBackendSnapmaker::handle_status_update(const nlohmann::json& notificatio
                                     changed = true;
                                 }
                             } else if (info.is_terminal) {
-                                // A *_finish state resolves the operation.
-                                // unload_finish and preload_finish both retract
-                                // filament out of the toolhead: demote the slot from
-                                // LOADED to AVAILABLE and clear filament_loaded so
-                                // slot_is_actively_loaded / filament_loaded clears
-                                // immediately (the extruder pin-state path keeps
-                                // active_pin set while parked, which otherwise leaves
-                                // the badge "active" after an idle unload).
+                                // A *_finish state resolves the operation. The
+                                // latch above carries its load meaning; the active
+                                // tool's LOADED status and filament_loaded are
+                                // derived from it after the sensor parse.
                                 //
                                 // current_slot / current_tool are NOT reset here:
                                 // they track which toolhead is picked up on the
                                 // carriage (toolhead.extruder is the authority, set
                                 // in the extruder-pin parse above), which is
                                 // independent of whether feeder filament is at the
-                                // nozzle. A user running TPU without feeders (Bart's
-                                // field report, 2026-07-20) has the tool picked up
-                                // while the channel reports unload_finish
-                                // permanently — resetting current_slot=-1 there
-                                // made unload_active_filament() dispatch the bare
-                                // INNER_FILAMENT_UNLOAD leaf macro (no tool
-                                // specifier), and the firmware defaulted to T0.
-                                // filament_loaded is the right signal for "no
-                                // filament at the nozzle"; current_slot tracks the
-                                // picked-up tool, full stop.
-                                if (info.clears_loaded) {
-                                    auto* slot = system_info_.units[0].get_slot(i);
-                                    if (slot && slot->status == SlotStatus::LOADED) {
-                                        slot->status = SlotStatus::AVAILABLE;
-                                        changed = true;
-                                    }
-                                    if (system_info_.current_slot == i ||
-                                        system_info_.current_tool == i) {
-                                        system_info_.filament_loaded = false;
-                                        changed = true;
-                                    }
-                                }
+                                // nozzle. A tool fed without the feeders (TPU loaded
+                                // straight into the toolhead) stays picked up while
+                                // its channel reports unload_finish permanently, and
+                                // unload_active_filament() needs current_slot to
+                                // name that tool: with no slot it dispatches the
+                                // bare INNER_FILAMENT_UNLOAD, which the firmware
+                                // runs on T0.
                                 if (state == "unload_finish") {
                                     // Deferred to after the lock for the same
                                     // reason emit_event is: this reaches into
@@ -2152,13 +2124,13 @@ void AmsBackendSnapmaker::handle_status_update(const nlohmann::json& notificatio
             }
         }
 
-        // Parse filament_motion_sensor / filament_switch_sensor for per-slot
-        // runout state. Snapmaker U1's config has [filament_motion_sensor e{N}_filament]
-        // with pause_on_runout=True; when filament stops moving past the encoder,
-        // Klipper publishes filament_detected:false and triggers PAUSE. The slot
-        // status / extruder pin state don't reflect this — the tool is still
-        // "active" but no filament reaches the nozzle. Mirror the sensor flag so
-        // the path canvas can break the spool→toolhead line at runout.
+        // Parse filament_motion_sensor / filament_switch_sensor per tool. The U1's
+        // [filament_motion_sensor e{N}_filament] is a motion runout during a
+        // print (filament_detected:false when extrusion outruns the encoder,
+        // then PAUSE via pause_on_runout) and a presence switch otherwise (it
+        // copies the toolhead pin). Mirror the flag: the path canvas breaks the
+        // spool→toolhead line on runout, and outside a print it answers whether
+        // filament sits in the toolhead.
         //
         // Match both prefixes (motion is the Snapmaker default; switch is the
         // generic fallback) and any "e{N}_filament" / "e{N}" sensor name suffix.
@@ -2211,6 +2183,10 @@ void AmsBackendSnapmaker::handle_status_update(const nlohmann::json& notificatio
             if (fd_it == it.value().end() || !fd_it->is_boolean())
                 continue;
             bool present = fd_it->get<bool>();
+            if (!toolhead_switch_reported_[tool_idx]) {
+                toolhead_switch_reported_[tool_idx] = true;
+                changed = true;
+            }
             if (sensor_filament_present_[tool_idx] != present) {
                 sensor_filament_present_[tool_idx] = present;
                 changed = true;
@@ -2219,17 +2195,35 @@ void AmsBackendSnapmaker::handle_status_update(const nlohmann::json& notificatio
             }
         }
 
-        // If the active tool's filament sensor reports runout, the global
-        // filament_loaded flag (used by get_filament_segment) should reflect that.
-        // The pin-state path above sets filament_loaded=(active>=0) — override
-        // here so the canvas's spool→toolhead line breaks on runout even though
-        // the tool itself is still "active".
-        if (system_info_.current_tool >= 0 && system_info_.current_tool < NUM_TOOLS &&
-            !sensor_filament_present_[system_info_.current_tool]) {
-            if (system_info_.filament_loaded) {
-                system_info_.filament_loaded = false;
+        // The active tool's loaded answers, derived from held state on every
+        // frame so they cannot depend on which fields this frame carried: a
+        // pick and the channel_state it pairs with often arrive in different
+        // frames. filament_loaded ("filament in the toolhead") follows a
+        // reported toolhead switch, which also breaks the canvas line on a
+        // mid-print runout, and falls back to the latch. LOADED status (loaded
+        // to the nozzle, the Load gate) needs the latch and no runout.
+        if (system_info_.current_tool >= 0 && system_info_.current_tool < NUM_TOOLS) {
+            const int t = system_info_.current_tool;
+            const bool switch_known = toolhead_switch_reported_[t];
+            const bool in_toolhead =
+                switch_known ? sensor_filament_present_[t] : loaded_at_toolhead_[t];
+            if (system_info_.filament_loaded != in_toolhead) {
+                system_info_.filament_loaded = in_toolhead;
                 changed = true;
             }
+            const bool at_nozzle =
+                loaded_at_toolhead_[t] && (!switch_known || sensor_filament_present_[t]);
+            auto* slot = system_info_.units[0].get_slot(t);
+            if (slot && at_nozzle && slot->status == SlotStatus::AVAILABLE) {
+                slot->status = SlotStatus::LOADED;
+                changed = true;
+            } else if (slot && !at_nozzle && slot->status == SlotStatus::LOADED) {
+                slot->status = SlotStatus::AVAILABLE;
+                changed = true;
+            }
+        } else if (system_info_.filament_loaded) {
+            system_info_.filament_loaded = false;
+            changed = true;
         }
 
         // Per-slot runout demotion: any slot whose motion sensor reports

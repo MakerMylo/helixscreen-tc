@@ -2105,10 +2105,12 @@ void FilamentPanel::update_filament_op_buttons() {
         // keeps Load reachable so the user can feed the next external spool.
         state.slot_has_filament = helix::ui::slot_presence(backend->get_slot_info(slot));
     }
-    // Unload/Purge act on whatever is at the toolhead for this slot, and the
-    // panel's Unload is always the heated toolhead unload — the cold lane ops
-    // (Eject / Recover) live on the AMS context menu, not here.
-    state.unload_available = state.slot_is_loaded;
+    // Unload/Purge act on whatever is at the toolhead for this slot, loaded or
+    // parked short of the nozzle, and the panel's Unload is always the heated
+    // toolhead unload. The cold lane ops (Eject / Recover) live on the AMS
+    // context menu, not here.
+    state.unload_available =
+        state.slot_is_loaded || backend->slot_filament_parked_in_toolhead(slot);
     state.unload_is_cold_lane_op = false;
 
     const auto gating = helix::ui::compute_op_button_gating(state);

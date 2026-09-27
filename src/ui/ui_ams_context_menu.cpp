@@ -611,7 +611,10 @@ AmsContextMenu::decide_slot_ops(const AmsBackend* backend, int slot_index, bool 
     // Eject button out of nowhere. Only the Load gate below treats UNKNOWN as
     // unanswerable.
     const bool present = d.presence.value_or(false);
-    d.unload_mode = decide_unload_mode(d.toolhead_unload,
+    // Filament parked in the toolhead is not loaded (Load keeps reading
+    // toolhead_unload) but still has a heated unload to run.
+    d.parked_in_toolhead = backend && backend->slot_filament_parked_in_toolhead(slot_index);
+    d.unload_mode = decide_unload_mode(d.toolhead_unload || d.parked_in_toolhead,
                                        backend && backend->can_recover_lane_position(slot_index),
                                        backend && backend->lane_recovery_is_attributed(),
                                        backend && backend->supports_lane_eject(), present,

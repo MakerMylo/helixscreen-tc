@@ -528,6 +528,13 @@ TEST_CASE_METHOD(BatchFixture, "Snapmaker eligibility follows channel state",
         CHECK(backend().slot_op_eligibility(0, /*load=*/true) == E::Eligible);
         CHECK(backend().slot_op_eligibility(0, /*load=*/false) == E::NotLoaded);
     }
+    SECTION("preload_finish with the toolhead switch reading filament loads and unloads") {
+        set_channel(0, "preload_finish", "ok", /*detected=*/true, /*module=*/true,
+                    /*no_auto=*/false);
+        feed_status(R"({"filament_motion_sensor e0_filament": {"filament_detected": true}})");
+        CHECK(backend().slot_op_eligibility(0, /*load=*/true) == E::Eligible);
+        CHECK(backend().slot_op_eligibility(0, /*load=*/false) == E::Eligible);
+    }
     SECTION("load_finish unloads, does not load") {
         set_channel(0, "load_finish", "ok", true, true, false);
         CHECK(backend().slot_op_eligibility(0, /*load=*/false) == E::Eligible);
@@ -617,6 +624,7 @@ TEST_CASE_METHOD(BatchFixture,
     // still reports tool 3 (the previous head). The header must name the head
     // being unloaded, and the carriage answers must not move at all.
     feed_status(R"({"toolhead":{"extruder":"extruder3"}})");
+    set_channel(3, "load_finish", "ok", /*detected=*/true, /*module=*/true, /*no_auto=*/false);
     REQUIRE(backend().get_system_info().current_slot == 3);
     REQUIRE(backend().get_system_info().units[0].get_slot(3)->status == helix::SlotStatus::LOADED);
 
@@ -760,6 +768,7 @@ TEST_CASE_METHOD(BatchFixture, "A batch the firmware ends mid-head leaves no wor
     // cursor head reaching a terminal state; the frame that reports doing=false
     // then carries no channel evidence at all. Nothing is being worked after it.
     feed_status(R"({"toolhead":{"extruder":"extruder3"}})");
+    set_channel(3, "load_finish", "ok", /*detected=*/true, /*module=*/true, /*no_auto=*/false);
     helix::SnapmakerTestAccess::set_batch_macro_object(backend(), "gcode_macro AUTO_FEEDING_BATCH");
     helix::SnapmakerTestAccess::set_batch_plan(backend(), {1, 3}, /*load=*/false, "Unload", "of");
     set_channel(1, "unload_doing", "ok", /*detected=*/true, /*module=*/true, /*no_auto=*/false);
