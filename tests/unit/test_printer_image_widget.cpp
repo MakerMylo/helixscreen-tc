@@ -207,6 +207,64 @@ TEST_CASE_METHOD(XMLTestFixture, "PrinterImageWidget generates its image cache o
     std::filesystem::remove(cache_path, ec);
 }
 
+// A widget's image can still be LV_SIZE_CONTENT when the cache check fires.
+// The raw special coordinate is large and positive, so it must read as "no size
+// yet": a cache job sized off it can never complete, leaves cache_job_inflight_
+// set, and blocks the generation for the real size that follows.
+TEST_CASE_METHOD(XMLTestFixture,
+                 "PrinterImageWidget skips the cache while its image is content-sized",
+                 "[panel_widget][printer_image][cache]") {
+    helix::init_widget_registrations();
+    helix::PanelWidgetManager::instance().init_widget_subjects();
+
+    lv_obj_t* container = lv_obj_create(test_screen());
+    lv_obj_set_size(container, 200, 200);
+    lv_obj_t* widget_obj = lv_obj_create(container);
+    lv_obj_set_size(widget_obj, 180, 180);
+    lv_obj_t* img = lv_image_create(widget_obj);
+    lv_obj_set_name(img, "printer_image");
+    // No lv_obj_set_size(img, ...): stays at LVGL's default LV_SIZE_CONTENT on
+    // both axes, the state attach() can see before a layout pass ever runs.
+    process_lvgl(5);
+
+    helix::PrinterImageWidget widget;
+    widget.attach(widget_obj, test_screen());
+
+    bool refreshed = false;
+    for (int i = 0; i < 10 && !refreshed; ++i) {
+        REQUIRE(fire_one_async_call());
+        refreshed = lv_image_get_src(img) != nullptr;
+    }
+    REQUIRE(refreshed);
+    const std::string source = static_cast<const char*>(lv_image_get_src(img));
+
+    // Content-sized cache check: must skip rather than submit a job sized off
+    // the LV_SIZE_CONTENT sentinel. Nothing to assert directly here — the proof
+    // is that a real size assigned right after still gets its cache entry.
+    process_async_calls();
+
+    lv_obj_set_size(img, 120, 90);
+    process_lvgl(5);
+    widget.on_activate();
+
+    const std::string cache_path = helix::get_cached_printer_image_path(source, 120, 90);
+    const std::string cache_src = "A:" + cache_path;
+    std::error_code ec;
+    std::filesystem::remove(cache_path, ec); // force a miss even on a warm cache
+
+    process_async_calls();
+    INFO("a content-sized cache check must not wedge cache_job_inflight_ and block "
+         "the next real-size generation");
+    REQUIRE(wait_until([&]() {
+        const auto* now = static_cast<const char*>(lv_image_get_src(img));
+        return now != nullptr && std::string(now) == cache_src;
+    }));
+    CHECK(std::filesystem::exists(cache_path));
+
+    widget.detach();
+    std::filesystem::remove(cache_path, ec);
+}
+
 // The printer-type subject publishes every change to the resolved type, and the
 // setter's early return (same type + same z-offset strategy) must not re-notify.
 // Consumers like PrinterImageWidget re-resolve on this subject, so a duplicate

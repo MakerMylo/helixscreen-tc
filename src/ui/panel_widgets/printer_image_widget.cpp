@@ -492,8 +492,11 @@ namespace {
 /// the XML's 100% resolves against the container's content box.
 void declared_image_size(lv_obj_t* img, int32_t& w, int32_t& h) {
     lv_obj_t* parent = lv_obj_get_parent(img);
-    const auto resolve = [](int32_t v, int32_t full) {
-        return LV_COORD_IS_PCT(v) ? full * LV_COORD_GET_PCT(v) / 100 : v;
+    const auto resolve = [](int32_t v, int32_t full) -> int32_t {
+        if (LV_COORD_IS_PCT(v))
+            return full * LV_COORD_GET_PCT(v) / 100;
+        // LV_SIZE_CONTENT and the other special values carry no pixel size.
+        return LV_COORD_IS_SPEC(v) ? 0 : v;
     };
     w = resolve(lv_obj_get_style_width(img, LV_PART_MAIN), lv_obj_get_content_width(parent));
     h = resolve(lv_obj_get_style_height(img, LV_PART_MAIN), lv_obj_get_content_height(parent));
