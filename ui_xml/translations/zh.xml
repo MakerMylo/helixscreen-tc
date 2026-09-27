@@ -266,6 +266,8 @@
   <translation tag="BLUETOOTH PRINTERS" zh="蓝牙打印机"/>
   <translation tag="BLUETOOTH SCANNERS" zh="蓝牙扫描器"/>
   <translation tag="Back" zh="返回"/>
+  <translation tag="Back Left" zh="左后"/>
+  <translation tag="Back Right" zh="右后"/>
   <translation tag="Backtrace: {} frames" zh="回溯: {} 帧"/>
   <translation tag="Backup lane name contains invalid characters" zh="备用耗材通道名称包含无效字符"/>
   <translation tag="Backup spool switching state unknown" zh="备用料盘切换状态未知"/>
@@ -460,6 +462,7 @@
   <translation tag="Cartographer scan calibrate sent — use Z-Offset panel to adjust" zh="Cartographer扫描校准已发送 — 使用Z偏移面板进行调整"/>
   <translation tag="Cartographer touch calibrate sent" zh="Cartographer触摸校准已发送"/>
   <translation tag="Category" zh="类别"/>
+  <translation tag="Center" zh="中心"/>
   <translation tag="Center QR code in frame" zh="将 QR 码对准画面中央"/>
   <translation tag="Chamb:" zh="腔:"/>
   <translation tag="Chamber" zh="腔体"/>
@@ -1221,6 +1224,9 @@
   <translation tag="Frequency Delta: Difference between Path A and B. Anything under 2 Hz is below what this measurement can resolve, so it counts as matched.&#10;&#10;Match: How close the two belts are, as a percentage of belt A&apos;s frequency. Above 95% is excellent; below 90% is worth adjusting." zh="频率差: 路径 A 与 B 之间的差异。低于 2 Hz 的差异超出此测量的分辨能力，因此视为匹配。&#10;&#10;匹配度: 两条皮带的接近程度，以皮带 A 频率的百分比表示。高于 95% 为优秀;低于 90% 则值得调整。"/>
   <translation tag="From Buffer" zh="来自缓冲区"/>
   <translation tag="From Version" zh="起始版本"/>
+  <translation tag="Front" zh="前"/>
+  <translation tag="Front Left" zh="左前"/>
+  <translation tag="Front Right" zh="右前"/>
   <translation tag="Full" zh="完整"/>
   <translation tag="G-code Console" zh="G-code 控制台"/>
   <translation tag="G-code Preview" zh="G-code 预览"/>
@@ -1450,6 +1456,7 @@
   <translation tag="It&apos;s a new spool" zh="这是新料盘"/>
   <translation tag="Jammed at the Toolhead" zh="工具头处堵塞"/>
   <translation tag="Job Queue" zh="任务队列"/>
+  <translation tag="Jog" zh="点动"/>
   <translation tag="Jog Speed XY" zh="XY 移动速度"/>
   <translation tag="Jog Speed Z" zh="Z 移动速度"/>
   <translation tag="Jog Y until the nozzle is centered over the chute opening, then tap Save." zh="点动 Y 轴，直到喷嘴位于排料口开口中心，然后点击保存。"/>
@@ -1522,6 +1529,7 @@
   <translation tag="Layout" zh="布局"/>
   <translation tag="Learn More" zh="了解更多"/>
   <translation tag="LedSelect" zh="选择 LED"/>
+  <translation tag="Left" zh="左"/>
   <translation tag="Length of filament to purge" zh="要排出的耗材长度"/>
   <translation tag="Length of the cooling tube section" zh="冷却管段的长度"/>
   <translation tag="Length:" zh="长度："/>
@@ -1616,6 +1624,7 @@
   <translation tag="Macro to cancel an active print" zh="取消当前打印的宏"/>
   <translation tag="Macro to clean/wipe the nozzle" zh="清洁/擦拭喷嘴的宏"/>
   <translation tag="Macro to load filament into extruder" zh="将耗材加载到挤出机的宏"/>
+  <translation tag="Macro to park the toolhead at a safe position" zh="将工具头停靠到安全位置的宏"/>
   <translation tag="Macro to pause an active print" zh="暂停当前打印的宏"/>
   <translation tag="Macro to purge/prime the nozzle" zh="排料/预挤喷嘴的宏"/>
   <translation tag="Macro to resume a paused print" zh="恢复暂停打印的宏"/>
@@ -1711,6 +1720,7 @@
   <translation tag="Motors Off" zh="关闭电机"/>
   <translation tag="Motors disable failed: {}" zh="禁用电机失败: {}"/>
   <translation tag="Motors disabled" zh="电机已禁用"/>
+  <translation tag="Motors off"/>
   <translation tag="Mount" zh="装上"/>
   <translation tag="Move" zh="移动"/>
   <translation tag="Move out of range" zh="移动超出范围"/>
@@ -2410,6 +2420,7 @@
   <translation tag="Review your changes" zh="查看您的更改"/>
   <translation tag="Review your configuration below, then click Finish to save" zh="请检查以下配置，然后点击完成以保存"/>
   <translation tag="Rewinding" zh="回卷中"/>
+  <translation tag="Right" zh="右"/>
   <translation tag="Role:" zh="角色："/>
   <translation tag="Rotating tips for using your printer" zh="轮播的打印机使用提示"/>
   <translation tag="Rotation" zh="旋转"/>

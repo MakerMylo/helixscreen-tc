@@ -300,6 +300,8 @@ translations:
   BLUETOOTH PRINTERS: IMPRIMANTES BLUETOOTH
   BLUETOOTH SCANNERS: SCANNERS BLUETOOTH
   Back: Retour
+  Back Left: 'Arrière gauche'
+  Back Right: 'Arrière droit'
   'Backtrace: {} frames': 'Trace : {} frames'
   Backup lane name contains invalid characters: 'Le nom de la voie de secours contient des caractères non valides'
   Backup spool switching state unknown: État du passage à la bobine de secours inconnu
@@ -520,6 +522,7 @@ translations:
     scan envoyé — utilisez le panneau Z-Offset pour ajuster
   Cartographer touch calibrate sent: Cartographer calibrage tactile envoyé
   Category: Catégorie
+  Center: 'Centre'
   Center QR code in frame: Centrez le QR code dans le cadre
   'Chamb:': 'Chambre :'
   Chamber: Enceinte
@@ -1369,6 +1372,9 @@ translations:
   : "Delta de fréquence : différence entre les chemins A et B. Tout écart inférieur à 2 Hz est en dessous de la résolution de cette mesure, donc il compte comme correspondant.\n\nCorrespondance : à quel point les deux courroies sont proches, en pourcentage de la fréquence de la courroie A. Au-dessus de 95 % c'est excellent ; en dessous de 90 %, un ajustement est utile."
   From Buffer: Depuis tampon
   From Version: Depuis la version
+  Front: 'Avant'
+  Front Left: 'Avant gauche'
+  Front Right: 'Avant droit'
   Full: Complet
   G-code Console: Console G-code
   G-code Preview: Aperçu G-code
@@ -1632,6 +1638,7 @@ translations:
   It's a new spool: C'est une nouvelle bobine
   Jammed at the Toolhead: Bourrage à la tête d'outil
   Job Queue: File d'impression
+  Jog: Jog
   Jog Speed XY: Vitesse de déplacement XY
   Jog Speed Z: Vitesse de déplacement Z
   Jog Y until the nozzle is centered over the chute opening, then tap Save.: Déplacez Y jusqu'à ce que la buse soit centrée sur l'ouverture de la goulotte, puis appuyez sur Enregistrer.
@@ -1721,6 +1728,7 @@ translations:
   Layout: Disposition
   Learn More: En savoir plus
   LedSelect: Sélection de la LED
+  Left: 'Gauche'
   Length of filament to purge: 'Longueur de filament à purger'
   Length of the cooling tube section: 'Longueur de la section du tube de refroidissement'
   'Length:': 'Longueur :'
@@ -1822,6 +1830,7 @@ translations:
   Macro to cancel an active print: Macro pour annuler une impression active
   Macro to clean/wipe the nozzle: Macro pour nettoyer/essuyer la buse
   Macro to load filament into extruder: Macro pour charger le filament dans l'extrudeur
+  Macro to park the toolhead at a safe position: 'Macro pour parquer la tête d''outil en position sûre'
   Macro to pause an active print: Macro pour mettre en pause une impression active
   Macro to purge/prime the nozzle: Macro pour purger/amorcer la buse
   Macro to resume a paused print: Macro pour reprendre une impression en pause
@@ -1922,6 +1931,7 @@ translations:
   Motors Off: Moteurs éteints
   'Motors disable failed: {}': 'Échec de la désactivation des moteurs : {}'
   Motors disabled: Moteurs désactivés
+  Motors off: ''
   Mount: Monter
   Move: Déplacer
   Move out of range: 'Déplacement hors limites'
@@ -2695,6 +2705,7 @@ translations:
   Review your configuration below, then click Finish to save: Vérifiez votre configuration
     ci-dessous, puis cliquez sur Terminer pour enregistrer
   Rewinding: Rembobinage
+  Right: 'Droite'
   'Role:': 'Rôle :'
   Rotating tips for using your printer: Conseils variés pour votre imprimante
   Rotation: Rotation

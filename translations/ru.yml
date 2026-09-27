@@ -290,6 +290,8 @@ translations:
   BLUETOOTH PRINTERS: BLUETOOTH-ПРИНТЕРЫ
   BLUETOOTH SCANNERS: BLUETOOTH-СКАНЕРЫ
   Back: Назад
+  Back Left: 'Сзади слева'
+  Back Right: 'Сзади справа'
   'Backtrace: {} frames': 'Трассировка: {} кадров'
   Backup lane name contains invalid characters: 'Имя резервного канала содержит недопустимые символы'
   Backup spool switching state unknown: 'Резервная катушка: состояние неизвестно'
@@ -506,6 +508,7 @@ translations:
     калибровка отправлена — используйте панель Z-Offset для настройки
   Cartographer touch calibrate sent: Cartographer тактильная калибровка отправлена
   Category: Категория
+  Center: 'Центр'
   Center QR code in frame: Расположите QR-код в центре кадра
   'Chamb:': 'Камера:'
   Chamber: Камера
@@ -1339,6 +1342,9 @@ translations:
   : "Разница частот: разница между путями A и B. Значения менее 2 Гц ниже точности этого измерения, поэтому считаются совпадением.\n\nСовпадение: насколько близки два ремня, в процентах от частоты ремня A. Выше 95% — отлично; ниже 90% стоит отрегулировать."
   From Buffer: Из буфера
   From Version: С версии
+  Front: 'Спереди'
+  Front Left: 'Спереди слева'
+  Front Right: 'Спереди справа'
   Full: Полный
   G-code Console: Консоль G-code
   G-code Preview: Просмотр G-code
@@ -1600,6 +1606,7 @@ translations:
   It's a new spool: Это новая катушка
   Jammed at the Toolhead: Замятие в печатающей головке
   Job Queue: Очередь заданий
+  Jog: 'Джог'
   Jog Speed XY: Скорость перемещения XY
   Jog Speed Z: Скорость перемещения Z
   Jog Y until the nozzle is centered over the chute opening, then tap Save.: Двигайте Y, пока сопло не встанет по центру отверстия жёлоба, затем нажмите «Сохранить».
@@ -1689,6 +1696,7 @@ translations:
   Layout: Раскладка
   Learn More: Подробнее
   LedSelect: Выбрать LED
+  Left: 'Слева'
   Length of filament to purge: 'Длина продуваемого филамента'
   Length of the cooling tube section: 'Длина участка трубки охлаждения'
   'Length:': 'Длина:'
@@ -1790,6 +1798,7 @@ translations:
   Macro to cancel an active print: Макрос для отмены текущей печати
   Macro to clean/wipe the nozzle: Макрос для очистки/протирки сопла
   Macro to load filament into extruder: Макрос для загрузки филамента в экструдер
+  Macro to park the toolhead at a safe position: 'Макрос для парковки печатающей головы в безопасное положение'
   Macro to pause an active print: Макрос для паузы текущей печати
   Macro to purge/prime the nozzle: Макрос для продувки/подготовки сопла
   Macro to resume a paused print: Макрос для возобновления приостановленной печати
@@ -1887,6 +1896,7 @@ translations:
   Motors Off: Отключить моторы
   'Motors disable failed: {}': 'Ошибка отключения моторов: {}'
   Motors disabled: Моторы отключены
+  Motors off: ''
   Mount: Установить
   Move: Двигать
   Move out of range: 'Движение за пределами диапазона'
@@ -2650,6 +2660,7 @@ translations:
   Review your configuration below, then click Finish to save: Проверьте конфигурацию
     ниже, затем нажмите «Готово» для сохранения
   Rewinding: Перемотка
+  Right: 'Справа'
   'Role:': 'Тип:'
   Rotating tips for using your printer: Сменяющиеся советы по печати
   Rotation: Поворот

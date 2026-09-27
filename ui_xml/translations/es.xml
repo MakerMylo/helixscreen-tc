@@ -266,6 +266,8 @@
   <translation tag="BLUETOOTH PRINTERS" es="IMPRESORAS BLUETOOTH"/>
   <translation tag="BLUETOOTH SCANNERS" es="ESCÁNERES BLUETOOTH"/>
   <translation tag="Back" es="Volver"/>
+  <translation tag="Back Left" es="Atrás izquierda"/>
+  <translation tag="Back Right" es="Atrás derecha"/>
   <translation tag="Backtrace: {} frames" es="Traza inversa: {} marcos"/>
   <translation tag="Backup lane name contains invalid characters" es="El nombre del carril de reserva contiene caracteres no válidos"/>
   <translation tag="Backup spool switching state unknown" es="Estado del cambio a bobina de respaldo desconocido"/>
@@ -460,6 +462,7 @@
   <translation tag="Cartographer scan calibrate sent — use Z-Offset panel to adjust" es="Cartographer calibración de escaneo enviada — use el panel de Z-Offset para ajustar"/>
   <translation tag="Cartographer touch calibrate sent" es="Cartographer calibración táctil enviada"/>
   <translation tag="Category" es="Categoría"/>
+  <translation tag="Center" es="Centro"/>
   <translation tag="Center QR code in frame" es="Centre el código QR en el marco"/>
   <translation tag="Chamb:" es="Cámara:"/>
   <translation tag="Chamber" es="Cámara"/>
@@ -1221,6 +1224,9 @@
   <translation tag="Frequency Delta: Difference between Path A and B. Anything under 2 Hz is below what this measurement can resolve, so it counts as matched.&#10;&#10;Match: How close the two belts are, as a percentage of belt A&apos;s frequency. Above 95% is excellent; below 90% is worth adjusting." es="Delta de frecuencia: diferencia entre la trayectoria A y la B. Cualquier valor por debajo de 2 Hz está por debajo de lo que esta medición puede resolver, así que se considera coincidente.&#10;&#10;Coincidencia: qué tan cerca están las dos correas, como porcentaje de la frecuencia de la correa A. Por encima del 95% es excelente; por debajo del 90% vale la pena ajustar."/>
   <translation tag="From Buffer" es="Desde búfer"/>
   <translation tag="From Version" es="Desde la versión"/>
+  <translation tag="Front" es="Delante"/>
+  <translation tag="Front Left" es="Delante izquierda"/>
+  <translation tag="Front Right" es="Delante derecha"/>
   <translation tag="Full" es="Completo"/>
   <translation tag="G-code Console" es="Consola G-code"/>
   <translation tag="G-code Preview" es="Vista Previa de G-code"/>
@@ -1450,6 +1456,7 @@
   <translation tag="It&apos;s a new spool" es="Es una bobina nueva"/>
   <translation tag="Jammed at the Toolhead" es="Atascado en el cabezal"/>
   <translation tag="Job Queue" es="Cola de trabajos"/>
+  <translation tag="Jog" es="Jog"/>
   <translation tag="Jog Speed XY" es="Velocidad de movimiento XY"/>
   <translation tag="Jog Speed Z" es="Velocidad de movimiento Z"/>
   <translation tag="Jog Y until the nozzle is centered over the chute opening, then tap Save." es="Mueva Y hasta que la boquilla quede centrada sobre la apertura del conducto y toque Guardar."/>
@@ -1522,6 +1529,7 @@
   <translation tag="Layout" es="Distribución"/>
   <translation tag="Learn More" es="Más información"/>
   <translation tag="LedSelect" es="Seleccionar LED"/>
+  <translation tag="Left" es="Izquierda"/>
   <translation tag="Length of filament to purge" es="Longitud de filamento a purgar"/>
   <translation tag="Length of the cooling tube section" es="Longitud de la sección del tubo de enfriamiento"/>
   <translation tag="Length:" es="Longitud:"/>
@@ -1616,6 +1624,7 @@
   <translation tag="Macro to cancel an active print" es="Macro para cancelar una impresión activa"/>
   <translation tag="Macro to clean/wipe the nozzle" es="Macro para limpiar la boquilla"/>
   <translation tag="Macro to load filament into extruder" es="Macro para cargar filamento en el extrusor"/>
+  <translation tag="Macro to park the toolhead at a safe position" es="Macro para llevar el cabezal a una posición segura"/>
   <translation tag="Macro to pause an active print" es="Macro para pausar una impresión activa"/>
   <translation tag="Macro to purge/prime the nozzle" es="Macro para purgar/cebar la boquilla"/>
   <translation tag="Macro to resume a paused print" es="Macro para reanudar una impresión pausada"/>
@@ -1711,6 +1720,7 @@
   <translation tag="Motors Off" es="Motores Apagados"/>
   <translation tag="Motors disable failed: {}" es="Error al desactivar motores: {}"/>
   <translation tag="Motors disabled" es="Motores desactivados"/>
+  <translation tag="Motors off"/>
   <translation tag="Mount" es="Montar"/>
   <translation tag="Move" es="Mover"/>
   <translation tag="Move out of range" es="Movimiento fuera de rango"/>
@@ -2410,6 +2420,7 @@
   <translation tag="Review your changes" es="Revisar sus cambios"/>
   <translation tag="Review your configuration below, then click Finish to save" es="Revisa tu configuración abajo, luego toca Finalizar para guardar"/>
   <translation tag="Rewinding" es="Rebobinando"/>
+  <translation tag="Right" es="Derecha"/>
   <translation tag="Role:" es="Rol:"/>
   <translation tag="Rotating tips for using your printer" es="Consejos rotativos para tu impresora"/>
   <translation tag="Rotation" es="Rotación"/>

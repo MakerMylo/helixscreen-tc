@@ -270,6 +270,8 @@ translations:
   BLUETOOTH PRINTERS: Bluetooth プリンター
   BLUETOOTH SCANNERS: Bluetooth スキャナー
   Back: 戻る
+  Back Left: '左奥'
+  Back Right: '右奥'
   'Backtrace: {} frames': 'バックトレース: {} フレーム'
   Backup lane name contains invalid characters: 'バックアップレーン名に無効な文字が含まれています'
   Backup spool switching state unknown: バックアップスプール切り替えの状態は不明です
@@ -468,6 +470,7 @@ translations:
     — Z-Offsetパネルで調整してください
   Cartographer touch calibrate sent: Cartographerタッチキャリブレーション送信済み
   Category: カテゴリー
+  Center: '中央'
   Center QR code in frame: QR コードをフレームの中央に合わせてください
   'Chamb:': 'チャンバ:'
   Chamber: チャンバー
@@ -1264,6 +1267,9 @@ translations:
   : "周波数差: パス A と B の差。2 Hz 未満はこの測定の分解能を下回るため、一致とみなされます。\n\n一致度: 2つのベルトの周波数がどれだけ近いかを、ベルトAの周波数に対する割合で示したもの。95% を超えれば優秀で、90% を下回ると調整が必要です。"
   From Buffer: バッファから
   From Version: 更新前バージョン
+  Front: '手前'
+  Front Left: '左手前'
+  Front Right: '右手前'
   Full: フル
   G-code Console: G-code コンソール
   G-code Preview: G-code プレビュー
@@ -1505,6 +1511,7 @@ translations:
   It's a new spool: 新しいスプールです
   Jammed at the Toolhead: ツールヘッドで詰まり
   Job Queue: ジョブキュー
+  Jog: 'ジョグ'
   Jog Speed XY: XY ジョグ速度
   Jog Speed Z: Z ジョグ速度
   Jog Y until the nozzle is centered over the chute opening, then tap Save.: Yをジョグしてノズルがシュートの開口部の中心に来たら、保存をタップします。
@@ -1586,6 +1593,7 @@ translations:
   Layout: レイアウト
   Learn More: 詳細を見る
   LedSelect: LEDを選択
+  Left: '左'
   Length of filament to purge: 'パージするフィラメントの長さ'
   Length of the cooling tube section: '冷却チューブ区間の長さ'
   'Length:': '長さ:'
@@ -1681,6 +1689,7 @@ translations:
   Macro to cancel an active print: アクティブな印刷をキャンセルするマクロ
   Macro to clean/wipe the nozzle: ノズルを清掃/ワイプするマクロ
   Macro to load filament into extruder: フィラメントをエクストルーダーに装填するマクロ
+  Macro to park the toolhead at a safe position: 'ヘッドを安全な位置へ移動するマクロ'
   Macro to pause an active print: アクティブな印刷を一時停止するマクロ
   Macro to purge/prime the nozzle: ノズルをパージ/プライムするマクロ
   Macro to resume a paused print: 一時停止した印刷を再開するマクロ
@@ -1777,6 +1786,7 @@ translations:
   Motors Off: モーターオフ
   'Motors disable failed: {}': 'モーターの無効化に失敗しました: {}'
   Motors disabled: モーターを無効化しました
+  Motors off: ''
   Mount: 装着
   Move: 移動
   Move out of range: '移動範囲外です'
@@ -2507,6 +2517,7 @@ translations:
   Review your changes: 変更を確認
   Review your configuration below, then click Finish to save: 以下の設定を確認し、「完了」をクリックして保存してください
   Rewinding: 巻き戻し中
+  Right: '右'
   'Role:': '役割:'
   Rotating tips for using your printer: プリンターの使い方のヒントを順に表示
   Rotation: 回転

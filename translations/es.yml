@@ -295,6 +295,8 @@ translations:
   BLUETOOTH PRINTERS: IMPRESORAS BLUETOOTH
   BLUETOOTH SCANNERS: ESCÁNERES BLUETOOTH
   Back: Volver
+  Back Left: 'Atrás izquierda'
+  Back Right: 'Atrás derecha'
   'Backtrace: {} frames': 'Traza inversa: {} marcos'
   Backup lane name contains invalid characters: 'El nombre del carril de reserva contiene caracteres no válidos'
   Backup spool switching state unknown: Estado del cambio a bobina de respaldo desconocido
@@ -514,6 +516,7 @@ translations:
     de escaneo enviada — use el panel de Z-Offset para ajustar
   Cartographer touch calibrate sent: Cartographer calibración táctil enviada
   Category: Categoría
+  Center: 'Centro'
   Center QR code in frame: Centre el código QR en el marco
   'Chamb:': 'Cámara:'
   Chamber: Cámara
@@ -1356,6 +1359,9 @@ translations:
   : "Delta de frecuencia: diferencia entre la trayectoria A y la B. Cualquier valor por debajo de 2 Hz está por debajo de lo que esta medición puede resolver, así que se considera coincidente.\n\nCoincidencia: qué tan cerca están las dos correas, como porcentaje de la frecuencia de la correa A. Por encima del 95% es excelente; por debajo del 90% vale la pena ajustar."
   From Buffer: Desde búfer
   From Version: Desde la versión
+  Front: 'Delante'
+  Front Left: 'Delante izquierda'
+  Front Right: 'Delante derecha'
   Full: Completo
   G-code Console: Consola G-code
   G-code Preview: Vista Previa de G-code
@@ -1618,6 +1624,7 @@ translations:
   It's a new spool: Es una bobina nueva
   Jammed at the Toolhead: Atascado en el cabezal
   Job Queue: Cola de trabajos
+  Jog: Jog
   Jog Speed XY: Velocidad de movimiento XY
   Jog Speed Z: Velocidad de movimiento Z
   Jog Y until the nozzle is centered over the chute opening, then tap Save.: Mueva Y hasta que la boquilla quede centrada sobre la apertura del conducto y toque Guardar.
@@ -1706,6 +1713,7 @@ translations:
   Layout: Distribución
   Learn More: Más información
   LedSelect: Seleccionar LED
+  Left: 'Izquierda'
   Length of filament to purge: 'Longitud de filamento a purgar'
   Length of the cooling tube section: 'Longitud de la sección del tubo de enfriamiento'
   'Length:': 'Longitud:'
@@ -1807,6 +1815,7 @@ translations:
   Macro to cancel an active print: Macro para cancelar una impresión activa
   Macro to clean/wipe the nozzle: Macro para limpiar la boquilla
   Macro to load filament into extruder: Macro para cargar filamento en el extrusor
+  Macro to park the toolhead at a safe position: 'Macro para llevar el cabezal a una posición segura'
   Macro to pause an active print: Macro para pausar una impresión activa
   Macro to purge/prime the nozzle: Macro para purgar/cebar la boquilla
   Macro to resume a paused print: Macro para reanudar una impresión pausada
@@ -1907,6 +1916,7 @@ translations:
   Motors Off: Motores Apagados
   'Motors disable failed: {}': 'Error al desactivar motores: {}'
   Motors disabled: Motores desactivados
+  Motors off: ''
   Mount: Montar
   Move: Mover
   Move out of range: 'Movimiento fuera de rango'
@@ -2677,6 +2687,7 @@ translations:
   Review your configuration below, then click Finish to save: Revisa tu configuración
     abajo, luego toca Finalizar para guardar
   Rewinding: Rebobinando
+  Right: 'Derecha'
   'Role:': 'Rol:'
   Rotating tips for using your printer: Consejos rotativos para tu impresora
   Rotation: Rotación
