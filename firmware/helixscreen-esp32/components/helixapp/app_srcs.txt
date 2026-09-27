@@ -229,6 +229,7 @@ src/system/filament_favorites.cpp
 src/system/helix_plugin_installer.cpp
 src/system/http_executor.cpp
 src/system/input_settings_manager.cpp
+src/system/helix_regex.cpp
 src/system/klipper_config_editor.cpp
 src/system/klipper_config_includes.cpp
 src/system/klipper_config_parser.cpp
