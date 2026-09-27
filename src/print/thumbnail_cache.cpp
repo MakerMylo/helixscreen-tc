@@ -10,13 +10,13 @@
 #include "gcode_parser.h"
 #include "system/crash_handler.h"
 #include "system/helix_paths.h"
+#include "text_io.h"
 
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>
-#include <fstream>
 #include <functional>
 #include <vector>
 
@@ -772,18 +772,9 @@ std::string ThumbnailCache::save_raw_png(const std::string& source_identifier,
         std::lock_guard<std::mutex> lock(mutex_);
 
         // Write PNG data to cache file
-        std::ofstream file(cache_path, std::ios::binary);
-        if (!file) {
+        if (!helix::text_io::write_file(
+                cache_path, {reinterpret_cast<const char*>(png_data.data()), png_data.size()})) {
             spdlog::error("[ThumbnailCache] Failed to create cache file: {}", cache_path);
-            return "";
-        }
-
-        file.write(reinterpret_cast<const char*>(png_data.data()),
-                   static_cast<std::streamsize>(png_data.size()));
-        file.close();
-
-        if (!file) {
-            spdlog::error("[ThumbnailCache] Failed to write PNG data to {}", cache_path);
             return "";
         }
 

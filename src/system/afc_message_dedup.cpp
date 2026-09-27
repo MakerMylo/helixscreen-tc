@@ -4,15 +4,17 @@
 
 #include "config.h"
 #include "json_utils.h"
+#include "text_io.h"
 
 #include <spdlog/spdlog.h>
 
 #include <filesystem>
-#include <fstream>
 
 using json = nlohmann::json;
 
 namespace helix {
+
+namespace tio = ::helix::text_io;
 
 AfcMessageDedup& AfcMessageDedup::instance() {
     static AfcMessageDedup instance;
@@ -38,7 +40,7 @@ void AfcMessageDedup::init(const std::string& config_dir) {
 
     const std::string path = seed_path_locked();
     {
-        std::ifstream in(path);
+        const auto in = tio::read_file(path);
         if (!in) {
             // Absent is the common first-boot case, not an error.
             spdlog::debug("[AfcMessageDedup] No seed file at {}", path);
@@ -54,7 +56,7 @@ void AfcMessageDedup::init(const std::string& config_dir) {
                              path, size, MAX_SEED_BYTES);
                 return;
             }
-            json data = json::parse(in);
+            json data = json::parse(*in);
             if (data.contains("printers") && data["printers"].is_object()) {
                 for (const auto& [printer_id, text] : data["printers"].items()) {
                     if (text.is_string()) {
@@ -149,11 +151,7 @@ void AfcMessageDedup::record_cleared() {
 
 bool AfcMessageDedup::save_locked() {
     const std::string path = seed_path_locked();
-    std::ofstream out(path, std::ios::trunc);
-    if (!out) {
-        spdlog::warn("[AfcMessageDedup] Cannot write {}", path);
-        return false;
-    }
+    std::string data;
     try {
         json printers = json::object();
         for (const auto& [printer_id, text] : last_error_by_printer_) {
@@ -161,7 +159,7 @@ bool AfcMessageDedup::save_locked() {
         }
         // safe_dump: message text carries whatever the printer printed, and
         // strict-mode dump would throw on invalid UTF-8 and cost the file.
-        out << helix::json_util::safe_dump(json{{"printers", printers}}) << "\n";
+        data = helix::json_util::safe_dump(json{{"printers", printers}}) + "\n";
     } catch (const json::exception& e) {
         spdlog::warn("[AfcMessageDedup] Cannot serialize seed for {}: {}", path, e.what());
         return false;
@@ -169,13 +167,15 @@ bool AfcMessageDedup::save_locked() {
         spdlog::warn("[AfcMessageDedup] Out of memory serializing seed for {}", path);
         return false;
     }
-    out.flush();
-    return static_cast<bool>(out);
+    if (!tio::write_file(path, data)) {
+        spdlog::warn("[AfcMessageDedup] Cannot write {}", path);
+        return false;
+    }
+    return true;
 }
 
 bool AfcMessageDedup::can_write_locked() const {
-    std::ofstream probe(seed_path_locked(), std::ios::app);
-    return static_cast<bool>(probe);
+    return static_cast<bool>(tio::open_file(seed_path_locked(), "ab"));
 }
 
 bool AfcMessageDedup::warn_uninitialized_locked(const char* op) const {

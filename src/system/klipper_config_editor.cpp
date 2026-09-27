@@ -6,6 +6,7 @@
 #include "http_executor.h"
 #include "i_moonraker_api.h"
 #include "klipper_config_includes.h"
+#include "text_io.h"
 
 #include <spdlog/spdlog.h>
 
@@ -13,7 +14,6 @@
 #include <atomic>
 #include <chrono>
 #include <set>
-#include <sstream>
 #include <thread>
 
 namespace helix::system {
@@ -104,10 +104,8 @@ ConfigStructure KlipperConfigEditor::parse_structure(const std::string& content)
 
     // Split content into lines
     std::vector<std::string> lines;
-    std::istringstream stream(content);
-    std::string line;
-    while (std::getline(stream, line)) {
-        lines.push_back(line);
+    for (std::string_view sv : helix::text_io::lines(content)) {
+        lines.push_back(std::string(sv));
     }
 
     result.total_lines = static_cast<int>(lines.size());
@@ -272,10 +270,8 @@ constexpr const char* ROOT_CONFIG_FILE = "printer.cfg";
 // Split content into lines, preserving the ability to rejoin with \n
 std::vector<std::string> split_lines(const std::string& content) {
     std::vector<std::string> lines;
-    std::istringstream stream(content);
-    std::string line;
-    while (std::getline(stream, line)) {
-        lines.push_back(line);
+    for (std::string_view sv : helix::text_io::lines(content)) {
+        lines.push_back(std::string(sv));
     }
     return lines;
 }
