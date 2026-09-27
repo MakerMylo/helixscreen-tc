@@ -1244,17 +1244,18 @@ static void gcode_viewer_release_cb(lv_event_t* e) {
 
 #if LV_USE_GESTURE_RECOGNITION
 /**
- * @brief Two-finger pan and pinch zoom (3D mode only)
+ * @brief Two-finger pan and pinch zoom
  *
- * A pinch zooms about the fingers and pans with them in the same frame; a
- * two-finger swipe only pans. Whichever LVGL recognizes first owns the touch
- * until a finger lifts.
+ * Motion is 3D-only; the two-finger latch that holds off tap and long-press
+ * applies in both modes. A pinch zooms about the fingers and pans with them
+ * in the same frame; a two-finger swipe only pans. Whichever LVGL recognizes
+ * first owns the touch until a finger lifts.
  */
 static void gcode_viewer_gesture_cb(lv_event_t* e) {
     lv_obj_t* obj = lv_event_get_target_obj(e);
     gcode_viewer_state_t* st = get_state(obj);
 
-    if (!st || st->is_using_2d_mode())
+    if (!st)
         return;
 
     const auto sample = helix::ui::read_two_finger_sample(e);
@@ -1272,6 +1273,10 @@ static void gcode_viewer_gesture_cb(lv_event_t* e) {
             st->long_press_timer_ = nullptr;
         }
     }
+
+    // Pan and zoom move the 3D camera only; the latch above applies in both modes.
+    if (st->is_using_2d_mode())
+        return;
 
     if (step.pan_dx == 0.0f && step.pan_dy == 0.0f && step.zoom == 1.0f)
         return;
