@@ -648,6 +648,12 @@ class AmsBackendSnapmaker : public AmsSubscriptionBackend {
     /// carried across a feeder write. Read by channel_snapshot().
     std::array<ChannelSnapshot, NUM_TOOLS> channel_snapshots_{};
 
+    /// Per channel: the last in-progress channel_state was a preload_*. A
+    /// preload ends at preload_finish; any other op merely rests there (an
+    /// unload heats with the channel still at preload_finish), so only this
+    /// lets preload_finish resolve the op. Under mutex_.
+    std::array<bool, NUM_TOOLS> preload_in_flight_{};
+
     /// Layer a configured FilamentSlotOverride for `slot_index` over `slot`,
     /// mutating `slot` in place. Override wins for every non-default field.
     /// Callers must hold mutex_. Called from the tail of handle_status_update

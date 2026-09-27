@@ -64,7 +64,8 @@ struct ChannelStateInfo {
 /// last channel_state. channel_action_state keeps the op's own last step at
 /// rest, so it stands in when the channel rests and it moved to a *_finish or
 /// *_fail since the previous frame. An unchanged value is the previous op's
-/// outcome and says nothing about the current one.
+/// outcome and says nothing about the current one, and the first value a
+/// channel reports is an op that ended before anyone was watching.
 ///
 /// @param channel_state          The channel's current (held) channel_state.
 /// @param prev_action_state      channel_action_state before this frame.

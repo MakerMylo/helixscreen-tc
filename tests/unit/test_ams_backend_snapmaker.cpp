@@ -879,6 +879,36 @@ TEST_CASE_METHOD(SnapmakerFixture,
 }
 
 TEST_CASE_METHOD(SnapmakerFixture,
+                 "Snapmaker a failed op from before startup raises nothing on the first frame",
+                 "[ams][snapmaker][action_state]") {
+    helix::test::RegisteredBackend<AmsBackendSnapmaker> backend_reg(nullptr, nullptr);
+    AmsBackendSnapmaker& backend = *backend_reg;
+    SnapmakerTestAccess::set_current_slot(backend, 3);
+    SnapmakerTestAccess::set_current_tool(backend, 3);
+
+    SnapmakerTestAccess::handle_status(backend, feed_with_action(3, "preload_finish", "load_fail"));
+    CHECK(backend.get_system_info().action != AmsAction::ERROR);
+}
+
+TEST_CASE_METHOD(SnapmakerFixture, "Snapmaker a spool-insert preload ends at preload_finish",
+                 "[ams][snapmaker][action_state]") {
+    helix::test::RegisteredBackend<AmsBackendSnapmaker> backend_reg(nullptr, nullptr);
+    AmsBackendSnapmaker& backend = *backend_reg;
+
+    SnapmakerTestAccess::handle_status(backend, make_feed_status(1, "preload_prepare"));
+    REQUIRE(backend.get_system_info().action == AmsAction::LOADING);
+
+    SECTION("every step reported") {
+        SnapmakerTestAccess::handle_status(backend, make_feed_status(1, "preload_feeding"));
+        REQUIRE(backend.get_system_info().action == AmsAction::LOADING);
+    }
+    SECTION("preload_finish arrives straight from preload_prepare") {}
+
+    SnapmakerTestAccess::handle_status(backend, make_feed_status(1, "preload_finish"));
+    CHECK(backend.get_system_info().action == AmsAction::IDLE);
+}
+
+TEST_CASE_METHOD(SnapmakerFixture,
                  "Snapmaker a previous op's channel_action_state never ends a new one",
                  "[ams][snapmaker][unload][action_state]") {
     helix::test::RegisteredBackend<AmsBackendSnapmaker> backend_reg(nullptr, nullptr);
@@ -888,6 +918,7 @@ TEST_CASE_METHOD(SnapmakerFixture,
     SnapmakerTestAccess::handle_status(backend,
                                        feed_with_action(3, "preload_finish", "unload_finish"));
     REQUIRE(backend.get_system_info().action == AmsAction::IDLE);
+    CHECK_FALSE(AmsState::instance().was_slot_recently_unloaded(3));
 
     // A new unload starts; this frame omits the unchanged channel_action_state.
     SnapmakerTestAccess::handle_status(backend, make_feed_status(3, "unload_heating"));

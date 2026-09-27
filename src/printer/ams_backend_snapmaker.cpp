@@ -1694,8 +1694,17 @@ void AmsBackendSnapmaker::handle_status_update(const nlohmann::json& notificatio
 
                         const ChannelStateInfo info = classify_channel_state(state);
                         const std::string& op_state = settled_outcome ? *settled_outcome : state;
-                        const ChannelStateInfo op_info =
+                        ChannelStateInfo op_info =
                             settled_outcome ? classify_channel_state(op_state) : info;
+                        if (!settled_outcome && state == "preload_finish" &&
+                            preload_in_flight_[i]) {
+                            op_info.is_terminal = true;
+                        }
+                        if (helix::snapmaker::channel_state_in_progress(state)) {
+                            preload_in_flight_[i] = state.rfind("preload_", 0) == 0;
+                        } else if (!state.empty()) {
+                            preload_in_flight_[i] = false;
+                        }
 
                         // A feed under way on this channel is the firmware
                         // moving filament itself, so a presence edge that
@@ -1837,12 +1846,13 @@ void AmsBackendSnapmaker::handle_status_update(const nlohmann::json& notificatio
                                     changed = true;
                                 }
                             }
-                            // A resting state (none / inited / wait_insert /
-                            // preload_finish) leaves the action untouched: one
-                            // also appears while the nozzle heats for an unload,
-                            // and the op's own outcome, when a resting state
-                            // hides it, arrives as settled_outcome above. The
-                            // latch already handled the resting states' clears.
+                            // A resting state (none / inited / wait_insert, and
+                            // preload_finish after anything but a preload) leaves
+                            // the action untouched: one also appears while the
+                            // nozzle heats for an unload, and the op's own
+                            // outcome, when a resting state hides it, arrives as
+                            // settled_outcome above. The latch already handled
+                            // the resting states' clears.
                         }
 
                         // Batch verification. Only the plan's cursor head can
