@@ -746,3 +746,27 @@ TEST_CASE_METHOD(LVGLUITestFixture, "callouts: an untagged image draws no bed gl
     REQUIRE(lv_subject_get_int(lv_xml_get_subject(nullptr, "callout_bed_heating")) == 1);
     CHECK(lv_obj_has_flag(h.child("callout_bed_glow"), LV_OBJ_FLAG_HIDDEN));
 }
+
+TEST_CASE_METHOD(LVGLUITestFixture,
+                 "callouts: a capability found after layout relayouts with no chip change",
+                 "[printer_image][callouts]") {
+    // Chamber and light join the budget; at this size four chips on the left
+    // no longer fit beside the image, so the mode drops to pinned.
+    const auto regions = prepare_tagged_widget();
+    lv_subject_t* has_led = lv_xml_get_subject(nullptr, "printer_has_led");
+    lv_subject_t* has_chamber = state().get_printer_has_chamber_heater_subject();
+    REQUIRE(has_led);
+    lv_subject_set_int(has_led, 0);
+    lv_subject_set_int(has_chamber, 0);
+    lv_subject_set_int(state().get_led_state_subject(), 0);
+    PanelWidgetHarness<PrinterImageWidget> h(test_screen());
+    h.resize(8, 4, 480, 160);
+    settle();
+    REQUIRE(mode_now() == static_cast<int>(CalloutMode::BothSides));
+    lv_subject_set_int(has_led, 1);
+    lv_subject_set_int(has_chamber, 1);
+    settle();
+    CHECK_FALSE(shown(h, "callout_chip_light"));
+    CHECK_FALSE(shown(h, "callout_chip_chamber"));
+    CHECK(mode_now() == static_cast<int>(CalloutMode::Pinned));
+}

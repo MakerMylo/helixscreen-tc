@@ -728,7 +728,8 @@ void PrinterImageWidget::handle_callout_clicked(CalloutKind kind) {
 namespace {
 
 lv_subject_t* printer_has_led_subject() {
-    // A capability subject with no PrinterState accessor; singleton lifetime.
+    // A capability subject with no PrinterState accessor, owned by
+    // PrinterState's capabilities_state_ (so it shares get_subjects_lifetime()).
     return lv_xml_get_subject(nullptr, "printer_has_led");
 }
 
@@ -745,11 +746,19 @@ void PrinterImageWidget::arm_callout_observers() {
     const SubjectLifetime life = ps.get_subjects_lifetime();
     for (lv_subject_t* s :
          {ps.get_active_extruder_temp_subject(), ps.get_active_extruder_target_subject(),
-          ps.get_fan_speed_subject(), ps.get_led_state_subject(), printer_has_led_subject(),
-          ps.get_printer_has_chamber_heater_subject()}) {
+          ps.get_fan_speed_subject(), ps.get_led_state_subject()}) {
         callout_observers_.push_back(
             helix::ui::observe_int_sync<PrinterImageWidget>(s, this, on_change, life));
     }
+    // A capability joins the budget, which decides the mode, whether or not any
+    // chip text changes with it.
+    const auto on_capability = [](PrinterImageWidget* w, int) {
+        w->update_callouts();
+        w->schedule_callout_layout();
+    };
+    for (lv_subject_t* s : {printer_has_led_subject(), ps.get_printer_has_chamber_heater_subject()})
+        callout_observers_.push_back(
+            helix::ui::observe_int_sync<PrinterImageWidget>(s, this, on_capability, life));
     const auto observe_dynamic = [&](lv_subject_t* s, SubjectLifetime& lt) {
         callout_observers_.push_back(
             helix::ui::observe_int_sync<PrinterImageWidget>(s, this, on_change, lt));
