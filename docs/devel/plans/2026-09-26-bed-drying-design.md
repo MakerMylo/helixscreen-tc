@@ -7,12 +7,19 @@ Issue: prestonbrown/helixscreen#1730. Builds on the chamber dryer
 Scope of this document: the **on-bed** placement (spools lying on the build plate).
 The under-bed placement is sketched at the end and is not part of the first build.
 
+Reference procedure: Bambu Lab's "Drying Filament Using the Printer's Heated Bed",
+https://wiki.bambulab.com/en/filament-acc/filament/dry-filament (section 2). This
+design follows its steps: unload, clear above and below the plate, lower the plate to
+the bottom, spool on the plate under a box, flip it midway, let it cool before removal.
+
 ## What the user gets
 
-On an enclosed printer with a heated bed, **Dry filament** homes the printer while the
-bed is empty, lowers the bed away from the nozzle, asks the user to lay the spools on
-the plate and close the door, then heats the bed to the preset's drying temperature
-(never above 70°C). A chamber appliance with a dryer (stock Panda Breath) runs at the
+On an enclosed printer with a heated bed, **Dry filament** makes sure no filament is
+loaded, homes the printer while the bed is empty, moves the bed as far from the nozzle
+as the printer allows, asks the user to lay the spools on the plate under a cover box
+and close the door, then heats the bed to the drying temperature (the cap is open
+question 1). Midway it asks the user to flip the spools; at the end it waits for the
+bed to cool before asking for them to be removed. A chamber appliance with a dryer (stock Panda Breath) runs at the
 same time when one is present. From the moment the user confirms the spools are in
 until the moment they confirm the spools are out, HelixScreen refuses anything that
 could move the toolhead or start a print, and says so in a banner that survives a
@@ -108,8 +115,8 @@ The one real Klipper-side option is **opt-in, homing only**: a `[gcode_macro G28
 `include/macro_manager.h`) that errors while a `_HELIX_SPOOL_LATCH` variable is set.
 It would cover Mainsail, macros and slicer-started prints that home. It cannot cover
 `G1 Z` moves, and it collides with every printer that already wraps `G28`
-(`homing_override`, `safe_z_home` shims, the K1/K2 and Qidi vendor macros). Not in the
-first build; listed as an open question.
+(`homing_override`, `safe_z_home` shims, the K1/K2 and Qidi vendor macros). Deferred:
+recorded under Future work.
 
 So the start modal says it plainly: HelixScreen blocks its own controls; it cannot stop
 Mainsail, a macro run elsewhere, or a print sent from a slicer.
@@ -130,6 +137,11 @@ means: the DB flag, else a configured chamber heater (an appliance heating a cha
 implies a chamber). A chamber sensor alone is not proof: plenty of open printers log
 room temperature. The result publishes as `printer_is_enclosed`.
 
+The override exists so an owner can mark a DIY-enclosed printer as enclosed. It is not
+a way to run the feature on an open frame: on an open printer the feature is hidden,
+with no warn-and-allow path. Bambu draws the same line, stating that its open-frame
+printers (P1P, A1, A1 mini, A2L) cannot dry filament this way.
+
 ### Bed moves in Z (exists)
 
 `printer_bed_moves` already exists: auto-detected in `printer_state.cpp`
@@ -146,7 +158,8 @@ max when `homing_positive_dir` is true, or when `position_endstop` equals
 ### Gate for the feature
 
 `printer_can_bed_dry` = heated bed && `printer_is_enclosed` && Z travel from
-`PrinterState::get_axis_bounds()` of at least the clearance height plus 10 mm.
+`PrinterState::get_axis_bounds()` of at least 130 mm (a lying 1 kg spool, 65-75 mm,
+plus a cover box and margin).
 
 ## 4. The flow
 
@@ -156,8 +169,11 @@ One dryer modal, not two. `ChamberDryerModal` grows into the general **Dry filam
 modal:
 
 - the existing chamber dryer row opens it when an appliance dryer exists
-- a **Dry filament** action on the bed card of the temperature overlay opens it on
-  printers with `printer_can_bed_dry` and no appliance
+- a **Dry filament** action on the bed card of the temperature overlay, shown when
+  `printer_can_bed_dry`
+- a **Dry filament** row in Advanced settings, shown when `printer_can_bed_dry`
+
+All three open the same modal.
 
 ### Start modal
 
@@ -165,38 +181,54 @@ modal:
 - placement: **On the bed** or **Elsewhere in the chamber** (the second is today's
   chamber dryer with bed assist)
 - for On the bed:
-  - the bed temperature it will use: the preset's temperature capped at 70°C and at
-    the bed's own max, shown as a number
-  - the warning text: plastic spools soften around 60-70°C, cardboard is fine; the
-    printer homes and lowers the bed first; nothing may move until the spools are out;
-    Mainsail, macros and slicer prints are not blocked
+  - the bed temperature it will use, shown as a number (rule: open question 1)
+  - the warning text: some spools are not heat-resistant enough and can deform; the
+    printer homes and moves the bed away from the nozzle first; nothing may move until
+    the spools are out; Mainsail, macros and slicer prints are not blocked
   - an **I understand** checkbox; **Start** stays disabled until it is ticked
 - the chamber appliance switch when an appliance dryer exists
 - Start carries `moves_machine="true"` like today's dryer Start
 
 ### Sequence
 
-1. **Home if needed**, bed empty. `IMotionAPI::home_axes` when any axis is unhomed.
-2. **Clearance move.** Absolute Z to 120 mm, bounded to `axis_maximum.z - 10`. A 1 kg
-   spool lying flat is 65-75 mm tall; 120 leaves room for a second layer of small
-   spools or a lid. Then park XY at the back of the bed so the plate is reachable.
-3. **Place prompt.** "Lay the spools on the bed and close the door." Confirm or Cancel.
-   Cancel ends here with nothing heated.
-4. **Latch on**, persisted before any heat is sent.
-5. **Heat.** Bed to the capped temperature through `TemperatureController::set_target`;
-   the appliance dryer when chosen; `hold_idle_timeout` for the run.
-6. **Run.** HelixScreen owns the timer when there is no appliance. The persistent
+1. **Unloaded check.** Filament left in a hot-adjacent toolhead softens and clogs. When
+   the printer reports filament at the toolhead (the filament sensor, or the AMS
+   backend's loaded slot), the modal offers the printer's existing unload flow and does
+   not continue until it reports nothing loaded. Printers with no way to tell get a
+   "make sure no filament is loaded" line in the place prompt instead.
+2. **Home if needed**, bed empty. `IMotionAPI::home_axes` when any axis is unhomed.
+3. **Clearance move.** Z to `axis_maximum.z - 10`, the far end of travel minus a
+   margin, then park XY at the back of the bed. On a printer whose bed moves this is
+   the plate at the bottom; on one whose gantry moves it is the nozzle at the top.
+   Reason for max travel over a fixed 120 mm: a cover box needs the height, and it is
+   Bambu's own procedure ("lower the plate to the bottom").
+4. **Place prompt.** "Clear the area above and below the plate. Lay the spools on the
+   plate, cover them with a box (a printed lid or the filament's packaging) and close
+   the door." Confirm or Cancel. Cancel ends here with nothing heated.
+5. **Latch on**, persisted before any heat is sent.
+6. **Heat.** Bed through `TemperatureController::set_target`; the appliance dryer when
+   chosen; `hold_idle_timeout` for the run.
+7. **Run.** HelixScreen owns the timer when there is no appliance. The persistent
    banner shows remaining time and the latch.
-7. **End** (timer, Stop, appliance end, refused start): bed off, idle timeout restored,
-   appliance stopped. The latch stays on.
-8. **Remove prompt.** "Remove the spools from the bed." Only its confirm clears the
-   latch. The banner keeps offering it until then.
+8. **Flip reminder.** At the run's midpoint, a notification: "Flip the spools over.
+   Use gloves: the plate is hot." It does not pause the run.
+9. **End** (timer, Stop, appliance end, refused start): bed to 0, idle timeout
+   restored, appliance stopped. The latch stays on.
+10. **Cool-down.** The remove prompt waits until the bed reads below 40°C, showing the
+    live bed temperature meanwhile. A "Remove now" button stays available behind a
+    "the plate and spools are hot" warning.
+11. **Remove prompt.** "Remove the spools from the bed." Only its confirm clears the
+    latch. The banner keeps offering it until then.
+
+Running the bed and a chamber appliance together is deliberate. Bambu's X1E does the
+opposite: setting its chamber heater by hand during its drying mode resets the chamber
+to 0. Here the two are one run with one stop.
 
 ### The latch
 
 - Stored in `SettingsManager` (settings.json) as a small record: set time, planned end
-  time, bed target, the configured idle timeout to restore. Written in step 4, cleared
-  only in step 8.
+  time, bed target, the configured idle timeout to restore. Written in step 5, cleared
+  only in step 11.
 - `spool_latch` subject published from it; the gates read the subject's backing value
   through PrinterState, the same way `reject_homing_during_active_print` reads print
   state.
@@ -214,24 +246,40 @@ with spools on top of the plate moves them away from the nozzle.
 
 | Event mid-run | What happens |
 |---|---|
-| HelixScreen restart | The latch record is read at startup. Before the planned end: the banner returns, the timer resumes from the stored end time, the bed target is re-checked. After it: step 7 cleanup runs, then step 8. The latch stays set throughout. |
-| Klipper restart | Klipper drops every heater target and its idle timeout returns to config. The run is over; the next status frame shows bed target 0, which the controller treats as an end (step 7). The latch stays set. |
+| HelixScreen restart | The latch record is read at startup. Before the planned end: the banner returns, the timer resumes from the stored end time, the bed target is re-checked. After it: step 9 cleanup runs, then steps 10 and 11. The latch stays set throughout. |
+| Klipper restart | Klipper drops every heater target and its idle timeout returns to config. The run is over; the next status frame shows bed target 0, which the controller treats as an end (step 9). The latch stays set. |
 | Power loss | Klipper comes back unhomed and cold. HelixScreen comes back with the latch set, so its first homing is refused until the spools are confirmed out. This is the case the persisted latch exists for. |
 | A print arrives from outside | Not blockable (section 2). The banner is the only defence; the start modal says so. |
 
-## 5. Risks and open questions
+## 5. Decisions and open questions
 
-1. **Entry point.** Bed card of the temperature overlay, the filament panel, or both?
-2. **Clearance.** 120 mm absolute, or spool height plus margin chosen in the modal?
-3. **Allowlist strictness.** Strict (above) refuses user macros during the run, even
-   harmless ones. Accept that?
-4. **Open printers.** Hide the feature, or allow with an extra warning? A bed-slinger
-   under a box is "enclosed" only through the override.
-5. **Klipper-side G28 guard** in `helix_macros.cfg`: worth offering opt-in later,
-   given the collision with vendor `G28` wrappers?
-6. **The X1C reference.** Its actual sequence (spool on the plate? bed temperature per
-   material? lid?) should be checked before the modal text is final.
-7. **Dead-man margin.** 10 minutes past the planned end, or tighter?
+Decided (Preston, 2026-09-26):
+
+- Entry: the bed card on the temperature overlay and a row in Advanced settings.
+- Clearance: the far end of Z travel minus 10 mm (step 3), with a 130 mm minimum
+  travel for the feature to show.
+- The strict allowlist stands.
+- Open printers: hidden. `EnclosureStyle` only marks a DIY enclosure.
+- The Klipper-side G28 wrapper is deferred (Future work).
+- Dead-man margin: 10 minutes past the planned end.
+
+Open:
+
+1. **Bed temperature rule.** Two candidates:
+   - **Per material, from Bambu's table, capped at 90°C and at the bed max**, with the
+     spool-deformation warning. Bambu's bed temperatures, all for 12 h: PLA 60-70,
+     PLA Silk/CF 65-75, PETG 75-85, TPU 80-90, ABS/ASA/PC/PA 90-100. Its X1C drying
+     mode caps at 90°C. It warns that "some third-party spools may not be
+     heat-resistant enough and could deform".
+   - **A flat 70°C cap**, Preston's first proposal: plastic spool flanges soften around
+     60-70°C. Safer for spools, but PETG and above dry below Bambu's range.
+2. **Cool-down threshold** for the remove prompt: 40°C proposed.
+3. **Loaded-filament detection** on printers without a toolhead sensor: is the prompt
+   line enough?
+
+## Future work
+
+- A Klipper-side `G28` guard in `helix_macros.cfg` (section 2), opt-in, homing only.
 
 ## Under-bed placement (later)
 
