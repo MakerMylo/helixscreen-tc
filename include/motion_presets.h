@@ -4,6 +4,7 @@
 #pragma once
 
 #include "axis_move.h"
+#include "printer_detector.h"
 #include "printer_motion_state.h"
 #include "printer_state.h"
 
@@ -34,14 +35,29 @@ enum class MotionPreset {
  * the inscribed radius in their direction - a round bed has no corners, so
  * the diagonal presets sit at 45 degrees instead.
  *
- * @param gcode_bounds The machine's kinematic envelope in G-code space
- *        (PrinterState::get_gcode_axis_bounds()).
+ * @param gcode_bounds The area to place presets in, G-code space
+ *        (preset_area()).
  * @param circular_bed True on a delta/rotary_delta machine (see
  *        circular_bed_kinematics() in printer_state.h).
  * @return nullopt when either axis's bounds are unknown or degenerate; the
  *         caller must skip the move rather than aim at fabricated
  *         coordinates.
  */
+/**
+ * @brief The area Move-tab presets aim at, in G-code space
+ *
+ * The plate the config declares ([bed_mesh] mesh_min/max) when there is one,
+ * clipped to travel; otherwise the whole travel. Axis travel can run past the
+ * plate into tool docks or a purge area, which a preset must never target.
+ *
+ * @param machine_travel toolhead axis limits (PrinterState::get_axis_bounds())
+ * @param gcode_travel the same limits in G-code space
+ *        (PrinterState::get_gcode_axis_bounds())
+ * @param volume build volume holding the declared plate (machine space)
+ */
+AxisBounds preset_area(const AxisBounds& machine_travel, const AxisBounds& gcode_travel,
+                       const BuildVolume& volume);
+
 std::optional<AxisTarget> motion_preset_target(MotionPreset preset, const AxisBounds& gcode_bounds,
                                                bool circular_bed);
 
