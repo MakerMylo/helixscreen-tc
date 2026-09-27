@@ -10,11 +10,15 @@
 #include "../test_helpers/process_async_timers.h"
 #include "../test_helpers/update_queue_test_access.h"
 #include "app_globals.h"
+#include "config.h"
 #include "display_settings_manager.h"
 #include "helix-xml/src/xml/lv_xml.h"
+#include "lvgl_image_writer.h"
 #include "panel_widget_manager.h"
 #include "panel_widget_registry.h"
+#include "prerender_size_class.h"
 #include "prerendered_images.h"
+#include "printer_image_manager.h"
 #include "printer_image_regions.h"
 #include "printer_images.h"
 #include "printer_state.h"
@@ -22,6 +26,7 @@
 #include "src/ui/panel_widgets/text_measure.h"
 #include "theme_manager.h"
 #include "tool_state.h"
+#include "wizard_config_paths.h"
 
 #include <chrono>
 #include <filesystem>
@@ -809,4 +814,66 @@ TEST_CASE_METHOD(LVGLUITestFixture,
     CHECK_FALSE(shown(h, "callout_chip_light"));
     CHECK_FALSE(shown(h, "callout_chip_chamber"));
     CHECK(mode_now() == static_cast<int>(CalloutMode::Pinned));
+}
+
+// A custom image can be re-imported in place: same id, same path, new pixels.
+TEST_CASE_METHOD(LVGLUITestFixture,
+                 "callouts: a custom image re-imported under the same path lays out with its "
+                 "new aspect",
+                 "[printer_image][callouts]") {
+    helix::init_widget_registrations();
+    helix::PanelWidgetManager::instance().init_widget_subjects();
+    const ScopedImageRegions untagged({});
+    const std::filesystem::path root = std::filesystem::temp_directory_path() /
+                                       ("helix-callout-reimport-" + std::to_string(::getpid()));
+    std::filesystem::remove_all(root);
+    auto& pim = helix::PrinterImageManager::instance();
+    pim.init(root.string());
+    Config* cfg = Config::get_instance();
+    REQUIRE(cfg);
+    const std::string key = cfg->df() + helix::PRINTER_IMAGE;
+    struct Restore {
+        Config* cfg;
+        std::string key;
+        std::filesystem::path root;
+        ~Restore() {
+            cfg->set<std::string>(key, "");
+            std::error_code ec;
+            std::filesystem::remove_all(root, ec);
+        }
+    } restore{cfg, key, root};
+    const int size = helix::get_printer_image_size(
+        lv_display_get_horizontal_resolution(lv_display_get_default()));
+    const std::string bin = pim.get_custom_dir() + "reimport-" + std::to_string(size) + ".bin";
+    const auto write_image = [&](int w, int h) {
+        const std::vector<uint8_t> px(size_t(w) * size_t(h) * 4, 0x80);
+        REQUIRE(helix::write_lvgl_bin(bin, w, h, LV_COLOR_FORMAT_ARGB8888, px.data(), px.size()));
+    };
+    write_image(40, 160); // tall: a side band holds the docked chips
+    cfg->set<std::string>(key, "custom:reimport");
+
+    PanelWidgetHarness<PrinterImageWidget> h(test_screen());
+    h.resize(8, 4, 480, 160);
+    lv_subject_set_int(state().get_bed_target_subject(), 600);
+    lv_subject_set_int(state().get_bed_temp_subject(), 400);
+    settle();
+    lv_obj_update_layout(h.root());
+    REQUIRE(mode_now() == static_cast<int>(CalloutMode::Docked));
+    lv_obj_t* container = h.child("printer_container");
+    lv_obj_t* chip = h.child("callout_chip_bed");
+    const int area_w = lv_obj_get_content_width(container);
+    const int area_h = lv_obj_get_content_height(container);
+    const CalloutRect tall = fit_image(area_w, area_h, 40, 160);
+    REQUIRE(lv_obj_get_x(chip) >= tall.x + tall.w); // in the band beside the image
+
+    // Re-imported wide: no band left, so the chip docks along the bottom edge.
+    write_image(160, 40);
+    h.widget().refresh_printer_image();
+    lv_subject_set_int(state().get_bed_temp_subject(), 410);
+    settle();
+    lv_obj_update_layout(h.root());
+    REQUIRE(mode_now() == static_cast<int>(CalloutMode::Docked));
+    CHECK(lv_obj_get_y(chip) + lv_obj_get_height(chip) ==
+          area_h - theme_manager_get_spacing("space_xs"));
+    h.widget().detach();
 }

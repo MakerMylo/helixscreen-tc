@@ -402,13 +402,14 @@ void PrinterImageWidget::refresh_printer_image() {
     }
 
     // LVGL keys its decoded copy on the path alone, and an import can rewrite an
-    // image in place under that same path, so the decoded copy is dropped on every
-    // refresh. The scaled entries on disk need no such sweep: their names carry the
-    // source's mtime and size, so the entry holding the old pixels is never named
-    // again.
+    // image in place under that same path, so the decoded copy and the natural
+    // size read from it are dropped on every refresh. The scaled entries on disk
+    // need no such sweep: their names carry the source's mtime and size, so the
+    // entry holding the old pixels is never named again.
     if (!current_source_path_.empty()) {
         lv_image_cache_drop(current_source_path_.c_str());
     }
+    natural_size_path_.clear();
 
     if (current_source_path_ != source_path) {
         current_displayed_path_.clear();
