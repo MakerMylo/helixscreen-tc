@@ -579,6 +579,12 @@ void PrinterImageWidget::check_or_generate_cache() {
     // Idempotent; covers unit tests and any call site reached before Application
     // starts the pools.
     helix::http::HttpExecutor::fast().start();
+    if (!helix::http::HttpExecutor::fast().running()) {
+        // No worker pool on this build (the ESP32 firmware): keep the scaled
+        // source, the same state a generation failure leaves.
+        spdlog::debug("[PrinterImageWidget] No background worker, using scaled source");
+        return;
+    }
 
     cache_job_inflight_ = true;
     auto tok = lifetime_.token();
