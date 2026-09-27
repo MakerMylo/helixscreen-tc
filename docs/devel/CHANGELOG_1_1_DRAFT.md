@@ -87,6 +87,14 @@ what gets saved.
   the settings sub-pages use. Widget names and descriptions are properly translated for the
   first time: 18 of 37 names and every description were invisible to the string extractor and
   only appeared in English. 74 new keys across all nine languages.
+- **The home screen's printer picture shows what the printer is doing (#1397)** - while the
+  nozzle, bed or chamber heats, and until a heater that was turned off drops below 50°C, a
+  temperature chip sits on the picture; the part fan shows its speed and the light shows
+  when it is on. Tap a chip for that heater's graph, the fan controls or the light controls.
+  On the 13 most common printers (K1, K1C, K1 Max, K2 Plus, Adventurer 5M Pro, AD5X,
+  Creator 5 Pro, Qidi Q2, Snapmaker U1, SV08, Voron 0, Trident and V2) each chip points at
+  its part: beside the picture with a line to it on a wide tile, on top of it on a small
+  one. Other printers show the chips along the picture's edge.
 - **The filament sensor tile on the home screen is tappable** - a tap now opens the tile's
   modal, and Load, Unload, Purge, Resume and Cancel Print all work from it, sharing the same
   dispatch the runout guidance dialog uses. Which sensor the tile watches is picked in edit
