@@ -252,6 +252,10 @@ class DisplayBackend {
         return target ? static_cast<int>(lv_display_get_rotation(target)) * 90 : 0;
     }
 
+    /// Gesture thresholds for an evdev multi-touch pointer. ROTATE is pushed out of
+    /// reach so PINCH and two-finger pan are the only two-finger gestures that win.
+    static void configure_touch_gestures(lv_indev_t* indev);
+
     // ========================================================================
     // Display Creation
     // ========================================================================
