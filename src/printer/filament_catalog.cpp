@@ -3,6 +3,7 @@
 
 #include "data_root_resolver.h"
 #include "filament_database.h"
+#include "helix_fs.h"
 #include "json_utils.h"
 #include "system/helix_paths.h"
 #include "text_io.h"
@@ -13,17 +14,16 @@
 #include <atomic>
 #include <cerrno>
 #include <cstring>
-#include <filesystem>
 #include <memory>
 #include <mutex>
 #include <set>
 #include <string>
-#include <system_error>
 
 #include "hv/json.hpp"
 
 namespace helix::printer {
 
+namespace hfs = helix::fs;
 namespace tio = helix::text_io;
 
 namespace detail {
@@ -427,11 +427,9 @@ bool FilamentCatalog::save_user_section_to(const char* key, nlohmann::json value
         // sections in there. Preserve the original as a .bak (best-effort) so
         // it stays recoverable, then start fresh with an empty object.
         const std::string bak = path + ".bak";
-        std::error_code bak_ec;
-        std::filesystem::copy_file(path, bak, std::filesystem::copy_options::overwrite_existing,
-                                   bak_ec);
+        const bool backed_up = hfs::copy_file(path, bak, /*overwrite=*/true);
         spdlog::warn("[filament] starting {} fresh; {} the unparseable original to {}", path,
-                     bak_ec ? "could not back up" : "backed up", bak);
+                     backed_up ? "backed up" : "could not back up", bak);
         break;
     }
     }
@@ -439,26 +437,23 @@ bool FilamentCatalog::save_user_section_to(const char* key, nlohmann::json value
     // Atomic write: tmp file + rename. POSIX rename is atomic within a single
     // filesystem. The tmp file lives next to the target so the rename never
     // crosses a mount boundary.
-    std::filesystem::path target(helix::paths::write_target(path));
+    std::string target = helix::paths::write_target(path);
 
     // Ensure parent dir exists (the on-device runtime config dir is created
     // elsewhere, but tests / fresh installs may hit this path first).
-    std::error_code ec;
-    if (auto parent = target.parent_path(); !parent.empty()) {
-        std::filesystem::create_directories(parent, ec);
-        // Ignore "already exists"; report everything else.
-        if (ec && !std::filesystem::is_directory(parent)) {
-            spdlog::warn("[filament] save {}: cannot create parent dir {}: {}", key,
-                         parent.string(), ec.message());
+    if (std::string parent{hfs::parent_path(target)}; !parent.empty()) {
+        // False only when `parent` is not a directory afterwards.
+        if (!hfs::create_directories(parent)) {
+            spdlog::warn("[filament] save {}: cannot create parent dir {}: {}", key, parent,
+                         std::strerror(errno));
             return false;
         }
     }
 
     doc[key] = std::move(value);
 
-    if (!tio::write_file_atomic(target.string(), helix::json_util::safe_dump(doc, 2))) {
-        spdlog::warn("[filament] save {}: cannot write {}: {}", key, target.string(),
-                     std::strerror(errno));
+    if (!tio::write_file_atomic(target, helix::json_util::safe_dump(doc, 2))) {
+        spdlog::warn("[filament] save {}: cannot write {}: {}", key, target, std::strerror(errno));
         return false;
     }
 

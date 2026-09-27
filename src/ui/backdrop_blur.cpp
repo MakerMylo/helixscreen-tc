@@ -5,6 +5,7 @@
 
 #include "config.h"
 #include "data_root_resolver.h"
+#include "helix_fs.h"
 #include "lv_draw_buf_guard.h"
 #include "text_io.h"
 
@@ -12,7 +13,6 @@
 
 #include <algorithm>
 #include <cstring>
-#include <filesystem>
 #include <vector>
 
 #ifdef ENABLE_GLES_3D
@@ -31,6 +31,8 @@
 #endif
 
 namespace helix::ui {
+
+namespace hfs = fs;
 
 // ============================================================================
 // Circuit Breaker
@@ -306,8 +308,7 @@ static bool init_gpu_blur() {
     struct GuardCleaner {
         const std::string& path;
         ~GuardCleaner() {
-            std::error_code ec;
-            std::filesystem::remove(path, ec);
+            hfs::remove(path);
         }
     } guard_cleaner{guard_path};
 

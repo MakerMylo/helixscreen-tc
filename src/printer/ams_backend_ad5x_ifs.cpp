@@ -13,6 +13,7 @@
 #include "app_globals.h"
 #include "config.h"
 #include "helix-xml/src/xml/lv_xml.h"
+#include "helix_fs.h"
 #include "helix_regex.h"
 #include "host_identity.h"
 #include "http_executor.h"
@@ -40,11 +41,12 @@
 #include <cerrno>
 #include <cstdio>
 #include <cstring>
-#include <filesystem>
 #include <lvgl.h>
 #include <thread>
 
 namespace helix {
+
+namespace hfs = fs;
 
 using json = nlohmann::json;
 
@@ -3645,12 +3647,11 @@ void AmsBackendAd5xIfs::detect_local_adventurer_json_path() {
     };
 
     for (const auto* candidate : candidates) {
-        std::error_code ec;
-        if (!std::filesystem::exists(candidate, ec) || ec) {
+        if (!hfs::exists(candidate)) {
             continue;
         }
         // Must be a regular file (or a symlink resolving to one) and writable.
-        if (!std::filesystem::is_regular_file(candidate, ec) || ec) {
+        if (!hfs::is_regular_file(candidate)) {
             continue;
         }
         if (::access(candidate, W_OK) != 0) {

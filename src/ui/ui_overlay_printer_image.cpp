@@ -20,6 +20,7 @@
 #include "ui_utils.h"
 
 #include "config.h"
+#include "helix_fs.h"
 #include "lvgl/src/others/translation/lv_translation.h"
 #include "prerendered_images.h"
 #include "printer_image_manager.h"
@@ -31,10 +32,11 @@
 #include <spdlog/spdlog.h>
 
 #include <cstring>
-#include <filesystem>
 #include <memory>
 
 namespace helix::settings {
+
+namespace hfs = fs;
 
 // ============================================================================
 // SINGLETON ACCESSOR
@@ -405,7 +407,7 @@ void PrinterImageOverlay::populate_usb_images(const std::string& mount_path) {
     lv_subject_copy_string(&usb_status_subject_, "");
 
     for (const auto& path : image_paths) {
-        std::string filename = std::filesystem::path(path).filename().string();
+        std::string filename = std::string(hfs::filename(path));
 
         // USB rows use a different callback (import behavior vs select)
         // and store the full path as image_id for the import handler
@@ -414,7 +416,7 @@ void PrinterImageOverlay::populate_usb_images(const std::string& mount_path) {
 }
 
 void PrinterImageOverlay::handle_usb_import(const std::string& source_path) {
-    std::string filename = std::filesystem::path(source_path).filename().string();
+    std::string filename = std::string(hfs::filename(source_path));
     spdlog::info("[{}] Importing USB image: {}", get_name(), filename);
 
     // Update status via subject binding
