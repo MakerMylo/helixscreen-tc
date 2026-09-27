@@ -104,7 +104,11 @@ what gets saved.
   On the 13 most common printers (K1, K1C, K1 Max, K2 Plus, Adventurer 5M Pro, AD5X,
   Creator 5 Pro, Qidi Q2, Snapmaker U1, SV08, Voron 0, Trident and V2) each chip points at
   its part: beside the picture with a line to it on a wide tile, on top of it on a small
-  one. Other printers show the chips along the picture's edge.
+  one. Other printers show the chips along the picture's edge - until you tag them: Tag
+  parts in the printer image picker asks for six taps on the picture (nozzle tip, part fan,
+  both front corners of the bed, a spot inside the enclosure, the light), shows the chips
+  where they will sit, and saves. That works for your own photo too, and re-tags a shipped
+  picture you disagree with; Reset tags puts it back.
 - **The filament sensor tile on the home screen is tappable** - a tap now opens the tile's
   modal, and Load, Unload, Purge, Resume and Cancel Print all work from it, sharing the same
   dispatch the runout guidance dialog uses. Which sensor the tile watches is picked in edit

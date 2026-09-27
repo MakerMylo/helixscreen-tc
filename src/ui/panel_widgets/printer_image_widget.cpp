@@ -386,20 +386,8 @@ void PrinterImageWidget::refresh_printer_image() {
     lv_display_t* disp = lv_display_get_default();
     int screen_width = disp ? lv_display_get_horizontal_resolution(disp) : 800;
 
-    // Resolve source image path
-    std::string source_path;
-
-    // Check for user-selected printer image (custom or shipped override)
-    auto& pim = helix::PrinterImageManager::instance();
-    source_path = pim.get_active_image_path(screen_width);
-
-    if (source_path.empty()) {
-        // Auto-detect from printer type
-        Config* config = Config::get_instance();
-        std::string printer_type =
-            config ? config->get<std::string>(config->df() + helix::wizard::PRINTER_TYPE, "") : "";
-        source_path = PrinterImages::get_best_printer_image(printer_type);
-    }
+    const std::string source_path =
+        helix::PrinterImageManager::instance().get_displayed_image_path(screen_width);
 
     // LVGL keys its decoded copy on the path alone, and an import can rewrite an
     // image in place under that same path, so the decoded copy and the natural
@@ -930,26 +918,22 @@ void PrinterImageWidget::apply_callout_layout() {
         return;
     }
 
-    const ImageRegions* r = lookup_image_regions(printer_image_basename(current_source_path_));
-    in.tagged = r != nullptr;
-    if (r) {
-        in.image_w = r->src_w;
-        in.image_h = r->src_h;
-    } else {
-        if (natural_size_path_ != current_source_path_) {
-            lv_image_header_t hdr;
-            if (current_source_path_.empty() ||
-                lv_image_decoder_get_info(current_source_path_.c_str(), &hdr) != LV_RESULT_OK) {
-                image_only();
-                return;
-            }
-            natural_size_path_ = current_source_path_;
-            natural_w_ = static_cast<int>(hdr.w);
-            natural_h_ = static_cast<int>(hdr.h);
+    if (natural_size_path_ != current_source_path_) {
+        lv_image_header_t hdr;
+        if (current_source_path_.empty() ||
+            lv_image_decoder_get_info(current_source_path_.c_str(), &hdr) != LV_RESULT_OK) {
+            image_only();
+            return;
         }
-        in.image_w = natural_w_;
-        in.image_h = natural_h_;
+        natural_size_path_ = current_source_path_;
+        natural_w_ = static_cast<int>(hdr.w);
+        natural_h_ = static_cast<int>(hdr.h);
     }
+    const ImageRegions* r = lookup_image_regions(printer_image_region_key(current_source_path_),
+                                                 natural_w_, natural_h_);
+    in.tagged = r != nullptr;
+    in.image_w = r ? r->src_w : natural_w_;
+    in.image_h = r ? r->src_h : natural_h_;
 
     // Measure in the fonts the chips render: chip_text is a text_small
     // (font_small) and every chip icon is size="xs" (icon_font_xs). Padding and
@@ -984,23 +968,7 @@ void PrinterImageWidget::apply_callout_layout() {
     in.min_line = theme_manager_get_spacing("space_md");
 
     const auto anchor = [&](CalloutKind k) -> std::optional<NormPoint> {
-        if (!r)
-            return std::nullopt;
-        switch (k) {
-        case CalloutKind::Nozzle:
-        case CalloutKind::Toolhead:
-            return r->nozzle;
-        case CalloutKind::Fan:
-            return r->part_fan;
-        case CalloutKind::Bed:
-            return NormPoint{(r->bed_left.x + r->bed_right.x) / 2,
-                             (r->bed_left.y + r->bed_right.y) / 2};
-        case CalloutKind::Chamber:
-            return r->chamber;
-        case CalloutKind::Light:
-            return r->light;
-        }
-        return std::nullopt;
+        return r ? region_anchor(*r, k) : std::nullopt;
     };
 
     const std::string widest_heater = helix::ui::temperature::heater_display(9990, 9990).temp;

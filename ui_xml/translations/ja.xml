@@ -506,6 +506,7 @@
   <translation tag="Check the PTFE tube along the drag chain for kinks, and the bend where it enters the extruder sensor" ja="ドラッグチェーンに沿った PTFE チューブの折れと、エクストルーダーセンサー入口の曲がりを確認してください"/>
   <translation tag="Check the RS-485 cable between printer and CFS" ja="プリンターと CFS 間の RS-485 ケーブルを確認してください"/>
   <translation tag="Check the buffer unit on the back of the printer" ja="プリンター背面のバッファーユニットを確認してください"/>
+  <translation tag="Check the chips, then save" ja="チップを確認して保存"/>
   <translation tag="Check the filament path and try again." ja="フィラメント経路を確認して、もう一度お試しください。"/>
   <translation tag="Check the path from the slot to the hub for a tangle or drag. If the slot feeds freely, the hub sensor or the feeder motor may have failed" ja="スロットからハブまでの経路に絡まりや抵抗がないか確認してください。スロットが問題なく送り出せる場合は、ハブセンサーまたは送り出しモーターの故障が考えられます"/>
   <translation tag="Check the provided value and try again" ja="入力した値を確認してもう一度お試しください"/>
@@ -686,11 +687,13 @@
   <translation tag="Could not reach Spoolman at" ja="Spoolman に接続できません:"/>
   <translation tag="Could not read the screw adjustments from the printer" ja="プリンターからネジ調整を読み取れませんでした"/>
   <translation tag="Could not remove the job from the queue" ja="キューからジョブを削除できませんでした"/>
+  <translation tag="Could not reset the printer image tags" ja="プリンター画像のタグのリセットに失敗しました"/>
   <translation tag="Could not resolve printer RFCOMM channel" ja="プリンターの RFCOMM チャンネルを解決できませんでした"/>
   <translation tag="Could not save filament" ja="フィラメントを保存できませんでした"/>
   <translation tag="Could not save the drying state" ja="乾燥の状態を保存できませんでした"/>
   <translation tag="Could not save the drying state: nothing was heated" ja="乾燥の状態を保存できませんでした: 何も加熱していません"/>
   <translation tag="Could not save the mesh as &apos;{}&apos;: {}" ja="メッシュを &apos;{}&apos; として保存できませんでした: {}"/>
+  <translation tag="Could not save the printer image tags" ja="プリンター画像のタグの保存に失敗しました"/>
   <translation tag="Could not start Bluetooth discovery" ja="Bluetooth の検出を開始できませんでした"/>
   <translation tag="Could not update filaments" ja="フィラメントを更新できませんでした"/>
   <translation tag="Could not verify Spoolman status. Moonraker may still be restarting." ja="Spoolman のステータスを確認できませんでした。Moonraker がまだ再起動中の可能性があります。"/>
@@ -2324,6 +2327,8 @@
   <translation tag="Remove the spools" ja="スプールを取り出す"/>
   <translation tag="Remove the spools from the bed" ja="ベッドからスプールを取り出す"/>
   <translation tag="Remove the spools now?" ja="今スプールを取り出しますか?"/>
+  <translation tag="Remove your tags for this image?" ja="この画像のタグを削除しますか？"/>
+  <translation tag="Remove your tags for this image? Its chips go back to the shipped positions." ja="この画像のタグを削除しますか？チップは出荷時の位置に戻ります。"/>
   <translation tag="Rename" ja="名前を変更"/>
   <translation tag="Rename Fan" ja="ファン名を変更"/>
   <translation tag="Rename Mesh Profile" ja="メッシュプロファイルの名前を変更"/>
@@ -2363,6 +2368,7 @@
   <translation tag="Reset endless spool failed" ja="エンドレススプールのリセットに失敗しました"/>
   <translation tag="Reset failed" ja="リセットに失敗しました"/>
   <translation tag="Reset motor run-time counter" ja="モーターの稼働時間カウンターをリセット"/>
+  <translation tag="Reset tags" ja="タグをリセット"/>
   <translation tag="Reset to Default" ja="デフォルトにリセット"/>
   <translation tag="Reset to defaults" ja="デフォルトに戻す"/>
   <translation tag="Reset to original values" ja="元の値にリセット"/>
@@ -2802,17 +2808,25 @@
   <translation tag="TOGGLE: {}" ja="切り替え: {}"/>
   <translation tag="TOOLS" ja="ツール"/>
   <translation tag="TPU" ja="TPU"/>
+  <translation tag="Tag Parts" ja="部位をタグ付け"/>
+  <translation tag="Tag parts" ja="部位をタグ付け"/>
   <translation tag="Takes 3-5 min. Do not interrupt." ja="3〜5分かかります。中断しないでください。"/>
   <translation tag="Tangle sensitivity" ja="絡み検出の感度"/>
   <translation tag="Tap + to add" ja="+ をタップして追加"/>
   <translation tag="Tap Firmware Restart to recover — on K2 this also bounces the rpi MCU bridge" ja="「ファームウェア再起動」をタップして復旧してください。K2 では rpi MCU ブリッジも再起動されます"/>
   <translation tag="Tap again to confirm this orientation" ja="もう一度タップしてこの向きを確定"/>
+  <translation tag="Tap an empty spot inside the enclosure" ja="筐体内の空いている場所をタップ"/>
   <translation tag="Tap an object to exclude it | {} objects ({} excluded)" ja="オブジェクトをタップして除外 | {} 個 ({} 個除外済み)"/>
   <translation tag="Tap any tile to open its full controls or toggle its state." ja="タイルをタップすると、全機能のコントロールを開いたり、状態を切り替えたりできます。"/>
   <translation tag="Tap anywhere if this text is right-side up" ja="この文字が正しい向きならどこかをタップ"/>
   <translation tag="Tap anywhere to begin" ja="どこかをタップして開始"/>
   <translation tag="Tap anywhere to begin calibration" ja="どこかをタップしてキャリブレーション開始"/>
+  <translation tag="Tap the bed&apos;s front-left corner" ja="ベッドの手前左の角をタップ"/>
+  <translation tag="Tap the bed&apos;s front-right corner" ja="ベッドの手前右の角をタップ"/>
   <translation tag="Tap the crosshair (point %1$d of 3) — touch %2$d of %3$d" ja="十字をタップ（ポイント %1$d / 3）— タッチ %2$d / %3$d"/>
+  <translation tag="Tap the light" ja="ライトをタップ"/>
+  <translation tag="Tap the nozzle tip" ja="ノズルの先端をタップ"/>
+  <translation tag="Tap the part cooling fan" ja="パーツ冷却ファンをタップ"/>
   <translation tag="Tap to assign" ja="タップして割当"/>
   <translation tag="Target" ja="目標"/>
   <translation tag="Target Frequency" ja="目標周波数"/>
@@ -3073,6 +3087,7 @@
   <translation tag="Unavailable" ja="利用不可"/>
   <translation tag="Unavailable on this printer" ja="このプリンターでは利用できません"/>
   <translation tag="Understanding Results" ja="結果の理解"/>
+  <translation tag="Undo" ja="元に戻す"/>
   <translation tag="Uneven belt tension causes print artifacts like layer shifts, VFAs (vertical fine artifacts), and ringing.&#10;&#10;Pluck each belt by hand and this tool listens through the accelerometer to measure the belt&apos;s frequency. Matched frequencies mean balanced tension.&#10;&#10;On CoreXY, belts A and B should be within a few Hz of each other." ja="ベルト張力が不均一だと、レイヤーシフトや VFA(垂直微細アーティファクト)、リンギングなどの印刷不良が発生します。&#10;&#10;各ベルトを手ではじくと、このツールが加速度センサーでベルトの周波数を測定します。周波数が一致していれば張力が均等であることを意味します。&#10;&#10;CoreXY では、ベルト A と B は数 Hz 以内に収まっている必要があります。"/>
   <translation tag="Uninstall" ja="アンインストール"/>
   <translation tag="Uninstall HelixPrint Plugin" ja="HelixPrint プラグインをアンインストール"/>
