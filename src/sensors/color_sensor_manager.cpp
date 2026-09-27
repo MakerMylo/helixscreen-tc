@@ -5,12 +5,12 @@
 
 #include "ui_update_queue.h"
 
+#include "helix_regex.h"
 #include "spdlog/spdlog.h"
 #include "static_subject_registry.h"
 
 #include <algorithm>
 #include <cstring>
-#include <regex>
 
 // CRITICAL: Subject updates trigger lv_obj_invalidate() which asserts if called
 // during LVGL rendering. WebSocket callbacks run on libhv's event loop thread,
@@ -441,10 +441,10 @@ void ColorSensorManager::update_subjects_on_main_thread() {
 
 std::string ColorSensorManager::generate_display_name(const std::string& device_id) const {
     // Convert "td1_lane0" -> "TD-1 Lane 0"
-    std::regex pattern(R"(td1_lane(\d+))");
-    std::smatch match;
+    helix::Regex pattern(R"(td1_lane(\d+))");
+    helix::RegexMatch match;
 
-    if (std::regex_match(device_id, match, pattern)) {
+    if (helix::regex_match(device_id, match, pattern)) {
         return "TD-1 Lane " + match[1].str();
     }
 

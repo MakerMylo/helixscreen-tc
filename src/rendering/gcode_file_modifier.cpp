@@ -4,21 +4,32 @@
 #include "gcode_file_modifier.h"
 
 #include "app_globals.h"
+#include "helix_regex.h"
 #include "streaming_policy.h"
+#include "text_io.h"
 
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <chrono>
 #include <cstdlib>
-#include <fstream>
 #include <random>
-#include <regex>
-#include <sstream>
 #include <unordered_map>
 
 namespace helix {
 namespace gcode {
+
+namespace {
+
+std::vector<std::string> split_lines(std::string_view text) {
+    std::vector<std::string> out;
+    for (std::string_view line : helix::text_io::lines(text)) {
+        out.emplace_back(line);
+    }
+    return out;
+}
+
+} // namespace
 
 // ============================================================================
 // GCodeFileModifier implementation
@@ -98,12 +109,7 @@ void GCodeFileModifier::apply_single_modification(std::vector<std::string>& line
 
     case ModificationType::INJECT_BEFORE: {
         // Split the gcode to inject into lines
-        std::vector<std::string> new_lines;
-        std::istringstream ss(mod.gcode);
-        std::string line;
-        while (std::getline(ss, line)) {
-            new_lines.push_back(line);
-        }
+        std::vector<std::string> new_lines = split_lines(mod.gcode);
 
         // Insert before idx
         lines.insert(lines.begin() + static_cast<long>(idx), new_lines.begin(), new_lines.end());
@@ -115,12 +121,7 @@ void GCodeFileModifier::apply_single_modification(std::vector<std::string>& line
 
     case ModificationType::INJECT_AFTER: {
         // Split the gcode to inject into lines
-        std::vector<std::string> new_lines;
-        std::istringstream ss(mod.gcode);
-        std::string line;
-        while (std::getline(ss, line)) {
-            new_lines.push_back(line);
-        }
+        std::vector<std::string> new_lines = split_lines(mod.gcode);
 
         // Insert after idx (at idx+1)
         lines.insert(lines.begin() + static_cast<long>(idx + 1), new_lines.begin(),
@@ -136,12 +137,7 @@ void GCodeFileModifier::apply_single_modification(std::vector<std::string>& line
         size_t count = end_idx - idx + 1;
 
         // Split the replacement gcode into lines
-        std::vector<std::string> new_lines;
-        std::istringstream ss(mod.gcode);
-        std::string line;
-        while (std::getline(ss, line)) {
-            new_lines.push_back(line);
-        }
+        std::vector<std::string> new_lines = split_lines(mod.gcode);
 
         // Erase old lines
         lines.erase(lines.begin() + static_cast<long>(idx),
@@ -166,12 +162,7 @@ std::string GCodeFileModifier::apply_to_content(const std::string& content) {
     }
 
     // Split content into lines
-    std::vector<std::string> lines;
-    std::istringstream ss(content);
-    std::string line;
-    while (std::getline(ss, line)) {
-        lines.push_back(line);
-    }
+    std::vector<std::string> lines = split_lines(content);
 
     // Sort modifications by line number (descending)
     sort_modifications();
@@ -183,15 +174,15 @@ std::string GCodeFileModifier::apply_to_content(const std::string& content) {
     }
 
     // Join lines back together
-    std::ostringstream out;
+    std::string out;
     for (size_t i = 0; i < lines.size(); ++i) {
-        out << lines[i];
+        out += lines[i];
         if (i + 1 < lines.size()) {
-            out << '\n';
+            out += '\n';
         }
     }
 
-    return out.str();
+    return out;
 }
 
 ModificationResult GCodeFileModifier::apply(const std::filesystem::path& filepath) {
@@ -222,8 +213,8 @@ ModificationResult GCodeFileModifier::apply_buffered(const std::filesystem::path
     ModificationResult result;
 
     // Read original file
-    std::ifstream infile(filepath);
-    if (!infile.is_open()) {
+    helix::text_io::LineReader infile(filepath.string());
+    if (!infile) {
         result.success = false;
         result.error_message = "Failed to open file: " + filepath.string();
         spdlog::error("[GCodeFileModifier] {}", result.error_message);
@@ -233,11 +224,10 @@ ModificationResult GCodeFileModifier::apply_buffered(const std::filesystem::path
     // Read all lines
     std::vector<std::string> lines;
     std::string line;
-    while (std::getline(infile, line)) {
+    while (infile.next(line)) {
         lines.push_back(line);
         result.original_size += line.size() + 1; // +1 for newline
     }
-    infile.close();
 
     spdlog::info("[GCodeFileModifier] Loaded {} lines ({} bytes) from {}", lines.size(),
                  result.original_size, filepath.filename().string());
@@ -247,17 +237,17 @@ ModificationResult GCodeFileModifier::apply_buffered(const std::filesystem::path
         result.success = true;
         result.modified_path = generate_temp_path(filepath);
 
-        std::ofstream outfile(result.modified_path);
-        if (!outfile.is_open()) {
+        auto outfile = helix::text_io::open_file(result.modified_path, "wb");
+        if (!outfile) {
             result.success = false;
             result.error_message = "Failed to create temp file: " + result.modified_path;
             return result;
         }
 
         for (size_t i = 0; i < lines.size(); ++i) {
-            outfile << lines[i];
+            helix::text_io::write_all(outfile.get(), lines[i]);
             if (i + 1 < lines.size()) {
-                outfile << '\n';
+                std::fputc('\n', outfile.get());
             }
         }
         result.modified_size = result.original_size;
@@ -279,8 +269,8 @@ ModificationResult GCodeFileModifier::apply_buffered(const std::filesystem::path
     result.modified_path = generate_temp_path(filepath);
 
     // Write modified file
-    std::ofstream outfile(result.modified_path);
-    if (!outfile.is_open()) {
+    auto outfile = helix::text_io::open_file(result.modified_path, "wb");
+    if (!outfile) {
         result.success = false;
         result.error_message = "Failed to create temp file: " + result.modified_path;
         spdlog::error("[GCodeFileModifier] {}", result.error_message);
@@ -288,14 +278,14 @@ ModificationResult GCodeFileModifier::apply_buffered(const std::filesystem::path
     }
 
     for (size_t i = 0; i < lines.size(); ++i) {
-        outfile << lines[i];
+        helix::text_io::write_all(outfile.get(), lines[i]);
         result.modified_size += lines[i].size();
         if (i + 1 < lines.size()) {
-            outfile << '\n';
+            std::fputc('\n', outfile.get());
             result.modified_size++;
         }
     }
-    outfile.close();
+    helix::text_io::close(outfile);
 
     result.success = true;
     spdlog::info("[GCodeFileModifier] Created modified file: {} ({} bytes, +{} -{} lines changed)",
@@ -337,8 +327,8 @@ ModificationResult GCodeFileModifier::apply_streaming(const std::filesystem::pat
     ModificationResult result;
 
     // Open input file
-    std::ifstream infile(filepath);
-    if (!infile.is_open()) {
+    helix::text_io::LineReader infile(filepath.string());
+    if (!infile) {
         result.success = false;
         result.error_message = "Failed to open file: " + filepath.string();
         spdlog::error("[GCodeFileModifier] {}", result.error_message);
@@ -349,8 +339,8 @@ ModificationResult GCodeFileModifier::apply_streaming(const std::filesystem::pat
     result.modified_path = generate_temp_path(filepath);
 
     // Open output file
-    std::ofstream outfile(result.modified_path);
-    if (!outfile.is_open()) {
+    auto outfile = helix::text_io::open_file(result.modified_path, "wb");
+    if (!outfile) {
         result.success = false;
         result.error_message = "Failed to create temp file: " + result.modified_path;
         spdlog::error("[GCodeFileModifier] {}", result.error_message);
@@ -368,7 +358,7 @@ ModificationResult GCodeFileModifier::apply_streaming(const std::filesystem::pat
     size_t line_number = 0;
     bool first_line = true;
 
-    while (std::getline(infile, line)) {
+    while (infile.next(line)) {
         line_number++;
         result.original_size += line.size() + 1;
 
@@ -382,13 +372,13 @@ ModificationResult GCodeFileModifier::apply_streaming(const std::filesystem::pat
                 // Skip if already a comment
                 if (!line.empty() && line[0] == ';') {
                     if (!first_line)
-                        outfile << '\n';
-                    outfile << line;
+                        std::fputc('\n', outfile.get());
+                    helix::text_io::write_all(outfile.get(), line);
                 } else {
                     std::string commented = comment_out_line(line, mod.comment);
                     if (!first_line)
-                        outfile << '\n';
-                    outfile << commented;
+                        std::fputc('\n', outfile.get());
+                    helix::text_io::write_all(outfile.get(), commented);
                     result.lines_modified++;
                 }
                 result.modified_size += line.size() + (first_line ? 0 : 1);
@@ -405,20 +395,18 @@ ModificationResult GCodeFileModifier::apply_streaming(const std::filesystem::pat
 
             case ModificationType::INJECT_BEFORE: {
                 // Write injected content first
-                std::istringstream ss(mod.gcode);
-                std::string inject_line;
-                while (std::getline(ss, inject_line)) {
+                for (std::string_view inject_line : helix::text_io::lines(mod.gcode)) {
                     if (!first_line)
-                        outfile << '\n';
-                    outfile << inject_line;
+                        std::fputc('\n', outfile.get());
+                    helix::text_io::write_all(outfile.get(), inject_line);
                     result.modified_size += inject_line.size() + (first_line ? 0 : 1);
                     result.lines_added++;
                     first_line = false;
                 }
                 // Then write the original line
                 if (!first_line)
-                    outfile << '\n';
-                outfile << line;
+                    std::fputc('\n', outfile.get());
+                helix::text_io::write_all(outfile.get(), line);
                 result.modified_size += line.size() + 1;
                 first_line = false;
                 break;
@@ -427,16 +415,14 @@ ModificationResult GCodeFileModifier::apply_streaming(const std::filesystem::pat
             case ModificationType::INJECT_AFTER: {
                 // Write original line first
                 if (!first_line)
-                    outfile << '\n';
-                outfile << line;
+                    std::fputc('\n', outfile.get());
+                helix::text_io::write_all(outfile.get(), line);
                 result.modified_size += line.size() + (first_line ? 0 : 1);
                 first_line = false;
                 // Then write injected content
-                std::istringstream ss(mod.gcode);
-                std::string inject_line;
-                while (std::getline(ss, inject_line)) {
-                    outfile << '\n';
-                    outfile << inject_line;
+                for (std::string_view inject_line : helix::text_io::lines(mod.gcode)) {
+                    std::fputc('\n', outfile.get());
+                    helix::text_io::write_all(outfile.get(), inject_line);
                     result.modified_size += inject_line.size() + 1;
                     result.lines_added++;
                 }
@@ -445,15 +431,13 @@ ModificationResult GCodeFileModifier::apply_streaming(const std::filesystem::pat
 
             case ModificationType::REPLACE: {
                 // Write replacement content instead of original
-                std::istringstream ss(mod.gcode);
-                std::string replace_line;
                 bool first_replace = true;
-                while (std::getline(ss, replace_line)) {
+                for (std::string_view replace_line : helix::text_io::lines(mod.gcode)) {
                     if (!first_line && !first_replace)
-                        outfile << '\n';
+                        std::fputc('\n', outfile.get());
                     if (!first_line && first_replace)
-                        outfile << '\n';
-                    outfile << replace_line;
+                        std::fputc('\n', outfile.get());
+                    helix::text_io::write_all(outfile.get(), replace_line);
                     result.modified_size += replace_line.size() + (first_line ? 0 : 1);
                     first_replace = false;
                     first_line = false;
@@ -465,15 +449,14 @@ ModificationResult GCodeFileModifier::apply_streaming(const std::filesystem::pat
         } else {
             // No modification - write line as-is
             if (!first_line)
-                outfile << '\n';
-            outfile << line;
+                std::fputc('\n', outfile.get());
+            helix::text_io::write_all(outfile.get(), line);
             result.modified_size += line.size() + (first_line ? 0 : 1);
             first_line = false;
         }
     }
 
-    infile.close();
-    outfile.close();
+    helix::text_io::close(outfile);
 
     result.success = true;
     spdlog::info("[GCodeFileModifier] Streaming complete: {} ({} bytes, +{} -{} lines)",
@@ -520,7 +503,7 @@ bool GCodeFileModifier::disable_macro_parameter(const DetectedOperation& op) {
     // Build regex pattern to find PARAM_NAME=value (case-insensitive)
     // Replace the value with 0 or FALSE
     std::string pattern = op.param_name + R"(=\S+)";
-    std::regex re(pattern, std::regex_constants::icase);
+    helix::Regex re(pattern, helix::Regex::ICase);
 
     // Determine replacement value
     std::string replacement = op.param_name + "=0";
@@ -533,7 +516,7 @@ bool GCodeFileModifier::disable_macro_parameter(const DetectedOperation& op) {
     }
 
     // Build the modified line
-    std::string modified_line = std::regex_replace(op.raw_line, re, replacement);
+    std::string modified_line = helix::regex_replace(op.raw_line, re, replacement);
 
     // Add a replacement modification
     add_modification(
@@ -596,10 +579,7 @@ std::string GCodeFileModifier::generate_temp_path(const std::filesystem::path& o
     std::uniform_int_distribution<> dis(100000, 999999);
     int suffix = dis(gen);
 
-    std::ostringstream path;
-    path << cache_dir << "/mod_" << suffix << "_" << filename;
-
-    return path.str();
+    return fmt::format("{}/mod_{}_{}", cache_dir, suffix, filename);
 }
 
 size_t GCodeFileModifier::cleanup_temp_files(int max_age_seconds) {

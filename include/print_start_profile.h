@@ -3,10 +3,10 @@
 
 #pragma once
 
+#include "helix_regex.h"
 #include "printer_state.h"
 
 #include <memory>
-#include <regex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -50,7 +50,7 @@ class PrintStartProfile {
      * @brief A regex response pattern
      */
     struct ResponsePattern {
-        std::regex pattern;
+        helix::Regex pattern;
         helix::PrintStartPhase phase;
         std::string message_template; // supports $1, $2 capture group substitution
         int weight;                   // only used in weighted mode
@@ -401,5 +401,5 @@ class PrintStartProfile {
     /**
      * @brief Substitute regex capture groups ($1, $2, ...) in a template
      */
-    static std::string substitute_captures(const std::string& tmpl, const std::smatch& match);
+    static std::string substitute_captures(const std::string& tmpl, const helix::RegexMatch& match);
 };

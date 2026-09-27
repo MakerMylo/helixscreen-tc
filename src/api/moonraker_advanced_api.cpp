@@ -12,6 +12,7 @@
 #include "app_globals.h"
 #include "bed_mesh_probe_parser.h"
 #include "gcode_unknown_command.h"
+#include "helix_regex.h"
 #include "json_utils.h"
 #include "moonraker_api.h"
 #include "observer_factory.h"
@@ -30,12 +31,9 @@
 #include <atomic>
 #include <chrono>
 #include <cmath>
-#include <iomanip>
 #include <memory>
 #include <optional>
-#include <regex>
 #include <set>
-#include <sstream>
 
 using namespace helix;
 
@@ -740,10 +738,10 @@ class PIDCalibrateCollector : public std::enable_shared_from_this<PIDCalibrateCo
         spdlog::trace("[PIDCalibrateCollector] Received: {}", line);
 
         // Check for progress: "sample:1 pwm:0.5 asymmetry:0.2 tolerance:n/a"
-        static const std::regex sample_regex(
+        static const helix::Regex sample_regex(
             R"(sample:(\d+)\s+pwm:[\d.]+\s+asymmetry:[\d.]+\s+tolerance:(\S+))");
-        std::smatch progress_match;
-        if (std::regex_search(line, progress_match, sample_regex)) {
+        helix::RegexMatch progress_match;
+        if (helix::regex_search(line, progress_match, sample_regex)) {
             int sample_num = std::stoi(progress_match[1].str());
             float tolerance_val = -1.0f;
             std::string tol_str = progress_match[2].str();
@@ -761,9 +759,10 @@ class PIDCalibrateCollector : public std::enable_shared_from_this<PIDCalibrateCo
         }
 
         // Check for PID result: "PID parameters: pid_Kp=22.865 pid_Ki=1.292 pid_Kd=101.178"
-        static const std::regex pid_regex(R"(pid_Kp=([\d.]+)\s+pid_Ki=([\d.]+)\s+pid_Kd=([\d.]+))");
-        std::smatch match;
-        if (std::regex_search(line, match, pid_regex) && match.size() == 4) {
+        static const helix::Regex pid_regex(
+            R"(pid_Kp=([\d.]+)\s+pid_Ki=([\d.]+)\s+pid_Kd=([\d.]+))");
+        helix::RegexMatch match;
+        if (helix::regex_search(line, match, pid_regex) && match.size() == 4) {
             float kp = std::stof(match[1].str());
             float ki = std::stof(match[2].str());
             float kd = std::stof(match[3].str());
@@ -864,11 +863,11 @@ class PACalibrateCollector : public std::enable_shared_from_this<PACalibrateColl
           on_error_(std::move(on_error)), on_progress_(std::move(on_progress)),
           result_re_(proc_.result_pattern) {
         if (!proc_.attempt_pattern.empty()) {
-            attempt_re_ = std::regex(proc_.attempt_pattern);
+            attempt_re_ = helix::Regex(proc_.attempt_pattern);
             has_attempt_re_ = true;
         }
         if (!proc_.failure_pattern.empty()) {
-            failure_re_ = std::regex(proc_.failure_pattern);
+            failure_re_ = helix::Regex(proc_.failure_pattern);
             has_failure_re_ = true;
         }
     }
@@ -912,8 +911,8 @@ class PACalibrateCollector : public std::enable_shared_from_this<PACalibrateColl
         // Result first: on firmwares that apply the value through
         // SET_PRESSURE_ADVANCE the winning line can also satisfy a loose
         // attempt pattern, and reading it as progress would drop the result.
-        std::smatch match;
-        if (std::regex_search(line, match, result_re_) && match.size() >= 2) {
+        helix::RegexMatch match;
+        if (helix::regex_search(line, match, result_re_) && match.size() >= 2) {
             try {
                 complete_success(std::stof(match[1].str()));
             } catch (const std::exception& ex) {
@@ -922,8 +921,8 @@ class PACalibrateCollector : public std::enable_shared_from_this<PACalibrateColl
             return;
         }
 
-        std::smatch attempt_match;
-        if (has_attempt_re_ && std::regex_search(line, attempt_match, attempt_re_)) {
+        helix::RegexMatch attempt_match;
+        if (has_attempt_re_ && helix::regex_search(line, attempt_match, attempt_re_)) {
             const int attempt = ++attempts_seen_;
             // The candidate K this attempt tried, when the pattern captures it.
             // Without it the panel's "K so far" readout has nothing to show and
@@ -956,7 +955,7 @@ class PACalibrateCollector : public std::enable_shared_from_this<PACalibrateColl
         // Only a line Klipper marks as an error: progress lines can carry words
         // like "fitting error" and must not end the run.
         if (line.rfind("!! ", 0) == 0 || line.rfind("Error:", 0) == 0 ||
-            (has_failure_re_ && std::regex_search(line, failure_re_))) {
+            (has_failure_re_ && helix::regex_search(line, failure_re_))) {
             complete_error(line);
             return;
         }
@@ -989,10 +988,10 @@ class PACalibrateCollector : public std::enable_shared_from_this<PACalibrateColl
     PACallback on_success_;
     MoonrakerAdvancedAPI::ErrorCallback on_error_;
     PAProgressCallback on_progress_;
-    std::regex result_re_;
-    std::regex attempt_re_;
+    helix::Regex result_re_;
+    helix::Regex attempt_re_;
     bool has_attempt_re_ = false;
-    std::regex failure_re_;
+    helix::Regex failure_re_;
     bool has_failure_re_ = false;
     int attempts_seen_ = 0;
     std::string handler_name_;
@@ -1120,17 +1119,17 @@ class MPCCalibrateCollector : public std::enable_shared_from_this<MPCCalibrateCo
     void parse_result_line(const std::string& line) {
         // Parse: fan_ambient_transfer=0.12, 0.18, 0.25 [W/K]
         // Must check BEFORE ambient_transfer since both contain "ambient_transfer"
-        static const std::regex fat_regex(R"(fan_ambient_transfer=([\d., ]+)\s*\[W/K\])");
+        static const helix::Regex fat_regex(R"(fan_ambient_transfer=([\d., ]+)\s*\[W/K\])");
         // Parse: block_heat_capacity=18.5432 [J/K]
-        static const std::regex bhc_regex(R"(block_heat_capacity=([\d.]+))");
+        static const helix::Regex bhc_regex(R"(block_heat_capacity=([\d.]+))");
         // Parse: sensor_responsiveness=0.123456 [K/s/K]
-        static const std::regex sr_regex(R"(sensor_responsiveness=([\d.]+))");
+        static const helix::Regex sr_regex(R"(sensor_responsiveness=([\d.]+))");
         // Parse: ambient_transfer=0.078901 [W/K]
-        static const std::regex at_regex(R"(ambient_transfer=([\d.]+)\s+\[W/K\])");
+        static const helix::Regex at_regex(R"(ambient_transfer=([\d.]+)\s+\[W/K\])");
 
-        std::smatch match;
+        helix::RegexMatch match;
 
-        if (std::regex_search(line, match, fat_regex)) {
+        if (helix::regex_search(line, match, fat_regex)) {
             result_.fan_ambient_transfer = match[1].str();
             // Trim trailing whitespace
             auto end = result_.fan_ambient_transfer.find_last_not_of(' ');
@@ -1145,7 +1144,7 @@ class MPCCalibrateCollector : public std::enable_shared_from_this<MPCCalibrateCo
             return;
         }
 
-        if (std::regex_search(line, match, bhc_regex)) {
+        if (helix::regex_search(line, match, bhc_regex)) {
             result_.block_heat_capacity = std::stof(match[1].str());
             spdlog::debug("[MPCCalibrateCollector] block_heat_capacity={}",
                           result_.block_heat_capacity);
@@ -1153,7 +1152,7 @@ class MPCCalibrateCollector : public std::enable_shared_from_this<MPCCalibrateCo
             return;
         }
 
-        if (std::regex_search(line, match, sr_regex)) {
+        if (helix::regex_search(line, match, sr_regex)) {
             result_.sensor_responsiveness = std::stof(match[1].str());
             spdlog::debug("[MPCCalibrateCollector] sensor_responsiveness={}",
                           result_.sensor_responsiveness);
@@ -1161,7 +1160,7 @@ class MPCCalibrateCollector : public std::enable_shared_from_this<MPCCalibrateCo
             return;
         }
 
-        if (std::regex_search(line, match, at_regex)) {
+        if (helix::regex_search(line, match, at_regex)) {
             result_.ambient_transfer = std::stof(match[1].str());
             spdlog::debug("[MPCCalibrateCollector] ambient_transfer={}", result_.ambient_transfer);
             parsed_at_ = true;
@@ -1694,9 +1693,9 @@ class InputShaperCollector : public std::enable_shared_from_this<InputShaperColl
     }
 
     void parse_sweep_line(const std::string& line) {
-        static const std::regex freq_regex(R"(Testing frequency ([\d.]+) Hz)");
-        std::smatch match;
-        if (std::regex_search(line, match, freq_regex) && match.size() == 2) {
+        static const helix::Regex freq_regex(R"(Testing frequency ([\d.]+) Hz)");
+        helix::RegexMatch match;
+        if (helix::regex_search(line, match, freq_regex) && match.size() == 2) {
             try {
                 float freq = std::stof(match[1].str());
                 last_sweep_freq_.store(freq);
@@ -1757,17 +1756,17 @@ class InputShaperCollector : public std::enable_shared_from_this<InputShaperColl
         // Fitted smoother 'smooth_mzv' frequency = 42.6 Hz (vibration score = 1.23%, smoothing ~=
         // 0.085, combined score = 1.234e-02) Fitted shaper 'mzv' frequency = 36.7 Hz (vibration
         // score = 1.23%, smoothing ~= 0.140, combined score = 2.345e-02)
-        static const std::regex kalico_regex(
+        static const helix::Regex kalico_regex(
             R"(Fitted (?:shaper|smoother) '([\w]+)' frequency = ([\d.]+) Hz \(vibration score = ([\d.]+)%, smoothing ~= ([\d.]+))");
 
         // Standard Klipper format:
         // Fitted shaper 'mzv' frequency = 36.7 Hz (vibrations = 7.2%, smoothing ~= 0.140)
-        static const std::regex klipper_regex(
+        static const helix::Regex klipper_regex(
             R"(Fitted shaper '(\w+)' frequency = ([\d.]+) Hz \(vibrations = ([\d.]+)%, smoothing ~= ([\d.]+)\))");
 
-        std::smatch match;
-        bool matched = std::regex_search(line, match, kalico_regex) ||
-                       std::regex_search(line, match, klipper_regex);
+        helix::RegexMatch match;
+        bool matched = helix::regex_search(line, match, kalico_regex) ||
+                       helix::regex_search(line, match, klipper_regex);
 
         if (matched && match.size() >= 5) {
             ShaperFitData fit;
@@ -1796,9 +1795,9 @@ class InputShaperCollector : public std::enable_shared_from_this<InputShaperColl
     }
 
     void parse_max_accel_line(const std::string& line) {
-        static const std::regex accel_regex(R"(suggested max_accel <= (\d+))");
-        std::smatch match;
-        if (std::regex_search(line, match, accel_regex) && match.size() == 2) {
+        static const helix::Regex accel_regex(R"(suggested max_accel <= (\d+))");
+        helix::RegexMatch match;
+        if (helix::regex_search(line, match, accel_regex) && match.size() == 2) {
             try {
                 float max_accel = std::stof(match[1].str());
                 // Attach to the most recently parsed shaper fit
@@ -1815,19 +1814,19 @@ class InputShaperCollector : public std::enable_shared_from_this<InputShaperColl
 
     void parse_recommendation(const std::string& line) {
         // Try new Klipper format first: "Recommended shaper_type_x = mzv, shaper_freq_x = 53.8 Hz"
-        static const std::regex rec_new(
+        static const helix::Regex rec_new(
             R"(Recommended shaper_type_\w+ = (\w+), shaper_freq_\w+ = ([\d.]+) Hz)");
         // Kalico smoother format: "Recommended smoother_type_x = smooth_mzv, smoother_freq_x = 42.6
         // Hz"
-        static const std::regex rec_smoother(
+        static const helix::Regex rec_smoother(
             R"(Recommended smoother_type_\w+ = (\w+), smoother_freq_\w+ = ([\d.]+) Hz)");
         // Legacy format: "Recommended shaper is mzv @ 36.7 Hz"
-        static const std::regex rec_old(R"(Recommended shaper is (\w+) @ ([\d.]+) Hz)");
+        static const helix::Regex rec_old(R"(Recommended shaper is (\w+) @ ([\d.]+) Hz)");
 
-        std::smatch match;
-        bool matched = std::regex_search(line, match, rec_new) ||
-                       std::regex_search(line, match, rec_smoother) ||
-                       std::regex_search(line, match, rec_old);
+        helix::RegexMatch match;
+        bool matched = helix::regex_search(line, match, rec_new) ||
+                       helix::regex_search(line, match, rec_smoother) ||
+                       helix::regex_search(line, match, rec_old);
 
         if (matched && match.size() == 3) {
             recommended_type_ = match[1].str();
@@ -1842,9 +1841,9 @@ class InputShaperCollector : public std::enable_shared_from_this<InputShaperColl
     }
 
     void parse_csv_path(const std::string& line) {
-        static const std::regex csv_regex(R"(calibration data written to (\S+\.csv))");
-        std::smatch match;
-        if (std::regex_search(line, match, csv_regex) && match.size() == 2) {
+        static const helix::Regex csv_regex(R"(calibration data written to (\S+\.csv))");
+        helix::RegexMatch match;
+        if (helix::regex_search(line, match, csv_regex) && match.size() == 2) {
             csv_path_ = match[1].str();
             spdlog::info("[InputShaperCollector] CSV path: {}", csv_path_);
         }
@@ -2066,11 +2065,11 @@ class NoiseCheckCollector : public std::enable_shared_from_this<NoiseCheckCollec
     void parse_noise_line(const std::string& line) {
         // Klipper output format:
         // "Axes noise for xy-axis accelerometer: 57.956 (x), 103.543 (y), 45.396 (z)"
-        static const std::regex noise_regex(
+        static const helix::Regex noise_regex(
             R"(Axes noise.*:\s*([\d.]+)\s*\(x\),\s*([\d.]+)\s*\(y\),\s*([\d.]+)\s*\(z\))");
 
-        std::smatch match;
-        if (std::regex_search(line, match, noise_regex) && match.size() == 4) {
+        helix::RegexMatch match;
+        if (helix::regex_search(line, match, noise_regex) && match.size() == 4) {
             try {
                 float noise_x = std::stof(match[1].str());
                 float noise_y = std::stof(match[2].str());
@@ -2567,11 +2566,10 @@ void MoonrakerAdvancedAPI::set_input_shaper(char axis, const std::string& shaper
                  frequency);
 
     // Build SET_INPUT_SHAPER command
-    std::ostringstream cmd;
-    cmd << "SET_INPUT_SHAPER SHAPER_FREQ_" << axis << "=" << frequency << " SHAPER_TYPE_" << axis
-        << "=" << shaper_type;
+    std::string cmd = fmt::format("SET_INPUT_SHAPER SHAPER_FREQ_{}={:g} SHAPER_TYPE_{}={}", axis,
+                                  frequency, axis, shaper_type);
 
-    api_.execute_gcode(cmd.str(), on_success, on_error);
+    api_.execute_gcode(cmd, on_success, on_error);
 }
 
 void MoonrakerAdvancedAPI::measure_axes_noise(NoiseCheckCallback on_complete,
@@ -2734,26 +2732,24 @@ void MoonrakerAdvancedAPI::set_machine_limits(const MachineLimits& limits,
 
     // Build SET_VELOCITY_LIMIT command with only non-zero parameters
     // Use fixed precision to avoid floating point representation issues
-    std::ostringstream cmd;
-    cmd << std::fixed << std::setprecision(1);
-    cmd << "SET_VELOCITY_LIMIT";
+    std::string cmd = "SET_VELOCITY_LIMIT";
 
     bool has_params = false;
 
     if (limits.max_velocity > 0) {
-        cmd << " VELOCITY=" << limits.max_velocity;
+        cmd += fmt::format(" VELOCITY={:.1f}", limits.max_velocity);
         has_params = true;
     }
     if (limits.max_accel > 0) {
-        cmd << " ACCEL=" << limits.max_accel;
+        cmd += fmt::format(" ACCEL={:.1f}", limits.max_accel);
         has_params = true;
     }
     if (limits.max_accel_to_decel > 0) {
-        cmd << " ACCEL_TO_DECEL=" << limits.max_accel_to_decel;
+        cmd += fmt::format(" ACCEL_TO_DECEL={:.1f}", limits.max_accel_to_decel);
         has_params = true;
     }
     if (limits.square_corner_velocity > 0) {
-        cmd << " SQUARE_CORNER_VELOCITY=" << limits.square_corner_velocity;
+        cmd += fmt::format(" SQUARE_CORNER_VELOCITY={:.1f}", limits.square_corner_velocity);
         has_params = true;
     }
 
@@ -2767,8 +2763,8 @@ void MoonrakerAdvancedAPI::set_machine_limits(const MachineLimits& limits,
         return;
     }
 
-    spdlog::debug("[Moonraker API] Executing: {}", cmd.str());
-    api_.execute_gcode(cmd.str(), on_success, on_error);
+    spdlog::debug("[Moonraker API] Executing: {}", cmd);
+    api_.execute_gcode(cmd, on_success, on_error);
 }
 
 void MoonrakerAdvancedAPI::save_config(SuccessCallback on_success, ErrorCallback on_error) {
@@ -2805,8 +2801,7 @@ void MoonrakerAdvancedAPI::execute_macro(const std::string& name,
     }
 
     // Build G-code: MACRO_NAME KEY1=value1 KEY2=value2
-    std::ostringstream gcode;
-    gcode << name;
+    std::string gcode = name;
 
     for (const auto& [key, value] : params) {
         // Validate param key - only alphanumeric and underscore
@@ -2839,13 +2834,13 @@ void MoonrakerAdvancedAPI::execute_macro(const std::string& name,
 
         // Safe to include - quote if it has spaces
         if (value.find(' ') != std::string::npos) {
-            gcode << " " << key << "=\"" << value << "\"";
+            gcode += " " + key + "=\"" + value + "\"";
         } else {
-            gcode << " " << key << "=" << value;
+            gcode += " " + key + "=" + value;
         }
     }
 
-    std::string gcode_str = gcode.str();
+    std::string gcode_str = std::move(gcode);
     spdlog::debug("[Moonraker API] Executing macro: {}", gcode_str);
 
     // Default to MACRO_TIMEOUT_MS (5 min) — user macros can do anything

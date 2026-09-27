@@ -111,25 +111,25 @@ bool PrintStartCollector::heater_climbed(int temp, int target, HeaterHighWater& 
 // ============================================================================
 
 // Pattern to detect PRINT_START macro invocation
-const std::regex
+const helix::Regex
     PrintStartCollector::print_start_pattern_(R"(PRINT_START|START_PRINT|_PRINT_START)",
-                                              std::regex::icase);
+                                              helix::Regex::ICase);
 
 // Pattern to detect print start completion (first layer indicator)
 // Includes HELIX:READY for our custom macro integration
-const std::regex PrintStartCollector::completion_pattern_(
+const helix::Regex PrintStartCollector::completion_pattern_(
     R"(SET_PRINT_STATS_INFO\s+CURRENT_LAYER=|LAYER:?\s*1\b|;LAYER:1|First layer|HELIX:READY)",
-    std::regex::icase);
+    helix::Regex::ICase);
 
 // Pattern to detect RESPOND-based print start completion (authoritative signal)
 // Matches messages containing "print" + "start"/"started"/"starting" adjacent in either word order
-const std::regex PrintStartCollector::respond_completion_pattern_(
+const helix::Regex PrintStartCollector::respond_completion_pattern_(
     R"(\bprint\b\W+\b(start|started|starting)\b|\b(start|started|starting)\b\W+\bprint\b)",
-    std::regex::icase);
+    helix::Regex::ICase);
 
 // One "<id>:<temp> /<target>" pair per heater with a gcode id, space separated.
 // The M105 reply carries an "ok " prefix and does not match.
-const std::regex PrintStartCollector::heater_wait_report_pattern_(
+const helix::Regex PrintStartCollector::heater_wait_report_pattern_(
     R"(\s*\w+:-?\d+(\.\d+)? /-?\d+(\.\d+)?(\s+\w+:-?\d+(\.\d+)? /-?\d+(\.\d+)?)*\s*)");
 
 // ============================================================================
@@ -1999,11 +1999,11 @@ int PrintStartCollector::calculate_progress_locked() const {
 }
 
 bool PrintStartCollector::is_print_start_marker(const std::string& line) const {
-    return std::regex_search(line, print_start_pattern_);
+    return helix::regex_search(line, print_start_pattern_);
 }
 
 bool PrintStartCollector::is_completion_marker(const std::string& line) const {
-    return std::regex_search(line, completion_pattern_);
+    return helix::regex_search(line, completion_pattern_);
 }
 
 // ============================================================================

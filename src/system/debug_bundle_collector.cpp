@@ -32,6 +32,8 @@
 #include "system/http_android.h"
 #endif
 
+#include "helix_regex.h"
+
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
@@ -39,7 +41,6 @@
 #include <deque>
 #include <filesystem>
 #include <fstream>
-#include <regex>
 #include <set>
 #include <sstream>
 #include <unordered_map>
@@ -772,29 +773,29 @@ std::string DebugBundleCollector::sanitize_value(const std::string& value) {
 
     try {
         // Check for long token-like strings (40+ chars of hex/base64/alphanum with prefix)
-        static const std::regex token_re(
+        static const helix::Regex token_re(
             R"(^(?:ghp_|gho_|glpat-|xoxb-|xoxp-)?[A-Za-z0-9+/=_-]{36,}$)");
-        if (std::regex_match(value, token_re)) {
+        if (helix::regex_match(value, token_re)) {
             return "[REDACTED_TOKEN]";
         }
 
         std::string result = value;
 
         // Redact URL credentials: ://user:pass@ -> ://[REDACTED_CREDENTIALS]@
-        static const std::regex cred_url_re(R"(://[^@/\s]+:[^@/\s]+@)");
-        result = std::regex_replace(result, cred_url_re, "://[REDACTED_CREDENTIALS]@");
+        static const helix::Regex cred_url_re(R"(://[^@/\s]+:[^@/\s]+@)");
+        result = helix::regex_replace(result, cred_url_re, "://[REDACTED_CREDENTIALS]@");
 
         // Redact email addresses. The last label must be alphabetic, because a
         // bare `<word>@<number>.<number><unit>` is a diagnostic value, not an
         // address: an input shaper logs its result as `mzv@40.2Hz`, and a
         // pattern that accepts a numeric final label eats it. No TLD is a
         // single character, so requiring two costs no real address.
-        static const std::regex email_re(R"(\b[\w.+-]+@[\w-]+(\.[\w-]+)*\.[A-Za-z]{2,}\b)");
-        result = std::regex_replace(result, email_re, "[REDACTED_EMAIL]");
+        static const helix::Regex email_re(R"(\b[\w.+-]+@[\w-]+(\.[\w-]+)*\.[A-Za-z]{2,}\b)");
+        result = helix::regex_replace(result, email_re, "[REDACTED_EMAIL]");
 
         // Redact MAC addresses (aa:bb:cc:dd:ee:ff or AA-BB-CC-DD-EE-FF)
-        static const std::regex mac_re(R"(\b([0-9a-fA-F]{2}[:-]){5}[0-9a-fA-F]{2}\b)");
-        result = std::regex_replace(result, mac_re, "[REDACTED_MAC]");
+        static const helix::Regex mac_re(R"(\b([0-9a-fA-F]{2}[:-]){5}[0-9a-fA-F]{2}\b)");
+        result = helix::regex_replace(result, mac_re, "[REDACTED_MAC]");
 
         // Redact globally routable IP addresses, IPv4 and IPv6 alike. Private
         // ones are deliberately kept: 192.168.1.50 is the same address in

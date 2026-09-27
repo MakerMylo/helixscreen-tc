@@ -16,10 +16,10 @@
 #include "data_root_resolver.h"
 #include "touch_calibration.h"
 
-#include <fstream>
+#include <cctype>
+#include <cstdio>
 #include <lvgl.h>
 #include <memory>
-#include <regex>
 #include <string>
 
 /**
@@ -117,13 +117,16 @@ inline lv_display_rotation_t degrees_to_lv_rotation(int degrees) {
  * @return Rotation in degrees (0, 90, 180, 270), or -1 if not detected
  */
 inline int detect_panel_orientation_from_cmdline() {
-    std::ifstream cmdline("/proc/cmdline");
-    if (!cmdline.is_open()) {
+    std::FILE* cmdline = std::fopen("/proc/cmdline", "r");
+    if (!cmdline) {
         return -1;
     }
 
     std::string line;
-    std::getline(cmdline, line);
+    for (int c; (c = std::fgetc(cmdline)) != EOF && c != '\n';) {
+        line.push_back(static_cast<char>(c));
+    }
+    std::fclose(cmdline);
 
     const std::string needle = "panel_orientation=";
     auto pos = line.find(needle);
@@ -163,20 +166,36 @@ inline int read_config_rotation(int default_value = 0) {
                                  "/opt/helixscreen/helixconfig.json"};
 
     for (const auto& path : paths) {
-        std::ifstream file(path);
-        if (!file.is_open()) {
+        std::FILE* file = std::fopen(path.c_str(), "rb");
+        if (!file) {
             continue;
         }
+        std::string content;
+        char buf[4096];
+        for (size_t n; (n = std::fread(buf, 1, sizeof(buf), file)) > 0;) {
+            content.append(buf, n);
+        }
+        std::fclose(file);
 
-        std::string content((std::istreambuf_iterator<char>(file)),
-                            std::istreambuf_iterator<char>());
-
-        // Look for "rotate" inside "display" section
-        // Simple regex approach matching existing pattern (read_config_brightness)
-        std::regex rotate_regex(R"("rotate"\s*:\s*(\d+))");
-        std::smatch match;
-        if (std::regex_search(content, match, rotate_regex) && match.size() > 1) {
-            int rotation = std::stoi(match[1].str());
+        // First `"rotate"` followed by optional whitespace, ':', optional
+        // whitespace and digits. Hand-scanned so the splash and watchdog
+        // binaries, which compile this header alone, need no regex engine.
+        std::string digits;
+        for (size_t pos = content.find("\"rotate\""); pos != std::string::npos && digits.empty();
+             pos = content.find("\"rotate\"", pos + 1)) {
+            size_t i = pos + 8;
+            while (i < content.size() && std::isspace(static_cast<unsigned char>(content[i])))
+                ++i;
+            if (i >= content.size() || content[i] != ':')
+                continue;
+            ++i;
+            while (i < content.size() && std::isspace(static_cast<unsigned char>(content[i])))
+                ++i;
+            while (i < content.size() && std::isdigit(static_cast<unsigned char>(content[i])))
+                digits.push_back(content[i++]);
+        }
+        if (!digits.empty()) {
+            int rotation = std::stoi(digits);
             // Validate: only 0, 90, 180, 270 are valid
             if (rotation == 90 || rotation == 180 || rotation == 270) {
                 return rotation;
