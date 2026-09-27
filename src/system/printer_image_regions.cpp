@@ -110,12 +110,13 @@ const ImageRegions* lookup_image_regions(std::string_view basename) {
     return it == table().end() ? nullptr : &it->second;
 }
 
-void set_image_regions_for_testing(std::unordered_map<std::string, ImageRegions> regions) {
+// Declared in tests/test_helpers/printer_image_regions_test_access.h only.
+void replace_image_regions(std::unordered_map<std::string, ImageRegions> regions) {
     table() = std::move(regions);
     loaded() = true;
 }
 
-void reset_image_regions_for_testing() {
+void unload_image_regions() {
     table().clear();
     loaded() = false;
 }

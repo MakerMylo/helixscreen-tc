@@ -6,6 +6,7 @@
 
 #include "../lvgl_ui_test_fixture.h"
 #include "../test_helpers/panel_widget_size_harness.h"
+#include "../test_helpers/printer_image_regions_test_access.h"
 #include "../test_helpers/process_async_timers.h"
 #include "../test_helpers/update_queue_test_access.h"
 #include "app_globals.h"
@@ -94,8 +95,8 @@ namespace {
 
 /// Registers the widget's subjects and tags the fallback image (the widget shows
 /// generic-corexy with no printer type) with the K1C's points, so the widget
-/// under test is "tagged". Pair with set_image_regions_for_testing({}).
-void prepare_tagged_widget(int src_w = 1601, int src_h = 1204) {
+/// under test is "tagged" while the returned guard lives.
+[[nodiscard]] ScopedImageRegions prepare_tagged_widget(int src_w = 1601, int src_h = 1204) {
     helix::init_widget_registrations();
     helix::PanelWidgetManager::instance().init_widget_subjects();
     ImageRegions r;
@@ -107,7 +108,7 @@ void prepare_tagged_widget(int src_w = 1601, int src_h = 1204) {
     r.light = NormPoint{0.321f, 0.164f};
     r.bed_left = {0.308f, 0.571f};
     r.bed_right = {0.611f, 0.573f};
-    set_image_regions_for_testing({{"generic-corexy", r}});
+    return ScopedImageRegions({{"generic-corexy", r}});
 }
 
 /// True when `obj` lies inside `chip`'s content box horizontally.
@@ -139,7 +140,7 @@ bool shown(PanelWidgetHarness<PrinterImageWidget>& h, const char* chip) {
 TEST_CASE_METHOD(LVGLUITestFixture,
                  "callouts: bed heating shows the bed chip with heater_display text",
                  "[printer_image][callouts]") {
-    prepare_tagged_widget();
+    const auto regions = prepare_tagged_widget();
     PanelWidgetHarness<PrinterImageWidget> h(test_screen());
     h.resize(4, 4, 160, 160);
     lv_subject_set_int(state().get_bed_temp_subject(), 400);
@@ -149,12 +150,11 @@ TEST_CASE_METHOD(LVGLUITestFixture,
     CHECK(shown(h, "callout_chip_bed"));
     CHECK(text_of(h, "callout_chip_bed") == helix::ui::temperature::heater_display(400, 600).temp);
     CHECK(lv_subject_get_int(lv_xml_get_subject(nullptr, "callout_bed_heating")) == 1);
-    set_image_regions_for_testing({});
 }
 
 TEST_CASE_METHOD(LVGLUITestFixture, "callouts: idle cold printer shows no chips",
                  "[printer_image][callouts]") {
-    prepare_tagged_widget();
+    const auto regions = prepare_tagged_widget();
     PanelWidgetHarness<PrinterImageWidget> h(test_screen());
     h.resize(4, 4, 160, 160);
     lv_subject_set_int(state().get_bed_temp_subject(), 250);
@@ -167,12 +167,11 @@ TEST_CASE_METHOD(LVGLUITestFixture, "callouts: idle cold printer shows no chips"
     CHECK_FALSE(shown(h, "callout_chip_nozzle"));
     CHECK_FALSE(shown(h, "callout_chip_fan"));
     CHECK_FALSE(shown(h, "callout_chip_toolhead"));
-    set_image_regions_for_testing({});
 }
 
 TEST_CASE_METHOD(LVGLUITestFixture, "callouts: heater off but hot keeps the chip until 50C",
                  "[printer_image][callouts]") {
-    prepare_tagged_widget();
+    const auto regions = prepare_tagged_widget();
     PanelWidgetHarness<PrinterImageWidget> h(test_screen());
     h.resize(4, 4, 160, 160);
     lv_subject_set_int(state().get_bed_target_subject(), 0);
@@ -183,13 +182,12 @@ TEST_CASE_METHOD(LVGLUITestFixture, "callouts: heater off but hot keeps the chip
     lv_subject_set_int(state().get_bed_temp_subject(), 500);
     settle();
     CHECK_FALSE(shown(h, "callout_chip_bed"));
-    set_image_regions_for_testing({});
 }
 
 TEST_CASE_METHOD(LVGLUITestFixture,
                  "callouts: fan on shows percent; light needs the LED capability",
                  "[printer_image][callouts]") {
-    prepare_tagged_widget();
+    const auto regions = prepare_tagged_widget();
     PanelWidgetHarness<PrinterImageWidget> h(test_screen());
     h.resize(4, 4, 160, 160);
     lv_subject_t* has_led = lv_xml_get_subject(nullptr, "printer_has_led");
@@ -206,13 +204,12 @@ TEST_CASE_METHOD(LVGLUITestFixture,
     lv_subject_set_int(has_led, 1);
     settle();
     CHECK(shown(h, "callout_chip_light"));
-    set_image_regions_for_testing({});
 }
 
 TEST_CASE_METHOD(LVGLUITestFixture,
                  "callouts: a heating nozzle with the fan on merges into the toolhead chip",
                  "[printer_image][callouts]") {
-    prepare_tagged_widget();
+    const auto regions = prepare_tagged_widget();
     PanelWidgetHarness<PrinterImageWidget> h(test_screen());
     h.resize(4, 4, 160, 160);
     lv_subject_set_int(state().get_active_extruder_temp_subject(), 1800);
@@ -224,12 +221,11 @@ TEST_CASE_METHOD(LVGLUITestFixture,
     CHECK_FALSE(shown(h, "callout_chip_fan"));
     const std::string nozzle = helix::ui::temperature::heater_display(1800, 2200).temp;
     CHECK(text_of(h, "callout_chip_toolhead") == nozzle + "  50%");
-    set_image_regions_for_testing({});
 }
 
 TEST_CASE_METHOD(LVGLUITestFixture, "callouts: single cell hides the whole layer",
                  "[printer_image][callouts]") {
-    prepare_tagged_widget();
+    const auto regions = prepare_tagged_widget();
     PanelWidgetHarness<PrinterImageWidget> h(test_screen());
     h.resize(4, 4, 160, 160);
     lv_subject_set_int(state().get_bed_target_subject(), 600);
@@ -238,12 +234,11 @@ TEST_CASE_METHOD(LVGLUITestFixture, "callouts: single cell hides the whole layer
     h.resize(2, 2, 80, 80);
     settle();
     CHECK(lv_obj_has_flag(h.child("callout_layer"), LV_OBJ_FLAG_HIDDEN));
-    set_image_regions_for_testing({});
 }
 
 TEST_CASE_METHOD(LVGLUITestFixture, "callouts: a chip sits inside the image container",
                  "[printer_image][callouts]") {
-    prepare_tagged_widget();
+    const auto regions = prepare_tagged_widget();
     PanelWidgetHarness<PrinterImageWidget> h(test_screen());
     h.resize(4, 4, 160, 160);
     lv_subject_set_int(state().get_bed_target_subject(), 600);
@@ -255,12 +250,11 @@ TEST_CASE_METHOD(LVGLUITestFixture, "callouts: a chip sits inside the image cont
     CHECK(lv_obj_get_y(chip) > 0);
     CHECK(lv_obj_get_x(chip) + lv_obj_get_width(chip) <= lv_obj_get_width(layer));
     CHECK(lv_obj_get_y(chip) + lv_obj_get_height(chip) <= lv_obj_get_height(layer));
-    set_image_regions_for_testing({});
 }
 
 TEST_CASE_METHOD(LVGLUITestFixture, "callouts: a detached widget stops publishing",
                  "[printer_image][callouts]") {
-    prepare_tagged_widget();
+    const auto regions = prepare_tagged_widget();
     PanelWidgetHarness<PrinterImageWidget> h(test_screen());
     h.resize(4, 4, 160, 160);
     lv_subject_set_int(state().get_bed_target_subject(), 0);
@@ -272,14 +266,13 @@ TEST_CASE_METHOD(LVGLUITestFixture, "callouts: a detached widget stops publishin
     lv_subject_set_int(state().get_bed_target_subject(), 600);
     settle();
     CHECK(lv_subject_get_int(bed_shown) == 0);
-    set_image_regions_for_testing({});
 }
 
 TEST_CASE_METHOD(LVGLUITestFixture, "callouts: a chip narrower than its text dots the label",
                  "[printer_image][callouts]") {
     // A tall image in a narrow tile: pinned, but the area is narrower than the
     // bed chip, so clamp_into shrinks the chip below its text.
-    prepare_tagged_widget(400, 1600);
+    const auto regions = prepare_tagged_widget(400, 1600);
     PanelWidgetHarness<PrinterImageWidget> h(test_screen());
     h.resize(4, 4, 80, 320);
     lv_subject_set_int(state().get_bed_temp_subject(), 400);
@@ -295,12 +288,11 @@ TEST_CASE_METHOD(LVGLUITestFixture, "callouts: a chip narrower than its text dot
                                        lv_obj_get_style_text_font(label, LV_PART_MAIN)));
     CHECK(within_chip(chip, label));
     CHECK(lv_label_get_long_mode(label) == LV_LABEL_LONG_MODE_DOTS);
-    set_image_regions_for_testing({});
 }
 
 TEST_CASE_METHOD(LVGLUITestFixture, "callouts: a laid-out chip is not narrower than its text",
                  "[printer_image][callouts]") {
-    prepare_tagged_widget();
+    const auto regions = prepare_tagged_widget();
     PanelWidgetHarness<PrinterImageWidget> h(test_screen());
     h.resize(4, 4, 160, 160);
     lv_subject_set_int(state().get_bed_temp_subject(), 400);
@@ -311,14 +303,13 @@ TEST_CASE_METHOD(LVGLUITestFixture, "callouts: a laid-out chip is not narrower t
     CHECK(lv_obj_get_width(label) >=
           helix::ui::measure_text_px(lv_label_get_text(label),
                                      lv_obj_get_style_text_font(label, LV_PART_MAIN)));
-    set_image_regions_for_testing({});
 }
 
 TEST_CASE_METHOD(LVGLUITestFixture,
                  "callouts: a chip shows its full text before its first layout, and fits its "
                  "rect after it",
                  "[printer_image][callouts]") {
-    prepare_tagged_widget();
+    const auto regions = prepare_tagged_widget();
     PanelWidgetHarness<PrinterImageWidget> h(test_screen());
     h.resize(4, 4, 160, 160);
     lv_subject_set_int(state().get_bed_temp_subject(), 400);
@@ -335,14 +326,13 @@ TEST_CASE_METHOD(LVGLUITestFixture,
     lv_obj_update_layout(h.root());
     CHECK(lv_obj_get_width(label) >= text_px);
     CHECK(within_chip(chip, label));
-    set_image_regions_for_testing({});
 }
 
 // A multi-tool printer draws the tool number beside the nozzle glyph; the chip
 // has to budget for it or the temperature is cut.
 TEST_CASE_METHOD(LVGLUITestFixture, "callouts: the nozzle chip budgets the tool badge",
                  "[printer_image][callouts]") {
-    prepare_tagged_widget();
+    const auto regions = prepare_tagged_widget();
     // The badge binds ToolState's subjects, which must exist before the XML parses.
     struct ToolSubjects {
         ToolSubjects() {
@@ -373,14 +363,13 @@ TEST_CASE_METHOD(LVGLUITestFixture, "callouts: the nozzle chip budgets the tool 
                                      lv_obj_get_style_text_font(label, LV_PART_MAIN)));
     CHECK(within_chip(chip, label));
     CHECK(within_chip(chip, badge));
-    set_image_regions_for_testing({});
 }
 
 // The populate_widgets reuse path: the old component is deleted under the widget,
 // then the SAME instance is attached to a fresh one (#1109 shape).
 TEST_CASE_METHOD(LVGLUITestFixture, "callouts: a recycled instance drives its new tree",
                  "[printer_image][callouts]") {
-    prepare_tagged_widget();
+    const auto regions = prepare_tagged_widget();
     auto& display = DisplaySettingsManager::instance();
     const bool prev_animations = display.get_animations_enabled();
     display.set_animations_enabled(true);
@@ -417,14 +406,13 @@ TEST_CASE_METHOD(LVGLUITestFixture, "callouts: a recycled instance drives its ne
     widget.detach();
     lv_obj_delete(comp2);
     display.set_animations_enabled(prev_animations);
-    set_image_regions_for_testing({});
 }
 
 TEST_CASE_METHOD(LVGLUITestFixture,
                  "callouts: tapping the bed chip opens the bed temperature graph, not the "
                  "printer manager",
                  "[printer_image][callouts]") {
-    prepare_tagged_widget();
+    const auto regions = prepare_tagged_widget();
     PanelWidgetHarness<PrinterImageWidget> h(test_screen());
     h.resize(4, 4, 160, 160);
     lv_subject_set_int(state().get_bed_target_subject(), 600);
@@ -439,7 +427,6 @@ TEST_CASE_METHOD(LVGLUITestFixture,
     CHECK(lv_subject_get_int(mode) == static_cast<int>(TempGraphOverlay::Mode::Bed));
     CHECK_FALSE(
         NavigationManager::instance().is_panel_in_stack(get_printer_manager_overlay().get_root()));
-    set_image_regions_for_testing({});
 }
 
 // ---------------------------------------------------------------------------
@@ -472,7 +459,7 @@ void forget_cache_entry(const std::string& path) {
 
 TEST_CASE_METHOD(LVGLUITestFixture, "callouts: wide widget draws a line to the bed chip",
                  "[printer_image][callouts]") {
-    prepare_tagged_widget();
+    const auto regions = prepare_tagged_widget();
     PanelWidgetHarness<PrinterImageWidget> h(test_screen());
     h.resize(8, 4, 480, 160);
     lv_subject_set_int(state().get_bed_target_subject(), 600);
@@ -486,24 +473,22 @@ TEST_CASE_METHOD(LVGLUITestFixture, "callouts: wide widget draws a line to the b
     settle();
     CHECK(lv_obj_has_flag(h.child("callout_bed_glow"), LV_OBJ_FLAG_HIDDEN));
     CHECK_FALSE(lv_obj_has_flag(h.child("callout_line_bed"), LV_OBJ_FLAG_HIDDEN));
-    set_image_regions_for_testing({});
 }
 
 TEST_CASE_METHOD(LVGLUITestFixture, "callouts: pinned mode draws no lines",
                  "[printer_image][callouts]") {
-    prepare_tagged_widget();
+    const auto regions = prepare_tagged_widget();
     PanelWidgetHarness<PrinterImageWidget> h(test_screen());
     h.resize(4, 4, 160, 160);
     lv_subject_set_int(state().get_bed_target_subject(), 600);
     settle();
     REQUIRE(mode_now() == static_cast<int>(CalloutMode::Pinned));
     CHECK(lv_obj_has_flag(h.child("callout_line_bed"), LV_OBJ_FLAG_HIDDEN));
-    set_image_regions_for_testing({});
 }
 
 TEST_CASE_METHOD(LVGLUITestFixture, "callouts: the bed line runs from the bed point to the chip",
                  "[printer_image][callouts]") {
-    prepare_tagged_widget();
+    const auto regions = prepare_tagged_widget();
     PanelWidgetHarness<PrinterImageWidget> h(test_screen());
     h.resize(8, 4, 480, 160);
     lv_subject_set_int(state().get_bed_target_subject(), 600);
@@ -522,13 +507,12 @@ TEST_CASE_METHOD(LVGLUITestFixture, "callouts: the bed line runs from the bed po
     const int cx = lv_obj_get_x(chip), cw = lv_obj_get_width(chip);
     CHECK((p[1].x == cx || p[1].x == cx + cw));
     CHECK(p[1].y == lv_obj_get_y(chip) + lv_obj_get_height(chip) / 2);
-    set_image_regions_for_testing({});
 }
 
 TEST_CASE_METHOD(LVGLUITestFixture,
                  "callouts: a one-side layout moves the image aside; a wider tile restores it",
                  "[printer_image][callouts]") {
-    prepare_tagged_widget();
+    const auto regions = prepare_tagged_widget();
     PanelWidgetHarness<PrinterImageWidget> h(test_screen());
     h.resize(8, 4, 400, 160);
     lv_subject_set_int(state().get_bed_target_subject(), 600);
@@ -553,13 +537,12 @@ TEST_CASE_METHOD(LVGLUITestFixture,
     CHECK(lv_obj_get_y(img) == 0);
     CHECK(lv_obj_get_width(img) == lv_obj_get_content_width(container));
     CHECK(lv_obj_get_height(img) == lv_obj_get_content_height(container));
-    set_image_regions_for_testing({});
 }
 
 TEST_CASE_METHOD(LVGLUITestFixture,
                  "callouts: a moved image drops the exact-size copy cut for its old rect",
                  "[printer_image][callouts]") {
-    prepare_tagged_widget();
+    const auto regions = prepare_tagged_widget();
     PanelWidgetHarness<PrinterImageWidget> h(test_screen());
     h.resize(8, 4, 480, 160);
     settle();
@@ -581,7 +564,6 @@ TEST_CASE_METHOD(LVGLUITestFixture,
     REQUIRE(mode_now() == static_cast<int>(CalloutMode::OneSide));
     CHECK(src_now() != full_cache);
     h.widget().detach();
-    set_image_regions_for_testing({});
 }
 
 // First display on a cold cache: the image moves while the full-size copy is
@@ -589,7 +571,7 @@ TEST_CASE_METHOD(LVGLUITestFixture,
 TEST_CASE_METHOD(LVGLUITestFixture,
                  "callouts: a copy generated for the old rect does not land on a moved image",
                  "[printer_image][callouts]") {
-    prepare_tagged_widget();
+    const auto regions = prepare_tagged_widget();
     const std::string source = PrinterImages::get_best_printer_image("");
 
     PanelWidgetHarness<PrinterImageWidget> h(test_screen());
@@ -634,7 +616,6 @@ TEST_CASE_METHOD(LVGLUITestFixture,
     h.widget().detach();
     forget_cache_entry(full);
     forget_cache_entry(moved);
-    set_image_regions_for_testing({});
 }
 
 // A copy cut for the tile's full size already on disk is what the image shows
@@ -643,7 +624,7 @@ TEST_CASE_METHOD(LVGLUITestFixture,
 TEST_CASE_METHOD(LVGLUITestFixture,
                  "callouts: a one-side image draws the source contain-fit into its rect",
                  "[printer_image][callouts]") {
-    prepare_tagged_widget();
+    const auto regions = prepare_tagged_widget();
     const std::string source = PrinterImages::get_best_printer_image("");
     PanelWidgetHarness<PrinterImageWidget> h(test_screen());
     h.resize(8, 4, 400, 160);
@@ -680,12 +661,11 @@ TEST_CASE_METHOD(LVGLUITestFixture,
     h.widget().detach();
     forget_cache_entry(full);
     forget_cache_entry(moved);
-    set_image_regions_for_testing({});
 }
 
 TEST_CASE_METHOD(LVGLUITestFixture, "callouts: a tile with no area puts a moved image back",
                  "[printer_image][callouts]") {
-    prepare_tagged_widget();
+    const auto regions = prepare_tagged_widget();
     PanelWidgetHarness<PrinterImageWidget> h(test_screen());
     h.resize(8, 4, 400, 160);
     lv_subject_set_int(state().get_bed_target_subject(), 600);
@@ -698,12 +678,11 @@ TEST_CASE_METHOD(LVGLUITestFixture, "callouts: a tile with no area puts a moved 
     REQUIRE(mode_now() == static_cast<int>(CalloutMode::ImageOnly));
     CHECK(lv_obj_get_style_width(img, LV_PART_MAIN) == LV_PCT(100));
     CHECK(lv_obj_get_style_height(img, LV_PART_MAIN) == LV_PCT(100));
-    set_image_regions_for_testing({});
 }
 
 TEST_CASE_METHOD(LVGLUITestFixture, "callouts: the disconnected overlay is centred on the image",
                  "[printer_image][callouts]") {
-    prepare_tagged_widget();
+    const auto regions = prepare_tagged_widget();
     PanelWidgetHarness<PrinterImageWidget> h(test_screen());
     h.resize(8, 4, 480, 160);
     lv_subject_set_int(state().get_printer_connection_state_subject(), 0);
@@ -714,13 +693,12 @@ TEST_CASE_METHOD(LVGLUITestFixture, "callouts: the disconnected overlay is centr
     REQUIRE_FALSE(lv_obj_has_flag(overlay, LV_OBJ_FLAG_HIDDEN));
     CHECK(lv_obj_get_x(overlay) ==
           (lv_obj_get_content_width(container) - lv_obj_get_width(overlay)) / 2);
-    set_image_regions_for_testing({});
 }
 
 TEST_CASE_METHOD(LVGLUITestFixture,
                  "callouts: the bed glow covers the bed edge and pulses while animations are on",
                  "[printer_image][callouts]") {
-    prepare_tagged_widget();
+    const auto regions = prepare_tagged_widget();
     auto& display = DisplaySettingsManager::instance();
     const bool prev = display.get_animations_enabled();
     display.set_animations_enabled(true);
@@ -752,14 +730,13 @@ TEST_CASE_METHOD(LVGLUITestFixture,
     h.widget().detach();
     CHECK(lv_anim_get(glow, nullptr) == nullptr);
     display.set_animations_enabled(prev);
-    set_image_regions_for_testing({});
 }
 
 TEST_CASE_METHOD(LVGLUITestFixture, "callouts: an untagged image draws no bed glow",
                  "[printer_image][callouts]") {
     helix::init_widget_registrations();
     helix::PanelWidgetManager::instance().init_widget_subjects();
-    set_image_regions_for_testing({});
+    const ScopedImageRegions untagged({});
     PanelWidgetHarness<PrinterImageWidget> h(test_screen());
     h.resize(8, 4, 480, 160);
     lv_subject_set_int(state().get_bed_target_subject(), 600);

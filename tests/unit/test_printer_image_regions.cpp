@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+#include "../test_helpers/printer_image_regions_test_access.h"
 #include "printer_image_regions.h"
 
 #include <cstdint>
@@ -47,19 +48,17 @@ TEST_CASE("printer_image_basename: shipped paths resolve, custom paths do not",
 }
 
 TEST_CASE("lookup_image_regions: override map is what lookup reads", "[printer_image][regions]") {
-    set_image_regions_for_testing({{"x", ImageRegions{}}});
+    const ScopedImageRegions regions({{"x", ImageRegions{}}});
     CHECK(lookup_image_regions("x") != nullptr);
     CHECK(lookup_image_regions("creality-k1c") == nullptr);
-    set_image_regions_for_testing({});
 }
 
 TEST_CASE("lookup_image_regions: reads the shipped regions.json on first lookup",
           "[printer_image][regions]") {
-    reset_image_regions_for_testing();
+    unload_image_regions();
     const auto* regions = lookup_image_regions("creality-k1c");
     REQUIRE(regions != nullptr);
     CHECK(regions->src_w == 1601);
-    reset_image_regions_for_testing();
 }
 
 // A re-cropped PNG silently shifts every tagged point; this names the image to re-tag.

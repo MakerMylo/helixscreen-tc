@@ -37,12 +37,6 @@ std::unordered_map<std::string, ImageRegions> parse_image_regions(const std::str
 /// shipped file is read once, on first call.
 const ImageRegions* lookup_image_regions(std::string_view basename);
 
-/// Replace what lookup_image_regions() reads. Tests only.
-void set_image_regions_for_testing(std::unordered_map<std::string, ImageRegions> regions);
-
-/// Clear the cached regions and reset the loaded flag to re-read the shipped file. Tests only.
-void reset_image_regions_for_testing();
-
 /// The regions key for an image path the printer image widget displays:
 /// the file stem, minus a prerendered "-<size>" suffix. Empty for anything
 /// outside the shipped printers directory (custom images carry no regions).
