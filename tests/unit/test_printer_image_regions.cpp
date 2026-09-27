@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "../test_helpers/config_dir_guard.h"
 #include "../test_helpers/printer_image_regions_test_access.h"
 #include "printer_image_regions.h"
 #include "src/ui/panel_widgets/callout_layout.h"
 
 #include <cstdint>
+#include <filesystem>
 #include <fstream>
 
 #include "../catch_amalgamated.hpp"
@@ -103,6 +105,7 @@ TEST_CASE("user regions: a user entry overrides the shipped entry for its key on
     })");
     const ScopedImageRegions shipped(
         {{"voron-v2", shipped_entry(0.5f)}, {"creality-k1c", shipped_entry(0.6f)}});
+    reload_user_image_regions();
 
     const auto* v2 = lookup_image_regions("voron-v2", 300, 150);
     REQUIRE(v2 != nullptr);
@@ -126,6 +129,7 @@ TEST_CASE("user regions: an entry tagged on an image of another size is ignored"
       "custom:mine": {"size": [300, 200], "nozzle": [0.4, 0.3], "bed": [[0.1, 0.9], [0.9, 0.9]]}
     })");
     const ScopedImageRegions shipped({{"voron-v2", shipped_entry(0.5f)}});
+    reload_user_image_regions();
 
     // Falls back to the shipped entry...
     const auto* v2 = lookup_image_regions("voron-v2", 300, 160);
@@ -300,4 +304,79 @@ TEST_CASE("review_callout_layout: close nozzle and fan points give chips that do
             CHECK((a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y));
         }
     }
+}
+
+namespace {
+
+constexpr const char* kUserTags = R"({
+  "voron-v2": {"size": [300, 150], "nozzle": [0.9, 0.1], "bed": [[0.1, 0.9], [0.9, 0.9]]}
+})";
+
+ImageRegions user_entry(float nozzle_x) {
+    ImageRegions r = shipped_entry(nozzle_x);
+    r.src_w = 300;
+    r.src_h = 150;
+    return r;
+}
+
+} // namespace
+
+TEST_CASE("user regions: the shipped-table override leaves the config dir's user file unread",
+          "[printer_image][regions][image_tagger]") {
+    const ConfigDirGuard cfg("regions_user_unread");
+    write_user_file(cfg, kUserTags);
+    const ScopedImageRegions shipped({{"voron-v2", shipped_entry(0.5f)}});
+    CHECK(lookup_user_image_regions("voron-v2", 300, 150) == nullptr);
+    reload_user_image_regions();
+    CHECK(lookup_user_image_regions("voron-v2", 300, 150) != nullptr);
+}
+
+TEST_CASE("user regions: a failed write leaves the saved tags in effect",
+          "[printer_image][regions][image_tagger]") {
+    const ConfigDirGuard cfg("regions_user_write_fails");
+    write_user_file(cfg, kUserTags);
+    const ScopedImageRegions shipped({{"voron-v2", shipped_entry(0.5f)}});
+    reload_user_image_regions();
+    REQUIRE(lookup_user_image_regions("voron-v2", 300, 150) != nullptr);
+
+    // A directory where the file goes: the rename over it fails, even as root.
+    const auto file = cfg.dir / "printer_image_regions.json";
+    std::filesystem::remove(file);
+    std::filesystem::create_directories(file / "keep");
+
+    CHECK_FALSE(save_user_image_regions("voron-v2", user_entry(0.2f)));
+    const auto* v2 = lookup_image_regions("voron-v2", 300, 150);
+    REQUIRE(v2 != nullptr);
+    CHECK(v2->nozzle.x == Catch::Approx(0.9f));
+
+    CHECK_FALSE(save_user_image_regions("custom:new", user_entry(0.2f)));
+    CHECK(lookup_user_image_regions("custom:new", 300, 150) == nullptr);
+
+    CHECK_FALSE(reset_user_image_regions("voron-v2"));
+    v2 = lookup_image_regions("voron-v2", 300, 150);
+    REQUIRE(v2 != nullptr);
+    CHECK(v2->nozzle.x == Catch::Approx(0.9f));
+}
+
+TEST_CASE("user regions: a file that cannot be parsed is ignored and never overwritten",
+          "[printer_image][regions][image_tagger]") {
+    const ConfigDirGuard cfg("regions_user_unparseable");
+    const std::string garbage = "{\"voron-v2\": {\"size\": [300, 150], oops";
+    write_user_file(cfg, garbage);
+    const ScopedImageRegions shipped({{"voron-v2", shipped_entry(0.5f)}});
+    reload_user_image_regions();
+
+    CHECK(lookup_user_image_regions("voron-v2", 300, 150) == nullptr);
+    CHECK_FALSE(save_user_image_regions("custom:mine", user_entry(0.2f)));
+    CHECK(lookup_user_image_regions("custom:mine", 300, 150) == nullptr);
+    CHECK(read_user_file(cfg) == garbage);
+}
+
+TEST_CASE("user regions: reset with no user entry writes nothing",
+          "[printer_image][regions][image_tagger]") {
+    const ConfigDirGuard cfg("regions_user_reset_absent");
+    const ScopedImageRegions shipped({{"voron-v2", shipped_entry(0.5f)}});
+    reload_user_image_regions();
+    CHECK(reset_user_image_regions("custom:none"));
+    CHECK_FALSE(std::filesystem::exists(cfg.dir / "printer_image_regions.json"));
 }

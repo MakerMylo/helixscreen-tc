@@ -40,18 +40,22 @@ std::unordered_map<std::string, ImageRegions> parse_image_regions(const std::str
 const ImageRegions* lookup_image_regions(std::string_view key, int natural_w, int natural_h);
 
 /// The user's own tags for `key`, or nullptr when there are none or they were
-/// placed on an image of another size (the photo was replaced since).
+/// placed on an image of another size: another screen tier, or re-cut art. A
+/// replaced custom photo of the same aspect has the same size; importing it
+/// clears its tags instead (PrinterImageManager::import_image).
 const ImageRegions* lookup_user_image_regions(std::string_view key, int natural_w, int natural_h);
 
 /// Whether regions.json tags `key`, whatever the user has saved over it.
 bool has_shipped_image_regions(std::string_view key);
 
 /// Store the user's tags for `key` in <config dir>/printer_image_regions.json,
-/// replacing any earlier entry for it. False when the file cannot be written.
+/// replacing any earlier entry for it. False, with nothing changed, when the
+/// file cannot be written, or exists and cannot be read.
 bool save_user_image_regions(const std::string& key, const ImageRegions& regions);
 
 /// Delete the user's tags for `key`, returning the image to its shipped points
-/// or to docked chips. False when the file cannot be written.
+/// or to docked chips. True, writing nothing, when there are none. False, with
+/// nothing changed, when the file cannot be written.
 bool reset_user_image_regions(const std::string& key);
 
 /// The regions key for an image path the printer image widget displays. A

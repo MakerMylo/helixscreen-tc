@@ -12,9 +12,12 @@
 namespace helix {
 
 /// Replace the shipped table and mark it loaded, so the shipped file is never
-/// read. The user table is unloaded: the next lookup reads it from the
-/// current config dir.
+/// read. The user table is loaded and empty, so no config dir's user file
+/// leaks into a test; reload_user_image_regions() reads it after all.
 void replace_image_regions(std::unordered_map<std::string, ImageRegions> regions);
+
+/// Unload the user table only: the next lookup reads it from the current config dir.
+void reload_user_image_regions();
 
 /// Empty both tables and mark them unloaded: the next lookup reads both files.
 void unload_image_regions();

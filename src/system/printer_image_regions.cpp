@@ -30,6 +30,8 @@ std::optional<NormPoint> read_point(const nlohmann::json& v) {
 struct RegionsTable {
     std::unordered_map<std::string, ImageRegions> entries;
     bool loaded = false;
+    /// The file is there but could not be read or is not a JSON object.
+    bool unreadable = false;
 };
 
 RegionsTable& shipped() {
@@ -47,9 +49,20 @@ constexpr const char* USER_REGIONS_FILE = "printer_image_regions.json";
 void load(RegionsTable& t, const std::string& path, const char* what) {
     if (t.loaded)
         return;
+    t = {};
     t.loaded = true;
     const auto text = text_io::read_file(path);
-    t.entries = text ? parse_image_regions(*text) : decltype(t.entries){};
+    if (!text) {
+        // A missing file is the usual case; one that exists and cannot be read is not.
+        t.unreadable = text_io::file_size(path).has_value();
+    } else if (!nlohmann::json::parse(*text, nullptr, /*allow_exceptions=*/false).is_object()) {
+        t.unreadable = true;
+    } else {
+        t.entries = parse_image_regions(*text);
+    }
+    if (t.unreadable)
+        spdlog::warn("[PrinterImageRegions] cannot read {}; its tags are ignored until it is fixed",
+                     path);
     spdlog::debug("[PrinterImageRegions] {} {} tagged images from {}", t.entries.size(), what,
                   path);
 }
@@ -78,9 +91,9 @@ nlohmann::json entry_json(const ImageRegions& r) {
     return e;
 }
 
-bool write_user_table() {
+bool write_user_table(const std::unordered_map<std::string, ImageRegions>& entries) {
     nlohmann::json doc = nlohmann::json::object();
-    for (const auto& [key, r] : user().entries)
+    for (const auto& [key, r] : entries)
         doc[key] = entry_json(r);
     // One entry per line, sorted, as regions.json is laid out.
     std::string text = "{";
@@ -92,7 +105,7 @@ bool write_user_table() {
     }
     text += "\n}\n";
     const std::string path = writable_path(USER_REGIONS_FILE);
-    if (!text_io::write_file_atomic(path, text)) {
+    if (!text_io::write_file_atomic(path, text, text_io::Durability::Fsync)) {
         spdlog::error("[PrinterImageRegions] cannot write {}: {}", path, std::strerror(errno));
         return false;
     }
@@ -154,21 +167,49 @@ const ImageRegions* lookup_image_regions(std::string_view key, int natural_w, in
     return has_shipped_image_regions(key) ? entry_for(shipped(), key) : nullptr;
 }
 
-bool save_user_image_regions(const std::string& key, const ImageRegions& regions) {
+namespace {
+
+/// Writes the user table with `change` applied, and keeps the change in memory
+/// only once it is on disk. Refuses to replace a file it could not read, which
+/// would drop every tag in it.
+template <typename Change> bool commit_user_change(Change change) {
     load(user(), writable_path(USER_REGIONS_FILE), "user");
-    user().entries[key] = regions;
-    return write_user_table();
+    if (user().unreadable) {
+        spdlog::error("[PrinterImageRegions] not saving over unreadable {}",
+                      writable_path(USER_REGIONS_FILE));
+        return false;
+    }
+    auto next = user().entries;
+    change(next);
+    if (!write_user_table(next))
+        return false;
+    user().entries = std::move(next);
+    return true;
+}
+
+} // namespace
+
+bool save_user_image_regions(const std::string& key, const ImageRegions& regions) {
+    return commit_user_change([&](auto& entries) { entries[key] = regions; });
 }
 
 bool reset_user_image_regions(const std::string& key) {
     load(user(), writable_path(USER_REGIONS_FILE), "user");
-    user().entries.erase(key);
-    return write_user_table();
+    if (user().entries.count(key) == 0)
+        return true;
+    return commit_user_change([&](auto& entries) { entries.erase(key); });
 }
 
 // Declared in tests/test_helpers/printer_image_regions_test_access.h only.
 void replace_image_regions(std::unordered_map<std::string, ImageRegions> regions) {
-    shipped() = {std::move(regions), true};
+    shipped() = {};
+    shipped().entries = std::move(regions);
+    shipped().loaded = true;
+    user() = {};
+    user().loaded = true;
+}
+
+void reload_user_image_regions() {
     user() = {};
 }
 
