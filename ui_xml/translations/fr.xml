@@ -1532,6 +1532,7 @@
   <translation tag="Load or unload filament." fr="Chargez ou déchargez du filament."/>
   <translation tag="Load the required filaments or start anyway?" fr="Charger les filaments requis ou démarrer quand même ?"/>
   <translation tag="Load, unload, and swap spools. View your multi-filament system at a glance, map colors to slots, and monitor runout sensors." fr="Chargez, déchargez et changez les bobines. Visualisez votre système multi-filaments en un coup d&apos;œil, associez les couleurs aux emplacements et surveillez les capteurs de fin de filament."/>
+  <translation tag="Load..." fr="Charger..."/>
   <translation tag="Loaded" fr="Chargé"/>
   <translation tag="Loading" fr="Chargement"/>
   <translation tag="Loading Bed Mesh..." fr="Chargement du maillage..."/>
@@ -3045,6 +3046,7 @@
   <translation tag="Unload from toolhead first" fr="Déchargez d&apos;abord depuis la tête d&apos;outil"/>
   <translation tag="Unload macro not configured" fr="Macro de déchargement non configurée"/>
   <translation tag="Unload the CFS filament before enabling bypass" fr="Déchargez le filament du CFS avant d&apos;activer le bypass"/>
+  <translation tag="Unload..." fr="Décharger..."/>
   <translation tag="Unloading" fr="Déchargement"/>
   <translation tag="Unloading Start Speed" fr="Vitesse initiale de déchargement"/>
   <translation tag="Unloading before bypass..." fr="Déchargement avant bypass..."/>

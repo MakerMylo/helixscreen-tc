@@ -1712,6 +1712,7 @@ translations:
   Load the required filaments or start anyway?: Benötigte Filamente laden oder trotzdem
     starten?
   'Load, unload, and swap spools. View your multi-filament system at a glance, map colors to slots, and monitor runout sensors.': 'Spulen laden, entladen und wechseln. Ihr Multi-Filament-System auf einen Blick sehen, Farben den Slots zuordnen und Filamentsensoren überwachen.'
+  Load...: Laden...
   Loaded: Geladen
   Loading: Laden
   Loading Bed Mesh...: Bett-Mesh laden...
@@ -3420,6 +3421,7 @@ translations:
   Unload from toolhead first: 'Entladen Sie zuerst aus dem Werkzeugkopf'
   Unload macro not configured: Entlade-Makro nicht konfiguriert
   Unload the CFS filament before enabling bypass: 'Entladen Sie das CFS-Filament, bevor Sie den Bypass aktivieren'
+  Unload...: Entladen...
   Unloading: Entladen
   Unloading Start Speed: 'Startgeschwindigkeit beim Entladen'
   Unloading before bypass...: Entladen vor Bypass...

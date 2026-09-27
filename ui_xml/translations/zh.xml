@@ -1532,6 +1532,7 @@
   <translation tag="Load or unload filament." zh="装载或卸载耗材。"/>
   <translation tag="Load the required filaments or start anyway?" zh="加载所需耗材还是直接开始？"/>
   <translation tag="Load, unload, and swap spools. View your multi-filament system at a glance, map colors to slots, and monitor runout sensors." zh="加载、卸载和更换料盘。一目了然地查看您的多耗材系统、将颜色映射到槽位，并监控耗材用尽传感器。"/>
+  <translation tag="Load..." zh="加载..."/>
   <translation tag="Loaded" zh="已加载"/>
   <translation tag="Loading" zh="加载中"/>
   <translation tag="Loading Bed Mesh..." zh="正在加载热床网格..."/>
@@ -3045,6 +3046,7 @@
   <translation tag="Unload from toolhead first" zh="请先从工具头卸载"/>
   <translation tag="Unload macro not configured" zh="卸载宏未配置"/>
   <translation tag="Unload the CFS filament before enabling bypass" zh="启用旁通前请先卸载 CFS 耗材"/>
+  <translation tag="Unload..." zh="卸载..."/>
   <translation tag="Unloading" zh="卸载中"/>
   <translation tag="Unloading Start Speed" zh="卸载起始速度"/>
   <translation tag="Unloading before bypass..." zh="旁通前正在卸载..."/>
