@@ -1920,7 +1920,7 @@ translations:
   Motors Off: Motores Apagados
   'Motors disable failed: {}': 'Error al desactivar motores: {}'
   Motors disabled: Motores desactivados
-  Motors off: ''
+  Motors off: Motores Apagados
   Motors stay on while a print is active: Los motores siguen activos durante una impresión
   Mount: Montar
   Move: Mover

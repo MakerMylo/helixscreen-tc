@@ -1724,7 +1724,7 @@
   <translation tag="Motors Off" ru="Отключить моторы"/>
   <translation tag="Motors disable failed: {}" ru="Ошибка отключения моторов: {}"/>
   <translation tag="Motors disabled" ru="Моторы отключены"/>
-  <translation tag="Motors off"/>
+  <translation tag="Motors off" ru="Отключить моторы"/>
   <translation tag="Motors stay on while a print is active" ru="Моторы остаются включены во время печати"/>
   <translation tag="Mount" ru="Установить"/>
   <translation tag="Move" ru="Двигать"/>

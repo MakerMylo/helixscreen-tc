@@ -1929,7 +1929,7 @@ translations:
   Motors Off: Motoren aus
   'Motors disable failed: {}': 'Motoren deaktivieren fehlgeschlagen: {}'
   Motors disabled: Motoren deaktiviert
-  Motors off: ''
+  Motors off: Motoren aus
   Motors stay on while a print is active: Motoren bleiben an, solange ein Druck läuft
   Mount: Montieren
   Move: Bewegen

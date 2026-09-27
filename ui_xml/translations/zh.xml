@@ -1724,7 +1724,7 @@
   <translation tag="Motors Off" zh="关闭电机"/>
   <translation tag="Motors disable failed: {}" zh="禁用电机失败: {}"/>
   <translation tag="Motors disabled" zh="电机已禁用"/>
-  <translation tag="Motors off"/>
+  <translation tag="Motors off" zh="关闭电机"/>
   <translation tag="Motors stay on while a print is active" zh="打印期间电机保持开启"/>
   <translation tag="Mount" zh="装上"/>
   <translation tag="Move" zh="移动"/>

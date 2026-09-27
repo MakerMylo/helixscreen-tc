@@ -1784,7 +1784,7 @@ translations:
   Motors Off: 关闭电机
   'Motors disable failed: {}': '禁用电机失败: {}'
   Motors disabled: 电机已禁用
-  Motors off: ''
+  Motors off: 关闭电机
   Motors stay on while a print is active: 打印期间电机保持开启
   Mount: 装上
   Move: 移动

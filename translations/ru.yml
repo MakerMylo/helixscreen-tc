@@ -1900,7 +1900,7 @@ translations:
   Motors Off: Отключить моторы
   'Motors disable failed: {}': 'Ошибка отключения моторов: {}'
   Motors disabled: Моторы отключены
-  Motors off: ''
+  Motors off: Отключить моторы
   Motors stay on while a print is active: Моторы остаются включены во время печати
   Mount: Установить
   Move: Двигать

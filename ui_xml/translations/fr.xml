@@ -1724,7 +1724,7 @@
   <translation tag="Motors Off" fr="Moteurs éteints"/>
   <translation tag="Motors disable failed: {}" fr="Échec de la désactivation des moteurs : {}"/>
   <translation tag="Motors disabled" fr="Moteurs désactivés"/>
-  <translation tag="Motors off"/>
+  <translation tag="Motors off" fr="Moteurs éteints"/>
   <translation tag="Motors stay on while a print is active" fr="Les moteurs restent actifs pendant une impression"/>
   <translation tag="Mount" fr="Monter"/>
   <translation tag="Move" fr="Déplacer"/>
