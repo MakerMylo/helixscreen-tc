@@ -1044,7 +1044,11 @@ $(TEST_BIN): $(TEST_CORE_DEPS) \
 	$(call check_abi_unchanged)
 	$(Q)mkdir -p $(BIN_DIR)
 	$(ECHO) "$(MAGENTA)$(BOLD)[LD]$(RESET) helix-tests"
-	$(Q)$(CXX) $(CXXFLAGS) $(filter-out %.a %.h %.hh %.hpp %.hxx,$(sort $^)) -o $@ $(LDFLAGS) || { \
+	@# The object list goes through a response file: inline, the recipe line
+	@# exceeds Linux's 128 KB per-argument limit once object paths grow (the
+	@# ASAN build's do), and bash refuses it with "Argument list too long".
+	$(file >$(OBJ_DIR)/$(notdir $@).objs,$(filter-out %.a %.h %.hh %.hpp %.hxx,$(sort $^)))
+	$(Q)$(CXX) $(CXXFLAGS) @$(OBJ_DIR)/$(notdir $@).objs -o $@ $(LDFLAGS) || { \
 		echo "$(RED)$(BOLD)✗ Test linking failed!$(RESET)"; \
 		exit 1; \
 	}
