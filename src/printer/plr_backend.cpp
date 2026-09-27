@@ -2,12 +2,11 @@
 #include "plr_backend.h"
 
 #include "printer_discovery.h"
+#include "text_io.h"
 
 #include <spdlog/spdlog.h>
 
 #include <array>
-#include <fstream>
-#include <sstream>
 
 #include "hv/json.hpp"
 
@@ -228,13 +227,11 @@ std::string plr_parse_creality_sidecar(const std::string& json_text) {
 std::string plr_read_creality_recovery_filename() {
     for (const char* root : CREALITY_DATA_ROOTS) {
         std::string path = std::string(root) + "/" + CREALITY_SIDECAR_REL_PATH;
-        std::ifstream in(path, std::ios::binary);
-        if (!in) {
+        auto text = helix::text_io::read_file(path);
+        if (!text) {
             continue;
         }
-        std::ostringstream buf;
-        buf << in.rdbuf();
-        std::string name = plr_parse_creality_sidecar(buf.str());
+        std::string name = plr_parse_creality_sidecar(*text);
         if (!name.empty()) {
             spdlog::info("[PLR] Creality recovery filename from {}: '{}'", path, name);
             return name;

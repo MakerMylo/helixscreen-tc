@@ -8,6 +8,7 @@
 #include "app_globals.h"
 #include "config.h"
 #include "data_root_resolver.h"
+#include "helix_fs.h"
 #include "json_utils.h"
 #include "klipper_extruder_naming.h"
 #include "lvgl/src/others/translation/lv_translation.h"
@@ -15,6 +16,7 @@
 #include "printer_discovery.h"
 #include "printer_state.h"
 #include "probe_preparation.h"
+#include "text_io.h"
 #include "thermal_rate_model.h"
 #include "wizard_config_paths.h"
 
@@ -22,7 +24,8 @@
 
 #include <algorithm>
 #include <cctype>
-#include <fstream>
+#include <cerrno>
+#include <cstring>
 #include <tuple>
 #include <unordered_set>
 #include <vector>
@@ -31,19 +34,12 @@
 #include <malloc.h> // malloc_trim() — see PrinterDatabase::compact()
 #endif
 
-// C++17 filesystem - use std::filesystem if available, fall back to experimental
-#if __cplusplus >= 201703L && __has_include(<filesystem>)
-#include <filesystem>
-namespace fs = std::filesystem;
-#else
-#include <experimental/filesystem>
-namespace fs = std::experimental::filesystem;
-#endif
-
 #include "hv/json.hpp"
 
 using json = nlohmann::json;
 using namespace helix;
+
+namespace hfs = helix::fs;
 
 // ============================================================================
 // JSON Database Loader with User Extensions Support
@@ -78,14 +74,14 @@ struct PrinterDatabase {
         // Phase 1: Load bundled database
         try {
             const std::string db_path = helix::find_readable("printer_database.json");
-            std::ifstream file(db_path);
-            if (!file.is_open()) {
+            const auto db_text = helix::text_io::read_file(db_path);
+            if (!db_text) {
                 NOTIFY_ERROR(lv_tr("Could not load printer database"));
                 LOG_ERROR_INTERNAL("[PrinterDetector] Failed to open {}", db_path);
                 return false;
             }
 
-            data = json::parse(file);
+            data = json::parse(*db_text);
             loaded_files.push_back(db_path);
             // safe_string, not .value(): a null "version" would throw
             // type_error.302 from inside this log statement, and the catch below
@@ -166,7 +162,7 @@ struct PrinterDatabase {
         const std::string extensions_dir = helix::writable_path("printer_database.d");
 
         // Check if extensions directory exists
-        if (!fs::exists(extensions_dir) || !fs::is_directory(extensions_dir)) {
+        if (!hfs::exists(extensions_dir) || !hfs::is_directory(extensions_dir)) {
             spdlog::debug("[PrinterDetector] No user extensions directory at {}", extensions_dir);
             return;
         }
@@ -184,16 +180,17 @@ struct PrinterDatabase {
 
         // Scan for JSON files in extensions directory
         std::vector<std::string> extension_files;
-        try {
-            for (const auto& entry : fs::directory_iterator(extensions_dir)) {
-                if (entry.path().extension() == ".json") {
-                    extension_files.push_back(entry.path().string());
-                }
-            }
-        } catch (const std::exception& e) {
-            load_errors.push_back(fmt::format("Failed to scan {}: {}", extensions_dir, e.what()));
+        auto entries = hfs::list_dir(extensions_dir);
+        if (!entries) {
+            load_errors.push_back(
+                fmt::format("Failed to scan {}: {}", extensions_dir, std::strerror(errno)));
             spdlog::warn("[PrinterDetector] {}", load_errors.back());
             return;
+        }
+        for (const auto& e : *entries) {
+            if (hfs::extension(e.path) == ".json") {
+                extension_files.push_back(e.path);
+            }
         }
 
         // Sort for consistent ordering
@@ -213,14 +210,14 @@ struct PrinterDatabase {
     void merge_extension_file(const std::string& file_path,
                               std::map<std::string, size_t>& bundled_index) {
         try {
-            std::ifstream file(file_path);
-            if (!file.is_open()) {
+            const auto extension_text = helix::text_io::read_file(file_path);
+            if (!extension_text) {
                 load_errors.push_back(fmt::format("Could not open {}", file_path));
                 spdlog::warn("[PrinterDetector] {}", load_errors.back());
                 return;
             }
 
-            json extension_data = json::parse(file);
+            json extension_data = json::parse(*extension_text);
             loaded_files.push_back(file_path);
 
             // Console filter sets merge into the shared table before the printer
@@ -959,17 +956,18 @@ PrinterDetectionResult PrinterDetector::detect(const PrinterHardwareData& hardwa
             PrinterDetectionResult result = execute_printer_heuristics(printer, hardware);
 
             if (result.confidence > 0) {
-                spdlog::info("[PrinterDetector] Candidate: '{}' scored {}% ({} matches, best={}%) "
-                             "via: {}",
-                             result.type_name, result.confidence, result.match_count,
-                             result.best_single_confidence, result.reason);
+                spdlog::debug("[PrinterDetector] Candidate: '{}' scored {}% ({} matches, best={}%) "
+                              "via: {}",
+                              result.type_name, result.confidence, result.match_count,
+                              result.best_single_confidence, result.reason);
             }
 
             // Non-printer addons (show_in_list: false) can't win detection
             // They're scored and logged for diagnostics, but excluded from the winner
             if (!printer.value("show_in_list", true)) {
                 if (result.confidence > 0) {
-                    spdlog::info("[PrinterDetector]   [excluded from winner - not a real printer]");
+                    spdlog::debug(
+                        "[PrinterDetector]   [excluded from winner - not a real printer]");
                 }
                 continue;
             }
@@ -2064,6 +2062,25 @@ std::string PrinterDetector::get_toolhead_style(const std::string& printer_name)
 
     spdlog::debug("[PrinterDetector] No toolhead_style found for printer '{}'", printer_name);
     return "";
+}
+
+bool PrinterDetector::is_enclosed(const std::string& printer_name) {
+    if (printer_name.empty() || !g_database.load() || !g_database.data.contains("printers") ||
+        !g_database.data["printers"].is_array()) {
+        return false;
+    }
+    std::string name_lower = printer_name;
+    std::transform(name_lower.begin(), name_lower.end(), name_lower.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+    for (const auto& printer : g_database.data["printers"]) {
+        std::string db_name = printer.value("name", "");
+        std::transform(db_name.begin(), db_name.end(), db_name.begin(),
+                       [](unsigned char c) { return std::tolower(c); });
+        if (db_name == name_lower) {
+            return printer.value("enclosed", false);
+        }
+    }
+    return false;
 }
 
 // ============================================================================

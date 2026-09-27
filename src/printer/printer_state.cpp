@@ -401,6 +401,7 @@ void PrinterState::update_from_status(const json& state, double eventtime,
 
     // Delegate motion updates to motion state component
     motion_state_.update_from_status(state);
+    refresh_bed_drying_capability();
 
     // Discovery latches external z-offset persistence the moment a provider
     // matches, because the mistake that damages hardware is the other one
@@ -898,6 +899,7 @@ void PrinterState::set_hardware(helix::PrinterDiscovery hardware) {
     // (set_hardware above used discovery flags which miss manual overrides)
     capabilities_state_.set_has_chamber_sensor(!chamber_sensor.empty());
     capabilities_state_.set_has_chamber_heater(!chamber_heater.empty());
+    refresh_bed_drying_capability();
     capabilities_state_.set_has_chamber_heater_diagnostics(
         chamber_diagnostics_apply && !discovery_.chamber_diagnostics_object().empty());
     capabilities_state_.set_has_chamber_filter_fan(chamber_diagnostics_apply &&
@@ -1156,6 +1158,20 @@ void PrinterState::set_kinematics(const std::string& kinematics) {
     apply_effective_bed_moves();
 }
 
+void PrinterState::refresh_bed_drying_capability() {
+    if (!subjects_initialized_) {
+        return;
+    }
+    const bool enclosed = bed_drying::is_enclosed(
+        SettingsManager::instance().get_enclosure_style(), printer_db_enclosed_,
+        lv_subject_get_int(capabilities_state_.get_printer_has_chamber_heater_subject()) != 0);
+    const AxisBounds bounds = motion_state_.get_axis_bounds();
+    const bool can_dry = bed_drying::available(
+        lv_subject_get_int(capabilities_state_.get_printer_has_heater_bed_subject()) != 0, enclosed,
+        bounds.has_z, bounds.z_min, bounds.z_max);
+    capabilities_state_.set_bed_drying(enclosed, can_dry);
+}
+
 void PrinterState::apply_effective_bed_moves() {
     auto style = SettingsManager::instance().get_z_movement_style();
     bool effective;
@@ -1313,6 +1329,8 @@ void PrinterState::set_printer_type_internal(const std::string& type) {
     printer_type_ = type;
     pre_print_option_set_ = new_options;
     z_offset_calibration_strategy_ = new_strategy;
+    printer_db_enclosed_ = PrinterDetector::is_enclosed(type);
+    refresh_bed_drying_capability();
 
     if (subjects_initialized_) {
         lv_subject_copy_string(&printer_type_subject_, type.c_str());

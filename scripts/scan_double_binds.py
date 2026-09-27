@@ -6,7 +6,7 @@ them holds. Each widget listed here is a place that relies on that.
 
 A binding is a `bind_state_*`/`bind_flag_*` child element, or the
 `moves_machine="true"` attribute, which the engine expands into a
-`job_holds_machine` -> disabled binding on the element itself. Missing the
+`machine_motion_blocked` -> disabled binding on the element itself. Missing the
 attribute form drops every control that carries the toolhead guard plus one
 hand-written state binding, and the generated table's own count assertion cannot
 see that the population shrank.
@@ -43,13 +43,13 @@ STATE_ATTR_RE = re.compile(r'(\s)([A-Za-z_][\w]*):([A-Za-z_][\w]*)=(["\'])')
 INT_RE = re.compile(r"-?\d+")
 
 # moves_machine="true" is a binding the engine installs on the element itself:
-# job_holds_machine eq 1 -> state disabled. It composes with the element's other
+# machine_motion_blocked eq 1 -> state disabled. It composes with the element's other
 # state bindings exactly as a hand-written one would, so a control carrying both
 # is a double-bind group even though only one of the two is spelled as a child
 # element. Attributes are applied before children, so it goes at the head of the
 # bucket - the order the runtime installs them in.
 GUARD_ATTRIBUTE = "moves_machine"
-GUARD_BINDING = {"subject": "job_holds_machine", "state": "disabled", "ref_value": "1"}
+GUARD_BINDING = {"subject": "machine_motion_blocked", "state": "disabled", "ref_value": "1"}
 
 
 def lv_xml_to_bool(value):
@@ -199,7 +199,7 @@ def emit_cpp(rows, out):
         "//",
         "// Every widget in ui_xml/ carrying two or more bindings on one state or flag.",
         "// A moves_machine=\"true\" attribute is one of them: the engine installs the",
-        "// job_holds_machine -> disabled binding for the element itself, so a control",
+        "// machine_motion_blocked -> disabled binding for the element itself, so a control",
         "// carrying the attribute and one hand-written state binding is a group of two.",
         "// Each row names the component to build, the widget in it, the property, the",
         "// subjects involved with a value that releases every binding on them, and one",

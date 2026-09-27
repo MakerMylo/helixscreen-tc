@@ -13,6 +13,8 @@
 #include "app_globals.h"
 #include "config.h"
 #include "helix-xml/src/xml/lv_xml.h"
+#include "helix_fs.h"
+#include "helix_regex.h"
 #include "host_identity.h"
 #include "http_executor.h"
 #include "i_moonraker_api.h"
@@ -28,6 +30,7 @@
 #include "printer_state.h"
 #include "settings_manager.h"
 #include "static_subject_registry.h"
+#include "text_io.h"
 #include "zmod_color_status.h"
 
 #include <spdlog/fmt/fmt.h>
@@ -38,14 +41,12 @@
 #include <cerrno>
 #include <cstdio>
 #include <cstring>
-#include <filesystem>
-#include <fstream>
 #include <lvgl.h>
-#include <regex>
-#include <sstream>
 #include <thread>
 
 namespace helix {
+
+namespace hfs = fs;
 
 using json = nlohmann::json;
 
@@ -3374,16 +3375,15 @@ std::string AmsBackendAd5xIfs::build_ifs_list_value(bool colors, int override_sl
         const auto i = static_cast<size_t>(port - 1);
         return colors ? colors_[i] : materials_[i];
     };
-    std::ostringstream ss;
-    ss << "\"[";
+    std::string ss = "\"[";
     if (var_prefix_ != "less_waste") {
         for (int i = 0; i < NUM_PORTS; ++i) {
             if (i > 0)
-                ss << ", ";
-            ss << "'" << port_entry(i + 1) << "'";
+                ss += ", ";
+            ss += "'" + port_entry(i + 1) + "'";
         }
-        ss << "]\"";
-        return ss.str();
+        ss += "]\"";
+        return ss;
     }
 
     // Tool-indexed projection. Until the plugin's `<prefix>_tools` array has
@@ -3399,36 +3399,35 @@ std::string AmsBackendAd5xIfs::build_ifs_list_value(bool colors, int override_sl
     }
     for (int t = 0; t < TOOL_MAP_SIZE; ++t) {
         if (t > 0)
-            ss << ", ";
+            ss += ", ";
         int port = tool_map_[static_cast<size_t>(t)];
         if (!any_mapped) {
             port = (t < NUM_PORTS) ? t + 1 : UNMAPPED_PORT;
         }
         if (port >= 1 && port <= NUM_PORTS) {
-            ss << "'" << port_entry(port) << "'";
+            ss += "'" + port_entry(port) + "'";
         } else {
             // Unmapped tool: no lane, no colour. A candidate on an unmapped
             // tool can never pass lessWaste's port-sensor check, so the empty
             // entry is inert in `_RUNOUT_HEAD`'s comparisons.
-            ss << "''";
+            ss += "''";
         }
     }
-    ss << "]\"";
-    return ss.str();
+    ss += "]\"";
+    return ss;
 }
 
 std::string AmsBackendAd5xIfs::build_tool_map_value() const {
     // Integer list — no quotes around elements.
     // Example: "[1, 2, 3, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]"
-    std::ostringstream ss;
-    ss << "\"[";
+    std::string ss = "\"[";
     for (int i = 0; i < TOOL_MAP_SIZE; ++i) {
         if (i > 0)
-            ss << ", ";
-        ss << tool_map_[static_cast<size_t>(i)];
+            ss += ", ";
+        ss += std::to_string(tool_map_[static_cast<size_t>(i)]);
     }
-    ss << "]\"";
-    return ss.str();
+    ss += "]\"";
+    return ss;
 }
 
 AmsError AmsBackendAd5xIfs::write_ifs_var(const std::string& key, const std::string& value) {
@@ -3588,10 +3587,8 @@ AmsError AmsBackendAd5xIfs::write_adventurer_json_local(int slot_index, const st
     // failure mode this code path exists to fix).
     json doc;
     {
-        std::ifstream in(local_adventurer_json_path_);
-        std::stringstream buf;
-        buf << in.rdbuf();
-        const std::string content = buf.str();
+        const std::string content =
+            helix::text_io::read_file(local_adventurer_json_path_).value_or("");
         if (content.empty()) {
             doc = json::object();
         } else {
@@ -3617,30 +3614,9 @@ AmsError AmsBackendAd5xIfs::write_adventurer_json_local(int slot_index, const st
     // POSIX rename() is atomic when src+dst are on the same filesystem — that's
     // guaranteed here because both live in the same directory. Critically, we
     // do NOT cross filesystems the way Moonraker's upload does.
-    const std::string tmp_path = local_adventurer_json_path_ + ".tmp";
-    {
-        std::ofstream out(tmp_path, std::ios::binary | std::ios::trunc);
-        if (!out) {
-            return AmsErrorHelper::command_failed("write_adventurer_json_local",
-                                                  std::string("open(") + tmp_path +
-                                                      ") failed: " + std::strerror(errno));
-        }
-        out << updated;
-        out.flush();
-        if (!out) {
-            std::error_code ec;
-            std::filesystem::remove(tmp_path, ec);
-            return AmsErrorHelper::command_failed("write_adventurer_json_local", "Write failed");
-        }
-    }
-
-    if (std::rename(tmp_path.c_str(), local_adventurer_json_path_.c_str()) != 0) {
-        const int saved_errno = errno;
-        std::error_code ec;
-        std::filesystem::remove(tmp_path, ec);
+    if (!helix::text_io::write_file_atomic(local_adventurer_json_path_, updated)) {
         return AmsErrorHelper::command_failed("write_adventurer_json_local",
-                                              std::string("rename failed: ") +
-                                                  std::strerror(saved_errno));
+                                              std::string("write failed: ") + std::strerror(errno));
     }
 
     spdlog::info("{} Wrote slot {} to Adventurer5M.json (direct fs path: {})", backend_log_tag(),
@@ -3671,12 +3647,11 @@ void AmsBackendAd5xIfs::detect_local_adventurer_json_path() {
     };
 
     for (const auto* candidate : candidates) {
-        std::error_code ec;
-        if (!std::filesystem::exists(candidate, ec) || ec) {
+        if (!hfs::exists(candidate)) {
             continue;
         }
         // Must be a regular file (or a symlink resolving to one) and writable.
-        if (!std::filesystem::is_regular_file(candidate, ec) || ec) {
+        if (!hfs::is_regular_file(candidate)) {
             continue;
         }
         if (::access(candidate, W_OK) != 0) {
@@ -3773,12 +3748,11 @@ std::vector<std::string> AmsBackendAd5xIfs::parse_user_cfg_filament_types(const 
     // try to fully reimplement Klipper's INI parser, just match the lines we
     // care about within the [zmod_ifs] section.
     std::vector<std::string> out;
-    std::istringstream is(body);
-    std::string line;
     bool in_section = false;
-    static const std::regex section_re(R"(^\s*\[\s*([^\]\s]+)\s*\]\s*$)");
-    static const std::regex filament_re(R"(^\s*filament_([A-Za-z0-9_+\-]+)\s*[:=].*$)");
-    while (std::getline(is, line)) {
+    static const helix::Regex section_re(R"(^\s*\[\s*([^\]\s]+)\s*\]\s*$)");
+    static const helix::Regex filament_re(R"(^\s*filament_([A-Za-z0-9_+\-]+)\s*[:=].*$)");
+    for (std::string_view line_view : helix::text_io::lines(body)) {
+        std::string line(line_view);
         // Strip trailing CR for files saved with CRLF.
         if (!line.empty() && line.back() == '\r') {
             line.pop_back();
@@ -3794,12 +3768,12 @@ std::vector<std::string> AmsBackendAd5xIfs::parse_user_cfg_filament_types(const 
         if (line.find_first_not_of(" \t") == std::string::npos) {
             continue;
         }
-        std::smatch m;
-        if (std::regex_match(line, m, section_re)) {
+        helix::RegexMatch m;
+        if (helix::regex_match(line, m, section_re)) {
             in_section = (m[1].str() == "zmod_ifs");
             continue;
         }
-        if (in_section && std::regex_match(line, m, filament_re)) {
+        if (in_section && helix::regex_match(line, m, filament_re)) {
             out.push_back(m[1].str());
         }
     }
@@ -4048,9 +4022,9 @@ bool AmsBackendAd5xIfs::on_gcode_response_line(const std::string& line) {
     {
         std::lock_guard<std::mutex> lock(mutex_);
         if (phase_tracker_.active) {
-            static const std::regex heat_re(R"(Heating the nozzle to\s+(\d+))");
-            std::smatch m;
-            if (std::regex_search(line, m, heat_re)) {
+            static const helix::Regex heat_re(R"(Heating the nozzle to\s+(\d+))");
+            helix::RegexMatch m;
+            if (helix::regex_search(line, m, heat_re)) {
                 int degrees = std::atoi(m[1].str().c_str());
                 if (degrees > 0) {
                     phase_tracker_.target_deci = helix::ui::temperature::degrees_to_deci(degrees);
@@ -4110,8 +4084,8 @@ bool AmsBackendAd5xIfs::on_gcode_response_line(const std::string& line) {
     // also produces a bare "Extruder: N". Re-reading after a Helix-initiated
     // tool change is harmless and desirable (fresh state); schedule_zcolor_query
     // is debounced + idempotent, so it collapses to one query either way.
-    static const std::regex extruder_commit_re(R"(^\s*(?://\s*)?Extruder:\s*\d+\s*$)");
-    if (std::regex_search(line, extruder_commit_re)) {
+    static const helix::Regex extruder_commit_re(R"(^\s*(?://\s*)?Extruder:\s*\d+\s*$)");
+    if (helix::regex_search(line, extruder_commit_re)) {
         spdlog::debug("{} Detected external channel commit ('{}') in gcode stream — "
                       "scheduling GET_ZCOLOR to resurrect presence",
                       backend_log_tag(), line);
@@ -4188,7 +4162,7 @@ bool AmsBackendAd5xIfs::on_gcode_response_line(const std::string& line) {
         // Extracting TYPE=/HEX= directly from the gcode makes the refresh
         // synchronous and lets GET_ZCOLOR degrade to a confirming no-op.
         if (line.find("CHANGE_ZCOLOR") != std::string::npos) {
-            static const std::regex slot_re(R"(SLOT=(\d+))");
+            static const helix::Regex slot_re(R"(SLOT=(\d+))");
             // Match TYPE= up to the next whitespace, a '|', or end of string.
             // zmod's stock whitelist is single-token (PLA, PLA-CF, PETG, PETG-CF,
             // SILK, ABS, TPU), and custom [zmod_ifs] filament_<NAME> entries are
@@ -4206,12 +4180,12 @@ bool AmsBackendAd5xIfs::on_gcode_response_line(const std::string& line) {
             // sync_override_to_firmware_locked that pinned a stale color into a
             // fresh auto-mirror override (#1065 raza616 07-22, bundle H2X5QMCU).
             // HEX= is already `{6}`-bounded so it stops at the '|' on its own.
-            static const std::regex type_re(R"(TYPE=([^\s|]+))");
+            static const helix::Regex type_re(R"(TYPE=([^\s|]+))");
             // HEX= is exactly 6 hex digits in zmod output. Tolerate lowercase
             // (Mainsail console typing) — canonicalized to upper below.
-            static const std::regex hex_re(R"(HEX=([0-9A-Fa-f]{6}))");
-            std::smatch m;
-            if (std::regex_search(line, m, slot_re)) {
+            static const helix::Regex hex_re(R"(HEX=([0-9A-Fa-f]{6}))");
+            helix::RegexMatch m;
+            if (helix::regex_search(line, m, slot_re)) {
                 // zmod SLOT is 1-based; overrides_ is 0-based.
                 int slot0 = std::atoi(m[1].str().c_str()) - 1;
 
@@ -4219,13 +4193,13 @@ bool AmsBackendAd5xIfs::on_gcode_response_line(const std::string& line) {
                 // (regex_search is the expensive part; do it once on the local
                 // line string). empty optional == "not present in this gcode".
                 std::optional<std::string> parsed_type;
-                std::smatch tm;
-                if (std::regex_search(line, tm, type_re)) {
+                helix::RegexMatch tm;
+                if (helix::regex_search(line, tm, type_re)) {
                     parsed_type = tm[1].str();
                 }
                 std::optional<std::string> parsed_hex;
-                std::smatch hm;
-                if (std::regex_search(line, hm, hex_re)) {
+                helix::RegexMatch hm;
+                if (helix::regex_search(line, hm, hex_re)) {
                     parsed_hex = hm[1].str();
                     // Canonicalize to upper-case so the follow-up GET_ZCOLOR
                     // response (which parse_zcolor_silent also receives as
@@ -4403,19 +4377,19 @@ bool AmsBackendAd5xIfs::apply_color_menu_slot_row(const std::string& line) {
     // submenu's buttons (Load|IN_ZCOLOR …, Change color|CHANGE_ZCOLOR …), and
     // RUN_ZCOLOR is display-only — it never mutates firmware state, so a row
     // can be read as a snapshot with no risk of confusing it for a command.
-    static const std::regex slot_row_re(
+    static const helix::Regex slot_row_re(
         R"(action:prompt_button\s+(\d+)\s*:[^|]*\|\s*RUN_ZCOLOR\b)");
-    std::smatch rm;
-    if (!std::regex_search(line, rm, slot_row_re))
+    helix::RegexMatch rm;
+    if (!helix::regex_search(line, rm, slot_row_re))
         return false;
 
     // Same token grammar as the CHANGE_ZCOLOR extractor: TYPE stops at the '|'
     // that begins the button's style/hex suffix, HEX is 6 digits.
-    static const std::regex slot_re(R"(SLOT=(\d+))");
-    static const std::regex type_re(R"(TYPE=([^\s|]+))");
-    static const std::regex hex_re(R"(HEX=([0-9A-Fa-f]{6}))");
-    std::smatch sm;
-    if (!std::regex_search(line, sm, slot_re))
+    static const helix::Regex slot_re(R"(SLOT=(\d+))");
+    static const helix::Regex type_re(R"(TYPE=([^\s|]+))");
+    static const helix::Regex hex_re(R"(HEX=([0-9A-Fa-f]{6}))");
+    helix::RegexMatch sm;
+    if (!helix::regex_search(line, sm, slot_re))
         return false;
     // The label index and SLOT= must agree, or this isn't the row we think it
     // is (a localized or restyled menu, a future zmod layout). Bail rather than
@@ -4427,10 +4401,10 @@ bool AmsBackendAd5xIfs::apply_color_menu_slot_row(const std::string& line) {
     if (slot0 < 0 || slot0 >= NUM_PORTS)
         return false;
 
-    std::smatch tm;
-    std::smatch hm;
-    const bool has_type = std::regex_search(line, tm, type_re);
-    const bool has_hex = std::regex_search(line, hm, hex_re);
+    helix::RegexMatch tm;
+    helix::RegexMatch hm;
+    const bool has_type = helix::regex_search(line, tm, type_re);
+    const bool has_hex = helix::regex_search(line, hm, hex_re);
     if (!has_type && !has_hex)
         return false;
 
@@ -5731,13 +5705,14 @@ AmsBackendAd5xIfs::parse_zcolor_silent(const std::vector<std::string>& lines, co
     // Regexes compiled once per call; parsing is off the hot path.
     // Summary: "// Extruder: None (N) | IFS: True"
     //   or:    "// Extruder: N: MATERIAL/HEX | IFS: True"
-    static const std::regex summary_re(R"(^//\s*Extruder:\s*(.+?)\s*\|\s*IFS:\s*(True|False)\s*$)");
+    static const helix::Regex summary_re(
+        R"(^//\s*Extruder:\s*(.+?)\s*\|\s*IFS:\s*(True|False)\s*$)");
     // Slot: "// N: MATERIAL/HEX" or "// N: MATERIAL/NAME/HEX" or old "// N: MATERIAL"
-    static const std::regex slot_re(R"(^//\s*([1-9])\s*:\s*(.+?)\s*$)");
+    static const helix::Regex slot_re(R"(^//\s*([1-9])\s*:\s*(.+?)\s*$)");
     // Extruder detail inside summary text: "N: MATERIAL/..."
-    static const std::regex extruder_slot_re(R"(^([1-9])\s*:)");
+    static const helix::Regex extruder_slot_re(R"(^([1-9])\s*:)");
     // current channel: "None (N)" or bare "N" form — look for "(N)" paren form
-    static const std::regex channel_paren_re(R"(\((\d+)\))");
+    static const helix::Regex channel_paren_re(R"(\((\d+)\))");
 
     // First pass: classify the response and pull the IFS_STATUS JSON line.
     //
@@ -5794,18 +5769,18 @@ AmsBackendAd5xIfs::parse_zcolor_silent(const std::vector<std::string>& lines, co
 
     int slot_lines_seen = 0;
     int slot_lines_with_hex = 0;
-    std::smatch m;
+    helix::RegexMatch m;
 
     for (const auto& line : lines) {
-        if (std::regex_match(line, m, summary_re)) {
+        if (helix::regex_match(line, m, summary_re)) {
             result.saw_valid_response = true;
             result.saw_silent_content = true;   // genuine GET_ZCOLOR summary line
             result.saw_extruder_summary = true; // carries the "Extruder:" head field
             result.ifs_active = (m[2].str() == "True");
             const std::string extruder_part = m[1].str();
 
-            std::smatch em;
-            if (std::regex_search(extruder_part, em, extruder_slot_re)) {
+            helix::RegexMatch em;
+            if (helix::regex_search(extruder_part, em, extruder_slot_re)) {
                 try {
                     int n = std::stoi(em[1].str());
                     if (n >= 1 && n <= NUM_PORTS) {
@@ -5814,8 +5789,8 @@ AmsBackendAd5xIfs::parse_zcolor_silent(const std::vector<std::string>& lines, co
                 } catch (...) {
                 }
             }
-            std::smatch cm;
-            if (std::regex_search(extruder_part, cm, channel_paren_re)) {
+            helix::RegexMatch cm;
+            if (helix::regex_search(extruder_part, cm, channel_paren_re)) {
                 try {
                     result.current_channel = std::stoi(cm[1].str());
                 } catch (...) {
@@ -5824,7 +5799,7 @@ AmsBackendAd5xIfs::parse_zcolor_silent(const std::vector<std::string>& lines, co
             continue;
         }
 
-        if (std::regex_match(line, m, slot_re)) {
+        if (helix::regex_match(line, m, slot_re)) {
             int n;
             try {
                 n = std::stoi(m[1].str());

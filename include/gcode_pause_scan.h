@@ -161,7 +161,7 @@ inline std::optional<float> m73_progress_percent(std::string_view line) {
  * @code
  *   PauseScan scan;
  *   scan.begin(total_bytes);
- *   while (std::getline(file, line))
+ *   while (reader.next(line))  // helix::text_io::LineReader
  *       scan.feed_line(line, offset, current_layer);
  * @endcode
  *

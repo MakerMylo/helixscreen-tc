@@ -5,6 +5,7 @@
 
 #include "moonraker_api_internal.h"
 #include "moonraker_client.h"
+#include "moonraker_gcode_guards.h"
 #include "spdlog/spdlog.h"
 
 using namespace moonraker_internal;
@@ -13,7 +14,13 @@ using namespace moonraker_internal;
 // MoonrakerJobAPI Implementation
 // ============================================================================
 
-MoonrakerJobAPI::MoonrakerJobAPI(helix::IMoonrakerClient& client) : client_(client) {}
+MoonrakerJobAPI::MoonrakerJobAPI(helix::IMoonrakerClient& client, const helix::PrinterState* state)
+    : client_(client), state_(state) {}
+
+bool MoonrakerJobAPI::refused_by_spool_latch(const char* method,
+                                             const ErrorCallback& on_error) const {
+    return helix::api::reject_job_while_spools_on_bed(state_, method, on_error);
+}
 
 // ============================================================================
 // Job Control Operations
@@ -23,6 +30,8 @@ void MoonrakerJobAPI::start_print(const std::string& filename, SuccessCallback o
                                   ErrorCallback on_error) {
     // Validate filename path
     if (reject_invalid_path(filename, "start_print", on_error))
+        return;
+    if (refused_by_spool_latch("printer.print.start", on_error))
         return;
 
     json params = {{"filename", filename}};
@@ -51,6 +60,8 @@ void MoonrakerJobAPI::pause_print(SuccessCallback on_success, ErrorCallback on_e
 }
 
 void MoonrakerJobAPI::resume_print(SuccessCallback on_success, ErrorCallback on_error) {
+    if (refused_by_spool_latch("printer.print.resume", on_error))
+        return;
     spdlog::info("[Moonraker API] Resuming print");
 
     client_.send_jsonrpc(
@@ -115,6 +126,8 @@ void MoonrakerJobAPI::start_modified_print(const std::string& original_filename,
     if (reject_invalid_path(original_filename, "start_modified_print", on_error))
         return;
     if (reject_invalid_path(temp_file_path, "start_modified_print", on_error))
+        return;
+    if (refused_by_spool_latch("server.helix.print_modified", on_error))
         return;
 
     // Build modifications array

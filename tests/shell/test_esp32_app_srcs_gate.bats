@@ -186,6 +186,22 @@ decide_all() {
 
 # ----------------------------------------------------------- the quiet half
 
+@test "flags a firmware-compiled file that includes a std::locale-pulling header" {
+    decide_all
+    printf '#include <string>\n  #include <sstream>\n' > "$ROOT/src/printer/compiled.cpp"
+    run_gate
+    [ "$status" -eq 1 ]
+    contains "src/printer/compiled.cpp:2: <sstream>" "$output"
+    contains "text_io.h" "$output"
+}
+
+@test "a locale-pulling include in an excluded file is not the firmware's problem" {
+    decide_all
+    printf '#include <regex>\n#include <filesystem>\n' > "$ROOT/src/printer/excluded_one.cpp"
+    run_gate
+    [ "$status" -eq 0 ]
+}
+
 @test "passes when every src/ file is in the manifest or exclusions" {
     # decide the new file: add it to the manifest
     decide_all

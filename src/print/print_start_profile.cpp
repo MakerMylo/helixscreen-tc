@@ -5,15 +5,13 @@
 
 #include "data_root_resolver.h"
 #include "lvgl/src/others/translation/lv_translation.h"
+#include "text_io.h"
 
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <cctype>
 #include <cmath>
-#include <fstream>
-#include <locale>
-#include <sstream>
 
 #include "hv/json.hpp"
 
@@ -105,15 +103,15 @@ static bool compare_values(PrintStartProfile::StatusPredicate::Op op, double lhs
 std::shared_ptr<PrintStartProfile> PrintStartProfile::load(const std::string& profile_name) {
     std::string path = helix::find_readable("print_start_profiles/" + profile_name + ".json");
 
-    std::ifstream file(path);
-    if (!file.is_open()) {
+    auto text = helix::text_io::read_file(path);
+    if (!text) {
         spdlog::warn("[PrintStartProfile] Could not open '{}', falling back to default", path);
         return load_default();
     }
 
     json j;
     try {
-        j = json::parse(file);
+        j = json::parse(*text);
     } catch (const json::parse_error& e) {
         spdlog::warn("[PrintStartProfile] JSON parse error in '{}': {}", path, e.what());
         return load_default();
@@ -134,14 +132,14 @@ std::shared_ptr<PrintStartProfile> PrintStartProfile::load_default() {
 
     // Try to load from JSON file first
     do {
-        std::ifstream file(path);
-        if (!file.is_open()) {
+        auto text = helix::text_io::read_file(path);
+        if (!text) {
             break;
         }
 
         json j;
         try {
-            j = json::parse(file);
+            j = json::parse(*text);
         } catch (const json::parse_error& e) {
             spdlog::warn("[PrintStartProfile] JSON parse error in default.json: {}", e.what());
             break;
@@ -206,17 +204,17 @@ std::shared_ptr<PrintStartProfile> PrintStartProfile::make_builtin_default() {
     // clang-format on
 
     for (const auto& def : builtin_patterns) {
-        try {
-            ResponsePattern rp;
-            rp.pattern = std::regex(def.pattern, std::regex::icase);
-            rp.phase = def.phase;
-            rp.message_template = def.message;
-            rp.weight = def.weight;
-            profile->response_patterns_.push_back(std::move(rp));
-        } catch (const std::regex_error& e) {
+        ResponsePattern rp;
+        rp.pattern = helix::Regex(def.pattern, helix::Regex::ICase);
+        if (!rp.pattern.ok()) {
             spdlog::error("[PrintStartProfile] Built-in regex error for '{}': {}", def.pattern,
-                          e.what());
+                          rp.pattern.error());
+            continue;
         }
+        rp.phase = def.phase;
+        rp.message_template = def.message;
+        rp.weight = def.weight;
+        profile->response_patterns_.push_back(std::move(rp));
     }
 
     // Both heaters take the same rule: a target is set and the reading is
@@ -322,8 +320,8 @@ bool PrintStartProfile::try_match_state(const std::string& state, MatchResult& r
 bool PrintStartProfile::match_pattern_list(const std::vector<ResponsePattern>& patterns,
                                            const std::string& text, MatchResult& result) const {
     for (const auto& rp : patterns) {
-        std::smatch match;
-        if (std::regex_search(text, match, rp.pattern)) {
+        helix::RegexMatch match;
+        if (helix::regex_search(text, match, rp.pattern)) {
             result.phase = rp.phase;
             // Translate the TEMPLATE, then substitute captures into the
             // translated text. Doing it the other way round looks up the
@@ -339,12 +337,10 @@ bool PrintStartProfile::match_pattern_list(const std::vector<ResponsePattern>& p
                 // Firmware prints the number with a '.' whatever the UI locale.
                 // A day bounds the seconds well inside an int.
                 constexpr double MAX_HOLD_MINUTES = 24.0 * 60.0;
-                std::istringstream minutes_text(match[rp.hold_minutes_group].str());
-                minutes_text.imbue(std::locale::classic());
-                double minutes = 0.0;
-                if (minutes_text >> minutes && std::isfinite(minutes) && minutes > 0.0) {
+                auto minutes = helix::text_io::parse_double(match[rp.hold_minutes_group].view);
+                if (minutes && std::isfinite(*minutes) && *minutes > 0.0) {
                     result.hold_seconds =
-                        static_cast<int>(std::lround(std::min(minutes, MAX_HOLD_MINUTES) * 60.0));
+                        static_cast<int>(std::lround(std::min(*minutes, MAX_HOLD_MINUTES) * 60.0));
                 }
             }
             spdlog::trace("[PrintStartProfile] Pattern match: '{}' -> phase={}, msg='{}'", text,
@@ -627,11 +623,10 @@ void PrintStartProfile::parse_pattern_array(const nlohmann::json& array,
 
         // Compile regex with case-insensitive flag
         std::string pattern_str = rp_json["pattern"].get<std::string>();
-        try {
-            rp.pattern = std::regex(pattern_str, std::regex::icase);
-        } catch (const std::regex_error& e) {
+        rp.pattern = helix::Regex(pattern_str, helix::Regex::ICase);
+        if (!rp.pattern.ok()) {
             spdlog::warn("[PrintStartProfile] Invalid regex '{}' in {}: {}", pattern_str,
-                         source_path, e.what());
+                         source_path, rp.pattern.error());
             continue;
         }
 
@@ -846,7 +841,7 @@ PrintStartPhase PrintStartProfile::parse_phase_name(const std::string& name) {
 }
 
 std::string PrintStartProfile::substitute_captures(const std::string& tmpl,
-                                                   const std::smatch& match) {
+                                                   const helix::RegexMatch& match) {
     std::string result;
     result.reserve(tmpl.size() + 32);
 

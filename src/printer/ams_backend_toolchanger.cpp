@@ -17,7 +17,6 @@
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
-#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>

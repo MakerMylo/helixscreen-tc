@@ -240,6 +240,12 @@ ProbeOverlay& get_global_probe_overlay();
  */
 void ui_probe_overlay_register_callbacks();
 
+/// Send a probe command through the API's send gate. False when refused on the
+/// spot (a print holds the machine, or spools are on the bed).
+namespace helix::ui {
+bool probe_send_gcode(const char* gcode, const char* label);
+} // namespace helix::ui
+
 /**
  * @brief Initialize row click callback for opening from Advanced panel
  *

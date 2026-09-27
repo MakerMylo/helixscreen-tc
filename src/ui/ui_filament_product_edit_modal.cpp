@@ -8,10 +8,10 @@
 #include "filament_catalog.h"
 #include "filament_database.h"
 #include "lvgl/src/others/translation/lv_translation.h"
+#include "text_io.h"
 
 #include <spdlog/spdlog.h>
 
-#include <fstream>
 #include <string>
 #include <vector>
 
@@ -31,8 +31,7 @@ const char* BUILTIN_PATHS[] = {"assets/filaments.json", "../assets/filaments.jso
 
 std::string first_existing_builtin() {
     for (const char* p : BUILTIN_PATHS) {
-        std::ifstream f(p);
-        if (f.is_open())
+        if (helix::text_io::open_file(p, "rb"))
             return p;
     }
     return "";

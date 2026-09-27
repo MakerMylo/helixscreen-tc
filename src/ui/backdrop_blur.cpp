@@ -5,14 +5,14 @@
 
 #include "config.h"
 #include "data_root_resolver.h"
+#include "helix_fs.h"
 #include "lv_draw_buf_guard.h"
+#include "text_io.h"
 
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <cstring>
-#include <filesystem>
-#include <fstream>
 #include <vector>
 
 #ifdef ENABLE_GLES_3D
@@ -31,6 +31,8 @@
 #endif
 
 namespace helix::ui {
+
+namespace hfs = fs;
 
 // ============================================================================
 // Circuit Breaker
@@ -291,9 +293,7 @@ static bool init_gpu_blur() {
     // on the next launch.
     const std::string guard_path = helix::writable_path("gpu_blur_guard");
     {
-        std::ofstream guard(guard_path, std::ios::out | std::ios::trunc);
-        if (guard.is_open()) {
-            guard << "1";
+        if (helix::text_io::write_file(guard_path, "1")) {
             spdlog::debug("[Backdrop Blur] Armed GPU crash-loop guard: {}", guard_path);
         } else {
             spdlog::warn("[Backdrop Blur] Could not write GPU crash-loop guard: {}", guard_path);
@@ -308,8 +308,7 @@ static bool init_gpu_blur() {
     struct GuardCleaner {
         const std::string& path;
         ~GuardCleaner() {
-            std::error_code ec;
-            std::filesystem::remove(path, ec);
+            hfs::remove(path);
         }
     } guard_cleaner{guard_path};
 

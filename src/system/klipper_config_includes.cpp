@@ -4,6 +4,7 @@
 #include "klipper_config_includes.h"
 
 #include "i_moonraker_api.h"
+#include "text_io.h"
 
 #include <spdlog/spdlog.h>
 
@@ -12,7 +13,7 @@
 #include <memory>
 #include <mutex>
 #include <set>
-#include <sstream>
+#include <string_view>
 
 namespace helix::system {
 
@@ -99,10 +100,9 @@ std::vector<std::string> config_match_glob(const std::map<std::string, std::stri
 
 std::vector<std::string> extract_includes(const std::string& content) {
     std::vector<std::string> includes;
-    std::istringstream stream(content);
-    std::string line;
 
-    while (std::getline(stream, line)) {
+    for (std::string_view sv : helix::text_io::lines(content)) {
+        std::string line(sv);
         // Trim leading whitespace
         size_t start = line.find_first_not_of(" \t");
         if (start == std::string::npos)

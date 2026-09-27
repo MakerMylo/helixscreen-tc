@@ -10,11 +10,12 @@
 
 #include <atomic>
 #include <chrono>
-#include <filesystem>
+#include <cstdint>
 #include <functional>
 #include <map>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -477,9 +478,9 @@ class ThumbnailCache {
 
     /// One cached file, as seen by a directory scan.
     struct CacheEntry {
-        std::filesystem::path path;
-        std::filesystem::file_time_type mtime;
-        std::uintmax_t size; ///< Matches std::filesystem::file_size()'s return type
+        std::string path;
+        std::int64_t mtime_ns; ///< helix::fs::mtime_ns()
+        std::uint64_t size;
     };
 
     /**
@@ -528,8 +529,8 @@ class ThumbnailCache {
 
     /// One indexed file. Same fields a directory walk would produce.
     struct IndexEntry {
-        std::filesystem::file_time_type mtime;
-        std::uintmax_t size;
+        std::int64_t mtime_ns;
+        std::uint64_t size;
     };
 
     /// Eviction checks between forced full rescans.
@@ -555,11 +556,11 @@ class ThumbnailCache {
     /// write is in flight, and a stale journal entry must not add a foreign
     /// file to this cache's accounting.
     /// @pre mutex_ is held.
-    void index_file_locked(const std::filesystem::path& raw_path) const;
+    void index_file_locked(const std::string& raw_path) const;
 
     /// Drop a path from the index, crediting its bytes back.
     /// @pre mutex_ is held.
-    void forget_file_locked(const std::filesystem::path& path) const;
+    void forget_file_locked(const std::string& path) const;
 
     /// Record a file this cache just wrote, then run an eviction check. The
     /// shape every write site uses so no write can reach eviction unindexed.
@@ -569,8 +570,10 @@ class ThumbnailCache {
     /// one key. What both invalidate() and save_raw_png() use to keep a
     /// freshly written PNG from being served through bins prescaled from the
     /// previous one.
+    /// @return Variants removed, or nullopt (errno set) when the directory could
+    ///         not be listed or a variant could not be removed.
     /// @pre mutex_ is held.
-    size_t remove_bin_variants_locked(const std::string& hash);
+    std::optional<size_t> remove_bin_variants_locked(const std::string& hash);
 
     /**
      * @brief Eviction pass proper.
@@ -586,7 +589,7 @@ class ThumbnailCache {
 
     /// The index and its bookkeeping. All guarded by mutex_; mutable because
     /// get_cache_size() is const and still has to prime and reconcile.
-    mutable std::map<std::filesystem::path, IndexEntry> index_;
+    mutable std::map<std::string, IndexEntry> index_;
     mutable size_t index_total_ = 0;
     mutable bool index_primed_ = false;
     mutable size_t checks_since_scan_ = 0;

@@ -5,17 +5,16 @@
 
 #include "ui_emergency_stop.h"
 
+#include "helix_regex.h"
 #include "i_moonraker_api.h"
 #include "moonraker_types.h"
+#include "text_io.h"
 
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <chrono>
 #include <ctime>
-#include <iomanip>
-#include <regex>
-#include <sstream>
 
 namespace helix {
 
@@ -74,7 +73,7 @@ std::string PrintStartEnhancer::generate_conditional_block(const std::string& or
         return "";
     }
 
-    std::ostringstream ss;
+    std::string ss;
 
     // Preserve original indentation
     size_t indent_end = original_line.find_first_not_of(" \t");
@@ -93,13 +92,13 @@ std::string PrintStartEnhancer::generate_conditional_block(const std::string& or
 
     // Generate the wrapper
     if (include_declaration) {
-        ss << indent << generate_param_declaration(param_name) << "\n";
+        ss += indent + generate_param_declaration(param_name) + "\n";
     }
-    ss << indent << "{% if " << param_name << " == 0 %}\n";
-    ss << indent << "  " << trimmed << "\n";
-    ss << indent << "{% endif %}";
+    ss += indent + "{% if " + param_name + " == 0 %}\n";
+    ss += indent + "  " + trimmed + "\n";
+    ss += indent + "{% endif %}";
 
-    return ss.str();
+    return ss;
 }
 
 MacroEnhancement PrintStartEnhancer::generate_wrapper(const PrintStartOperation& operation,
@@ -148,10 +147,8 @@ std::string PrintStartEnhancer::apply_to_source(const std::string& original_macr
 
     // Split macro into lines
     std::vector<std::string> lines;
-    std::istringstream stream(original_macro);
-    std::string line;
-    while (std::getline(stream, line)) {
-        lines.push_back(line);
+    for (std::string_view line : helix::text_io::lines(original_macro)) {
+        lines.emplace_back(line);
     }
 
     // Apply each enhancement
@@ -191,15 +188,15 @@ std::string PrintStartEnhancer::apply_to_source(const std::string& original_macr
     }
 
     // Reconstruct the macro
-    std::ostringstream result;
+    std::string result;
     for (size_t i = 0; i < lines.size(); ++i) {
-        result << lines[i];
+        result += lines[i];
         if (i < lines.size() - 1) {
-            result << "\n";
+            result += "\n";
         }
     }
 
-    return result.str();
+    return result;
 }
 
 bool PrintStartEnhancer::validate_jinja2_syntax(const std::string& code) {
@@ -257,14 +254,14 @@ bool PrintStartEnhancer::validate_jinja2_syntax(const std::string& code) {
     }
 
     // Check for if/endif matching
-    std::regex if_pattern(R"(\{%\s*if\s)", std::regex::icase);
-    std::regex endif_pattern(R"(\{%\s*endif\s*%\})", std::regex::icase);
-    std::regex for_pattern(R"(\{%\s*for\s)", std::regex::icase);
-    std::regex endfor_pattern(R"(\{%\s*endfor\s*%\})", std::regex::icase);
+    helix::Regex if_pattern(R"(\{%\s*if\s)", helix::Regex::ICase);
+    helix::Regex endif_pattern(R"(\{%\s*endif\s*%\})", helix::Regex::ICase);
+    helix::Regex for_pattern(R"(\{%\s*for\s)", helix::Regex::ICase);
+    helix::Regex endfor_pattern(R"(\{%\s*endfor\s*%\})", helix::Regex::ICase);
 
-    auto count_matches = [](const std::string& text, const std::regex& pattern) -> int {
-        return static_cast<int>(std::distance(
-            std::sregex_iterator(text.begin(), text.end(), pattern), std::sregex_iterator()));
+    auto count_matches = [](const std::string& text, const helix::Regex& pattern) -> int {
+        return static_cast<int>(
+            std::distance(helix::RegexIterator(text, pattern), helix::RegexIterator()));
     };
 
     int if_count = count_matches(code, if_pattern);
@@ -296,9 +293,9 @@ std::string PrintStartEnhancer::generate_backup_filename(const std::string& sour
     std::tm tm_now{};
     localtime_r(&time_t_now, &tm_now);
 
-    std::ostringstream ss;
-    ss << source_file << ".backup." << std::put_time(&tm_now, "%Y%m%d_%H%M%S");
-    return ss.str();
+    char stamp[32];
+    std::strftime(stamp, sizeof(stamp), "%Y%m%d_%H%M%S", &tm_now);
+    return source_file + ".backup." + stamp;
 }
 
 std::string
@@ -307,9 +304,9 @@ PrintStartEnhancer::config_file_from_backup_filename(const std::string& backup_f
     // stamp being YYYYMMDD_HHMMSS. Anything else is not ours, and the caller must
     // not fall back to a default — the default would name a file the backup does
     // not contain.
-    static const std::regex backup_pattern(R"(^(.+)\.backup\.\d{8}_\d{6}$)");
-    std::smatch match;
-    if (!std::regex_match(backup_filename, match, backup_pattern)) {
+    static const helix::Regex backup_pattern(R"(^(.+)\.backup\.\d{8}_\d{6}$)");
+    helix::RegexMatch match;
+    if (!helix::regex_match(backup_filename, match, backup_pattern)) {
         return {};
     }
     return match[1].str();

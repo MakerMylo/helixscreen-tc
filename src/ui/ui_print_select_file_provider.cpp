@@ -8,13 +8,13 @@
 #include "ui_print_select_card_view.h"
 #include "ui_update_queue.h"
 
+#include "helix_fs.h"
 #include "i_moonraker_api.h"
 #include "print_file_data.h"
 #include "thumbnail_cache.h"
 
 #include <spdlog/spdlog.h>
 
-#include <filesystem>
 #include <unordered_map>
 
 namespace helix::ui {
@@ -119,7 +119,7 @@ void PrintSelectFileProvider::refresh_files(const std::string& current_path,
                                 PrintSelectCardView::get_default_thumbnail()) {
                             // Convert LVGL path to filesystem path and check existence
                             std::string fs_path = preserved.thumbnail_path.substr(2); // Strip "A:"
-                            if (!std::filesystem::exists(fs_path)) {
+                            if (!helix::fs::exists(fs_path)) {
                                 spdlog::debug(
                                     "[FileProvider] Cached thumbnail missing, will re-fetch: {}",
                                     preserved.thumbnail_path);
@@ -132,7 +132,7 @@ void PrintSelectFileProvider::refresh_files(const std::string& current_path,
                         continue;
                     }
                     // File was modified - invalidate cached thumbnails and refetch
-                    spdlog::info(
+                    spdlog::debug(
                         "[FileProvider] File modified, invalidating cache: {} (old: {}, new: {})",
                         file.filename, it->second.modified_timestamp, new_modified);
                     if (!it->second.original_thumbnail_url.empty()) {

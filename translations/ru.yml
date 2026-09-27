@@ -279,6 +279,7 @@ translations:
   Available Networks: Доступные сети
   Available networks: Доступные сети
   Average: Среднее
+  Axis limits unknown: Границы оси неизвестны
   B: B
   BEACON: BEACON
   BETA: БЕТА
@@ -314,6 +315,8 @@ translations:
   Bed Screws: Винты стола
   Bed Temp: Темп. стола
   Bed Temperature: Температура стола
+  'Bed cooling, spools still on the bed:': 'Стол остывает, катушки всё ещё на нём:'
+
   Bed is Level!: Стол выровнен!
   Bed mesh operation timed out: Сетка стола — время ожидания истекло
   Bed mesh...: Сетка стола...
@@ -601,6 +604,10 @@ translations:
   Clear Spool: Убрать катушку
   Clear all spool failover assignments: 'Очистить все назначения резервных катушек'
   Clear failed: Ошибка очистки
+  ? Clear the area above and below the plate. Lay the spools on the plate, cover them with a box (a printed lid or the filament's packaging) and close the door.
+
+  : Освободите место над столом и под ним. Положите катушки на стол, накройте их коробкой (напечатанной крышкой или упаковкой филамента) и закройте дверцу.
+
   Cleared from settings — system unpair failed, may need OS Bluetooth: Удалено из
     настроек; не удалось отменить сопряжение в системе, возможно нужен Bluetooth ОС
   Clipboard unavailable - use SSH: Буфер обмена недоступен - используйте SSH
@@ -748,6 +755,8 @@ translations:
   Could not confirm cancel: Не удалось подтвердить отмену
   Could not forget device: Не удалось забыть устройство
   Could not load printer database: Не удалось загрузить базу данных принтеров
+  Could not move the plate: Не удалось переместить стол
+
   Could not open Klipper's accelerometer stream. Check that Klipper is running, then retry.: Не удалось открыть поток акселерометра Klipper. Убедитесь, что Klipper запущен, и повторите попытку.
   Could not parse tips database: Не удалось разобрать базу данных советов
   Could not reach Spoolman at: Не удалось связаться со Spoolman по адресу
@@ -755,6 +764,10 @@ translations:
   Could not remove the job from the queue: Не удалось удалить задание из очереди
   Could not resolve printer RFCOMM channel: Не удалось определить RFCOMM-канал принтера
   Could not save filament: Не удалось сохранить филамент
+  Could not save the drying state: Не удалось сохранить состояние сушки
+
+  'Could not save the drying state: nothing was heated': 'Не удалось сохранить состояние сушки: ничего не нагревалось'
+
   "Could not save the mesh as '{}': {}": "Не удалось сохранить сетку как '{}': {}"
   Could not start Bluetooth discovery: Не удалось запустить поиск Bluetooth
   Could not update filaments: Не удалось обновить филаменты
@@ -906,7 +919,17 @@ translations:
     — помогает диагностировать смещения
   Drive Cal: Кал. привода
   Drop shadow strength (0 = disabled): Интенсивность тени (0 = отключено)
+  Dry Filament: Сушка филамента
+
+  Dry Filament on the Bed: Сушка филамента на столе
+
+  Dry spools on the heated bed: Сушка катушек на нагреваемом столе
+
   Drying: Сушка
+  Drying is already running: Сушка уже идёт
+
+  Drying on the bed: Сушка на столе
+
   Drying started: Сушка запущена
   Drying stopped: Сушка остановлена
   Duplicate: Дублировать
@@ -968,6 +991,10 @@ translations:
   Enable/disable automatic backup spool switching: 'Включить/выключить автопереключение на резервную катушку'
   Enable/disable quiet operation mode: 'Включить/выключить тихий режим работы'
   Enabled: Включено
+  Enclosed: Закрытый
+
+  Enclosure: Корпус
+
   Encoder: Энкодер
   Encoder Error: 'Ошибка энкодера'
   Ended: Завершено
@@ -1227,6 +1254,8 @@ translations:
   Filament is clear of the toolhead. Pull it out the rest of the way.: Филамент вышел из печатающей головки. Вытяните его до конца.
   Filament is dragging: Филамент идёт с натягом
   Filament is loaded at the toolhead. Unload it before enabling bypass.: 'Филамент загружен в печатающую головку. Выгрузите его перед включением обхода.'
+  Filament is loaded at the toolhead. Unload it first, so it does not soften in the extruder while the bed heats.: В печатающей головке загружен филамент. Сначала выгрузите его, чтобы он не размягчился в экструдере, пока греется стол.
+
   Filament is loose: Филамент ослаблен
   Filament is pulling tight: Филамент натянут
   ? Filament is still at the nozzle after unloading. The cut or retract may not have completed. Clear the toolhead before loading another spool.
@@ -1285,6 +1314,8 @@ translations:
   FlashForge Adventurer 5X: FlashForge Adventurer 5X
   FlashForge IFS: FlashForge IFS
   Flip: Отразить
+  Flip the spools: Переверните катушки
+
   Flow: Поток
   Flow Compensation: 'Компенсация потока'
   Flow Rate: Множитель потока
@@ -1338,6 +1369,8 @@ translations:
   HTTP Code: Код HTTP
   'HTTP error: {} {}': 'Ошибка HTTP: {} {}'
   HUMIDITY SENSORS: ДАТЧИКИ ВЛАЖНОСТИ
+  'Halfway through drying: flip the spools over. Use gloves, the plate is hot.': 'Половина сушки: переверните катушки. Используйте перчатки, стол горячий.'
+
   Hang on, we'll be right back!: Подождите, мы скоро вернёмся!
   Happy Hare MMU: Happy Hare MMU
   Hardware: Оборудование
@@ -1465,6 +1498,8 @@ translations:
   Hyperlapse captures frames at fixed time intervals. Good for very long prints.: Гиперлапс
     захватывает кадры через фиксированные интервалы времени. Подходит для очень долгих
     печатей.
+  I understand: Я понимаю
+
   ID (optional): ID (необязательно)
   IMPORT FROM USB: ИМПОРТ С USB
   IP Address / Hostname: IP-адрес / Имя хоста
@@ -1683,6 +1718,7 @@ translations:
   Load the required filaments or start anyway?: Загрузить нужные филаменты или начать
     без них?
   'Load, unload, and swap spools. View your multi-filament system at a glance, map colors to slots, and monitor runout sensors.': 'Загружайте, выгружайте и меняйте катушки. Просматривайте вашу мультифиламентную систему одним взглядом, сопоставляйте цвета со слотами и отслеживайте датчики окончания филамента.'
+  Load...: Загрузить...
   Loaded: Загружен
   Loading: Загрузка
   Loading Bed Mesh...: Загрузка сетки стола...
@@ -1770,6 +1806,8 @@ translations:
   Make Optional: Сделать опциональным
   Make bed mesh and QGL skippable: Сделать сетку стола и QGL пропускаемыми
   Make sure every nozzle is clean.: Убедитесь, что все сопла чистые.
+  'Make sure no filament is loaded at the toolhead: it can soften in the extruder while the bed heats.': 'Убедитесь, что в печатающей головке нет филамента: он может размягчиться в экструдере, пока греется стол.'
+
   MakeID (Bluetooth): MakeID (Bluetooth)
   Manage: Управление
   Manage Printers: Управление принтерами
@@ -1786,6 +1824,8 @@ translations:
     материалом
   Mapping Error: 'Ошибка привязки'
   Marginal: Допустимо
+  Mark a printer you enclosed yourself: Отметить принтер, который вы закрыли сами
+
   Master volume level: Основной уровень громкости
   Match: Совпадение
   Match to belt A: Совпадение с ремнём A
@@ -1862,6 +1902,8 @@ translations:
     2-3 минуты. Принтер будет шуметь — это нормально.
   Moving gantry: Перемещение портала
   Moving lane: Перемещение канала
+  Moving the plate...: Перемещение стола...
+
   Multi-Filament: Мульти-филамент
   Multi-Filament Overview: Обзор мульти-филамента
   Multi-Filament System: Мультифиламентная система
@@ -1985,11 +2027,15 @@ translations:
   No spool assigned: Катушка не назначена
   No spools found — tap to retry: Катушки не найдены — нажмите для повтора
   No spools match your search: По вашему запросу катушки не найдены
+  No spools placed: Катушки не положены
+
   No tape detected in printer: В принтере не обнаружена лента
   No target printer configured: Целевой принтер не настроен
   No temperature sensors detected: 'Датчики температуры не обнаружены'
   No timelapse videos found: Таймлапс-видео не найдены
   No tools to calibrate: Нет инструментов для калибровки
+  'No unload macro found: unload by hand, then start again': 'Макрос выгрузки не найден: выгрузите вручную и начните заново'
+
   No vendors found: Производители не найдены
   No verified bypass command for this CFS firmware: 'Нет проверенной команды обхода для этой прошивки CFS'
   No video player installed - showing the timelapse library: 'Видеоплеер не установлен – показана библиотека таймлапсов'
@@ -2077,6 +2123,8 @@ translations:
   Open color and brightness controls: Управление цветом и яркостью
   Open feeder macro: Макрос для открытия фидера
   Open feeder: Открыть фидер
+  Open frame: Открытая рама
+
   Open motion controls for jogging: Управление перемещением осей
   Open the CFS unit and remove the broken filament from the slot: Откройте блок CFS и извлеките сломанный филамент из слота
   Operation already in progress: Операция уже выполняется
@@ -2168,6 +2216,8 @@ translations:
   'Place image files (PNG, JPEG, BMP, GIF) in config/custom_images/. Max size: 2048×2048 pixels.': 'Поместите
     файлы изображений (PNG, JPEG, BMP, GIF) в config/custom_images/. Макс. размер:
     2048×2048 пикселей.'
+  Place the spools: Положите катушки
+
   Placed: Добавлено
   Platform: Платформа
   'Platform: ': 'Платформа: '
@@ -2487,6 +2537,12 @@ translations:
   Remove plugin from printer: Удалить плагин с принтера
   'Remove the PEI sheet from the bed, then start again: probing through the sheet gives wrong results': 'Снимите лист PEI со стола и начните заново: щуп через лист даёт неверные результаты'
   Remove the bypass spool from the toolhead first: 'Сначала извлеките катушку байпаса из печатающей головки'
+  Remove the spools: Снимите катушки
+
+  Remove the spools from the bed: Снимите катушки со стола
+
+  Remove the spools now?: Снять катушки сейчас?
+
   Rename: Переименовать
   Rename Fan: Переименовать вентилятор
   Rename Mesh Profile: Переименовать профиль сетки
@@ -2615,6 +2671,8 @@ translations:
   Run stopped: 'Запуск остановлен'
   Run test sequence on all lanes: 'Запустить тестовую последовательность на всех каналах'
   Run the HelixScreen installer with --update from a terminal on this printer. Scan for the command for your platform.: Запустите установщик HelixScreen с ключом --update в терминале на этом принтере. Отсканируйте код, чтобы получить команду для вашей платформы.
+  Run the chamber dryer too: Включить и сушилку камеры
+
   Run {}?: Запустить {}?
   Running {}...: Выполнение {}...
   Runout: 'Окончание'
@@ -2917,6 +2975,12 @@ translations:
   Spoolman was not configured.: Spoolman не был настроен.
   'Spoolman: %zu Spool%s': 'Spoolman: %zu катушк%s'
   'Spoolman: %zu/%zu Spool%s': 'Spoolman: %zu/%zu катушк%s'
+  'Spools are on the bed: tap the drying banner to confirm they are off, then restart.': 'На столе катушки: нажмите на баннер сушки, чтобы подтвердить, что они сняты, затем перезапустите.'
+
+  'Spools on the bed: start drying, or confirm none were placed': 'Катушки на столе: начните сушку или подтвердите, что ничего не положено'
+
+  Spools removed: Катушки сняты
+
   Square Corner Velocity: Скорость прохождения углов
   Stable: Стабильная
   Stall detection setup failed for the Z motor — power-cycle to retry: Не удалась настройка детектирования заклинивания двигателя Z. Выключите и включите питание
@@ -2934,6 +2998,8 @@ translations:
   Start Probing: Начать зондирование
   Start anyway?: 'Всё равно начать?'
   Start at: Начать с
+  Start drying: Начать сушку
+
   Start failed: Ошибка запуска
   'Start next: {}': 'Запустить следующую: {}'
   Start over: Начать заново
@@ -2957,6 +3023,8 @@ translations:
   Stop: Стоп
   Stop Drying: Остановить сушку
   Stop Print?: Остановить печать?
+  Stop drying?: Остановить сушку?
+
   Stop failed: Ошибка остановки
   ? "Stop printing \"{}\"?\n\nThis cannot be undone after 5 seconds."
   : "Остановить печать \"{}\"?\n\nЭто нельзя будет отменить через 5 секунд."
@@ -3087,6 +3155,10 @@ translations:
     interfering with prints. You can re-enable it in Settings > Display.
   : Анимированная заставка была отключена на данном устройстве, чтобы она не мешала
     печати. Вы можете снова включить её в Настройки > Дисплей.
+  The bed has cooled. Take the spools off the plate, then confirm.: Стол остыл. Снимите катушки со стола, затем подтвердите.
+
+  The bed turns off. The spools stay latched on the bed until you confirm they are off.: Стол выключится. Катушки считаются лежащими на столе, пока вы не подтвердите, что сняли их.
+
   The bed was reported dirty, so this print cannot resume.: 'Стол помечен как загрязнённый, поэтому печать не может быть продолжена.'
   The buffer may be disconnected, stuck, or faulty. Check it before retrying: Буфер может быть отключён, заклинен или неисправен. Проверьте его перед повтором
   The buffer saw no movement for 16 seconds. Check for a blockage between the CFS and the extruder, or a stuck buffer: Буфер не фиксировал движение 16 секунд. Проверьте засор между CFS и экструдером или заклинивший буфер
@@ -3104,6 +3176,8 @@ translations:
   ? The loaded spool is {}, but this file was sliced for {}. Filled filament runs at a lower flow rate and needs a hardened nozzle.
   : Загружена катушка {}, но файл нарезан для {}. Филамент с наполнителем печатается с меньшим потоком и требует закалённого сопла.
   The nozzle extrudes a few short test moves in a corner, away from the print area, and repeats until it agrees with itself.: 'Сопло делает несколько коротких тестовых перемещений в углу, в стороне от зоны печати, и повторяет их до сходимости.'
+  The plate and the spools are still hot. Use gloves.: Стол и катушки ещё горячие. Используйте перчатки.
+
   ? The print is paused. Changing tools now moves the toolhead and swaps the filament at the nozzle. Resume the print once the change finishes.
   : Печать на паузе. Смена инструмента сейчас переместит печатающую головку и заменит филамент в сопле. Возобновите печать после завершения смены.
   The printer applied this value and keeps it for this tool.: 'Принтер применил это значение и сохранил его для этого инструмента.'
@@ -3114,6 +3188,10 @@ translations:
   ? The printer heats the nozzle, extrudes a few short test moves in a corner of the plate, and measures them itself. It repeats until the readings agree, then reports one number.
   : 'Принтер нагревает сопло, делает несколько коротких тестовых перемещений в углу стола и сам их измеряет. Он повторяет, пока показания не сойдутся, и затем сообщает одно число.'
   The printer homes and sweeps the cutter (about 1 minute). Keep the filament path clear.: Принтер ищет ноль и прощупывает резак (около 1 минуты). Держите путь филамента свободным.
+  ? The printer homes, then moves the plate as far from the nozzle as it goes. Some spools are not heat-resistant enough and can deform. Nothing moves from this screen until you confirm the spools are off the bed; Mainsail, macros and prints sent from a slicer are not blocked.
+
+  : Принтер выполнит парковку, затем отведёт стол как можно дальше от сопла. Некоторые катушки недостаточно термостойкие и могут деформироваться. С этого экрана ничего не будет двигаться, пока вы не подтвердите, что катушки сняты со стола; Mainsail, макросы и печать, отправленная из слайсера, не блокируются.
+
   The printer is not homed. Continuing will home all axes, moving the toolhead. Make sure the bed is clear.: Принтер не запаркован. Продолжение выполнит парковку всех осей, печатающая головка переместится. Убедитесь, что стол свободен.
   The printer lost power during a print. It can resume where it left off.: Принтер потерял питание во время печати. Он может продолжить с места остановки.
   The printer lost power during a print. The resumed layer may not line up exactly.: Принтер потерял питание во время печати. Возобновлённый слой может не совпасть точно.
@@ -3369,9 +3447,12 @@ translations:
   'Unload at end': 'Выгружать в конце'
   Unload failed: Ошибка выгрузки
   Unload filament: 'Выгрузка филамента'
+  Unload filament?: Выгрузить филамент?
+
   Unload from toolhead first: 'Сначала выгрузите из печатающей головки'
   Unload macro not configured: Макрос выгрузки не настроен
   Unload the CFS filament before enabling bypass: 'Выгрузите филамент CFS перед включением обхода'
+  Unload...: Выгрузить...
   Unloading: Выгрузка
   Unloading Start Speed: 'Начальная скорость выгрузки'
   Unloading before bypass...: Выгрузка перед байпасом...
@@ -3415,7 +3496,7 @@ translations:
   VM Peak: Пик VM
   VM Size: Размер VM
   Validating bed mesh...: Валидация сетки стола...
-  Value must be between {:.0f} and {:.0f}: Значение должно быть от {:.0f} до {:.0f}
+  Value must be between {} and {}: Значение должно быть от {} до {}
   Values must not be negative: Значения не должны быть отрицательными
   Velocity and acceleration limits: Ограничения скорости и ускорения
   Vendor: Производитель
@@ -3527,14 +3608,14 @@ translations:
   X and Y jog feedrate: Скорость перемещения по осям X и Y
   X axis applied, but Y axis failed: Ось X применена, но ось Y не удалась
   X axis done, starting Y...: 'Ось X готова, запуск Y...'
-  X jog blocked at bed edge: Перемещение по X заблокировано на краю стола
+  X is at its limit ({}mm): X на пределе ({}mm)
   'X:': 'X:'
   XY: XY
   Y: Y
   Y Axis: Ось Y
   Y Offset: Смещение Y
   Y axis limit reached: Достигнут предел оси Y
-  Y jog blocked at bed edge: Перемещение по Y заблокировано на краю стола
+  Y is at its limit ({}mm): Y на пределе ({}mm)
   'Y:': 'Y:'
   ? "YOU WIN!\nScore: {}\nTap to play again"
   : "ПОБЕДА!\nСчёт: {}\nНажмите, чтобы сыграть снова"
@@ -3560,7 +3641,7 @@ translations:
   Z Offset: Z Offset
   Z Range: Диапазон Z
   Z Tilt Adjust...: Регулировка наклона Z...
-  Z jog blocked at axis limit: Перемещение по Z заблокировано на пределе оси
+  Z is at its limit ({}mm): Z на пределе ({}mm)
   Z jog feedrate: Скорость перемещения по оси Z
   Z motor calibration failed: Не удалась калибровка двигателя Z
   Z probes for bed leveling and mesh generation: Z-зонды для выравнивания стола и

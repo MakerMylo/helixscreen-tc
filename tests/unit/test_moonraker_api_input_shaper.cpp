@@ -1470,3 +1470,45 @@ TEST_CASE_METHOD(InputShaperTestFixture, "stall diagnostics survive a run with n
 
     CHECK(progress.empty());
 }
+
+// ============================================================================
+// Exact G-code bytes: frequencies print as %g, machine limits as %.1f
+// ============================================================================
+
+namespace {
+std::string last_script_containing(const MoonrakerClientMock& client, const std::string& needle) {
+    const auto& history = client.gcode_script_history();
+    for (auto it = history.rbegin(); it != history.rend(); ++it) {
+        if (it->find(needle) != std::string::npos)
+            return *it;
+    }
+    return {};
+}
+} // namespace
+
+TEST_CASE_METHOD(InputShaperTestFixture, "set_input_shaper writes the frequency as %g",
+                 "[calibration][input_shaper]") {
+    mock_client_.clear_gcode_script_history();
+    api_->advanced().set_input_shaper('X', "mzv", 36.7, []() {}, [](const MoonrakerError&) {});
+    api_->advanced().set_input_shaper('Y', "ei", 1234567.0, []() {}, [](const MoonrakerError&) {});
+
+    CHECK(last_script_containing(mock_client_, "SHAPER_TYPE_X") ==
+          "SET_INPUT_SHAPER SHAPER_FREQ_X=36.7 SHAPER_TYPE_X=mzv");
+    CHECK(last_script_containing(mock_client_, "SHAPER_TYPE_Y") ==
+          "SET_INPUT_SHAPER SHAPER_FREQ_Y=1.23457e+06 SHAPER_TYPE_Y=ei");
+}
+
+TEST_CASE_METHOD(InputShaperTestFixture, "set_machine_limits writes each limit with one decimal",
+                 "[calibration][input_shaper]") {
+    mock_client_.clear_gcode_script_history();
+    MachineLimits limits;
+    limits.max_velocity = 300;
+    limits.max_accel = 3000.04;
+    limits.max_accel_to_decel = 1500.96;
+    limits.square_corner_velocity = 5.25;
+    api_->advanced().set_machine_limits(limits, []() {}, [](const MoonrakerError&) {});
+
+    CHECK(last_script_containing(mock_client_, "SET_VELOCITY_LIMIT") ==
+          "SET_VELOCITY_LIMIT VELOCITY=300.0 ACCEL=3000.0 ACCEL_TO_DECEL=1501.0 "
+          "SQUARE_CORNER_VELOCITY=5.2");
+}

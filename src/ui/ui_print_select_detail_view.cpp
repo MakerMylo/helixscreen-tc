@@ -36,15 +36,17 @@
 #include "print_status_preview_decision.h"
 #include "runtime_config.h"
 #include "settings_manager.h"
+#include "text_io.h"
 #include "theme_manager.h"
 #include "tool_state.h"
 
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
-#include <fstream>
 
 namespace helix::ui {
+
+namespace tio = ::helix::text_io;
 
 // ============================================================================
 // Static instance pointer for callback access
@@ -603,12 +605,11 @@ std::string PrintSelectDetailView::local_gcode_source() const {
     // Size is the same staleness check the cached-copy path uses. It also
     // doubles as the existence and readability probe: a file we cannot open is
     // one we must fetch over HTTP instead.
-    std::ifstream f(candidate, std::ios::binary | std::ios::ate);
-    if (!f) {
+    if (!tio::open_file(candidate, "rb")) {
         spdlog::debug("[DetailView] No local G-code at '{}' — falling back to HTTP", candidate);
         return {};
     }
-    const auto on_disk_bytes = static_cast<size_t>(f.tellg());
+    const auto on_disk_bytes = static_cast<size_t>(tio::file_size(candidate).value_or(0));
     if (on_disk_bytes == 0) {
         return {};
     }
@@ -677,8 +678,9 @@ void PrintSelectDetailView::ensure_gcode_downloaded(
     //    those bytes would scan the OLD file and store the wrong tool set
     //    under the NEW (size, mtime) cache key, so drop the copy and
     //    re-download instead of scanning stale bytes.
-    if (std::ifstream f(path, std::ios::binary | std::ios::ate); f && f.tellg() > 0) {
-        const auto on_disk_bytes = static_cast<size_t>(f.tellg());
+    const size_t on_disk_bytes =
+        tio::open_file(path, "rb") ? static_cast<size_t>(tio::file_size(path).value_or(0)) : 0;
+    if (on_disk_bytes > 0) {
         if (current_file_size_bytes_ == 0 || on_disk_bytes == current_file_size_bytes_) {
             cb(true, path);
             return;
@@ -2238,9 +2240,8 @@ void PrintSelectDetailView::load_gcode_for_preview() {
             return;
         }
 
-        std::ifstream f(path, std::ios::binary | std::ios::ate);
-        const std::streampos end_pos = f ? f.tellg() : std::streampos(0);
-        const size_t local_size = end_pos > 0 ? static_cast<size_t>(end_pos) : 0;
+        const size_t local_size =
+            tio::open_file(path, "rb") ? static_cast<size_t>(tio::file_size(path).value_or(0)) : 0;
         if (!helix::is_gcode_2d_streaming_safe(local_size)) {
             auto mem = helix::get_system_memory_info();
             spdlog::warn("[DetailView] G-code too large for streaming: file={} bytes, "

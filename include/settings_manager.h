@@ -4,6 +4,7 @@
 #pragma once
 
 #include "ams_types.h"
+#include "bed_drying.h"
 #include "lvgl/lvgl.h"
 #include "subject_managed_panel.h"
 
@@ -136,6 +137,25 @@ class SettingsManager {
     void set_z_movement_style(ZMovementStyle style);
 
     // =========================================================================
+    // BED DRYING (prestonbrown/helixscreen#1730)
+    // =========================================================================
+
+    /// Enclosure override: Auto (printer database, else a chamber heater),
+    /// Enclosed (marks a DIY enclosure) or Open.
+    helix::bed_drying::EnclosureStyle get_enclosure_style() const;
+    void set_enclosure_style(helix::bed_drying::EnclosureStyle style);
+    lv_subject_t* subject_enclosure_style() {
+        return &enclosure_style_subject_;
+    }
+
+    /// The persisted bed-drying run; `latched` false when there is none.
+    helix::bed_drying::RunRecord get_bed_drying_record() const;
+    /// Written and saved at once: the latch must reach disk before any heat.
+    /// False when the save failed.
+    [[nodiscard]] bool set_bed_drying_record(const helix::bed_drying::RunRecord& record);
+    bool clear_bed_drying_record();
+
+    // =========================================================================
     // CHAMBER ASSIGNMENT (owned by SettingsManager — sensor/heater override)
     // =========================================================================
 
@@ -238,6 +258,18 @@ class SettingsManager {
 
     /** @brief Set Z jog feedrate in mm/min (clamped 60-60000, persisted) */
     void set_jog_speed_z(int mm_per_min);
+
+    /** @brief Get whether the motion readout shows actual (live) position
+     *  (default false: commanded position) */
+    bool get_motion_show_actual_position() const;
+
+    /** @brief Set whether the motion readout shows actual (live) position (persisted) */
+    void set_motion_show_actual_position(bool show);
+
+    /** @brief Motion coordinate source subject (integer: 0=commanded, 1=actual) */
+    lv_subject_t* subject_motion_show_actual_position() {
+        return &motion_show_actual_position_subject_;
+    }
 
     // =========================================================================
     // JOG STEP DISTANCES (owned by SettingsManager — persisted per-printer)
@@ -659,7 +691,9 @@ class SettingsManager {
     // LVGL subjects — only those owned by SettingsManager
     lv_subject_t led_enabled_subject_{};
     lv_subject_t z_movement_style_subject_{};
+    lv_subject_t enclosure_style_subject_{};
     lv_subject_t extrude_speed_subject_{};
+    lv_subject_t motion_show_actual_position_subject_{};
     lv_subject_t jog_speed_xy_subject_{};
     lv_subject_t jog_speed_z_subject_{};
     // Jog step distances in mm, [static_cast<int>(JogMode)][outer]. Cached

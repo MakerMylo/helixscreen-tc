@@ -84,6 +84,7 @@ Welcome to the HelixScreen documentation. Choose your path:
 | [**Screensavers**](devel/SCREENSAVERS.md) | Registry, shared parts, CPU gate and stored levels, adding a saver |
 | [**LED Control**](devel/LED_CONTROL.md) | LED system: 5 backends, auto-state lighting, overlays |
 | [**Chamber Heaters**](devel/CHAMBER_HEATER.md) | Chamber heater backends, discovery, diagnostics, ceiling rules |
+| [**Bed Drying**](devel/BED_DRYING.md) | Drying filament on the heated bed: capability, flow, the spools-on-the-bed latch, restarts |
 | [**Printer Manager**](devel/PRINTER_MANAGER.md) | Printer overlay, custom images, inline editing |
 | [**Timelapse**](devel/TIMELAPSE.md) | Moonraker timelapse plugin integration |
 | [**Crash Reporter**](devel/CRASH_REPORTER.md) | Crash detection, delivery pipeline, CF Worker |

@@ -11,13 +11,13 @@
 #include "layout_manager.h"
 #include "layout_port.h"
 #include "panel_widget_registry.h"
+#include "text_io.h"
 #include "theme_manager.h"
 
 #include <hv/json.hpp>
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
-#include <fstream>
 #include <iterator>
 #include <set>
 #include <string>
@@ -384,14 +384,14 @@ bool PanelWidgetConfig::try_populate_from_preset_seed() {
 
     std::string rel_path = "panel_widgets/" + preset + "/" + panel_id_ + ".json";
     std::string seed_path = helix::find_readable(rel_path);
-    std::ifstream in(seed_path);
-    if (!in.is_open()) {
+    const auto seed_text = helix::text_io::read_file(seed_path);
+    if (!seed_text) {
         return false;
     }
 
     nlohmann::json seed;
     try {
-        seed = nlohmann::json::parse(in);
+        seed = nlohmann::json::parse(*seed_text);
     } catch (const std::exception& e) {
         spdlog::warn("[PanelWidgetConfig] Failed to parse preset seed '{}': {}", seed_path,
                      e.what());
@@ -936,10 +936,10 @@ std::vector<PanelWidgetEntry> PanelWidgetConfig::build_default_grid(int grid_col
     // "not on this tier" needs saying explicitly.
     std::set<std::string> disabled_ids;
 
-    std::ifstream layout_file(helix::find_readable("default_layout.json"));
-    if (layout_file.is_open()) {
+    const auto layout_text = helix::text_io::read_file(helix::find_readable("default_layout.json"));
+    if (layout_text) {
         try {
-            nlohmann::json layout = nlohmann::json::parse(layout_file);
+            nlohmann::json layout = nlohmann::json::parse(*layout_text);
             // find + is_array rather than .value("anchors", array()): default_
             // layout.json is runtime-editable, and .value() throws type_error
             // .302 on a key present with a null value. The catch below would

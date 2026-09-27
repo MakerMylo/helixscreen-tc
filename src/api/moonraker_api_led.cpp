@@ -5,11 +5,11 @@
 
 #include "moonraker_api.h"
 #include "moonraker_api_internal.h"
+#include "spdlog/fmt/fmt.h"
 #include "spdlog/spdlog.h"
 
 #include <algorithm>
 #include <cmath>
-#include <sstream>
 
 using namespace moonraker_internal;
 
@@ -51,20 +51,19 @@ void MoonrakerAPI::set_led(const std::string& led, double red, double green, dou
 
     // Build SET_LED G-code command
     // Quote LED name (may contain spaces), add SYNC=0 TRANSMIT=1 for immediate effect
-    std::ostringstream gcode;
-    gcode << "SET_LED LED=\"" << led_name << "\" RED=" << red << " GREEN=" << green
-          << " BLUE=" << blue;
+    std::string gcode =
+        fmt::format("SET_LED LED=\"{}\" RED={:g} GREEN={:g} BLUE={:g}", led_name, red, green, blue);
 
     // Only add WHITE parameter if non-zero (for RGBW LEDs)
     if (white > 0.0) {
-        gcode << " WHITE=" << white;
+        gcode += fmt::format(" WHITE={:g}", white);
     }
 
-    gcode << " SYNC=0 TRANSMIT=1";
+    gcode += " SYNC=0 TRANSMIT=1";
 
     spdlog::info("[Moonraker API] Setting LED {}: R={:.2f} G={:.2f} B={:.2f} W={:.2f}", led_name,
                  red, green, blue, white);
 
-    execute_gcode(gcode.str(), std::move(on_success), std::move(on_error), 0, false,
-                  std::move(on_queued), caller_surfaces_errors);
+    execute_gcode(gcode, std::move(on_success), std::move(on_error), 0, false, std::move(on_queued),
+                  caller_surfaces_errors);
 }

@@ -86,6 +86,7 @@ All developer documentation lives here. When working on features, look up the re
 | `SCREENSAVERS.md` | Screensavers: the registry, shared overlay/canvas/timer/pixel writer, the CPU gate and stored levels, color depth in builds, adding a saver |
 | `LED_CONTROL.md` | LED control system: 5 backends, auto-state lighting, control/settings overlays, home panel widget |
 | `CHAMBER_HEATER.md` | Chamber heaters: backend registry (generic/dragonbreath/panda_breath), discovery, diagnostics subjects + card, ceiling rules, arbitration, verification logs |
+| `BED_DRYING.md` | Drying filament on the heated bed: the enclosure capability, the flow, the spools-on-the-bed latch and its five send-layer choke points, persistence across restarts and power loss |
 | `PRINTER_MANAGER.md` | Printer overlay, custom images, inline name editing |
 | `MULTI_PRINTER.md` | Multi-printer management: config v4, soft restart, printer switching |
 | `TIMELAPSE.md` | Moonraker timelapse plugin integration |

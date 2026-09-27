@@ -22,7 +22,6 @@
 #include <algorithm>
 #include <cctype>
 #include <cmath>
-#include <sstream>
 
 using namespace moonraker_internal;
 
@@ -252,6 +251,10 @@ void MoonrakerAPI::execute_gcode(const std::string& gcode, SuccessCallback on_su
                                                       "[Moonraker API]")) {
         return;
     }
+    if (helix::api::reject_motion_while_spools_on_bed(gcode, state_, silent, on_error,
+                                                      "[Moonraker API]")) {
+        return;
+    }
 
     // Gate discretionary gcode (fan, temp, non-homing moves, LED) while a blocking
     // non-print operation holds Klipper's single-threaded gcode lock (homing,
@@ -454,8 +457,7 @@ void MoonrakerAPI::exclude_object(const std::string& object_name, SuccessCallbac
         return;
     }
 
-    std::ostringstream gcode;
-    gcode << "EXCLUDE_OBJECT NAME=" << object_name;
+    std::string gcode = "EXCLUDE_OBJECT NAME=" + object_name;
 
     spdlog::info("[Moonraker API] Excluding object: {}", object_name);
 
@@ -467,7 +469,7 @@ void MoonrakerAPI::exclude_object(const std::string& object_name, SuccessCallbac
     // truth comes from the `exclude_object.excluded_objects` status subscription. A 15-minute
     // ceiling still catches genuinely stuck requests without aborting legitimate pre-prints.
     constexpr uint32_t EXCLUDE_OBJECT_TIMEOUT_MS = 15 * 60 * 1000;
-    execute_gcode(gcode.str(), on_success, on_error, EXCLUDE_OBJECT_TIMEOUT_MS, /*silent=*/true);
+    execute_gcode(gcode, on_success, on_error, EXCLUDE_OBJECT_TIMEOUT_MS, /*silent=*/true);
 }
 
 void MoonrakerAPI::emergency_stop(SuccessCallback on_success, ErrorCallback on_error) {
@@ -483,6 +485,12 @@ void MoonrakerAPI::emergency_stop(SuccessCallback on_success, ErrorCallback on_e
 }
 
 void MoonrakerAPI::restart_firmware(SuccessCallback on_success, ErrorCallback on_error) {
+    // Restarting releases the steppers; with spools on the bed a gantry can sink
+    // onto them (prestonbrown/helixscreen#1730).
+    if (helix::api::reject_restart_while_spools_on_bed(&state_, "printer.firmware_restart",
+                                                       on_error)) {
+        return;
+    }
     spdlog::info("[Moonraker API] Restarting firmware");
 
     client_.send_jsonrpc(
@@ -495,6 +503,11 @@ void MoonrakerAPI::restart_firmware(SuccessCallback on_success, ErrorCallback on
 }
 
 void MoonrakerAPI::restart_klipper(SuccessCallback on_success, ErrorCallback on_error) {
+    // Restarting releases the steppers; with spools on the bed a gantry can sink
+    // onto them (prestonbrown/helixscreen#1730).
+    if (helix::api::reject_restart_while_spools_on_bed(&state_, "printer.restart", on_error)) {
+        return;
+    }
     spdlog::info("[Moonraker API] Restarting Klipper");
 
     client_.send_jsonrpc(
@@ -508,6 +521,11 @@ void MoonrakerAPI::restart_klipper(SuccessCallback on_success, ErrorCallback on_
 
 void MoonrakerAPI::restart_service(const std::string& service_name, SuccessCallback on_success,
                                    ErrorCallback on_error) {
+    if (service_name.find("klipper") != std::string::npos &&
+        helix::api::reject_restart_while_spools_on_bed(&state_, "machine.services.restart",
+                                                       on_error)) {
+        return;
+    }
     spdlog::info("[Moonraker API] Restarting service '{}' via machine.services.restart",
                  service_name);
 

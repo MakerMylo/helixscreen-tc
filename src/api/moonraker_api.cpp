@@ -11,7 +11,6 @@
 
 #include <chrono>
 #include <cmath>
-#include <sstream>
 #include <thread>
 
 using namespace helix;
@@ -29,9 +28,9 @@ MoonrakerAPI::MoonrakerAPI(IMoonrakerClient& client, PrinterState& state)
     file_api_ = std::make_unique<MoonrakerFileAPI>(client);
     file_transfer_api_ = std::make_unique<MoonrakerFileTransferAPI>(client, http_base_url_);
     history_api_ = std::make_unique<MoonrakerHistoryAPI>(client);
-    job_api_ = std::make_unique<MoonrakerJobAPI>(client);
+    job_api_ = std::make_unique<MoonrakerJobAPI>(client, &state);
     motion_api_ = std::make_unique<MoonrakerMotionAPI>(client, state, safety_limits_);
-    queue_api_ = std::make_unique<MoonrakerQueueAPI>(client);
+    queue_api_ = std::make_unique<MoonrakerQueueAPI>(client, &state);
     rest_api_ = std::make_unique<MoonrakerRestAPI>(client, http_base_url_);
     spoolman_api_ = std::make_unique<MoonrakerSpoolmanAPI>(client);
     timelapse_api_ = std::make_unique<MoonrakerTimelapseAPI>(client, http_base_url_);

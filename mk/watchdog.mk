@@ -90,8 +90,11 @@ WATCHDOG_EXTRA_OBJS := $(BUILD_DIR)/watchdog/config.o \
                        $(BUILD_DIR)/watchdog/backlight_backend.o \
                        $(BUILD_DIR)/watchdog/data_root_resolver.o \
                        $(BUILD_DIR)/watchdog/helix_paths.o \
+                       $(BUILD_DIR)/watchdog/text_io.o \
+                       $(BUILD_DIR)/watchdog/helix_fs.o \
                        $(BUILD_DIR)/watchdog/logging_init.o \
                        $(BUILD_DIR)/watchdog/platform_capabilities.o \
+                       $(BUILD_DIR)/watchdog/helix_regex.o \
                        $(BUILD_DIR)/watchdog/ui_notification_stub.o \
                        $(BUILD_DIR)/watchdog/drm_mode_matching.o \
                        $(BUILD_DIR)/watchdog/fbdev_size_helper.o \
@@ -132,6 +135,18 @@ $(BUILD_DIR)/watchdog/helix_paths.o: src/system/helix_paths.cpp $(ABI_STAMP) | $
 	@echo "[CXX] $< (watchdog)"
 	$(Q)$(CXX) $(WATCHDOG_CXXFLAGS) $(DEPFLAGS) -c $< -o $@
 
+# Compile text_io for watchdog (config_storage_file.cpp reads and writes through it).
+# Large-file offsets, as in the app build (mk/rules.mk).
+$(BUILD_DIR)/watchdog/text_io.o: src/system/text_io.cpp $(ABI_STAMP) | $(BUILD_DIR)/watchdog
+	@echo "[CXX] $< (watchdog)"
+	$(Q)$(CXX) $(WATCHDOG_CXXFLAGS) -D_FILE_OFFSET_BITS=64 $(DEPFLAGS) -c $< -o $@
+
+# Compile helix_fs for watchdog (config, config_backup, config_storage_file and
+# helix_paths query and copy files through it). Large-file offsets, as text_io.
+$(BUILD_DIR)/watchdog/helix_fs.o: src/system/helix_fs.cpp $(ABI_STAMP) | $(BUILD_DIR)/watchdog
+	@echo "[CXX] $< (watchdog)"
+	$(Q)$(CXX) $(WATCHDOG_CXXFLAGS) -D_FILE_OFFSET_BITS=64 $(DEPFLAGS) -c $< -o $@
+
 # Compile logging_init for watchdog
 $(BUILD_DIR)/watchdog/logging_init.o: src/system/logging_init.cpp $(LIBHV_LIB) $(LIBHV_JSON_HEADER) $(ABI_STAMP) | $(BUILD_DIR)/watchdog
 	@echo "[CXX] $< (watchdog)"
@@ -139,6 +154,11 @@ $(BUILD_DIR)/watchdog/logging_init.o: src/system/logging_init.cpp $(LIBHV_LIB) $
 
 # logging_init sizes the debug ring from total RAM, so the watchdog links this too.
 $(BUILD_DIR)/watchdog/platform_capabilities.o: src/system/platform_capabilities.cpp $(ABI_STAMP) | $(BUILD_DIR)/watchdog
+	@echo "[CXX] $< (watchdog)"
+	$(Q)$(CXX) $(WATCHDOG_CXXFLAGS) $(DEPFLAGS) -c $< -o $@
+
+# Regex engine; platform_capabilities.cpp parses /proc/meminfo and /proc/cpuinfo with it.
+$(BUILD_DIR)/watchdog/helix_regex.o: src/system/helix_regex.cpp $(ABI_STAMP) | $(BUILD_DIR)/watchdog
 	@echo "[CXX] $< (watchdog)"
 	$(Q)$(CXX) $(WATCHDOG_CXXFLAGS) $(DEPFLAGS) -c $< -o $@
 

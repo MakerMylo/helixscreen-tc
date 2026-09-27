@@ -231,7 +231,9 @@ field tracking the head back to the requested position is correct behaviour.
 
 Unhomed goes through the `ensure_homed_then` helper used by
 `src/ui/ui_panel_belt_tension.cpp` and the AMS backends, so asking for a position on a
-cold printer offers to home rather than surfacing a Klipper error.
+cold printer homes (G28) and then moves, with no confirmation prompt. Preston's call
+(2026-09-26): asking for a position is consent to the homing it needs. Presets and the
+bed map follow the same rule.
 
 ### 6. Position presets
 

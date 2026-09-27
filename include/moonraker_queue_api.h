@@ -21,6 +21,7 @@
 // Forward declarations
 namespace helix {
 class IMoonrakerClient;
+class PrinterState;
 } // namespace helix
 
 /**
@@ -48,7 +49,8 @@ class MoonrakerQueueAPI : public IQueueAPI {
      *
      * @param client MoonrakerClient instance (must remain valid during API lifetime)
      */
-    explicit MoonrakerQueueAPI(helix::IMoonrakerClient& client);
+    explicit MoonrakerQueueAPI(helix::IMoonrakerClient& client,
+                               const helix::PrinterState* state = nullptr);
     virtual ~MoonrakerQueueAPI() = default;
 
     /**
@@ -101,4 +103,5 @@ class MoonrakerQueueAPI : public IQueueAPI {
 
   protected:
     helix::IMoonrakerClient& client_;
+    const helix::PrinterState* state_ = nullptr;
 };

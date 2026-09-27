@@ -43,6 +43,15 @@
                               options="Auto&#10;Bed Moves&#10;Nozzle Moves"
                               options_tag="Auto&#10;Bed Moves&#10;Nozzle Moves" callback="on_z_movement_style_changed"/>
         <!-- ================================================================== -->
+        <!-- ENCLOSURE (drying on the heated bed needs one) -->
+        <!-- ================================================================== -->
+        <setting_dropdown_row name="row_enclosure_style"
+                              label="Enclosure" label_tag="Enclosure" icon="heat_wave"
+                              description="Mark a printer you enclosed yourself"
+                              description_tag="Mark a printer you enclosed yourself"
+                              options="Auto&#10;Enclosed&#10;Open frame" options_tag="Auto&#10;Enclosed&#10;Open frame"
+                              bind_selected="settings_enclosure_style" callback="on_enclosure_style_changed"/>
+        <!-- ================================================================== -->
         <!-- MACHINE LIMITS -->
         <!-- ================================================================== -->
         <setting_action_row name="row_machine_limits"

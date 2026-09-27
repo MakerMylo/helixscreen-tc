@@ -5,6 +5,8 @@
 
 #include "ui_update_queue.h"
 
+#include "text_io.h"
+
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
@@ -16,8 +18,6 @@
 #endif
 
 #ifdef __linux__
-#include <fstream>
-#include <sstream>
 #include <string>
 #endif
 
@@ -226,13 +226,13 @@ MemoryStats MemoryMonitor::get_current_stats() {
     MemoryStats stats;
 
 #ifdef __linux__
-    std::ifstream status("/proc/self/status");
-    if (!status.is_open()) {
+    helix::text_io::LineReader status("/proc/self/status");
+    if (!status) {
         return stats;
     }
 
     std::string line;
-    while (std::getline(status, line)) {
+    while (status.next(line)) {
         if (line.compare(0, 7, "VmSize:") == 0) {
             sscanf(line.c_str(), "VmSize: %zu", &stats.vm_size_kb);
         } else if (line.compare(0, 6, "VmRSS:") == 0) {

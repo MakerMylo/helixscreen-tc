@@ -21,6 +21,24 @@ Same layout as nozzle control:
 - Presets for common materials
 - Temperature graph
 
+### Drying Filament on the Bed
+
+On an enclosed printer with a heated bed, HelixScreen can dry filament on the build plate. Tap **Dry Filament** on the bed card (or **Advanced > Dry Filament**), pick the material and tap **Start** once you have ticked **I understand**. The material list shows the bed temperature and time each one uses: bed temperatures follow Bambu Lab's heated-bed drying guide, capped at 90°C and at your bed's maximum, for 12 hours. If a chamber heater that can dry filament is fitted, you can run it at the same time.
+
+What happens next:
+
+1. If filament may still be loaded at the toolhead, HelixScreen offers to unload it first, so it does not soften in the extruder. If a sensor says the toolhead is empty, this step is skipped. You can skip it either way.
+2. The printer homes, then moves the plate as far from the nozzle as it goes.
+3. Clear the area above and below the plate, lay the spools on the plate, cover them with a box (a printed lid or the filament's packaging) and close the door. Tap **Start drying**.
+4. A banner at the top of the screen shows the time left. Halfway through, HelixScreen reminds you to flip the spools over. Use gloves: the plate is hot.
+5. At the end the bed turns off. Once it has cooled below 40°C, HelixScreen asks you to take the spools off and confirm.
+
+From the moment you confirm the spools are on the bed until you confirm they are off, HelixScreen will not home, move the printer or start a print, and the banner stays up, even after a restart or a power cut. Tap the banner to stop a run early, or to confirm the spools are off before the bed has cooled.
+
+**Some spools are not heat-resistant enough and can deform.** HelixScreen cannot stop Mainsail, a macro run from elsewhere, or a print sent from a slicer while the spools are on the bed.
+
+Dry Filament appears only on printers HelixScreen knows are enclosed. If you enclosed your printer yourself, set **Settings > Printing > Enclosure** to **Enclosed**.
+
 ---
 
 ## Temperature Presets
@@ -101,7 +119,7 @@ A Panda Breath on its **stock firmware** can also dry filament, and HelixScreen 
 
 While a run is going the card shows the chamber temperature next to the drying target, and the time left, with a **Stop** button. On its own the heater often cannot bring a whole enclosure up to the target, especially with the bed off, so a chamber that levels off below the target is expected. The run still ends on the heater's own timer.
 
-**Heat the bed too** (on by default when your printer has a heated bed) heats the bed to 80°C for the length of the run, which helps the chamber get warmer. HelixScreen turns the bed back off when the run ends, whether it finishes, you tap **Stop**, or the heater stops it itself. If you have set a different bed temperature in the meantime, or a print has started, the bed is left alone.
+**Heat the bed too** (on by default when your printer has a heated bed) heats the bed to 70°C for the length of the run, which helps the chamber get warmer. Do not leave plastic spools sitting on a hot bed. HelixScreen turns the bed back off when the run ends, whether it finishes, you tap **Stop**, or the heater stops it itself. If you have set a different bed temperature in the meantime, or a print has started, the bed is left alone.
 
 You cannot start a drying run while a print is running: drying takes over the chamber heater. DragonBreath firmware has no drying control in Klipper, so on DragonBreath you start drying from the unit itself.
 

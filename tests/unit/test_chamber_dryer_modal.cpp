@@ -68,7 +68,7 @@ TEST_CASE_METHOD(LVGLUITestFixture, "chamber dryer modal starts the chosen prese
 
         lv_obj_t* bed_label = lv_obj_find_by_name(dialog, "bed_assist_label");
         REQUIRE(bed_label != nullptr);
-        CHECK(std::string(lv_label_get_text(bed_label)).find("80") != std::string::npos);
+        CHECK(std::string(lv_label_get_text(bed_label)).find("70") != std::string::npos);
 
         client.clear_gcode_script_history();
         lv_obj_t* start = lv_obj_find_by_name(dialog, "btn_primary");
@@ -83,7 +83,7 @@ TEST_CASE_METHOD(LVGLUITestFixture, "chamber dryer modal starts the chosen prese
                                     dryer.clamp_duration(presets[0].duration_min));
         CHECK(std::count(history.begin(), history.end(), expected_start) == 1);
         CHECK(std::count(history.begin(), history.end(),
-                         "SET_HEATER_TEMPERATURE HEATER=heater_bed TARGET=80") == 1);
+                         "SET_HEATER_TEMPERATURE HEATER=heater_bed TARGET=70") == 1);
     }
 
     SECTION("bed assist switched off heats nothing but the dryer") {

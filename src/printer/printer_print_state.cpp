@@ -98,6 +98,9 @@ void PrinterPrintState::init_subjects(bool register_xml) {
                      register_xml);
     INIT_SUBJECT_INT(print_lifecycle, static_cast<int>(PrintState::Idle), subjects_, register_xml);
     INIT_SUBJECT_INT(job_holds_machine, 0, subjects_, register_xml);
+    INIT_SUBJECT_INT(machine_motion_blocked, spool_latch_active_.load() ? 1 : 0, subjects_,
+                     register_xml);
+    INIT_SUBJECT_INT(spool_latch, spool_latch_active_.load() ? 1 : 0, subjects_, register_xml);
     INIT_SUBJECT_INT(preparing_epoch, 0, subjects_, false);
     INIT_SUBJECT_INT(print_identity_epoch, 0, subjects_, false);
     INIT_SUBJECT_INT(print_lifecycle_prev, static_cast<int>(PrintState::Idle), subjects_, false);
@@ -1521,6 +1524,7 @@ void PrinterPrintState::publish_lifecycle_state() {
     if (lv_subject_get_int(&job_holds_machine_) != holds) {
         lv_subject_set_int(&job_holds_machine_, holds);
     }
+    publish_machine_motion_blocked();
 
     if (current != derived) {
         // Previous first, so an observer of the current value already sees a
@@ -1528,6 +1532,26 @@ void PrinterPrintState::publish_lifecycle_state() {
         lv_subject_set_int(&print_lifecycle_prev_, current);
         lv_subject_set_int(&print_lifecycle_, derived);
     }
+}
+
+void PrinterPrintState::publish_machine_motion_blocked() {
+    const int blocked =
+        (lv_subject_get_int(&job_holds_machine_) != 0 || spool_latch_active_.load()) ? 1 : 0;
+    if (lv_subject_get_int(&machine_motion_blocked_) != blocked) {
+        lv_subject_set_int(&machine_motion_blocked_, blocked);
+    }
+}
+
+void PrinterPrintState::set_spool_latch(bool on, std::vector<std::string> extra_tokens) {
+    {
+        std::lock_guard<std::mutex> lock(spool_latch_mutex_);
+        spool_latch_tokens_ = on ? std::move(extra_tokens) : std::vector<std::string>{};
+    }
+    spool_latch_active_.store(on);
+    if (lv_subject_get_int(&spool_latch_) != (on ? 1 : 0)) {
+        lv_subject_set_int(&spool_latch_, on ? 1 : 0);
+    }
+    publish_machine_motion_blocked();
 }
 
 bool PrinterPrintState::is_in_print_start() const {

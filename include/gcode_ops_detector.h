@@ -6,7 +6,6 @@
 #include "operation_patterns.h"
 
 #include <chrono>
-#include <filesystem>
 #include <functional>
 #include <optional>
 #include <set>
@@ -168,7 +167,7 @@ class GCodeOpsDetector {
      * @param filepath Path to the G-code file
      * @return ScanResult containing all detected operations
      */
-    [[nodiscard]] ScanResult scan_file(const std::filesystem::path& filepath) const;
+    [[nodiscard]] ScanResult scan_file(const std::string& filepath) const;
 
     /**
      * @brief Scan G-code content from a string (for testing)
@@ -211,9 +210,10 @@ class GCodeOpsDetector {
     void init_default_patterns();
 
     /**
-     * @brief Scan a stream of G-code lines
+     * @brief Scan G-code lines drawn from `next_line`, which fills its argument
+     * and returns false at the end. Defined and instantiated in the .cpp only.
      */
-    [[nodiscard]] ScanResult scan_stream(std::istream& stream) const;
+    template <typename NextLine> [[nodiscard]] ScanResult scan_lines(NextLine next_line) const;
 
     /**
      * @brief Check a line against all patterns

@@ -25,6 +25,7 @@
 #include "../test_helpers/scoped_update_urls.h"
 #include "../test_helpers/update_checker_test_access.h"
 #include "../test_helpers/update_queue_test_access.h"
+#include "app_constants.h"
 #include "config.h"
 #include "lvgl.h"
 #include "version.h"
@@ -84,6 +85,22 @@ std::string platform_tarball(const std::string& version) {
 // ============================================================================
 // Version Parsing Behind Update Detection
 // ============================================================================
+
+TEST_CASE("Self-restart sentinel creates a missing fallback dir", "[update_checker][sentinel]") {
+    namespace fs = std::filesystem;
+    const std::string prev = AppConstants::Update::detail::backup_fallback_dir_ref();
+    const fs::path root =
+        fs::temp_directory_path() / ("helix-sentinel-" + std::to_string(getpid()));
+    const fs::path dir = root / ".helixscreen";
+    fs::remove_all(root);
+    AppConstants::Update::detail::backup_fallback_dir_ref() = dir.string();
+
+    CHECK(UpdateChecker::write_self_restart_sentinel());
+    CHECK(fs::exists(dir / "self_restart_sentinel"));
+
+    AppConstants::Update::detail::backup_fallback_dir_ref() = prev;
+    fs::remove_all(root);
+}
 
 // The three-way update rule lives in compare_channel_version() and is pinned
 // against that shipped function at the bottom of this file. What remains here
