@@ -198,11 +198,20 @@ hundreds of small moves.
 - Release, or press-lost (finger slides off the zone)
 - Panel deactivate or navigate-away
 - Printer disconnect, or klippy not ready
-- **Bounds reached.** When the clamp returns approximately zero the repeat stops and the
-  latch fires exactly one "blocked at bed edge". It does not tick into a wall generating
-  one error per tick. The latch clears on release and on direction change.
+- **Bounds reached.** When the clamp returns approximately zero the repeat stops,
+  silently. See "Limit feedback" below.
 
 Applies to the jog pad and the four Z buttons.
+
+### Limit feedback, per tab
+
+Decided with Preston 2026-09-26. The rule differs by tab because the intent differs.
+
+| Tab | Input past the limit | Feedback |
+|---|---|---|
+| **Jog** | A hold that reaches the edge stops there. A partial move (10mm asked, 2mm left) moves 2mm. | Silent for both. A **fresh** press when the axis is already at its limit warns every time, worded "X is at its limit (235mm)", never "blocked". The Z buttons render disabled at the Z limits. The jog pad draws no per-direction limit state. |
+| **Move** | A typed value outside the axis range. | An error, and no move is sent. This includes the header coordinate keypad. Any +/- steppers stop at the limit silently. |
+| **Bed** | A tap or drag outside the plate (or outside the radius on a delta). | None. The target clamps to the nearest reachable point. Out-of-bounds touches are slop, not mistakes. |
 
 ### 5. Coordinate entry
 
