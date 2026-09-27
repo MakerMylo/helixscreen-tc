@@ -98,14 +98,11 @@ std::vector<DeviceAction> hh_default_actions() {
     add_button("spoolman_refresh", "Refresh Spoolman", "accessories");
 
     // --- Maintenance section ---
+    add_button("load_extruder", "Load Extruder", "maintenance");
+    add_button("unload_extruder", "Unload Extruder", "maintenance");
     add_button("test_grip", "Test Grip", "maintenance");
     add_button("test_load", "Test Load", "maintenance");
     add_button("test_move", "Test Move", "maintenance");
-    // Extruder-only moves push filament through the hotend.
-    add_button("load_extruder", "Load Extruder", "maintenance");
-    actions.back().needs_hot_nozzle = true;
-    add_button("unload_extruder", "Unload Extruder", "maintenance");
-    actions.back().needs_hot_nozzle = true;
     {
         DeviceAction a;
         a.id = "gear_sync";

@@ -1395,14 +1395,12 @@ std::vector<helix::RecoveryAction> AmsBackendHappyHare::build_recovery_actions()
     actions.push_back({lv_tr("Resume"), "RESUME", "hh::resume", "primary",
                        /*needs_hot_nozzle=*/true});
 
-    // MMU_RECOVER re-syncs HH's filament state; the LOADED arg must match
-    // reality (HH issue #729). Derive from the live loaded flag. State-only — it
-    // moves nothing, so it stays available on a cold nozzle.
+    // Bare MMU_RECOVER: HH detects the filament position with its own
+    // sensors. Our loaded flag reads false for every position HH reports as
+    // Unknown, so asserting it would tell HH "unloaded" about filament stuck
+    // mid-bowden. State-only, so it stays available on a cold nozzle.
     const bool loaded = system_info_.filament_loaded;
-    RecoverStateRequest recover_request;
-    recover_request.loaded = loaded;
-    actions.push_back(
-        {lv_tr("Recover"), build_recover_command(recover_request), "hh::recover", ""});
+    actions.push_back({lv_tr("Recover"), "MMU_RECOVER", "hh::recover", ""});
 
     // If filament is at the toolhead, offer an explicit unload. Pulls filament
     // back out through the melt zone, so it needs heat.
@@ -2549,13 +2547,8 @@ std::string AmsBackendHappyHare::build_recover_command(const RecoverStateRequest
     std::string cmd = "MMU_RECOVER";
     if (request.bypass) {
         cmd += " BYPASS=1";
-    } else {
-        if (request.tool >= 0) {
-            cmd += " TOOL=" + std::to_string(request.tool);
-        }
-        if (request.slot >= 0) {
-            cmd += " GATE=" + std::to_string(request.slot);
-        }
+    } else if (request.slot >= 0) {
+        cmd += " GATE=" + std::to_string(request.slot);
     }
     if (request.loaded.has_value()) {
         cmd += *request.loaded ? " LOADED=1" : " LOADED=0";
@@ -2576,15 +2569,10 @@ AmsError AmsBackendHappyHare::recover_with_state(const RecoverStateRequest& requ
             if (!system_info_.supports_bypass) {
                 return AmsErrorHelper::not_supported("Bypass");
             }
-        } else {
-            if (request.tool >= static_cast<int>(system_info_.tool_to_slot_map.size())) {
-                return AmsErrorHelper::tool_out_of_range(request.tool);
-            }
-            if (request.slot >= 0) {
-                AmsError slot_err = validate_slot_index_locked(request.slot);
-                if (!slot_err) {
-                    return slot_err;
-                }
+        } else if (request.slot >= 0) {
+            AmsError slot_err = validate_slot_index_locked(request.slot);
+            if (!slot_err) {
+                return slot_err;
             }
         }
     }
@@ -3813,8 +3801,6 @@ AmsError AmsBackendHappyHare::execute_device_action(const std::string& action_id
         {"test_grip",           "MMU_TEST_GRIP"},
         {"test_load",           "MMU_TEST_LOAD"},
         {"test_move",           "MMU_TEST_MOVE"},
-        {"load_extruder",       "MMU_LOAD EXTRUDER_ONLY=1"},
-        {"unload_extruder",     "MMU_UNLOAD EXTRUDER_ONLY=1"},
         {"servo_buzz",          "MMU_SERVO"},
         {"servo_up",            "MMU_SERVO POS=up"},
         {"servo_move",          "MMU_SERVO POS=move"},
@@ -3827,6 +3813,21 @@ AmsError AmsBackendHappyHare::execute_device_action(const std::string& action_id
         if (action_id == id) {
             return execute_gcode(gcode);
         }
+    }
+
+    // Extruder-only moves drive the toolhead extruder, and HH puts no print
+    // check on MMU_LOAD/MMU_UNLOAD; an EXTRUDER_ONLY unload forms a tip and
+    // retracts over the part. HH heats the nozzle itself.
+    if (action_id == "load_extruder" || action_id == "unload_extruder") {
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            AmsError precondition = check_preconditions(/*requires_toolhead_motion=*/true);
+            if (!precondition) {
+                return precondition;
+            }
+        }
+        return execute_gcode(action_id == "load_extruder" ? "MMU_LOAD EXTRUDER_ONLY=1"
+                                                          : "MMU_UNLOAD EXTRUDER_ONLY=1");
     }
 
     // HH refuses MMU_SPOOLMAN outright while its spoolman_support is off.

@@ -1236,9 +1236,9 @@ class AmsBackend {
     /**
      * @brief Re-sync the firmware's tracked state to what the user says is true
      *
-     * State-only, like clear_fault(): tells the firmware which tool and slot
-     * are selected and whether filament is loaded, without moving anything.
-     * Fields left unknown in @p request are not asserted.
+     * State-only, like clear_fault(): tells the firmware which slot is
+     * selected and whether filament is loaded, without moving anything.
+     * Fields left unset in @p request are not asserted.
      *
      * Default implementation returns NOT_SUPPORTED.
      */

@@ -12,7 +12,6 @@
 #include "ui_event_safety.h"
 #include "ui_keyboard_manager.h"
 #include "ui_nav_manager.h"
-#include "ui_temperature_utils.h"
 #include "ui_text_input.h"
 #include "ui_utils.h"
 
@@ -27,8 +26,6 @@
 #include "ams_backend.h"
 #include "ams_state.h"
 #include "ams_types.h"
-#include "app_globals.h"
-#include "i_moonraker_api.h"
 #include "lvgl/src/others/translation/lv_translation.h"
 #include "static_panel_registry.h"
 #include "text_io.h"
@@ -38,7 +35,6 @@
 #include <spdlog/spdlog.h>
 
 #include <cctype>
-#include <cstdio>
 #include <memory>
 
 namespace helix::ui {
@@ -612,18 +608,12 @@ void AmsDeviceSectionDetailOverlay::on_action_clicked(lv_event_t* e) {
             } else {
                 // Find label for the toast
                 std::string label = action_id;
-                bool needs_hot_nozzle = false;
                 for (const auto& act : overlay.cached_actions_) {
                     if (act.id == action_id) {
                         label = act.label;
-                        needs_hot_nozzle = act.needs_hot_nozzle;
                         break;
                     }
                 }
-                IMoonrakerAPI* api = get_moonraker_api();
-                const bool refuse_cold = needs_hot_nozzle && api &&
-                                         !helix::ui::temperature::active_nozzle_ready_for_extrusion(
-                                             api->get_safety_limits());
 
 #if HELIX_HAS_CFS
                 // K1 CFS calibration actions route away from the plain
@@ -640,14 +630,7 @@ void AmsDeviceSectionDetailOverlay::on_action_clicked(lv_event_t* e) {
                     confirm_cutter_calibration(label);
                 } else
 #endif
-                    if (refuse_cold) {
-                    // The same sentence the filament panel shows for a cold nozzle.
-                    char msg[128];
-                    std::snprintf(
-                        msg, sizeof(msg), lv_tr("Heat to at least %d°C for filament operations"),
-                        helix::ui::temperature::extrusion_floor_c(api->get_safety_limits()));
-                    NOTIFY_WARNING("{}", msg);
-                } else {
+                {
                     AmsError result = backend->execute_device_action(action_id);
                     if (result.success()) {
                         // Whole sentence, not "{} {}" over two separately translated

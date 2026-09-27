@@ -135,9 +135,11 @@ class AmsBackendHappyHare : public AmsSubscriptionBackend {
     /**
      * @brief The MMU_RECOVER line asserting @p request.
      *
-     * Names only what the request knows: an unknown tool or gate is omitted,
-     * and an unset loaded flag leaves LOADED off so HH detects it with its
-     * sensors. BYPASS=1 replaces TOOL and GATE, which HH then forces to bypass.
+     * Names only what the request knows: an unset gate is omitted, and an
+     * unset loaded flag leaves LOADED off so HH detects it with its sensors.
+     * BYPASS=1 replaces GATE; HH then forces tool and gate to bypass. Never
+     * names TOOL: HH's tool branch remaps the tool onto the gate and rewrites
+     * that gate's status, and with LOADED=0 wipes the gate's spool info.
      */
     [[nodiscard]] static std::string build_recover_command(const RecoverStateRequest& request);
     AmsError eject_lane(int slot_index) override;

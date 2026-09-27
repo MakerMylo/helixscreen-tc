@@ -1270,10 +1270,8 @@ TEST_CASE("Happy Hare clear_fault fails when not running", "[ams][happy_hare][re
 // ============================================================================
 
 namespace {
-helix::RecoverStateRequest recover_req(int tool, int slot, bool bypass,
-                                       std::optional<bool> loaded) {
+helix::RecoverStateRequest recover_req(int slot, bool bypass, std::optional<bool> loaded) {
     helix::RecoverStateRequest r;
-    r.tool = tool;
     r.slot = slot;
     r.bypass = bypass;
     r.loaded = loaded;
@@ -1284,7 +1282,6 @@ helix::RecoverStateRequest recover_req(int tool, int slot, bool bypass,
 TEST_CASE("Happy Hare recover command names only what the user asserted",
           "[ams][happy_hare][recovery]") {
     struct Row {
-        int tool;
         int slot;
         bool bypass;
         std::optional<bool> loaded;
@@ -1292,29 +1289,23 @@ TEST_CASE("Happy Hare recover command names only what the user asserted",
     };
     // clang-format off
     const Row rows[] = {
-        {-1, -1, false, std::nullopt, "MMU_RECOVER"},
-        {-1, -1, false, false,        "MMU_RECOVER LOADED=0"},
-        {-1, -1, false, true,         "MMU_RECOVER LOADED=1"},
-        { 2, -1, false, std::nullopt, "MMU_RECOVER TOOL=2"},
-        { 2, -1, false, false,        "MMU_RECOVER TOOL=2 LOADED=0"},
-        { 2, -1, false, true,         "MMU_RECOVER TOOL=2 LOADED=1"},
-        {-1,  1, false, std::nullopt, "MMU_RECOVER GATE=1"},
-        {-1,  1, false, false,        "MMU_RECOVER GATE=1 LOADED=0"},
-        {-1,  1, false, true,         "MMU_RECOVER GATE=1 LOADED=1"},
-        { 2,  1, false, std::nullopt, "MMU_RECOVER TOOL=2 GATE=1"},
-        { 2,  1, false, false,        "MMU_RECOVER TOOL=2 GATE=1 LOADED=0"},
-        { 2,  1, false, true,         "MMU_RECOVER TOOL=2 GATE=1 LOADED=1"},
-        { 0,  0, false, std::nullopt, "MMU_RECOVER TOOL=0 GATE=0"},
-        // Bypass overrides tool and gate: HH forces both to bypass itself.
-        {-1, -1, true,  std::nullopt, "MMU_RECOVER BYPASS=1"},
-        { 2,  1, true,  false,        "MMU_RECOVER BYPASS=1 LOADED=0"},
-        { 2,  1, true,  true,         "MMU_RECOVER BYPASS=1 LOADED=1"},
+        {-1, false, std::nullopt, "MMU_RECOVER"},
+        {-1, false, false,        "MMU_RECOVER LOADED=0"},
+        {-1, false, true,         "MMU_RECOVER LOADED=1"},
+        { 1, false, std::nullopt, "MMU_RECOVER GATE=1"},
+        { 1, false, false,        "MMU_RECOVER GATE=1 LOADED=0"},
+        { 1, false, true,         "MMU_RECOVER GATE=1 LOADED=1"},
+        { 0, false, std::nullopt, "MMU_RECOVER GATE=0"},
+        // Bypass replaces the gate: HH forces tool and gate to bypass itself.
+        {-1, true,  std::nullopt, "MMU_RECOVER BYPASS=1"},
+        { 1, true,  false,        "MMU_RECOVER BYPASS=1 LOADED=0"},
+        { 1, true,  true,         "MMU_RECOVER BYPASS=1 LOADED=1"},
     };
     // clang-format on
     for (const auto& row : rows) {
-        INFO("tool=" << row.tool << " slot=" << row.slot << " bypass=" << row.bypass);
+        INFO("slot=" << row.slot << " bypass=" << row.bypass);
         CHECK(helix::AmsBackendHappyHare::build_recover_command(
-                  recover_req(row.tool, row.slot, row.bypass, row.loaded)) == row.expected);
+                  recover_req(row.slot, row.bypass, row.loaded)) == row.expected);
     }
 }
 
@@ -1327,10 +1318,10 @@ TEST_CASE("Happy Hare recover_with_state sends the built command", "[ams][happy_
 
     CHECK(helper.supports_recover_with_state());
 
-    REQUIRE(helper.recover_with_state(recover_req(3, 2, false, true)).success());
-    REQUIRE(helper.recover_with_state(recover_req(-1, -1, true, std::nullopt)).success());
+    REQUIRE(helper.recover_with_state(recover_req(2, false, true)).success());
+    REQUIRE(helper.recover_with_state(recover_req(-1, true, std::nullopt)).success());
     CHECK(helper.captured_gcodes ==
-          std::vector<std::string>{"MMU_RECOVER TOOL=3 GATE=2 LOADED=1", "MMU_RECOVER BYPASS=1"});
+          std::vector<std::string>{"MMU_RECOVER GATE=2 LOADED=1", "MMU_RECOVER BYPASS=1"});
 }
 
 TEST_CASE("Happy Hare recover_with_state refuses what the MMU cannot be in",
@@ -1340,37 +1331,38 @@ TEST_CASE("Happy Hare recover_with_state refuses what the MMU cannot be in",
     helper.initialize_test_gates(4);
 
     SECTION("not running") {
-        CHECK_FALSE(helper.recover_with_state(recover_req(0, 0, false, true)).success());
+        CHECK_FALSE(helper.recover_with_state(recover_req(0, false, true)).success());
     }
     SECTION("gate out of range") {
         helper.set_running(true);
-        CHECK(helper.recover_with_state(recover_req(-1, 4, false, std::nullopt)).result ==
+        CHECK(helper.recover_with_state(recover_req(4, false, std::nullopt)).result ==
               AmsResult::INVALID_SLOT);
-    }
-    SECTION("tool out of range") {
-        helper.set_running(true);
-        CHECK_FALSE(helper.recover_with_state(recover_req(4, -1, false, std::nullopt)).success());
     }
     SECTION("bypass on an MMU without one") {
         helper.set_running(true);
         helper.set_supports_bypass(false);
-        CHECK_FALSE(helper.recover_with_state(recover_req(-1, -1, true, std::nullopt)).success());
+        CHECK_FALSE(helper.recover_with_state(recover_req(-1, true, std::nullopt)).success());
     }
     CHECK(helper.captured_gcodes.empty());
 }
 
-TEST_CASE("Happy Hare error-popup Recover asserts the loaded flag with LOADED=0|1",
+TEST_CASE("Happy Hare error-popup Recover lets HH detect the filament position",
           "[ams][happy_hare][recovery]") {
-    // MMU_RECOVER has no UNLOADED parameter; Klipper drops unknown params, so
-    // the unloaded case must be spelled LOADED=0.
+    // Our loaded flag reads false for every position HH calls Unknown, so
+    // echoing it as LOADED=0 would tell HH "unloaded" about filament stuck
+    // mid-bowden. Bare MMU_RECOVER has HH read its own sensors.
     helix::test::RegisteredBackend<AmsBackendHappyHareTestHelper> hh_reg;
     AmsBackendHappyHareTestHelper& hh = *hh_reg;
     hh.initialize_test_gates(4);
-    const bool loaded = GENERATE(true, false);
+    struct Pos {
+        int filament_pos;
+        const char* filament;
+    };
+    const Pos pos = GENERATE(Pos{8, "Loaded"}, Pos{0, "Unloaded"}, Pos{3, "Unknown"});
     nlohmann::json mmu;
     mmu["action"] = "Error";
-    mmu["filament_pos"] = loaded ? 8 : 0;
-    mmu["filament"] = loaded ? "Loaded" : "Unloaded";
+    mmu["filament_pos"] = pos.filament_pos;
+    mmu["filament"] = pos.filament;
     mmu["reason_for_pause"] = "Clog detected";
     hh.test_parse_mmu_state(mmu);
 
@@ -1382,7 +1374,8 @@ TEST_CASE("Happy Hare error-popup Recover asserts the loaded flag with LOADED=0|
     for (const auto& a : ev->recovery_actions)
         if (a.log_tag == "hh::recover")
             recover_gcode = a.gcode;
-    CHECK(recover_gcode == (loaded ? "MMU_RECOVER LOADED=1" : "MMU_RECOVER LOADED=0"));
+    INFO(pos.filament);
+    CHECK(recover_gcode == "MMU_RECOVER");
 }
 
 // ============================================================================
@@ -4257,29 +4250,6 @@ TEST_CASE("Happy Hare classify_error: runout pause is CRITICAL with recovery",
     CHECK(ev->detail.find("Runout detected on gate 0") != std::string::npos);
 }
 
-TEST_CASE("Happy Hare classify_error: recover gcode reflects loaded state",
-          "[ams][happy_hare][error-center]") {
-    helix::test::RegisteredBackend<AmsBackendHappyHareTestHelper> hh_reg;
-    AmsBackendHappyHareTestHelper& hh = *hh_reg;
-    hh.initialize_test_gates(4);
-    nlohmann::json mmu;
-    mmu["action"] = "Error";
-    mmu["filament_pos"] = 8;
-    mmu["filament"] = "Loaded"; // pos=8 means at toolhead; make loaded flag match
-    mmu["reason_for_pause"] = "Clog detected";
-    hh.test_parse_mmu_state(mmu);
-
-    helix::ClassifyContext ctx;
-    ctx.is_paused = true;
-    auto ev = hh.classify_error("!! Clog detected", ctx);
-    REQUIRE(ev.has_value());
-    bool has_recover_loaded = false;
-    for (const auto& a : ev->recovery_actions)
-        if (a.gcode == "MMU_RECOVER LOADED=1")
-            has_recover_loaded = true;
-    CHECK(has_recover_loaded);
-}
-
 TEST_CASE("Happy Hare classify_error: non-!! line and non-paused defer to generic",
           "[ams][happy_hare][error-center]") {
     helix::test::RegisteredBackend<AmsBackendHappyHareTestHelper> hh_reg;
@@ -5056,9 +5026,10 @@ TEST_CASE("Happy Hare motors toggle turns motors on and off without homing",
     CHECK(helper.captured_gcodes == std::vector<std::string>{"MMU_MOTORS_ON", "MMU_MOTORS_OFF"});
 }
 
-TEST_CASE("Happy Hare extruder-only load and unload need a hot nozzle",
+TEST_CASE("Happy Hare extruder-only load and unload send EXTRUDER_ONLY=1",
           "[ams][happy_hare][device_actions]") {
     AmsBackendHappyHareTestHelper helper;
+    helper.set_running(true);
     const auto actions = helper.get_device_actions();
 
     for (const char* id : {"load_extruder", "unload_extruder"}) {
@@ -5067,12 +5038,7 @@ TEST_CASE("Happy Hare extruder-only load and unload need a hot nozzle",
         REQUIRE(a != nullptr);
         CHECK(a->section == "maintenance");
         CHECK(a->type == helix::printer::ActionType::BUTTON);
-        CHECK(a->needs_hot_nozzle);
     }
-    // Everything else in the section moves no filament through the hotend.
-    const auto* grip = find_action(actions, "test_grip");
-    REQUIRE(grip != nullptr);
-    CHECK_FALSE(grip->needs_hot_nozzle);
 
     REQUIRE(helper.execute_device_action("load_extruder").success());
     REQUIRE(helper.execute_device_action("unload_extruder").success());
@@ -5104,4 +5070,21 @@ TEST_CASE("Happy Hare Refresh Spoolman follows HH's spoolman_support",
         REQUIRE(helper.execute_device_action("spoolman_refresh").success());
         CHECK(helper.captured_gcodes == std::vector<std::string>{"MMU_SPOOLMAN REFRESH=1"});
     }
+}
+
+TEST_CASE("Happy Hare extruder-only load and unload are refused mid-print",
+          "[ams][happy_hare][device_actions]") {
+    // HH puts no print check on MMU_LOAD/MMU_UNLOAD, and an EXTRUDER_ONLY
+    // unload forms a tip and retracts over the part.
+    PrintLifecycleFixture fx;
+    helix::test::RegisteredBackend<AmsBackendHappyHareTestHelper> helper_reg(fx.api.get(),
+                                                                             &fx.mock_client);
+    AmsBackendHappyHareTestHelper& helper = *helper_reg;
+    helper.initialize_test_gates(4);
+    helper.set_running(true);
+    helix::test::set_wire_state(fx.state, helix::PrintJobState::PRINTING);
+
+    CHECK(helper.execute_device_action("load_extruder").result == AmsResult::WRONG_STATE);
+    CHECK(helper.execute_device_action("unload_extruder").result == AmsResult::WRONG_STATE);
+    CHECK(helper.captured_gcodes.empty());
 }
