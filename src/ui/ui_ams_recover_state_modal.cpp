@@ -56,9 +56,10 @@ bool AmsRecoverStateModal::show_owned() {
 RecoverStateRequest AmsRecoverStateModal::prefill(const AmsSystemInfo& info, bool bypass_active) {
     RecoverStateRequest request;
     request.bypass = bypass_active;
-    request.tool = info.current_tool >= 0 ? info.current_tool : -1;
     request.slot = info.current_slot >= 0 ? info.current_slot : -1;
-    request.loaded = info.filament_loaded;
+    // Filament starts at "detect": the loaded flag reads false for every
+    // position the firmware itself calls unknown, so echoing it would assert
+    // the very state the firmware is confused about.
     return request;
 }
 
@@ -67,13 +68,8 @@ AmsRecoverStateModal::selection_for(const RecoverStateRequest& request, const Ch
     Selection s;
     if (request.bypass && choices.has_bypass) {
         s.slot = static_cast<uint32_t>(choices.slot_count) + 1;
-    } else {
-        if (request.tool >= 0 && request.tool < choices.tool_count) {
-            s.tool = static_cast<uint32_t>(request.tool) + 1;
-        }
-        if (request.slot >= 0 && request.slot < choices.slot_count) {
-            s.slot = static_cast<uint32_t>(request.slot) + 1;
-        }
+    } else if (request.slot >= 0 && request.slot < choices.slot_count) {
+        s.slot = static_cast<uint32_t>(request.slot) + 1;
     }
     if (request.loaded.has_value()) {
         s.loaded = *request.loaded ? kLoadedYes : kLoadedNo;
@@ -88,7 +84,6 @@ RecoverStateRequest AmsRecoverStateModal::request_for(const Selection& selection
     if (choices.has_bypass && selection.slot == slot_count + 1) {
         request.bypass = true;
     } else {
-        request.tool = static_cast<int>(selection.tool) - 1;
         request.slot = selection.slot <= slot_count ? static_cast<int>(selection.slot) - 1 : -1;
     }
     if (selection.loaded == kLoadedYes) {
@@ -108,22 +103,14 @@ void AmsRecoverStateModal::on_show() {
         return;
     }
     const AmsSystemInfo info = backend->get_system_info();
+    shown_backend_ = backend;
     choices_.slot_count = info.total_slots;
-    choices_.tool_count = info.tool_to_slot_map.empty()
-                              ? info.total_slots
-                              : static_cast<int>(info.tool_to_slot_map.size());
     choices_.has_bypass = info.supports_bypass;
 
     const LaneNoun noun = backend->lane_noun();
     const Selection selected = selection_for(prefill(info, backend->is_bypass_active()), choices_);
 
-    std::string tools = lv_tr("Unknown");
-    for (int i = 0; i < choices_.tool_count; ++i) {
-        tools += "\n" + lane_label(LaneNoun::Tool, i);
-    }
-    set_dropdown(find_widget("tool_dropdown"), tools, selected.tool);
-
-    std::string slots = lv_tr("Unknown");
+    std::string slots = lv_tr("Keep current");
     for (int i = 0; i < choices_.slot_count; ++i) {
         slots += "\n" + lane_label(noun, i);
     }
@@ -139,15 +126,21 @@ void AmsRecoverStateModal::on_show() {
 
 void AmsRecoverStateModal::on_ok() {
     Selection selection;
-    selection.tool = dropdown_selected(find_widget("tool_dropdown"));
     selection.slot = dropdown_selected(find_widget("slot_dropdown"));
     selection.loaded = dropdown_selected(find_widget("loaded_dropdown"));
     const RecoverStateRequest request = request_for(selection, choices_);
+    const Choices shown = choices_;
+    AmsBackend* const shown_backend = shown_backend_;
     hide();
 
-    // Re-fetched: the backend may have changed while the dialog was open.
+    // The rows index the system the dialog was built for. A backend swapped
+    // or resized while it was open would read them as different slots.
     AmsBackend* backend = AmsState::instance().get_backend();
     if (!backend) {
+        return;
+    }
+    if (backend != shown_backend || backend->get_system_info().total_slots != shown.slot_count) {
+        spdlog::info("[AmsRecoverStateModal] Backend changed while open; recover not sent");
         return;
     }
     AmsError err = backend->recover_with_state(request);

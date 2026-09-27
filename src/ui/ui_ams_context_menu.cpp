@@ -419,9 +419,12 @@ void AmsContextMenu::on_created(lv_obj_t* menu_obj) {
     }
 
     // Preload moves filament only between spool and gate, but the firmware
-    // refuses it mid-print, so it shares the filament-op print gate.
+    // refuses it mid-print and while any filament is loaded, and reports that
+    // refusal only to its console.
     if (backend_ && backend_->supports_lane_preload()) {
-        lv_subject_set_int(&slot_preload_subject_, (system_busy || print_blocks_op) ? 1 : 2);
+        const bool preload_blocked =
+            system_busy || print_blocks_op || backend_->is_filament_loaded();
+        lv_subject_set_int(&slot_preload_subject_, preload_blocked ? 1 : 2);
     }
 
     // Show Clear Spool whenever the slot carries an assignment, present or not

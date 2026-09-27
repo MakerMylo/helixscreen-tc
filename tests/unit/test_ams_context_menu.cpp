@@ -1197,15 +1197,27 @@ TEST_CASE_METHOD(LVGLUITestFixture,
 // on_created: Preload follows the backend capability and the print gate
 // ============================================================================
 
+namespace {
+/// A mock whose "filament at the toolhead" answer the test sets.
+class PreloadMock : public AmsBackendMock {
+  public:
+    using AmsBackendMock::AmsBackendMock;
+    bool loaded = false;
+    [[nodiscard]] bool is_filament_loaded() const override {
+        return loaded;
+    }
+};
+} // namespace
+
 TEST_CASE_METHOD(LVGLUITestFixture,
-                 "AmsContextMenu: Preload shows for a preloading backend and greys mid-print",
+                 "AmsContextMenu: Preload shows for a preloading backend and greys when blocked",
                  "[ui][ams][context_menu][preload]") {
-    auto backend = std::make_unique<AmsBackendMock>(4);
+    auto backend = std::make_unique<PreloadMock>(4);
     REQUIRE(backend->supports_lane_preload());
 
     REQUIRE(lv_xml_register_component_from_file("A:ui_xml/ams_context_menu.xml") == LV_RESULT_OK);
 
-    SECTION("machine free: shown and enabled") {
+    SECTION("machine free, nothing loaded: shown and enabled") {
         ScopedWireState idle(state(), helix::PrintJobState::STANDBY);
         AmsContextMenu menu;
         REQUIRE(menu.show_near_widget(test_screen(), /*slot_index=*/1, test_screen(),
@@ -1214,6 +1226,18 @@ TEST_CASE_METHOD(LVGLUITestFixture,
         REQUIRE(btn != nullptr);
         CHECK_FALSE(lv_obj_has_flag(btn, LV_OBJ_FLAG_HIDDEN));
         CHECK_FALSE(lv_obj_has_state(btn, LV_STATE_DISABLED));
+    }
+
+    SECTION("filament loaded: shown but disabled") {
+        ScopedWireState idle(state(), helix::PrintJobState::STANDBY);
+        backend->loaded = true;
+        AmsContextMenu menu;
+        REQUIRE(menu.show_near_widget(test_screen(), /*slot_index=*/1, test_screen(),
+                                      /*is_loaded=*/false, backend.get()));
+        lv_obj_t* btn = lv_obj_find_by_name(test_screen(), "btn_preload");
+        REQUIRE(btn != nullptr);
+        CHECK_FALSE(lv_obj_has_flag(btn, LV_OBJ_FLAG_HIDDEN));
+        CHECK(lv_obj_has_state(btn, LV_STATE_DISABLED));
     }
 
     SECTION("mid-print: shown but disabled") {

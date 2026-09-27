@@ -108,7 +108,7 @@
                      variant="ghost" clickable="true" style_flex_main_place="start" hidden="true">
             <event_cb trigger="clicked" callback="ams_context_gate_check_cb"/>
           </ui_button>
-          <!-- Preload Button (hidden unless backend supports lane preload, e.g. Happy Hare MMU_PRELOAD) -->
+          <!-- Preload Button (hidden unless the backend supports lane preload) -->
           <ui_button name="btn_preload"
                      height="#button_height_sm" icon="download" text="Preload" translation_tag="Preload" variant="ghost"
                      clickable="true" style_flex_main_place="start">
