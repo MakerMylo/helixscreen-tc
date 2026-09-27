@@ -685,6 +685,17 @@ TEST_CASE("PrinterDiscovery detects new AFC object types", "[printer_discovery][
         }
     }
 
+    SECTION("Natural sort: a suffix too long for an int sorts last instead of throwing") {
+        json objects = {"AFC", "AFC_lane lane2", "AFC_lane lane99999999999", "AFC_lane lane1"};
+        hw.parse_objects(objects);
+
+        auto lanes = hw.afc_lane_names();
+        REQUIRE(lanes.size() == 3);
+        REQUIRE(lanes[0] == "lane1");
+        REQUIRE(lanes[1] == "lane2");
+        REQUIRE(lanes[2] == "lane99999999999");
+    }
+
     SECTION("Natural sort: buffer names with numeric suffixes") {
         json objects = {"AFC", "AFC_buffer TN", "AFC_buffer TN2", "AFC_buffer TN1",
                         "AFC_buffer TN10"};

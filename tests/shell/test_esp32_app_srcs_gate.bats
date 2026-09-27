@@ -315,6 +315,30 @@ CPP
     contains "src/printer/compiled.cpp:2: try" "$output"
 }
 
+@test "headers are checked too: any of them can reach the firmware through an include" {
+    decide_all
+    mkdir -p "$ROOT/include"
+    printf 'inline int n(const std::string& s) { return std::stoi(s); }\n' > "$ROOT/include/sorting.h"
+    run_gate
+    [ "$status" -eq 1 ]
+    contains "include/sorting.h:1: std::sto*" "$output"
+}
+
+@test "an #else after a compiled #if branch is not compiled, whatever an #elif said" {
+    decide_all
+    cat > "$ROOT/src/printer/compiled.cpp" <<'CPP'
+#if defined(ESP_PLATFORM)
+    v = 1;
+#elif SOMETHING
+    v = 2;
+#else
+    try { g(); } catch (...) {}
+#endif
+CPP
+    run_gate
+    [ "$status" -eq 0 ]
+}
+
 @test "passes when every src/ file is in the manifest or exclusions" {
     # decide the new file: add it to the manifest
     decide_all

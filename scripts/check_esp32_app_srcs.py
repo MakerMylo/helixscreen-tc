@@ -104,7 +104,7 @@ LOCALE_INCLUDE = re.compile(
 
 # The ESP32 image is built without exceptions, so each of these aborts the device on
 # input the desktop build would catch: a wrongly typed or missing JSON field, text
-# that is not a number, an any holding another type. try/catch and throw no longer
+# that is not a number, an any holding another type. try/catch and throw do not
 # compile there, so the compiler flags those; these calls compile and abort.
 ABORTING_CALLS = [
     (re.compile(r'\.value\(\s*"'), 'json .value("key", d) throws on a wrongly typed field',
@@ -198,12 +198,21 @@ def exception_sites(text: str, defines: dict[str, str]) -> list[tuple[int, str]]
         stripped = line.strip()
         if stripped.startswith("#"):
             directive = re.sub(r"\s+", " ", stripped[1:].split("//", 1)[0]).strip()
+            # Each frame: [does the firmware compile this branch (None = unknown),
+            #              has an earlier branch of this #if been compiled].
             if directive.startswith("if"):
-                stack.append(firmware_condition(directive, defines))
+                cond = firmware_condition(directive, defines)
+                stack.append([cond, cond is True])
             elif directive.startswith("elif") and stack:
-                stack[-1] = False if stack[-1] else None
+                stack[-1][0] = False if stack[-1][1] else None
             elif directive.startswith("else") and stack:
-                stack[-1] = None if stack[-1] is None else not stack[-1]
+                frame = stack[-1]
+                if frame[1]:
+                    frame[0] = False
+                elif frame[0] is False:
+                    frame[0] = True
+                else:
+                    frame[0] = None
             elif directive.startswith("endif") and stack:
                 stack.pop()
             continue
@@ -211,7 +220,7 @@ def exception_sites(text: str, defines: dict[str, str]) -> list[tuple[int, str]]
         if "/*" in code:
             code, rest = code.split("/*", 1)
             in_block_comment = "*/" not in rest
-        if False in stack:
+        if any(frame[0] is False for frame in stack):
             continue
         m = EXCEPTION_CONSTRUCT.search(code)
         if m:
@@ -413,12 +422,24 @@ def compute(manifest: Path, exclusions: Path, src_root: Path) -> Findings:
     exception_constructs: list[tuple[str, int, str]] = []
     cmake = manifest.parent / "CMakeLists.txt"
     defines = firmware_defines(cmake.read_text() if cmake.exists() else "")
-    for f in sorted(included):
-        if not f.startswith("src/") or f not in universe:
-            continue
-        text = (src_root.parent / f).read_text(errors="replace")
-        for m in LOCALE_INCLUDE.finditer(text):
-            locale_includes.append((f, text.count("\n", 0, m.start()) + 1, m.group(1)))
+    base = src_root.parent
+    compiled = [f for f in sorted(included) if f.startswith("src/") and f in universe]
+    # Every header, not only the ones a compiled file includes: any of them can
+    # reach the firmware through an include, and tracing that graph here would be
+    # a second, weaker compiler. Plus the firmware's own component sources, which
+    # sit beside helixapp outside src/.
+    extra = [p.relative_to(base).as_posix()
+             for d in (base / "include", src_root) if d.is_dir()
+             for p in sorted(d.rglob("*.h"))]
+    if manifest.parent.name == "helixapp":
+        extra += [p.relative_to(base).as_posix()
+                  for p in sorted(manifest.parent.parent.glob("*/*.cpp"))
+                  if p.is_relative_to(base)]
+    for f in compiled + extra:
+        text = (base / f).read_text(errors="replace")
+        if f in compiled:
+            for m in LOCALE_INCLUDE.finditer(text):
+                locale_includes.append((f, text.count("\n", 0, m.start()) + 1, m.group(1)))
         for lineno, line in enumerate(text.splitlines(), 1):
             code = line.split("//", 1)[0]
             if code.lstrip().startswith("*"):
