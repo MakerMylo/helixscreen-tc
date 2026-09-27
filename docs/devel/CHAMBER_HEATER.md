@@ -340,8 +340,8 @@ ends the cycle. `DryerInfo::is_at_temp()` has no caller on this path.
 
 `remaining_seconds` is not a live countdown from the start: on the U1 rig a
 45°C/1h run reported `filament_drying_active: true`, `work_mode: 3`,
-`filament_timer: 1` and `remaining_seconds: 0` for its first two minutes, while
-the chamber climbed 25 to 30°C. The module updates the field only when the device
+`filament_timer: 1` and `remaining_seconds: 0` for all seven minutes watched,
+including after the chamber reached the 45°C target. The module updates the field only when the device
 sends one. The readout therefore omits the countdown while it reads 0, and nothing
 may treat 0 during an active run as "finished"; `filament_drying_active` is the
 only end signal.
@@ -365,3 +365,10 @@ absent) and sends `SET_IDLE_TIMEOUT TIMEOUT=<run seconds + 1800>`; every end pat
 sends the configured value back, unless a print owns the machine by then. When the
 configfile cannot be read nothing is held, since there would be no value to restore.
 The hold applies with or without the bed assist.
+
+Measured on the U1 (stock firmware, bed assist at 70°C): without the hold,
+`idle_timeout` fired five minutes after the start, the bed target went to 0 and the
+appliance left its run (`work_mode` 3 to 2, `work_on` false,
+`filament_drying_active` false). With `SET_IDLE_TIMEOUT` held, both ran on
+untouched past seven minutes. With the bed assist the chamber climbed 25 to 40°C in
+five minutes and held 44-45°C.

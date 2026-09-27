@@ -199,8 +199,9 @@ class AmsBackendSnapmaker : public AmsSubscriptionBackend {
     /// Eligibility answers from these; presence alone cannot distinguish a
     /// lane holding filament from a head that is loaded.
     struct ChannelSnapshot {
-        std::string state;       ///< channel_state, e.g. "load_finish"
-        std::string error{"ok"}; ///< channel_error
+        std::string state;        ///< channel_state, e.g. "load_finish"
+        std::string action_state; ///< channel_action_state: last op step, kept at rest
+        std::string error{"ok"};  ///< channel_error
         bool filament_detected{false};
         bool module_exist{false};
         bool disable_auto{false};
@@ -646,6 +647,12 @@ class AmsBackendSnapmaker : public AmsSubscriptionBackend {
     /// sensor_enabled arrives from the motion-sensor objects instead and is
     /// carried across a feeder write. Read by channel_snapshot().
     std::array<ChannelSnapshot, NUM_TOOLS> channel_snapshots_{};
+
+    /// Per channel: the last in-progress channel_state was a preload_*. A
+    /// preload ends at preload_finish; any other op merely rests there (an
+    /// unload heats with the channel still at preload_finish), so only this
+    /// lets preload_finish resolve the op. Under mutex_.
+    std::array<bool, NUM_TOOLS> preload_in_flight_{};
 
     /// Layer a configured FilamentSlotOverride for `slot_index` over `slot`,
     /// mutating `slot` in place. Override wins for every non-default field.

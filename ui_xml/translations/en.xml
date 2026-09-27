@@ -1532,6 +1532,7 @@
   <translation tag="Load or unload filament." en="Load or unload filament."/>
   <translation tag="Load the required filaments or start anyway?" en="Load the required filaments or start anyway?"/>
   <translation tag="Load, unload, and swap spools. View your multi-filament system at a glance, map colors to slots, and monitor runout sensors." en="Load, unload, and swap spools. View your multi-filament system at a glance, map colors to slots, and monitor runout sensors."/>
+  <translation tag="Load..." en="Load..."/>
   <translation tag="Loaded" en="Loaded"/>
   <translation tag="Loading" en="Loading"/>
   <translation tag="Loading Bed Mesh..." en="Loading Bed Mesh..."/>
@@ -3045,6 +3046,7 @@
   <translation tag="Unload from toolhead first" en="Unload from toolhead first"/>
   <translation tag="Unload macro not configured" en="Unload macro not configured"/>
   <translation tag="Unload the CFS filament before enabling bypass" en="Unload the CFS filament before enabling bypass"/>
+  <translation tag="Unload..." en="Unload..."/>
   <translation tag="Unloading" en="Unloading"/>
   <translation tag="Unloading Start Speed" en="Unloading Start Speed"/>
   <translation tag="Unloading before bypass..." en="Unloading before bypass..."/>

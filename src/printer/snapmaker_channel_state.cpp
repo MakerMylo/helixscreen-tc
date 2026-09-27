@@ -31,7 +31,7 @@ namespace helix::snapmaker {
         // --- preload (stage insert -> gear, NOT to nozzle) ---
         add("preload_prepare", {LOAD, 0, false, false, false, false, false});
         add("preload_feeding", {LOAD, 3, false, false, false, false, false});
-        add("preload_finish", {IDLE, -1, /*terminal=*/true, false, false, /*clear=*/true, false});
+        add("preload_finish", {IDLE, -1, false, false, false, /*clear=*/true, false});
         add("preload_fail", {ERR, -1, false, /*fail=*/true, false, false, false});
         // --- load (feed to nozzle) ---
         add("load_prepare", {LOAD, 0, false, false, false, false, false});
@@ -126,6 +126,23 @@ namespace helix::snapmaker {
 bool channel_state_in_progress(const std::string& state) {
     const AmsAction action = classify_channel_state(state).action;
     return action == AmsAction::LOADING || action == AmsAction::UNLOADING;
+}
+
+std::optional<std::string> settled_op_outcome(const std::string& channel_state,
+                                              const std::string& prev_action_state,
+                                              const std::string& action_state) {
+    if (channel_state.empty() || prev_action_state.empty() || action_state == prev_action_state) {
+        return std::nullopt;
+    }
+    const ChannelStateInfo resting = classify_channel_state(channel_state);
+    if (resting.action != AmsAction::IDLE || resting.is_terminal || resting.ignore) {
+        return std::nullopt;
+    }
+    const ChannelStateInfo outcome = classify_channel_state(action_state);
+    if (!outcome.is_terminal && !outcome.is_fail) {
+        return std::nullopt;
+    }
+    return action_state;
 }
 
 } // namespace helix::snapmaker

@@ -1660,6 +1660,7 @@ translations:
   Load the required filaments or start anyway?: Load the required filaments or start
     anyway?
   'Load, unload, and swap spools. View your multi-filament system at a glance, map colors to slots, and monitor runout sensors.': 'Load, unload, and swap spools. View your multi-filament system at a glance, map colors to slots, and monitor runout sensors.'
+  Load...: Load...
   Loaded: Loaded
   Loading: Loading
   Loading Bed Mesh...: Loading Bed Mesh...
@@ -3338,6 +3339,7 @@ translations:
   Unload from toolhead first: Unload from toolhead first
   Unload macro not configured: Unload macro not configured
   Unload the CFS filament before enabling bypass: Unload the CFS filament before enabling bypass
+  Unload...: Unload...
   Unloading: Unloading
   Unloading Start Speed: Unloading Start Speed
   Unloading before bypass...: Unloading before bypass...
