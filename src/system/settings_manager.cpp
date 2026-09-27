@@ -174,6 +174,13 @@ void SettingsManager::init_subjects() {
     jog_speed_z = std::clamp(jog_speed_z, 60, 60000);
     UI_MANAGED_SUBJECT_INT(jog_speed_z_subject_, jog_speed_z, "settings_jog_speed_z", subjects_);
 
+    // Coordinate readout source for the motion panel: commanded (default) or
+    // actual (live) position.
+    const int show_actual =
+        config->get<bool>(config->df() + "motion/show_actual_position", false) ? 1 : 0;
+    UI_MANAGED_SUBJECT_INT(motion_show_actual_position_subject_, show_actual,
+                           "settings_motion_show_actual_position", subjects_);
+
     // Jog step distances (Fine/Coarse/Turbo x inner/outer, mm). Read on every
     // jog rather than bound to a widget, so a cache is enough; the settings
     // overlay re-reads on open.
@@ -576,6 +583,26 @@ void SettingsManager::set_jog_speed_z(int mm_per_min) {
 
     TelemetryManager::instance().notify_setting_changed("jog_speed_z", old_val,
                                                         std::to_string(mm_per_min));
+}
+
+bool SettingsManager::get_motion_show_actual_position() const {
+    return lv_subject_get_int(const_cast<lv_subject_t*>(&motion_show_actual_position_subject_)) !=
+           0;
+}
+
+void SettingsManager::set_motion_show_actual_position(bool show) {
+    spdlog::info("[SettingsManager] set_motion_show_actual_position({})", show);
+
+    auto old_val = std::to_string(lv_subject_get_int(&motion_show_actual_position_subject_));
+
+    lv_subject_set_int(&motion_show_actual_position_subject_, show ? 1 : 0);
+
+    Config* config = Config::get_instance();
+    config->set<bool>(config->df() + "motion/show_actual_position", show);
+    config->save();
+
+    TelemetryManager::instance().notify_setting_changed("show_actual_position", old_val,
+                                                        show ? "1" : "0");
 }
 
 // ============================================================================

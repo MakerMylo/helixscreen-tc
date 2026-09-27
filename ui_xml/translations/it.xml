@@ -255,6 +255,7 @@
   <translation tag="Available Networks" it="Reti disponibili"/>
   <translation tag="Available networks" it="Reti disponibili"/>
   <translation tag="Average" it="Media"/>
+  <translation tag="Axis limits unknown" it="Limiti dell&apos;asse sconosciuti"/>
   <translation tag="B" it="B"/>
   <translation tag="BEACON" it="BEACON"/>
   <translation tag="BETA" it="BETA"/>
@@ -3187,14 +3188,16 @@
   <translation tag="X and Y jog feedrate" it="Velocità di avanzamento del movimento X e Y"/>
   <translation tag="X axis applied, but Y axis failed" it="Asse X applicato, ma asse Y fallito"/>
   <translation tag="X axis done, starting Y..." it="Asse X completato, avvio di Y..."/>
-  <translation tag="X jog blocked at bed edge" it="Movimento X bloccato al bordo del piano"/>
+  <translation tag="X is at its limit ({}mm)" it="X è al suo limite ({}mm)"/>
+  <translation tag="X position" it="Posizione X"/>
   <translation tag="X:" it="X:"/>
   <translation tag="XY" it="XY"/>
   <translation tag="Y" it="Y"/>
   <translation tag="Y Axis" it="Asse Y"/>
   <translation tag="Y Offset" it="Offset Y"/>
   <translation tag="Y axis limit reached" it="Limite asse Y raggiunto"/>
-  <translation tag="Y jog blocked at bed edge" it="Movimento Y bloccato al bordo del piano"/>
+  <translation tag="Y is at its limit ({}mm)" it="Y è al suo limite ({}mm)"/>
+  <translation tag="Y position" it="Posizione Y"/>
   <translation tag="Y:" it="Y:"/>
   <translation tag="YOU WIN!&#10;Score: {}&#10;Tap to play again" it="HAI VINTO!&#10;Punteggio: {}&#10;Tocca per rigiocare"/>
   <translation tag="Year" it="Anno"/>
@@ -3214,9 +3217,10 @@
   <translation tag="Z Offset" it="Z Offset"/>
   <translation tag="Z Range" it="Intervallo Z"/>
   <translation tag="Z Tilt Adjust..." it="Regolazione inclinazione Z..."/>
-  <translation tag="Z jog blocked at axis limit" it="Movimento Z bloccato al limite dell&apos;asse"/>
+  <translation tag="Z is at its limit ({}mm)" it="Z è al suo limite ({}mm)"/>
   <translation tag="Z jog feedrate" it="Velocità di avanzamento del movimento Z"/>
   <translation tag="Z motor calibration failed" it="Calibrazione del motore Z non riuscita"/>
+  <translation tag="Z position" it="Posizione Z"/>
   <translation tag="Z probes for bed leveling and mesh generation" it="Sonde Z per livellamento piano e generazione mesh"/>
   <translation tag="Z-Off:" it="Z-Off:"/>
   <translation tag="Z-Offset" it="Z-Offset"/>

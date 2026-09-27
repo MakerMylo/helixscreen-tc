@@ -284,6 +284,7 @@ translations:
   Available Networks: Redes Disponíveis
   Available networks: Redes disponíveis
   Average: Média
+  Axis limits unknown: Limites do eixo desconhecidos
   B: B
   BEACON: BEACON
   BETA: BETA
@@ -3576,14 +3577,16 @@ translations:
   X and Y jog feedrate: Velocidade de movimento dos eixos X e Y
   X axis applied, but Y axis failed: Eixo X aplicado, mas eixo Y falhou
   X axis done, starting Y...: 'Eixo X concluído, iniciando Y...'
-  X jog blocked at bed edge: Movimento X bloqueado na borda da mesa
+  X is at its limit ({}mm): X está no seu limite ({}mm)
+  X position: 'Posição X'
   'X:': 'X:'
   XY: XY
   Y: Y
   Y Axis: Eixo Y
   Y Offset: Offset Y
   Y axis limit reached: Limite do eixo Y alcançado
-  Y jog blocked at bed edge: Movimento Y bloqueado na borda da mesa
+  Y is at its limit ({}mm): Y está no seu limite ({}mm)
+  Y position: 'Posição Y'
   'Y:': 'Y:'
   ? "YOU WIN!\nScore: {}\nTap to play again"
   : "VOCÊ VENCEU!\nPontuação: {}\nToque para jogar de novo"
@@ -3609,9 +3612,10 @@ translations:
   Z Offset: Z Offset
   Z Range: Alcance Z
   Z Tilt Adjust...: Ajuste de inclinação Z...
-  Z jog blocked at axis limit: Movimento Z bloqueado no limite do eixo
+  Z is at its limit ({}mm): Z está no seu limite ({}mm)
   Z jog feedrate: Velocidade de movimento do eixo Z
   Z motor calibration failed: Falha na calibração do motor Z
+  Z position: 'Posição Z'
   Z probes for bed leveling and mesh generation: Sondas Z para nivelamento da mesa
     e geração de malha
   'Z-Off:': 'Z-Offset:'

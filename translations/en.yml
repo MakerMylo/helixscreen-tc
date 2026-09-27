@@ -273,6 +273,7 @@ translations:
   Available Networks: Available Networks
   Available networks: Available networks
   Average: Average
+  Axis limits unknown: Axis limits unknown
   B: B
   BEACON: BEACON
   BETA: BETA
@@ -3494,14 +3495,16 @@ translations:
   X and Y jog feedrate: X and Y jog feedrate
   X axis applied, but Y axis failed: X axis applied, but Y axis failed
   X axis done, starting Y...: X axis done, starting Y...
-  X jog blocked at bed edge: X jog blocked at bed edge
+  X is at its limit ({}mm): X is at its limit ({}mm)
+  X position: X position
   'X:': 'X:'
   XY: XY
   Y: Y
   Y Axis: Y Axis
   Y Offset: Y Offset
   Y axis limit reached: Y axis limit reached
-  Y jog blocked at bed edge: Y jog blocked at bed edge
+  Y is at its limit ({}mm): Y is at its limit ({}mm)
+  Y position: Y position
   'Y:': 'Y:'
   ? "YOU WIN!\nScore: {}\nTap to play again"
   : "YOU WIN!\nScore: {}\nTap to play again"
@@ -3527,9 +3530,10 @@ translations:
   Z Offset: Z Offset
   Z Range: Z Range
   Z Tilt Adjust...: Z Tilt Adjust...
-  Z jog blocked at axis limit: Z jog blocked at axis limit
+  Z is at its limit ({}mm): Z is at its limit ({}mm)
   Z jog feedrate: Z jog feedrate
   Z motor calibration failed: Z motor calibration failed
+  Z position: Z position
   Z probes for bed leveling and mesh generation: Z probes for bed leveling and mesh
     generation
   'Z-Off:': 'Z-Off:'

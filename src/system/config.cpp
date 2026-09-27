@@ -102,6 +102,7 @@ json get_default_printer_config(const std::string& moonraker_host) {
         {"motion",
          {{"jog_speed_xy", 6000},
           {"jog_speed_z", 600},
+          {"show_actual_position", false},
           {"fine_inner", 0.1f},
           {"fine_outer", 1.0f},
           {"coarse_inner", 1.0f},

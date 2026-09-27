@@ -188,7 +188,9 @@ TEST_CASE_METHOD(LVGLTestFixture, "HoldRepeatTimer release stops ticks and keeps
 #include "app_globals.h"
 #include "moonraker_api.h"
 #include "moonraker_client_mock.h"
+#include "settings_manager.h"
 #include "static_panel_registry.h"
+#include "toolhead_homing.h"
 #include "ui/ui_lazy_panel_helper.h"
 
 #include <array>
@@ -236,14 +238,16 @@ TEST_CASE_METHOD(LVGLUITestFixture, "a Z jog blocked at the ceiling cancels the 
     CHECK_FALSE(panel.z_hold_timer().poll(HoldRepeat::DELAY_MS - 1));
     CHECK(warnings.empty());
 
-    // First repeat at the delay: the jog is clamped to zero at the ceiling,
-    // warned once, and the refusal stops the repeat.
+    // First repeat at the delay is the press's INITIAL jog: a fresh press
+    // already at the limit warns every time, and the refusal stops the repeat.
     CHECK(panel.z_hold_timer().poll(HoldRepeat::DELAY_MS));
     CHECK_FALSE(panel.z_hold_timer().ticking());
     REQUIRE(warnings.size() == 1);
-    CHECK(warnings.front().find("blocked") != std::string::npos);
+    CHECK(warnings.front().find("Z is at its limit") != std::string::npos);
+    CHECK(warnings.front().find("250.00mm") != std::string::npos);
 
-    // No further ticks, so ticks into the wall can never raise a second toast.
+    // Repeat ticks into the wall can never raise a toast (and none fire: the
+    // refusal already stopped the timer).
     CHECK_FALSE(panel.z_hold_timer().poll(HoldRepeat::DELAY_MS + HoldRepeat::INTERVAL_MS));
     CHECK(warnings.size() == 1);
 
@@ -333,6 +337,421 @@ TEST_CASE_METHOD(LVGLUITestFixture, "a hold that repeated jogs exactly once on r
 
     set_moonraker_api(previous_api);
     helix::ui::UpdateQueue::instance().drain();
+    StaticPanelRegistry::instance().destroy_all();
+    helix::ui::UpdateQueue::instance().drain();
+}
+
+// ============================================================================
+// Limit feedback: a fresh press at a limit warns every time, repeat ticks
+// stay silent, and the Z buttons render their limit state.
+// ============================================================================
+
+TEST_CASE("z_direction_blocked decides from the bound the button drives toward",
+          "[motion][limits]") {
+    // At the ceiling: up is impossible, down is not.
+    CHECK(helix::z_direction_blocked(true, true, 250.0, 0.0, 250.0, +1.0));
+    CHECK_FALSE(helix::z_direction_blocked(true, true, 250.0, 0.0, 250.0, -1.0));
+    // At the floor: down is impossible, up is not.
+    CHECK(helix::z_direction_blocked(true, true, 0.0, 0.0, 250.0, -1.0));
+    CHECK_FALSE(helix::z_direction_blocked(true, true, 0.0, 0.0, 250.0, +1.0));
+    // Mid-range: both directions have room.
+    CHECK_FALSE(helix::z_direction_blocked(true, true, 125.0, 0.0, 250.0, +1.0));
+    CHECK_FALSE(helix::z_direction_blocked(true, true, 125.0, 0.0, 250.0, -1.0));
+
+    // bed_moves printers pass the post-inversion direction: at the ceiling,
+    // the button driving G-code Z- still has room.
+    CHECK_FALSE(helix::z_direction_blocked(true, true, 250.0, 0.0, 250.0, -10.0));
+    CHECK(helix::z_direction_blocked(true, true, 250.0, 0.0, 250.0, +10.0));
+
+    // A hair inside the envelope is still at the bound: the epsilon reads the
+    // distance to the bound, not the move.
+    CHECK(helix::z_direction_blocked(true, true, 250.0 - 1e-7, 0.0, 250.0, +1.0));
+
+    // Without homing or a known envelope the buttons stay enabled.
+    CHECK_FALSE(helix::z_direction_blocked(false, true, 250.0, 0.0, 250.0, +1.0));
+    CHECK_FALSE(helix::z_direction_blocked(true, false, 250.0, 0.0, 250.0, +1.0));
+}
+
+TEST_CASE_METHOD(LVGLUITestFixture, "two taps at the Z limit warn twice", "[motion][limits][xml]") {
+    std::array<lv_obj_t*, UI_PANEL_COUNT> panels{};
+    for (auto& p : panels)
+        p = lv_obj_create(lv_screen_active());
+    NavigationManager::instance().set_panels(panels.data());
+
+    lv_obj_t* cached = nullptr;
+    REQUIRE(helix::ui::lazy_create_and_push_overlay<MotionPanel>(
+        get_global_motion_panel, cached, lv_screen_active(), "Motion", "test"));
+    helix::ui::UpdateQueue::instance().drain();
+
+    MotionPanel& panel = get_global_motion_panel();
+    get_printer_state().update_from_status({{"toolhead",
+                                             {{"homed_axes", "xyz"},
+                                              {"axis_minimum", {0.0, 0.0, 0.0, 0.0}},
+                                              {"axis_maximum", {235.0, 235.0, 250.0, 0.0}}}}});
+    helix::ui::UpdateQueue::instance().drain();
+    lv_subject_set_int(get_printer_state().get_gcode_position_z_subject(), 25'000); // 250.00mm
+    helix::ui::UpdateQueue::instance().drain();
+
+    std::vector<std::string> warnings;
+    helix::ui::set_test_notification_warning_hook(
+        [&warnings](const std::string& msg) { warnings.push_back(msg); });
+
+    // Each tap is a fresh press: both warn, with the limit it hit.
+    CHECK_FALSE(panel.handle_z_button("z_up_large"));
+    REQUIRE(warnings.size() == 1);
+    CHECK(warnings.front().find("Z is at its limit (250.00mm)") != std::string::npos);
+    CHECK_FALSE(panel.handle_z_button("z_up_large"));
+    REQUIRE(warnings.size() == 2);
+    CHECK(warnings[1].find("Z is at its limit (250.00mm)") != std::string::npos);
+
+    helix::ui::set_test_notification_warning_hook(nullptr);
+    StaticPanelRegistry::instance().destroy_all();
+    helix::ui::UpdateQueue::instance().drain();
+}
+
+TEST_CASE_METHOD(LVGLUITestFixture, "a hold that moves then hits the ceiling stops silently",
+                 "[motion][limits][xml]") {
+    // The Z button distances come from SettingsManager; without init_subjects()
+    // the cache reads as zero and clamps to the 0.01mm floor, so the hold
+    // would creep a hundredth at a time and never reach the ceiling.
+    SettingsManager::instance().init_subjects();
+
+    std::array<lv_obj_t*, UI_PANEL_COUNT> panels{};
+    for (auto& p : panels)
+        p = lv_obj_create(lv_screen_active());
+    NavigationManager::instance().set_panels(panels.data());
+
+    lv_obj_t* cached = nullptr;
+    REQUIRE(helix::ui::lazy_create_and_push_overlay<MotionPanel>(
+        get_global_motion_panel, cached, lv_screen_active(), "Motion", "test"));
+    helix::ui::UpdateQueue::instance().drain();
+
+    MotionPanel& panel = get_global_motion_panel();
+    lv_obj_t* root = panel.get_root();
+    lv_obj_t* z_up = lv_obj_find_by_name(root, "z_up_large");
+    REQUIRE(z_up != nullptr);
+
+    get_printer_state().update_from_status({{"toolhead",
+                                             {{"homed_axes", "xyz"},
+                                              {"axis_minimum", {0.0, 0.0, 0.0, 0.0}},
+                                              {"axis_maximum", {235.0, 235.0, 250.0, 0.0}}}}});
+    get_printer_state().set_klippy_state_sync(helix::KlippyState::READY);
+    lv_subject_set_int(get_printer_state().get_print_state_enum_subject(),
+                       static_cast<int>(helix::PrintJobState::STANDBY));
+    helix::ui::UpdateQueue::instance().drain();
+
+    MoonrakerClientMock client{MoonrakerClientMock::PrinterType::VORON_24};
+    MoonrakerAPI api{client, get_printer_state()};
+    IMoonrakerAPI* previous_api = get_moonraker_api();
+    set_moonraker_api(&api);
+
+    // 5mm below the ceiling, seeded after the klippy/print-state churn above:
+    // processing those events rewrites the position subjects. The first tick
+    // (Coarse outer, 10mm) moves the remaining 5 as a silent partial; the
+    // second is fully clamped and stops the repeat without a toast.
+    lv_subject_set_int(get_printer_state().get_gcode_position_z_subject(), 24'500); // 245.00mm
+    helix::ui::UpdateQueue::instance().drain();
+
+    std::vector<std::string> warnings;
+    helix::ui::set_test_notification_warning_hook(
+        [&warnings](const std::string& msg) { warnings.push_back(msg); });
+
+    lv_obj_send_event(z_up, LV_EVENT_PRESSED, nullptr);
+    REQUIRE(panel.z_hold_timer().ticking());
+
+    // Partial first tick: moves 5 of the requested 10, no toast, keeps ticking.
+    CHECK(panel.z_hold_timer().poll(HoldRepeat::DELAY_MS));
+    CHECK(panel.z_hold_timer().ticking());
+    CHECK(warnings.empty());
+
+    // Repeat tick into the ceiling: fully clamped, stops the repeat, no toast.
+    CHECK(panel.z_hold_timer().poll(HoldRepeat::DELAY_MS + HoldRepeat::INTERVAL_MS));
+    CHECK_FALSE(panel.z_hold_timer().ticking());
+    CHECK(warnings.empty());
+
+    helix::ui::set_test_notification_warning_hook(nullptr);
+    set_moonraker_api(previous_api);
+    helix::ui::UpdateQueue::instance().drain();
+    StaticPanelRegistry::instance().destroy_all();
+    helix::ui::UpdateQueue::instance().drain();
+}
+
+TEST_CASE_METHOD(LVGLUITestFixture, "Z buttons disable at the ceiling and swap under bed_moves",
+                 "[motion][limits][xml]") {
+    std::array<lv_obj_t*, UI_PANEL_COUNT> panels{};
+    for (auto& p : panels)
+        p = lv_obj_create(lv_screen_active());
+    NavigationManager::instance().set_panels(panels.data());
+
+    lv_obj_t* cached = nullptr;
+    REQUIRE(helix::ui::lazy_create_and_push_overlay<MotionPanel>(
+        get_global_motion_panel, cached, lv_screen_active(), "Motion", "test"));
+    helix::ui::UpdateQueue::instance().drain();
+
+    MotionPanel& panel = get_global_motion_panel();
+    lv_obj_t* root = panel.get_root();
+    lv_obj_t* up_large = lv_obj_find_by_name(root, "z_up_large");
+    lv_obj_t* up_small = lv_obj_find_by_name(root, "z_up_small");
+    lv_obj_t* down_large = lv_obj_find_by_name(root, "z_down_large");
+    REQUIRE(up_large != nullptr);
+    REQUIRE(up_small != nullptr);
+    REQUIRE(down_large != nullptr);
+
+    get_printer_state().update_from_status({{"toolhead",
+                                             {{"homed_axes", "xyz"},
+                                              {"axis_minimum", {0.0, 0.0, 0.0, 0.0}},
+                                              {"axis_maximum", {235.0, 235.0, 250.0, 0.0}}}}});
+    helix::ui::UpdateQueue::instance().drain();
+    lv_subject_set_int(get_printer_state().get_gcode_position_z_subject(), 10'000); // 100.00mm
+    helix::ui::UpdateQueue::instance().drain();
+    CHECK_FALSE(lv_obj_has_state(up_large, LV_STATE_DISABLED));
+    CHECK_FALSE(lv_obj_has_state(down_large, LV_STATE_DISABLED));
+
+    // Reaching the max disables both up buttons; down still has room.
+    lv_subject_set_int(get_printer_state().get_gcode_position_z_subject(), 25'000); // 250.00mm
+    helix::ui::UpdateQueue::instance().drain();
+    CHECK(lv_obj_has_state(up_large, LV_STATE_DISABLED));
+    CHECK(lv_obj_has_state(up_small, LV_STATE_DISABLED));
+    CHECK_FALSE(lv_obj_has_state(down_large, LV_STATE_DISABLED));
+
+    // A bed-moves printer swaps the direction each on-screen arrow drives, so
+    // the disabled pair swaps with it.
+    lv_subject_set_int(get_printer_state().get_printer_bed_moves_subject(), 1);
+    helix::ui::UpdateQueue::instance().drain();
+    CHECK_FALSE(lv_obj_has_state(up_large, LV_STATE_DISABLED));
+    CHECK(lv_obj_has_state(down_large, LV_STATE_DISABLED));
+
+    StaticPanelRegistry::instance().destroy_all();
+    helix::ui::UpdateQueue::instance().drain();
+}
+
+TEST_CASE_METHOD(LVGLUITestFixture, "a coordinate tap sends one absolute single-axis move",
+                 "[motion][coords][xml]") {
+    SettingsManager::instance().init_subjects();
+
+    std::array<lv_obj_t*, UI_PANEL_COUNT> panels{};
+    for (auto& p : panels)
+        p = lv_obj_create(lv_screen_active());
+    NavigationManager::instance().set_panels(panels.data());
+
+    lv_obj_t* cached = nullptr;
+    REQUIRE(helix::ui::lazy_create_and_push_overlay<MotionPanel>(
+        get_global_motion_panel, cached, lv_screen_active(), "Motion", "test"));
+    helix::ui::UpdateQueue::instance().drain();
+
+    MotionPanel& panel = get_global_motion_panel();
+    get_printer_state().update_from_status({{"toolhead",
+                                             {{"homed_axes", "xyz"},
+                                              {"axis_minimum", {0.0, 0.0, 0.0, 0.0}},
+                                              {"axis_maximum", {235.0, 235.0, 250.0, 0.0}}}}});
+    get_printer_state().set_klippy_state_sync(helix::KlippyState::READY);
+    lv_subject_set_int(get_printer_state().get_print_state_enum_subject(),
+                       static_cast<int>(helix::PrintJobState::STANDBY));
+    helix::ui::UpdateQueue::instance().drain();
+
+    MoonrakerClientMock client{MoonrakerClientMock::PrinterType::VORON_24};
+    MoonrakerAPI api{client, get_printer_state()};
+    IMoonrakerAPI* previous_api = get_moonraker_api();
+    set_moonraker_api(&api);
+    client.clear_gcode_script_history();
+
+    // The setup reached the branch under test: Y homed with a known envelope,
+    // so the tap dispatches immediately with no homing detour.
+    REQUIRE(get_printer_state().get_axis_bounds().has_y);
+    REQUIRE(helix::axis_is_homed(get_printer_state(), helix::Axis::Y));
+
+    panel.request_axis_target('y', 100.0);
+    helix::ui::UpdateQueue::instance().drain();
+
+    const auto& history = client.gcode_script_history();
+    int move_lines = 0;
+    std::string move;
+    int homing_lines = 0;
+    for (const auto& script : history) {
+        if (script.find("G0 Y100") != std::string::npos) {
+            ++move_lines;
+            move = script;
+        }
+        if (script.find("G28") != std::string::npos) {
+            ++homing_lines;
+        }
+    }
+    REQUIRE(move_lines == 1);
+    CHECK(homing_lines == 0);
+    // Only Y is commanded: the other axes must not appear as G0 terms.
+    CHECK(move.find(" X") == std::string::npos);
+    CHECK(move.find(" Z") == std::string::npos);
+
+    set_moonraker_api(previous_api);
+    helix::ui::UpdateQueue::instance().drain();
+    StaticPanelRegistry::instance().destroy_all();
+    helix::ui::UpdateQueue::instance().drain();
+}
+
+TEST_CASE_METHOD(LVGLUITestFixture, "an unhomed coordinate tap homes first then moves",
+                 "[motion][coords][xml]") {
+    SettingsManager::instance().init_subjects();
+
+    std::array<lv_obj_t*, UI_PANEL_COUNT> panels{};
+    for (auto& p : panels)
+        p = lv_obj_create(lv_screen_active());
+    NavigationManager::instance().set_panels(panels.data());
+
+    lv_obj_t* cached = nullptr;
+    REQUIRE(helix::ui::lazy_create_and_push_overlay<MotionPanel>(
+        get_global_motion_panel, cached, lv_screen_active(), "Motion", "test"));
+    helix::ui::UpdateQueue::instance().drain();
+
+    MotionPanel& panel = get_global_motion_panel();
+    get_printer_state().update_from_status({{"toolhead",
+                                             {{"homed_axes", ""},
+                                              {"axis_minimum", {0.0, 0.0, 0.0, 0.0}},
+                                              {"axis_maximum", {235.0, 235.0, 250.0, 0.0}}}}});
+    get_printer_state().set_klippy_state_sync(helix::KlippyState::READY);
+    lv_subject_set_int(get_printer_state().get_print_state_enum_subject(),
+                       static_cast<int>(helix::PrintJobState::STANDBY));
+    helix::ui::UpdateQueue::instance().drain();
+
+    MoonrakerClientMock client{MoonrakerClientMock::PrinterType::VORON_24};
+    MoonrakerAPI api{client, get_printer_state()};
+    IMoonrakerAPI* previous_api = get_moonraker_api();
+    set_moonraker_api(&api);
+    client.clear_gcode_script_history();
+
+    // Unhomed with a known envelope: the move must wait for a full G28.
+    REQUIRE(get_printer_state().get_axis_bounds().has_y);
+    REQUIRE_FALSE(helix::axis_is_homed(get_printer_state(), helix::Axis::Y));
+
+    panel.request_axis_target('y', 100.0);
+    helix::ui::UpdateQueue::instance().drain();
+
+    const auto& history = client.gcode_script_history();
+    size_t home_at = std::string::npos;
+    size_t move_at = std::string::npos;
+    int homing_lines = 0;
+    std::string move;
+    for (size_t i = 0; i < history.size(); ++i) {
+        if (history[i].find("G28") != std::string::npos) {
+            if (home_at == std::string::npos)
+                home_at = i;
+            ++homing_lines;
+        }
+        if (history[i].find("G0 Y100") != std::string::npos) {
+            move_at = i;
+            move = history[i];
+        }
+    }
+    REQUIRE(homing_lines == 1);
+    REQUIRE(move_at != std::string::npos);
+    CHECK(home_at < move_at); // the move only goes out after G28 completes
+    CHECK(move.find(" X") == std::string::npos);
+    CHECK(move.find(" Z") == std::string::npos);
+
+    set_moonraker_api(previous_api);
+    helix::ui::UpdateQueue::instance().drain();
+    StaticPanelRegistry::instance().destroy_all();
+    helix::ui::UpdateQueue::instance().drain();
+}
+
+TEST_CASE_METHOD(LVGLUITestFixture,
+                 "a Z button disabled under a hold drops its pressed look and follows commanded Z",
+                 "[motion][limits][xml]") {
+    SettingsManager::instance().init_subjects();
+
+    std::array<lv_obj_t*, UI_PANEL_COUNT> panels{};
+    for (auto& p : panels)
+        p = lv_obj_create(lv_screen_active());
+    NavigationManager::instance().set_panels(panels.data());
+
+    lv_obj_t* cached = nullptr;
+    REQUIRE(helix::ui::lazy_create_and_push_overlay<MotionPanel>(
+        get_global_motion_panel, cached, lv_screen_active(), "Motion", "test"));
+    helix::ui::UpdateQueue::instance().drain();
+
+    MotionPanel& panel = get_global_motion_panel();
+    lv_obj_t* z_up = lv_obj_find_by_name(panel.get_root(), "z_up_large");
+    REQUIRE(z_up != nullptr);
+
+    get_printer_state().update_from_status({{"toolhead",
+                                             {{"homed_axes", "xyz"},
+                                              {"axis_minimum", {0.0, 0.0, 0.0, 0.0}},
+                                              {"axis_maximum", {235.0, 235.0, 250.0, 0.0}}}}});
+    get_printer_state().set_klippy_state_sync(helix::KlippyState::READY);
+    lv_subject_set_int(get_printer_state().get_print_state_enum_subject(),
+                       static_cast<int>(helix::PrintJobState::STANDBY));
+    helix::ui::UpdateQueue::instance().drain();
+
+    MoonrakerClientMock client{MoonrakerClientMock::PrinterType::VORON_24};
+    MoonrakerAPI api{client, get_printer_state()};
+    IMoonrakerAPI* previous_api = get_moonraker_api();
+    set_moonraker_api(&api);
+
+    lv_subject_set_int(get_printer_state().get_gcode_position_z_subject(), 24'500); // 245.00mm
+    helix::ui::UpdateQueue::instance().drain();
+
+    // A real finger sets PRESSED through the input device; the test sets it.
+    lv_obj_add_state(z_up, LV_STATE_PRESSED);
+    lv_obj_send_event(z_up, LV_EVENT_PRESSED, nullptr);
+    REQUIRE(panel.z_hold_timer().poll(HoldRepeat::DELAY_MS)); // moves the last 5mm
+
+    // Any recompute before the head reports 250 reads commanded Z, so the up
+    // buttons stay live even while the move toward the ceiling is in flight.
+    lv_subject_set_int(get_printer_state().get_printer_bed_moves_subject(), 1);
+    lv_subject_set_int(get_printer_state().get_printer_bed_moves_subject(), 0);
+    helix::ui::UpdateQueue::instance().drain();
+    CHECK_FALSE(lv_obj_has_state(z_up, LV_STATE_DISABLED));
+
+    // The head reaches the ceiling: the held button disables under the finger,
+    // and the next tick's refusal clears the pressed look LVGL would keep.
+    lv_subject_set_int(get_printer_state().get_gcode_position_z_subject(), 25'000);
+    helix::ui::UpdateQueue::instance().drain();
+    REQUIRE(lv_obj_has_state(z_up, LV_STATE_DISABLED));
+    CHECK(panel.z_hold_timer().poll(HoldRepeat::DELAY_MS + HoldRepeat::INTERVAL_MS));
+    CHECK_FALSE(panel.z_hold_timer().ticking());
+    CHECK_FALSE(lv_obj_has_state(z_up, LV_STATE_PRESSED));
+
+    set_moonraker_api(previous_api);
+    helix::ui::UpdateQueue::instance().drain();
+    StaticPanelRegistry::instance().destroy_all();
+    helix::ui::UpdateQueue::instance().drain();
+}
+
+TEST_CASE_METHOD(LVGLUITestFixture, "a diagonal along a wall moves the free axis without warning",
+                 "[motion][limits][xml]") {
+    std::array<lv_obj_t*, UI_PANEL_COUNT> panels{};
+    for (auto& p : panels)
+        p = lv_obj_create(lv_screen_active());
+    NavigationManager::instance().set_panels(panels.data());
+
+    lv_obj_t* cached = nullptr;
+    REQUIRE(helix::ui::lazy_create_and_push_overlay<MotionPanel>(
+        get_global_motion_panel, cached, lv_screen_active(), "Motion", "test"));
+    helix::ui::UpdateQueue::instance().drain();
+
+    MotionPanel& panel = get_global_motion_panel();
+    get_printer_state().update_from_status({{"toolhead",
+                                             {{"homed_axes", "xyz"},
+                                              {"axis_minimum", {0.0, 0.0, 0.0, 0.0}},
+                                              {"axis_maximum", {235.0, 235.0, 250.0, 0.0}}}}});
+    helix::ui::UpdateQueue::instance().drain();
+    lv_subject_set_int(get_printer_state().get_gcode_position_x_subject(), 23'500); // X at max
+    lv_subject_set_int(get_printer_state().get_gcode_position_y_subject(), 10'000); // Y mid
+    helix::ui::UpdateQueue::instance().drain();
+
+    std::vector<std::string> warnings;
+    helix::ui::set_test_notification_warning_hook(
+        [&warnings](const std::string& msg) { warnings.push_back(msg); });
+
+    // NE: X is pinned, Y still moves, so the press is partial travel.
+    panel.jog(helix::JogDirection::NE, 10.0f);
+    CHECK(warnings.empty());
+
+    // E: nothing can move, so the fresh press warns.
+    panel.jog(helix::JogDirection::E, 10.0f);
+    REQUIRE(warnings.size() == 1);
+    CHECK(warnings.front().find("X is at its limit (235.00mm)") != std::string::npos);
+
+    helix::ui::set_test_notification_warning_hook(nullptr);
     StaticPanelRegistry::instance().destroy_all();
     helix::ui::UpdateQueue::instance().drain();
 }

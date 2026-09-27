@@ -255,6 +255,7 @@
   <translation tag="Available Networks" en="Available Networks"/>
   <translation tag="Available networks" en="Available networks"/>
   <translation tag="Average" en="Average"/>
+  <translation tag="Axis limits unknown" en="Axis limits unknown"/>
   <translation tag="B" en="B"/>
   <translation tag="BEACON" en="BEACON"/>
   <translation tag="BETA" en="BETA"/>
@@ -3187,14 +3188,16 @@
   <translation tag="X and Y jog feedrate" en="X and Y jog feedrate"/>
   <translation tag="X axis applied, but Y axis failed" en="X axis applied, but Y axis failed"/>
   <translation tag="X axis done, starting Y..." en="X axis done, starting Y..."/>
-  <translation tag="X jog blocked at bed edge" en="X jog blocked at bed edge"/>
+  <translation tag="X is at its limit ({}mm)" en="X is at its limit ({}mm)"/>
+  <translation tag="X position" en="X position"/>
   <translation tag="X:" en="X:"/>
   <translation tag="XY" en="XY"/>
   <translation tag="Y" en="Y"/>
   <translation tag="Y Axis" en="Y Axis"/>
   <translation tag="Y Offset" en="Y Offset"/>
   <translation tag="Y axis limit reached" en="Y axis limit reached"/>
-  <translation tag="Y jog blocked at bed edge" en="Y jog blocked at bed edge"/>
+  <translation tag="Y is at its limit ({}mm)" en="Y is at its limit ({}mm)"/>
+  <translation tag="Y position" en="Y position"/>
   <translation tag="Y:" en="Y:"/>
   <translation tag="YOU WIN!&#10;Score: {}&#10;Tap to play again" en="YOU WIN!&#10;Score: {}&#10;Tap to play again"/>
   <translation tag="Year" en="Year"/>
@@ -3214,9 +3217,10 @@
   <translation tag="Z Offset" en="Z Offset"/>
   <translation tag="Z Range" en="Z Range"/>
   <translation tag="Z Tilt Adjust..." en="Z Tilt Adjust..."/>
-  <translation tag="Z jog blocked at axis limit" en="Z jog blocked at axis limit"/>
+  <translation tag="Z is at its limit ({}mm)" en="Z is at its limit ({}mm)"/>
   <translation tag="Z jog feedrate" en="Z jog feedrate"/>
   <translation tag="Z motor calibration failed" en="Z motor calibration failed"/>
+  <translation tag="Z position" en="Z position"/>
   <translation tag="Z probes for bed leveling and mesh generation" en="Z probes for bed leveling and mesh generation"/>
   <translation tag="Z-Off:" en="Z-Off:"/>
   <translation tag="Z-Offset" en="Z-Offset"/>

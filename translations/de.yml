@@ -289,6 +289,7 @@ translations:
   Available Networks: Verfügbare Netzwerke
   Available networks: Verfügbare Netzwerke
   Average: Durchschnitt
+  Axis limits unknown: Achsgrenzen unbekannt
   B: B
   BEACON: BEACON
   BETA: BETA
@@ -3577,14 +3578,16 @@ translations:
   X and Y jog feedrate: Vorschub für die X- und Y-Bewegung
   X axis applied, but Y axis failed: X-Achse angewendet, aber Y-Achse fehlgeschlagen
   X axis done, starting Y...: 'X-Achse fertig, starte Y...'
-  X jog blocked at bed edge: X-Bewegung an Bettkante blockiert
+  X is at its limit ({}mm): X ist an seinem Limit ({}mm)
+  X position: 'X-Position'
   'X:': 'X:'
   XY: XY
   Y: Y
   Y Axis: Y-Achse
   Y Offset: Y-Offset
   Y axis limit reached: Y-Achsen-Limit erreicht
-  Y jog blocked at bed edge: Y-Bewegung an Bettkante blockiert
+  Y is at its limit ({}mm): Y ist an seinem Limit ({}mm)
+  Y position: 'Y-Position'
   'Y:': 'Y:'
   ? "YOU WIN!\nScore: {}\nTap to play again"
   : "GEWONNEN!\nPunkte: {}\nZum erneuten Spielen tippen"
@@ -3611,9 +3614,10 @@ translations:
   Z Offset: Z Offset
   Z Range: Z-Bereich
   Z Tilt Adjust...: Z-Neigung anpassen...
-  Z jog blocked at axis limit: Z-Bewegung an Achsgrenze blockiert
+  Z is at its limit ({}mm): Z ist an seinem Limit ({}mm)
   Z jog feedrate: Vorschub für die Z-Bewegung
   Z motor calibration failed: Kalibrierung des Z-Motors fehlgeschlagen
+  Z position: 'Z-Position'
   Z probes for bed leveling and mesh generation: Z-Sonden für Bettnivellierung und
     Netzerzeugung
   'Z-Off:': 'Z-Off:'

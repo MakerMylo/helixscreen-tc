@@ -76,6 +76,9 @@ typedef struct {
     // slide into another zone.
     helix::HoldRepeatTimer hold_timer;
     float hold_distance_mm;
+    // Whether a repeat tick has already fired for this press: the first tick
+    // is the press's initial jog, later ones are repeats.
+    bool hold_repeated;
 
     // Homing state: when false (not all axes homed) the center home button is
     // drawn in a warning color to signal that homing is required.
@@ -579,7 +582,9 @@ static bool jog_pad_repeat_fire(void* user_data) {
     if (!state || !state->jog_callback) {
         return false;
     }
-    return state->jog_callback(state->pressed_direction, state->hold_distance_mm,
+    const bool is_repeat = state->hold_repeated;
+    state->hold_repeated = true;
+    return state->jog_callback(state->pressed_direction, state->hold_distance_mm, is_repeat,
                                state->jog_user_data);
 }
 
@@ -613,6 +618,7 @@ static void jog_pad_press_cb(lv_event_t* e) {
         // this zone until release, refusal or a slide into another zone.
         const auto& mode_dist = get_jog_mode_distances(state->current_mode);
         state->hold_distance_mm = zone.inner ? mode_dist.inner : mode_dist.outer;
+        state->hold_repeated = false;
         state->hold_timer.begin(&jog_pad_repeat_fire, obj);
     } else {
         // A home tap never repeats; an earlier hold whose click was dropped
@@ -714,7 +720,7 @@ static void jog_pad_click_cb(lv_event_t* e) {
     float jog_dist = zone.inner ? mode_dist.inner : mode_dist.outer;
 
     if (state->jog_callback) {
-        state->jog_callback(zone.direction, jog_dist, state->jog_user_data);
+        state->jog_callback(zone.direction, jog_dist, /*is_repeat=*/false, state->jog_user_data);
     }
 
     const char* dir_names[] = {"N(+Y)",    "S(-Y)",    "E(+X)",    "W(-X)",
