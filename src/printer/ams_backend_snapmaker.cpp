@@ -1659,9 +1659,14 @@ void AmsBackendSnapmaker::handle_status_update(const nlohmann::json& notificatio
                         // enabled flag, so that field rides the same rule).
                         // Absent-or-null is "no change" for every field.
                         ChannelSnapshot snap = channel_snapshots_[static_cast<size_t>(i)];
+                        const std::string prev_action_state = snap.action_state;
                         const auto state_it = ch.find("channel_state");
                         if (state_it != ch.end() && state_it->is_string()) {
                             snap.state = state_it->get_ref<const std::string&>();
+                        }
+                        const auto action_it = ch.find("channel_action_state");
+                        if (action_it != ch.end() && action_it->is_string()) {
+                            snap.action_state = action_it->get_ref<const std::string&>();
                         }
                         const auto error_it = ch.find("channel_error");
                         if (error_it != ch.end() && error_it->is_string()) {
@@ -1678,9 +1683,19 @@ void AmsBackendSnapmaker::handle_status_update(const nlohmann::json& notificatio
                         if (disable_it != ch.end() && disable_it->is_boolean()) {
                             snap.disable_auto = disable_it->get<bool>();
                         }
+                        // The op lifecycle, error surfacing and batch
+                        // verification read the op's outcome; the latch and the
+                        // step bar read where the filament is. They differ only
+                        // when the outcome survives in channel_action_state alone.
+                        const std::optional<std::string> settled_outcome =
+                            helix::snapmaker::settled_op_outcome(snap.state, prev_action_state,
+                                                                 snap.action_state);
                         channel_snapshots_[static_cast<size_t>(i)] = std::move(snap);
 
                         const ChannelStateInfo info = classify_channel_state(state);
+                        const std::string& op_state = settled_outcome ? *settled_outcome : state;
+                        const ChannelStateInfo op_info =
+                            settled_outcome ? classify_channel_state(op_state) : info;
 
                         // A feed under way on this channel is the firmware
                         // moving filament itself, so a presence edge that
@@ -1753,40 +1768,40 @@ void AmsBackendSnapmaker::handle_status_update(const nlohmann::json& notificatio
                         // empty-lane guard applies to it as to the no_filament token).
                         const bool has_error_token =
                             error != "ok" && !error.empty() && error != "none";
-                        if (has_error_token || info.is_fail) {
+                        if (has_error_token || op_info.is_fail) {
                             const auto* slot = system_info_.units[0].get_slot(i);
                             const bool lane_empty = slot == nullptr || !slot->is_present();
                             const bool active_lane =
                                 system_info_.current_slot == i || system_info_.current_tool == i;
-                            const bool op_in_progress = info.action == AmsAction::LOADING ||
-                                                        info.action == AmsAction::UNLOADING;
+                            const bool op_in_progress = op_info.action == AmsAction::LOADING ||
+                                                        op_info.action == AmsAction::UNLOADING;
                             if (lane_empty && !op_in_progress && !active_lane) {
                                 spdlog::debug(
                                     "[AmsBackendSnapmaker] ignoring error (token='{}' state='{}') "
                                     "on idle empty lane {} (not operating, not active)",
-                                    error, state, i);
+                                    error, op_state, i);
                             } else {
                                 system_info_.action = AmsAction::ERROR;
                                 system_info_.operation_detail =
                                     has_error_token
                                         ? friendly_channel_error(error, lane_noun(), i)
-                                        : friendly_channel_state_fail(state, lane_noun(), i);
+                                        : friendly_channel_state_fail(op_state, lane_noun(), i);
                                 changed = true;
                             }
-                        } else if (!state.empty() && !info.ignore) {
+                        } else if (!op_state.empty() && !op_info.ignore) {
                             // No error — drive the action / operation lifecycle from
                             // the classifier.
-                            if (info.action == AmsAction::LOADING) {
+                            if (op_info.action == AmsAction::LOADING) {
                                 if (system_info_.action != AmsAction::LOADING) {
                                     system_info_.action = AmsAction::LOADING;
                                     changed = true;
                                 }
-                            } else if (info.action == AmsAction::UNLOADING) {
+                            } else if (op_info.action == AmsAction::UNLOADING) {
                                 if (system_info_.action != AmsAction::UNLOADING) {
                                     system_info_.action = AmsAction::UNLOADING;
                                     changed = true;
                                 }
-                            } else if (info.is_terminal) {
+                            } else if (op_info.is_terminal) {
                                 // A *_finish state resolves the operation. The
                                 // latch above carries its load meaning; the active
                                 // tool's LOADED status and filament_loaded are
@@ -1804,7 +1819,7 @@ void AmsBackendSnapmaker::handle_status_update(const nlohmann::json& notificatio
                                 // name that tool: with no slot it dispatches the
                                 // bare INNER_FILAMENT_UNLOAD, which the firmware
                                 // runs on T0.
-                                if (state == "unload_finish") {
+                                if (op_state == "unload_finish") {
                                     // Deferred to after the lock for the same
                                     // reason emit_event is: this reaches into
                                     // AmsState, which takes its own mutex, while
@@ -1814,34 +1829,27 @@ void AmsBackendSnapmaker::handle_status_update(const nlohmann::json& notificatio
                                     // reported the deadlock (nightly, 2026-08-16).
                                     unloaded_lanes.push_back(i);
                                 }
-                                // preload_finish is terminal-for-latch but does NOT
-                                // end the op: a lane already at preload_finish that
-                                // the user re-unloads keeps channel_state=preload_finish
-                                // while the nozzle heats, and dropping to IDLE here
-                                // killed the unload step display mid-heat
-                                // (#u1-unload-steps). Only the true terminals resolve
-                                // the action to IDLE.
-                                if (state != "preload_finish") {
-                                    if (system_info_.action == AmsAction::LOADING ||
-                                        system_info_.action == AmsAction::UNLOADING) {
-                                        system_info_.action = AmsAction::IDLE;
-                                        system_info_.operation_detail.clear();
-                                        PostOpCooldownManager::instance().schedule();
-                                        changed = true;
-                                    }
+                                if (system_info_.action == AmsAction::LOADING ||
+                                    system_info_.action == AmsAction::UNLOADING) {
+                                    system_info_.action = AmsAction::IDLE;
+                                    system_info_.operation_detail.clear();
+                                    PostOpCooldownManager::instance().schedule();
+                                    changed = true;
                                 }
                             }
-                            // IDLE non-terminal (none / inited / wait_insert): leave
-                            // the action untouched — a stray idle mid-op must not
-                            // clobber an in-progress LOADING/UNLOADING. The latch
-                            // already handled wait_insert's clear above.
+                            // A resting state (none / inited / wait_insert /
+                            // preload_finish) leaves the action untouched: one
+                            // also appears while the nozzle heats for an unload,
+                            // and the op's own outcome, when a resting state
+                            // hides it, arrives as settled_outcome above. The
+                            // latch already handled the resting states' clears.
                         }
 
                         // Batch verification. Only the plan's cursor head can
                         // advance the cursor, so a sibling channel repeating its
                         // settled state in this frame is inert. The direction's
-                        // own terminal is matched exactly: preload_finish and
-                        // manual_sta_finish end a single-op lifecycle but a load
+                        // own terminal is matched exactly: manual_sta_finish ends
+                        // a single-op lifecycle but a load
                         // batch counts a head only at load_finish (unload at
                         // unload_finish). A *_fail on the cursor head stops the
                         // batch where it stands; the error branch above has
@@ -1850,11 +1858,12 @@ void AmsBackendSnapmaker::handle_status_update(const nlohmann::json& notificatio
                         // terminal resolution so its operation_detail.clear()
                         // cannot wipe the progress string this writes.
                         if (batch_.active && i == batch_.heads[batch_.cursor]) {
-                            if (info.is_fail) {
+                            if (op_info.is_fail) {
                                 batch_.active = false;
                                 batch_failed_head = i;
-                                batch_failed_state = state;
-                            } else if (state == (batch_.load ? "load_finish" : "unload_finish")) {
+                                batch_failed_state = op_state;
+                            } else if (op_state ==
+                                       (batch_.load ? "load_finish" : "unload_finish")) {
                                 ++batch_.cursor;
                                 batch_.active = batch_.cursor < batch_.heads.size();
                                 if (batch_.active) {
@@ -1882,10 +1891,10 @@ void AmsBackendSnapmaker::handle_status_update(const nlohmann::json& notificatio
                         // The on-screen step bar / status was dropping to Idle before the
                         // physical unload finished; the real event order is firmware-
                         // specific and was previously unlogged. (#u1-unload-steps)
-                        if (!state.empty()) {
+                        if (!state.empty() || settled_outcome) {
                             spdlog::debug("[AmsBackendSnapmaker] tool {} channel_state='{}' "
-                                          "error='{}' -> action={} current_slot={}",
-                                          i, state, error,
+                                          "op_state='{}' error='{}' -> action={} current_slot={}",
+                                          i, state, op_state, error,
                                           ams_action_to_string(system_info_.action),
                                           system_info_.current_slot);
                         }

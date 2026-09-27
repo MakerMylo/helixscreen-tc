@@ -199,8 +199,9 @@ class AmsBackendSnapmaker : public AmsSubscriptionBackend {
     /// Eligibility answers from these; presence alone cannot distinguish a
     /// lane holding filament from a head that is loaded.
     struct ChannelSnapshot {
-        std::string state;       ///< channel_state, e.g. "load_finish"
-        std::string error{"ok"}; ///< channel_error
+        std::string state;        ///< channel_state, e.g. "load_finish"
+        std::string action_state; ///< channel_action_state: last op step, kept at rest
+        std::string error{"ok"};  ///< channel_error
         bool filament_detected{false};
         bool module_exist{false};
         bool disable_auto{false};
