@@ -3089,7 +3089,7 @@
   <translation tag="VM Peak" pt="Pico de VM"/>
   <translation tag="VM Size" pt="Tamanho de VM"/>
   <translation tag="Validating bed mesh..." pt="Validando malha da mesa..."/>
-  <translation tag="Value must be between {:.0f} and {:.0f}" pt="O valor deve estar entre {:.0f} e {:.0f}"/>
+  <translation tag="Value must be between {} and {}" pt="O valor deve estar entre {} e {}"/>
   <translation tag="Values must not be negative" pt="Os valores não podem ser negativos"/>
   <translation tag="Velocity and acceleration limits" pt="Limites de velocidade e aceleração"/>
   <translation tag="Vendor" pt="Fabricante"/>
@@ -3191,7 +3191,6 @@
   <translation tag="X axis applied, but Y axis failed" pt="Eixo X aplicado, mas eixo Y falhou"/>
   <translation tag="X axis done, starting Y..." pt="Eixo X concluído, iniciando Y..."/>
   <translation tag="X is at its limit ({}mm)" pt="X está no seu limite ({}mm)"/>
-  <translation tag="X position" pt="Posição X"/>
   <translation tag="X:" pt="X:"/>
   <translation tag="XY" pt="XY"/>
   <translation tag="Y" pt="Y"/>
@@ -3199,7 +3198,6 @@
   <translation tag="Y Offset" pt="Offset Y"/>
   <translation tag="Y axis limit reached" pt="Limite do eixo Y alcançado"/>
   <translation tag="Y is at its limit ({}mm)" pt="Y está no seu limite ({}mm)"/>
-  <translation tag="Y position" pt="Posição Y"/>
   <translation tag="Y:" pt="Y:"/>
   <translation tag="YOU WIN!&#10;Score: {}&#10;Tap to play again" pt="VOCÊ VENCEU!&#10;Pontuação: {}&#10;Toque para jogar de novo"/>
   <translation tag="Year" pt="Ano"/>
@@ -3222,7 +3220,6 @@
   <translation tag="Z is at its limit ({}mm)" pt="Z está no seu limite ({}mm)"/>
   <translation tag="Z jog feedrate" pt="Velocidade de movimento do eixo Z"/>
   <translation tag="Z motor calibration failed" pt="Falha na calibração do motor Z"/>
-  <translation tag="Z position" pt="Posição Z"/>
   <translation tag="Z probes for bed leveling and mesh generation" pt="Sondas Z para nivelamento da mesa e geração de malha"/>
   <translation tag="Z-Off:" pt="Z-Offset:"/>
   <translation tag="Z-Offset" pt="Z-Offset"/>

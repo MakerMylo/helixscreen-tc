@@ -3089,7 +3089,7 @@
   <translation tag="VM Peak" fr="Pic de mémoire virtuelle"/>
   <translation tag="VM Size" fr="Taille de la mémoire virtuelle"/>
   <translation tag="Validating bed mesh..." fr="Validation du maillage du plateau..."/>
-  <translation tag="Value must be between {:.0f} and {:.0f}" fr="La valeur doit être entre {:.0f} et {:.0f}"/>
+  <translation tag="Value must be between {} and {}" fr="La valeur doit être entre {} et {}"/>
   <translation tag="Values must not be negative" fr="Les valeurs ne doivent pas être négatives"/>
   <translation tag="Velocity and acceleration limits" fr="Limites de vitesse et d&apos;accélération"/>
   <translation tag="Vendor" fr="Fabricant"/>
@@ -3191,7 +3191,6 @@
   <translation tag="X axis applied, but Y axis failed" fr="Axe X appliqué, mais l&apos;axe Y a échoué"/>
   <translation tag="X axis done, starting Y..." fr="Axe X terminé, démarrage de Y..."/>
   <translation tag="X is at its limit ({}mm)" fr="X est à sa limite ({}mm)"/>
-  <translation tag="X position" fr="Position X"/>
   <translation tag="X:" fr="X :"/>
   <translation tag="XY" fr="XY"/>
   <translation tag="Y" fr="Y"/>
@@ -3199,7 +3198,6 @@
   <translation tag="Y Offset" fr="Décalage Y"/>
   <translation tag="Y axis limit reached" fr="Limite de l&apos;axe Y atteinte"/>
   <translation tag="Y is at its limit ({}mm)" fr="Y est à sa limite ({}mm)"/>
-  <translation tag="Y position" fr="Position Y"/>
   <translation tag="Y:" fr="Y :"/>
   <translation tag="YOU WIN!&#10;Score: {}&#10;Tap to play again" fr="GAGNÉ !&#10;Score : {}&#10;Touchez pour rejouer"/>
   <translation tag="Year" fr="Année"/>
@@ -3222,7 +3220,6 @@
   <translation tag="Z is at its limit ({}mm)" fr="Z est à sa limite ({}mm)"/>
   <translation tag="Z jog feedrate" fr="Vitesse d&apos;avance du déplacement Z"/>
   <translation tag="Z motor calibration failed" fr="Échec de l&apos;étalonnage du moteur Z"/>
-  <translation tag="Z position" fr="Position Z"/>
   <translation tag="Z probes for bed leveling and mesh generation" fr="Sondes Z pour la mise à niveau du plateau et la génération de maillage"/>
   <translation tag="Z-Off:" fr="Z-Off :"/>
   <translation tag="Z-Offset" fr="Z-Offset"/>

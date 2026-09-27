@@ -239,7 +239,7 @@ TEST_CASE_METHOD(LVGLUITestFixture, "motion bounds follow the gcode origin, not 
         all_scripts += "\n";
     }
     CHECK(all_scripts.find("G91") != std::string::npos);
-    CHECK(all_scripts.find("Z0.44") != std::string::npos);
+    CHECK(all_scripts.find("Z0.43") != std::string::npos); // stops a micron inside 0.44
     CHECK(all_scripts.find("Z1") == std::string::npos);
 
     set_moonraker_api(previous_api);

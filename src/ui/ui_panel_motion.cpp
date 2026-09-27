@@ -90,6 +90,12 @@ helix::keypad_params_for_axis(const AxisBounds& bounds, Axis axis, double comman
         max = bounds.z_max;
         break;
     }
+    // The bounds sit a micron inside the edge; the keypad shows and accepts
+    // them at its own 0.01mm precision, and dispatch_target's clamp keeps the
+    // move inside.
+    const auto hundredths = [](float v) { return std::round(v * 100.0f) / 100.0f; };
+    min = hundredths(min);
+    max = hundredths(max);
     return AxisKeypadParams{min, max, static_cast<float>(commanded_mm), min < 0.0f};
 }
 
@@ -1086,11 +1092,9 @@ void MotionPanel::open_axis_keypad(char axis) {
     config.allow_decimal = true;
     config.allow_negative = params->allow_negative;
     config.unit_label = "mm";
-    // Three literals rather than an assembled string: the translation
-    // extractor scans for lv_tr() literals and cannot see a runtime key.
-    config.title_label = axis == 'x'   ? lv_tr("X position")
-                         : axis == 'y' ? lv_tr("Y position")
-                                       : lv_tr("Z position");
+    // The axis letter alone: the keypad header is narrow at small sizes and
+    // the display already carries the mm unit.
+    config.title_label = axis == 'x' ? "X" : axis == 'y' ? "Y" : "Z";
     config.callback = &MotionPanel::on_axis_keypad_value;
     config.user_data = this;
     spdlog::debug("[{}] Axis keypad for {} ({}-{}, seed {:.2f})", get_name(), axis,

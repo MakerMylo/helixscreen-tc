@@ -173,15 +173,18 @@ TEST_CASE_METHOD(BoundsFixture, "gcode bounds shift the machine envelope by homi
           {{"axis_minimum", {0.0, 0.0, 0.0, 0.0}}, {"axis_maximum", {235.0, 235.0, 275.0, 0.0}}}}});
     state.update_from_status({{"gcode_move", {{"homing_origin", {-0.0889, -0.016, 0.06, 0.0}}}}});
 
+    // Shifted by minus the origin, then inset by the edge margin so a target
+    // at the edge never sums past the machine limit.
+    const double m = helix::GCODE_EDGE_MARGIN_MM;
     const AxisBounds g = state.get_gcode_axis_bounds();
     CHECK(g.has_x);
     CHECK(g.has_y);
     CHECK(g.has_z);
-    CHECK(g.x_min == Catch::Approx(0.0889f));
-    CHECK(g.x_max == Catch::Approx(235.0889f));
-    CHECK(g.y_max == Catch::Approx(235.016f));
-    CHECK(g.z_min == Catch::Approx(-0.06f));
-    CHECK(g.z_max == Catch::Approx(274.94f));
+    CHECK(g.x_min == Catch::Approx(0.0889 + m));
+    CHECK(g.x_max == Catch::Approx(235.0889 - m));
+    CHECK(g.y_max == Catch::Approx(235.016 - m));
+    CHECK(g.z_min == Catch::Approx(-0.06 + m));
+    CHECK(g.z_max == Catch::Approx(274.94 - m));
 
     // Machine envelope stays machine: other consumers (bed dimensions, belt
     // tension) compare against toolhead-space values.
@@ -191,5 +194,5 @@ TEST_CASE_METHOD(BoundsFixture, "gcode bounds shift the machine envelope by homi
     state.deinit_subjects();
     AxisBounds reset = state.get_gcode_axis_bounds();
     CHECK_FALSE(reset.has_z);
-    CHECK(reset.z_max == Catch::Approx(0.0f));
+    CHECK(reset.x_min == Catch::Approx(m)); // origin back to zero
 }
