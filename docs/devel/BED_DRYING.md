@@ -44,18 +44,27 @@ the **Dry Filament** row in Advanced. Both carry `moves_machine="true"`.
 3. **Clearance move** to `axis_maximum.z - 10` (`bed_drying::clearance_z`), then the
    toolhead parks at the back, then `M400`. On a bed-moving printer that puts the plate at
    the bottom; on a gantry-moving one, the nozzle at the top. Either way a cover box fits.
-4. **Place prompt**: clear above and below the plate, spools on the plate, cover with a
-   box, close the door.
-5. **Latch on and persist** (`BedDryingController::confirm_placed`), before any heat.
-6. **Heat**: the bed at the material's value from Bambu's table capped at 90°C and at the
-   bed max (`bed_drying::bed_temp_c`); the chamber dryer too when chosen, started with
-   `hold_idle=false`; Klipper's idle timeout held to the planned end plus 10 minutes.
+4. **Latch on and persist** (`BedDryingController::begin_placement`), then the place
+   prompt: clear above and below the plate, spools on the plate, cover with a box,
+   close the door. Spools can land on the plate from the moment the prompt opens, so
+   only its **No spools placed** button clears the latch; any other dismissal keeps it
+   and asks for the removal confirmation. The idle timeout is held from here on.
+5. **Start** (`confirm_placed`): the run is saved before any heat; a failed save
+   refuses to heat, with a toast.
+6. **Heat**: the bed at the material's value from Bambu's heated-bed table capped at 90°C
+   and at the bed max (`bed_drying::bed_temp_c`); the chamber dryer too when chosen, at
+   the material's **air** temperature from Bambu's AMS HT / oven column (PLA 50°C, not
+   the bed's 70), clamped by the dryer and started with `hold_idle=false`; Klipper's idle
+   timeout held to the planned end plus 10 minutes.
 7. **Run**: HelixScreen's 1 s timer. At the midpoint a "flip the spools" notification.
-8. **End** (planned end, Stop, or the bed target dropping to 0): bed off, idle timeout
-   restored, dryer stopped. The latch stays.
+8. **End** (planned end, Stop, or the bed target dropping to 0): bed off, dryer stopped,
+   and the idle timeout re-held for 24 h (`kSpoolsOnBedHoldS`). The latch stays. With
+   the heat off, the timeout's only effect would be its `M84`, which lets a gantry sink
+   onto the spools, so the configured value comes back only at removal.
 9. **Cool-down**: the removal prompt waits for the bed to read below 40°C. Tapping the
    banner earlier offers the removal behind a hot-plate warning.
-10. **Remove**: only its confirm clears the latch and the persisted run.
+10. **Remove**: only its confirm clears the latch and the persisted run, and restores the
+    configured idle timeout.
 
 Running the bed and a chamber appliance together is deliberate; Bambu's X1E does the
 opposite and resets its chamber heater to 0 during its own drying mode.
@@ -79,7 +88,19 @@ latch gates all five:
 The gcode gates are an **allowlist**, not a denylist: a macro can home without saying
 `G28`, so while latched a script passes only if every line's first token is a heater,
 fan, light, read-only, `SET_IDLE_TIMEOUT`, `M112` or restart command, or one of the
-dryer's own tokens (`TemperatureController::chamber_dryer_tokens`). `M84` is refused.
+dryer's own tokens (`TemperatureController::chamber_dryer_tokens`). `M84`,
+`FIRMWARE_RESTART` and `RESTART` are refused: each releases the steppers. The
+`printer.restart` / `printer.firmware_restart` RPCs, a `klipper` service restart and the
+recovery chain in `PrinterRecoveryService::recover` refuse too. `M112` always passes.
+
+**The allowlist trusts command names.** It matches first tokens, so a macro that
+overrides an allowlisted name (an `M140` wrapper that homes, a `SET_LED` that parks) runs
+while latched. No stock or vendor macro known to HelixScreen does that; a user macro can.
+
+Probe commands (`probe_send_gcode` in `ui_probe_overlay.cpp`) go through
+`IMoonrakerAPI::execute_gcode` and so through the gate. The remaining direct
+`gcode_script` senders move nothing: batch-feed interlock END, `TURN_OFF_HEATERS` at print
+completion, `M300` beeps, and settings queries.
 
 **Buttons**: `moves_machine="true"` binds disabled to `machine_motion_blocked`
 (`job_holds_machine || spool_latch`), in `lv_xml_obj_parser.c`. `job_holds_machine`
@@ -101,7 +122,7 @@ The run is a `RunRecord` under `bed_drying` in settings.json
 
 | Event mid-run | What happens |
 |---|---|
-| HelixScreen restart | The latch returns; before the planned end the timer resumes from the stored end time; after it the end runs at once |
+| HelixScreen restart | The latch returns at once. The run advances only once Klipper reports ready (a restore runs before Moonraker connects, and sends made then go nowhere): before the planned end the timer resumes from the stored end time, after it the end runs on the first ready tick |
 | Klipper restart | Heater targets drop to 0; once the bed target was seen at the run's value, a 0 ends the run. The latch stays |
 | Power loss | Klipper comes back cold and unhomed; HelixScreen comes back latched, so its first homing is refused until the spools are confirmed out |
 | HelixScreen dies for good | The held idle timeout fires 10 minutes after the planned end and Klipper's own `TURN_OFF_HEATERS` ends the heat (measured on the U1: it does end a heater run) |
