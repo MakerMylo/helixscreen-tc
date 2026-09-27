@@ -46,6 +46,26 @@ hold-to-repeat on top of an unclamped axis turns that into a toast flood.
 
 ## Architecture
 
+### Decisions, 2026-09-27 (supersede the item text below where they differ)
+
+Made with Preston over mockups at real pixel sizes. Already shipped: header coordinates
+with a Commanded/Actual swap icon, and tapping a coordinate opens the keypad, so the
+Move tab has **no X/Y/Z fields** (item 5 lives in the header).
+
+- **Tab switcher.** Landscape: a vertical icon rail (Jog / Move / Bed, icon above label)
+  left of the jog pad, in the width the height-limited pad leaves free, so the pad keeps
+  its size. Portrait: a horizontal strip under the coordinate row. The Z column and QGL
+  stay visible on every tab. Fine/Coarse/Turbo show on Jog only.
+- **Move tab.** A 3x3 grid of positions laid out as the bed seen from above (back row on
+  top): Back Left, Back, Back Right / Left, Center, Right / Front Left, Front, Front
+  Right. Word labels, one word per line (measured: the widest word in the eight locales
+  is Spanish "Izquierda", 53px in Noto Sans 12 against about 64-73px of button). The
+  center button is a darker blue. Below the grid: Park (the ParkToolhead macro slot,
+  falling back to a bounds-derived front-center move) and Motors off.
+- **Preset coordinates.** Nominal G-code envelope inset by 10% of each axis's span for
+  the edge rows and columns; center is the envelope midpoint. XY only; Z is untouched.
+  All route through `ensure_homed_then` and `MotionPanel::dispatch_target` (which clamps).
+
 ### The panel becomes tabbed on the left, unchanged on the right
 
 The left column's jog pad slot gains a three-tab strip. The right column (Z buttons,
