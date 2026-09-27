@@ -99,7 +99,6 @@ jobs:
             display_name: "Elegoo Centauri Carbon 1"
           - platform: mips
             display_name: "Unified MIPS (K1 Series + AD5X)"
-            docker_image: ad5x
             build_target: mips
             build_dir: mips
           - platform: k2
