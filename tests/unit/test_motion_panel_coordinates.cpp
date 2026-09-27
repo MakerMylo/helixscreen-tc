@@ -226,7 +226,7 @@ TEST_CASE_METHOD(LVGLUITestFixture, "motion bounds follow the gcode origin, not 
     lv_obj_send_event(z_up_small, LV_EVENT_PRESSED, nullptr);
     REQUIRE(panel.z_hold_timer().poll(helix::HoldRepeat::DELAY_MS));
     const std::string blob = log.get_captured();
-    CHECK(blob.find("Z jog: +0.44mm") != std::string::npos);
+    CHECK(blob.find("Z jog: +0.42mm") != std::string::npos);
 
     lv_obj_send_event(z_up_small, LV_EVENT_RELEASED, nullptr);
     lv_obj_send_event(z_up_small, LV_EVENT_CLICKED, nullptr);
@@ -239,7 +239,7 @@ TEST_CASE_METHOD(LVGLUITestFixture, "motion bounds follow the gcode origin, not 
         all_scripts += "\n";
     }
     CHECK(all_scripts.find("G91") != std::string::npos);
-    CHECK(all_scripts.find("Z0.43") != std::string::npos); // stops a micron inside 0.44
+    CHECK(all_scripts.find("Z0.42") != std::string::npos); // stops the edge margin short of 0.44
     CHECK(all_scripts.find("Z1") == std::string::npos);
 
     set_moonraker_api(previous_api);

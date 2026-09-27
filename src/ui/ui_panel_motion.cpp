@@ -90,12 +90,6 @@ helix::keypad_params_for_axis(const AxisBounds& bounds, Axis axis, double comman
         max = bounds.z_max;
         break;
     }
-    // The bounds sit a micron inside the edge; the keypad shows and accepts
-    // them at its own 0.01mm precision, and dispatch_target's clamp keeps the
-    // move inside.
-    const auto hundredths = [](float v) { return std::round(v * 100.0f) / 100.0f; };
-    min = hundredths(min);
-    max = hundredths(max);
     return AxisKeypadParams{min, max, static_cast<float>(commanded_mm), min < 0.0f};
 }
 
@@ -104,13 +98,14 @@ bool helix::z_direction_blocked(bool z_homed, bool bounds_known, double z, doubl
     if (!z_homed || !bounds_known || direction_mm == 0.0) {
         return false;
     }
-    // Epsilon from the bound, not the move: a hair inside the envelope leaves
-    // a sub-micron residual that a fresh press could still "move", so the
-    // button must read enabled until the position is genuinely at the bound.
+    // The reading is truncated to POSITION_RESOLUTION_MM, so a head parked at
+    // the bound can read up to that much short of it. What a press could still
+    // move from there is below what the clamp's margin already gives away.
+    const double tolerance = POSITION_RESOLUTION_MM + AxisMove::EPSILON_MM;
     if (direction_mm > 0.0) {
-        return z >= z_max - AxisMove::EPSILON_MM;
+        return z >= z_max - tolerance;
     }
-    return z <= z_min + AxisMove::EPSILON_MM;
+    return z <= z_min + tolerance;
 }
 
 // Strip Klipper error prefixes, parse JSON error objects, and truncate for toast display.
@@ -686,7 +681,7 @@ void MotionPanel::update_jog_pad_enabled() {
 void MotionPanel::update_z_button_blocked() {
     if (!subjects_initialized_)
         return;
-    const auto bounds = get_printer_state().get_gcode_axis_bounds();
+    const auto bounds = clamp_bounds();
     const bool z_homed = helix::axis_is_homed(get_printer_state(), helix::Axis::Z);
     // Commanded, not predicted: an in-flight move leaves no recompute trigger
     // when it acks, so a prediction here could disable a button for good.
@@ -784,7 +779,7 @@ bool MotionPanel::handle_z_button(const char* name, bool is_repeat) {
     }
 
     // Bounds are in gcode space, so this must follow the inversion above.
-    const auto bounds = get_printer_state().get_gcode_axis_bounds();
+    const auto bounds = clamp_bounds();
     if (bounds.has_z && helix::axis_is_homed(get_printer_state(), helix::Axis::Z)) {
         distance = clamp_axis_delta(helix::Axis::Z, current_z_,
                                     jog_coalescer_.predicted_z(current_z_) - current_z_, distance,
@@ -882,7 +877,7 @@ bool MotionPanel::jog(JogDirection direction, float distance_mm, bool is_repeat)
     // Soft-stop: clamp against the PREDICTED position (current + uncommitted
     // coalescer travel) so queued taps can't walk past the envelope. Skip when
     // bounds aren't known yet (fresh connect) or the axis isn't homed.
-    const auto bounds = get_printer_state().get_gcode_axis_bounds();
+    const auto bounds = clamp_bounds();
 
     double ddx = static_cast<double>(dx);
     double ddy = static_cast<double>(dy);
@@ -903,9 +898,9 @@ bool MotionPanel::jog(JogDirection direction, float distance_mm, bool is_repeat)
         // still moves the other axis, and partial travel is silent.
         if (!is_repeat) {
             if (dx != 0.0f) {
-                warn_axis_limit(helix::Axis::X, dx > 0.0f ? bounds.x_max : bounds.x_min);
+                warn_axis_limit(helix::Axis::X, dx > 0.0f ? bounds.x_max : bounds.x_min, dx > 0.0f);
             } else if (dy != 0.0f) {
-                warn_axis_limit(helix::Axis::Y, dy > 0.0f ? bounds.y_max : bounds.y_min);
+                warn_axis_limit(helix::Axis::Y, dy > 0.0f ? bounds.y_max : bounds.y_min, dy > 0.0f);
             }
         }
         return false;
@@ -924,12 +919,20 @@ double MotionPanel::clamp_axis_delta(helix::Axis axis, double current, double un
     if (fresh_press) {
         // Repeat ticks into a limit stop silently; only the initial jog of a
         // press warns.
-        warn_axis_limit(axis, delta > 0.0 ? max : min);
+        warn_axis_limit(axis, delta > 0.0 ? max : min, delta > 0.0);
     }
     return 0.0;
 }
 
-void MotionPanel::warn_axis_limit(helix::Axis axis, float limit) {
+helix::AxisBounds MotionPanel::clamp_bounds() {
+    return helix::inset_bounds(get_printer_state().get_gcode_axis_bounds(),
+                               helix::GCODE_EDGE_MARGIN_MM);
+}
+
+void MotionPanel::warn_axis_limit(helix::Axis axis, float clamp_bound, bool at_max) {
+    // The clamp stops GCODE_EDGE_MARGIN_MM inside; tell the user the limit.
+    const auto limit = static_cast<float>(at_max ? clamp_bound + helix::GCODE_EDGE_MARGIN_MM
+                                                 : clamp_bound - helix::GCODE_EDGE_MARGIN_MM);
     // Three literals rather than an assembled string: the translation
     // extractor scans for lv_tr() literals and cannot see a runtime key.
     char limit_buf[16];
@@ -961,7 +964,7 @@ bool MotionPanel::dispatch_target(const helix::AxisTarget& target) {
     // Soft-stop for absolute moves, same bounds source the jog clamp uses: a
     // set axis without a known envelope cannot be clamped, and sending it
     // unclamped would trust exactly the value that is missing.
-    const auto bounds = get_printer_state().get_gcode_axis_bounds();
+    const auto bounds = clamp_bounds();
     if ((target.x && !bounds.has_x) || (target.y && !bounds.has_y) || (target.z && !bounds.has_z)) {
         NOTIFY_INFO(lv_tr("Axis limits unknown"));
         return false;

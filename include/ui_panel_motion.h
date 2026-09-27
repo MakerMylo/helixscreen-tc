@@ -154,8 +154,13 @@ class MotionPanel : public OverlayBase {
     /// with the limit it hit. Returns the permitted delta, 0.0 when blocked.
     double clamp_axis_delta(helix::Axis axis, double current, double uncommitted, double delta,
                             float min, float max, bool fresh_press);
-    /// Raise the "at its limit" warning for an axis refused at `limit`.
-    void warn_axis_limit(helix::Axis axis, float limit);
+    /// The G-code envelope the clamps and the Z-button state use: the nominal
+    /// one inset by GCODE_EDGE_MARGIN_MM. The keypad offers the nominal limits.
+    helix::AxisBounds clamp_bounds();
+
+    /// Raise the "at its limit" warning for an axis refused at the clamp bound
+    /// on its max (`at_max`) or min side.
+    void warn_axis_limit(helix::Axis axis, float clamp_bound, bool at_max);
 
   private:
     // RAII subject manager - auto-deinits all registered subjects on destruction

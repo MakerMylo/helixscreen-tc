@@ -27,11 +27,16 @@ struct AxisBounds {
 /// Shift machine-space bounds into G-code space. machine = gcode + homing_origin
 /// (SET_GCODE_OFFSET, saved Z offset, toolchanger tool offsets), so the valid
 /// G-code range per axis is [min - origin, max - origin]. Has-bits are untouched.
-/// Klipper adds the offset to a G-code target in doubles and range-checks the
-/// sum, so a target exactly at a shifted edge can land a hair past the machine
-/// limit and be refused (Z 274.94 + 0.06 on a Snapmaker U1). Clamps stop this
-/// far inside instead.
-inline constexpr double GCODE_EDGE_MARGIN_MM = 0.001;
+/// Resolution of the stored gcode_position subjects: centimillimetres,
+/// truncated, so a reading sits up to this far below the real position.
+inline constexpr double POSITION_RESOLUTION_MM = 0.01;
+
+/// Clamps stop this far inside the G-code envelope. Klipper adds the offset to
+/// a target in doubles and range-checks the sum, so a target exactly at a
+/// shifted edge can land a hair past the machine limit and be refused (Z
+/// 274.94 + 0.06 on a Snapmaker U1); and a relative jog computed from a
+/// truncated reading can overshoot by up to POSITION_RESOLUTION_MM.
+inline constexpr double GCODE_EDGE_MARGIN_MM = 2 * POSITION_RESOLUTION_MM;
 
 /// Shrink each axis's range by `margin` from both ends. Has-bits are untouched.
 inline AxisBounds inset_bounds(const AxisBounds& b, double margin) {
@@ -185,9 +190,7 @@ class PrinterMotionState {
     /// against gcode_move.gcode_position (jog clamps, keypad limits, Z-button
     /// blocking) must use these, not the machine bounds.
     [[nodiscard]] AxisBounds get_gcode_axis_bounds() const {
-        return inset_bounds(
-            to_gcode_space(axis_bounds_, homing_origin_x_, homing_origin_y_, homing_origin_z_),
-            GCODE_EDGE_MARGIN_MM);
+        return to_gcode_space(axis_bounds_, homing_origin_x_, homing_origin_y_, homing_origin_z_);
     }
 
   private:

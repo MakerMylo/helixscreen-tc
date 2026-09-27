@@ -173,18 +173,15 @@ TEST_CASE_METHOD(BoundsFixture, "gcode bounds shift the machine envelope by homi
           {{"axis_minimum", {0.0, 0.0, 0.0, 0.0}}, {"axis_maximum", {235.0, 235.0, 275.0, 0.0}}}}});
     state.update_from_status({{"gcode_move", {{"homing_origin", {-0.0889, -0.016, 0.06, 0.0}}}}});
 
-    // Shifted by minus the origin, then inset by the edge margin so a target
-    // at the edge never sums past the machine limit.
-    const double m = helix::GCODE_EDGE_MARGIN_MM;
     const AxisBounds g = state.get_gcode_axis_bounds();
     CHECK(g.has_x);
     CHECK(g.has_y);
     CHECK(g.has_z);
-    CHECK(g.x_min == Catch::Approx(0.0889 + m));
-    CHECK(g.x_max == Catch::Approx(235.0889 - m));
-    CHECK(g.y_max == Catch::Approx(235.016 - m));
-    CHECK(g.z_min == Catch::Approx(-0.06 + m));
-    CHECK(g.z_max == Catch::Approx(274.94 - m));
+    CHECK(g.x_min == Catch::Approx(0.0889));
+    CHECK(g.x_max == Catch::Approx(235.0889));
+    CHECK(g.y_max == Catch::Approx(235.016));
+    CHECK(g.z_min == Catch::Approx(-0.06));
+    CHECK(g.z_max == Catch::Approx(274.94));
 
     // Machine envelope stays machine: other consumers (bed dimensions, belt
     // tension) compare against toolhead-space values.
@@ -194,5 +191,24 @@ TEST_CASE_METHOD(BoundsFixture, "gcode bounds shift the machine envelope by homi
     state.deinit_subjects();
     AxisBounds reset = state.get_gcode_axis_bounds();
     CHECK_FALSE(reset.has_z);
-    CHECK(reset.x_min == Catch::Approx(m)); // origin back to zero
+    CHECK(reset.x_min == Catch::Approx(0.0)); // origin back to zero
+}
+
+TEST_CASE("inset_bounds shrinks each known axis from both ends", "[motion][bounds]") {
+    AxisBounds b;
+    b.has_x = b.has_y = b.has_z = true;
+    b.x_min = 0.0f;
+    b.x_max = 235.0f;
+    b.y_min = -5.0f;
+    b.y_max = 235.0f;
+    b.z_min = -0.06f;
+    b.z_max = 274.94f;
+    const AxisBounds r = helix::inset_bounds(b, 0.02);
+    CHECK(r.x_min == Catch::Approx(0.02));
+    CHECK(r.x_max == Catch::Approx(234.98));
+    CHECK(r.y_min == Catch::Approx(-4.98));
+    CHECK(r.z_min == Catch::Approx(-0.04));
+    CHECK(r.z_max == Catch::Approx(274.92));
+    CHECK(r.has_x);
+    CHECK(r.has_z);
 }
