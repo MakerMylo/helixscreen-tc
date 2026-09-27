@@ -193,10 +193,19 @@ def test_portrait_strips_stack_and_fit(size, pad_floor, tmp_path):
                 f"right of the Z column")
             # And none between them: the wrapper is clamped to the pad square
             # so the growing Z column, not empty row width, takes the rest.
+            # The wrapper-width bound also catches the overlap direction: a
+            # wrapper that lost the clamp lets the pad spill across the gap.
             assert z_col["x"] - _right(pad) <= 8, (
                 f"{size}: {z_col['x'] - _right(pad)}px of dead space between "
                 f"the pad and the Z column - the wrapper is not clamped to "
                 f"the pad square")
+            wrapper = _geom(app, "jog_pad_wrapper")
+            assert pad["w"] <= wrapper["w"] + 2, (
+                f"{size}: pad is {pad['w']}px wide but its wrapper is only "
+                f"{wrapper['w']}px - the pad spills out of the row's share")
+            assert z_col["x"] + 2 >= _right(pad), (
+                f"{size}: the Z column starts at {z_col['x']} under the pad's "
+                f"right edge {_right(pad)} - the pad overlaps the Z column")
 
             content = _geom(app, "overlay_content")
             assert all(v == 0 for v in content["scroll"].values()), (
