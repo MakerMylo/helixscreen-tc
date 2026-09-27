@@ -1207,6 +1207,7 @@
   <translation tag="Flying Toasters" pt="Torradeiras Voadoras"/>
   <translation tag="Follow active tool" pt="Seguir ferramenta ativa"/>
   <translation tag="Follow graph screen" pt="Acompanhar tela do gráfico"/>
+  <translation tag="Force/weight sensors" pt="Sensores de força/peso"/>
   <translation tag="Forget" pt="Esquecer"/>
   <translation tag="Forget Network?" pt="Esquecer Rede?"/>
   <translation tag="Forget network &apos;{}&apos;? You will need the password to reconnect." pt="Esquecer a rede &apos;{}&apos;? Você precisará da senha para reconectar."/>
@@ -1494,6 +1495,7 @@
   <translation tag="LED strip available for lighting control" pt="Fita de LED disponível para controle de iluminação"/>
   <translation tag="LEDs" pt="LEDs"/>
   <translation tag="LEDs controlled by the light button" pt="LEDs controlados pelo botão de luz"/>
+  <translation tag="LOAD CELLS" pt="CÉLULAS DE CARGA"/>
   <translation tag="LOADED" pt="CARREGADO"/>
   <translation tag="LOCKED" pt="BLOQUEADO"/>
   <translation tag="LOT-2024-001" pt="LOT-2024-001"/>
@@ -1537,6 +1539,8 @@
   <translation tag="Listening" pt="Escutando"/>
   <translation tag="Live view from your webcam" pt="Visão ao vivo da sua webcam"/>
   <translation tag="Load" pt="Carregar"/>
+  <translation tag="Load Cell" pt="Célula de carga"/>
+  <translation tag="Load Cells" pt="Células de carga"/>
   <translation tag="Load Failed" pt="Falha ao carregar"/>
   <translation tag="Load Filament" pt="Carregar Filamento"/>
   <translation tag="Load a filament first before trying to unload" pt="Carregue primeiro filamento antes de tentar descarregar"/>

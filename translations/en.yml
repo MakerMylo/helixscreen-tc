@@ -1292,6 +1292,7 @@ translations:
   Flying Toasters: Flying Toasters
   Follow active tool: Follow active tool
   Follow graph screen: Follow graph screen
+  Force/weight sensors: Force/weight sensors
   Forget: Forget
   Forget Network?: Forget Network?
   Forget network '{}'? You will need the password to reconnect.: Forget network '{}'? You will need the password to reconnect.
@@ -1618,6 +1619,7 @@ translations:
   LED strip available for lighting control: LED strip available for lighting control
   LEDs: LEDs
   LEDs controlled by the light button: LEDs controlled by the light button
+  LOAD CELLS: LOAD CELLS
   LOADED: LOADED
   LOCKED: LOCKED
   LOT-2024-001: LOT-2024-001
@@ -1665,6 +1667,8 @@ translations:
   Listening: Listening
   Live view from your webcam: Live view from your webcam
   Load: Load
+  Load Cell: Load Cell
+  Load Cells: Load Cells
   Load Failed: Load Failed
   Load Filament: Load Filament
   Load a filament first before trying to unload: Load a filament first before trying to unload
