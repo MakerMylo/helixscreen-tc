@@ -202,6 +202,16 @@ class FanControlOverlay : public OverlayBase {
  */
 FanControlOverlay& get_fan_control_overlay();
 
+namespace helix {
+/**
+ * @brief Push the fan control overlay, creating it under @p parent_screen on first use
+ * @param parent_screen Screen to create the overlay on when @p panel is null
+ * @param panel The caller's panel from a previous open, or nullptr
+ * @return The pushed panel for the caller to keep, or nullptr if it could not be created
+ */
+lv_obj_t* open_fan_control_overlay(lv_obj_t* parent_screen, lv_obj_t* panel);
+} // namespace helix
+
 /**
  * @brief Initialize global FanControlOverlay instance
  * @param printer_state Reference to global helix::PrinterState
