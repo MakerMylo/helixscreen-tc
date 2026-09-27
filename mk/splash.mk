@@ -82,6 +82,7 @@ SPLASH_EXTRA_OBJS := \
     $(BUILD_DIR)/splash/data_root_resolver.o \
     $(BUILD_DIR)/splash/helix_paths.o \
     $(BUILD_DIR)/splash/text_io.o \
+    $(BUILD_DIR)/splash/helix_fs.o \
     $(BUILD_DIR)/splash/ui_notification_stub.o \
     $(BUILD_DIR)/splash/drm_mode_matching.o \
     $(BUILD_DIR)/splash/fbdev_size_helper.o \
@@ -121,6 +122,12 @@ $(BUILD_DIR)/splash/helix_paths.o: src/system/helix_paths.cpp $(ABI_STAMP) | $(B
 # Compile text_io for splash (config_storage_file.cpp reads and writes through it).
 # Large-file offsets, as in the app build (mk/rules.mk).
 $(BUILD_DIR)/splash/text_io.o: src/system/text_io.cpp $(ABI_STAMP) | $(BUILD_DIR)/splash
+	@echo "[CXX] $< (splash)"
+	$(Q)$(CXX) $(SPLASH_CXXFLAGS) -D_FILE_OFFSET_BITS=64 $(DEPFLAGS) -c $< -o $@
+
+# Compile helix_fs for splash (config, config_backup, config_storage_file and
+# helix_paths query and copy files through it). Large-file offsets, as text_io.
+$(BUILD_DIR)/splash/helix_fs.o: src/system/helix_fs.cpp $(ABI_STAMP) | $(BUILD_DIR)/splash
 	@echo "[CXX] $< (splash)"
 	$(Q)$(CXX) $(SPLASH_CXXFLAGS) -D_FILE_OFFSET_BITS=64 $(DEPFLAGS) -c $< -o $@
 
