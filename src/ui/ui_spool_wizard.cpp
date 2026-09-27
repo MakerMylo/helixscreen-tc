@@ -1483,7 +1483,8 @@ void SpoolWizardOverlay::on_wizard_show_create_filament_modal(lv_event_t* /*e*/)
 
     // Clear previous filament input state, default material to first in database
     wiz.new_filament_name_.clear();
-    wiz.new_filament_material_ = filament::MATERIALS[0].name; // "PLA"
+    const auto table = filament::materials();
+    wiz.new_filament_material_ = table->empty() ? "PLA" : table->front().name;
     wiz.new_filament_color_hex_.clear();
     wiz.new_filament_color_name_.clear();
     wiz.new_filament_nozzle_min_ = 0;

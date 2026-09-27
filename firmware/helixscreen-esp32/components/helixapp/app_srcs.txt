@@ -151,6 +151,7 @@ src/printer/chamber_heater_backend_panda_breath.cpp
 src/printer/consumption_sink.cpp
 src/printer/filament_catalog.cpp
 src/printer/filament_consumption_tracker.cpp
+src/printer/filament_database.cpp
 src/printer/filament_display_name.cpp
 src/printer/filament_macro_profiles.cpp
 src/printer/filament_mapper.cpp

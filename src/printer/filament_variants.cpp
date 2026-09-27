@@ -38,7 +38,7 @@ struct VariantAffix {
 /// Known variant affixes, matched case-insensitively and ONLY when delimited by
 /// a '-', '_' or ' ' separator. Derived from the type strings actually present
 /// in assets/filaments.json (CF, GF, AERO), the variant rows in
-/// filament_database.h MATERIALS[] (Silk/Matte/Wood/Marble/Metal/Glow), and the
+/// the material-type table (Silk/Matte/Wood/Marble/Metal/Glow), and the
 /// prefixed product names the catalog carries (HT-PLA-GF, PLA-HS, PETG+HS,
 /// PLA-LW, Bambu PETG HF).
 ///

@@ -82,6 +82,7 @@ class MaterialTempsOverlay : public OverlayBase {
 
     // Macro dropdown state
     lv_subject_t has_macro_subject_; // 0=no macro, 1=has macro (controls toggle visibility)
+    lv_subject_t shipped_subject_;   // 1=editing a shipped type (has a default to reset to)
     lv_obj_t* macro_dropdown_ = nullptr;
     lv_obj_t* macro_heating_switch_ = nullptr;
     std::vector<std::string> macro_names_; // Parallel to dropdown options (index 0 = "None")
