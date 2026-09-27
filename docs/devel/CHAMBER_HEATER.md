@@ -347,10 +347,21 @@ may treat 0 during an active run as "finished"; `filament_drying_active` is the
 only end signal.
 
 **Bed assist.** `start_chamber_drying(..., heat_bed)` also sets the bed to
-`chamber_dryer_bed_assist_c()`: 80°C, the bed temperature the stock appliance's own
-auto mode keys on (`auto_hotbedtemp`), capped at the bed's ceiling. The controller
+`chamber_dryer_bed_assist_c()`: 70°C, capped at the bed's ceiling. Spools may sit on
+the bed during a run, and a spool in contact with the bed must not be held above its
+drying temperature: plastic spool flanges soften around 60-70°C. A separate on-bed
+drying mode, with the spool deliberately placed on the plate, is being designed. The controller
 observes `chamber_dryer_active` and turns the bed off when the cycle ends on the
 appliance's side (only after it has seen the cycle running, so the idle frames
 before the appliance picks up the start end nothing), on Stop, and on a refused
 start. It leaves the bed alone if a job holds the machine by then, or the bed
 target is no longer the one it set. It never moves any axis.
+
+**Idle timeout.** A dry run moves nothing, so Klipper's `idle_timeout` would fire
+mid-run and run its gcode (`TURN_OFF_HEATERS` and `M84` on most printers, 300 s on the
+U1), zeroing the bed assist and the appliance's own `heater_generic`. The start reads
+`idle_timeout.timeout` from `configfile` (Klipper's default 600 when the section is
+absent) and sends `SET_IDLE_TIMEOUT TIMEOUT=<run seconds + 1800>`; every end path above
+sends the configured value back, unless a print owns the machine by then. When the
+configfile cannot be read nothing is held, since there would be no value to restore.
+The hold applies with or without the bed assist.
