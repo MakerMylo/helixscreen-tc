@@ -702,7 +702,7 @@ Located in the `motion` section. These back the jog pad; set them from the scree
 ### `show_actual_position`
 **Type:** boolean
 **Default:** `false`
-**Description:** What the X/Y/Z coordinates on the Motion screen show when it opens: the commanded position (`false`) or the actual measured position (`true`). Tapping the swap icon next to the coordinates flips it, so this is normally set from the screen rather than by hand. Remembered per printer.
+**Description:** What the X/Y/Z coordinates on the Motion screen show when it opens: the commanded position (`false`) or the actual measured position (`true`). Tapping the Target / Actual chip next to the coordinates flips it, so this is normally set from the screen rather than by hand. Remembered per printer.
 
 ---
 

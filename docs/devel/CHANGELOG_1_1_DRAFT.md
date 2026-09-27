@@ -197,8 +197,10 @@ what gets saved.
   so it stays visible on both tabs (the separate "Act:" line is gone; see the swap icon
   below).
 - **The Move tab sends the toolhead to named bed positions** - a 3x3 grid laid out like the
-  bed seen from above (Rear at the top, Front at the bottom), outer positions 10% in from
-  the edges so the head clears rails and clamps; on a delta the eight outer positions sit
+  bed seen from above (Rear at the top, Front at the bottom), placed on the print plate
+  from the `[bed_mesh]` probing area rather than the full axis travel, so no preset aims
+  at a purge area or tool dock past the plate; outer positions sit 10% in from the plate
+  edges; on a delta the eight outer positions sit
   on a circle instead. Moves are XY only, homing first when needed, and the whole tab is
   disabled while a print runs or is paused, or while the printer is not ready. Park and
   Motors Off sit under the grid.
@@ -208,9 +210,9 @@ what gets saved.
   Settings > Printing > Macro Buttons.
 - **Tap a coordinate in the header to move there** - a number pad opens for that axis, and
   a value outside the printer's range is refused with the allowed range while nothing
-  moves; an unhomed axis is homed first, then moved. The swap icon beside the coordinates
-  toggles between Commanded and Actual position, lights up for Actual, and is remembered
-  per printer.
+  moves; an unhomed axis is homed first, then moved. A Target / Actual chip beside the
+  coordinates names which position is shown and toggles it, lights up for Actual, and is
+  remembered per printer.
 - **Hold to repeat on the jog pad and Z buttons** - after about 0.4s the move repeats
   roughly every 0.15s for as long as you hold; a quick tap is still exactly one move.
 - **Jog limits are quiet, and the edge is visible before you press** - holding into a limit

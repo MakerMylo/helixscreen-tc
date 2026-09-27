@@ -1265,9 +1265,11 @@ void MotionPanel::handle_preset(helix::MotionPreset preset) {
     }
     // Computed at tap time: bounds can change (settings, calibration) between
     // the panel opening and the tap.
-    const auto target =
-        helix::motion_preset_target(preset, get_printer_state().get_gcode_axis_bounds(),
-                                    helix::circular_bed_kinematics(api->hardware().kinematics()));
+    const auto& ps = get_printer_state();
+    const auto area = helix::preset_area(ps.get_axis_bounds(), ps.get_gcode_axis_bounds(),
+                                         api->hardware().build_volume());
+    const auto target = helix::motion_preset_target(
+        preset, area, helix::circular_bed_kinematics(api->hardware().kinematics()));
     if (!target) {
         NOTIFY_INFO(lv_tr("Axis limits unknown"));
         return;

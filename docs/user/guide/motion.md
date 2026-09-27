@@ -13,7 +13,7 @@ Open the Motion screen by tapping **Motion** on the Controls panel. It has two t
 The current **X**, **Y**, and **Z** coordinates sit in the header of the Motion screen (in portrait they form a row just under the header). Each axis letter is dimmed while that axis is not homed yet.
 
 - **Tap a coordinate** to open a number pad and send the toolhead straight to that position. Values outside the printer's range are refused with "Value must be between A and B" - nothing moves. If the axis isn't homed yet, the printer homes it first and then makes the move; no extra confirmation is needed.
-- **Tap the swap icon** next to the coordinates to switch what they show: **Commanded** (the position you asked for) or **Actual** (where the nozzle really is, with z-offset, tool offsets and bed mesh correction applied, updating while it moves). The icon lights up while Actual is shown. The choice is remembered separately for each printer.
+- **Tap the Target / Actual chip** next to the coordinates to switch what they show: **Target** (the position you asked for) or **Actual** (where the nozzle really is, with z-offset, tool offsets and bed mesh correction applied, updating while it moves). The chip names the mode on screen and lights up while Actual is shown. The choice is remembered separately for each printer.
 
 The coordinates are greyed out whenever the printer isn't ready - not connected, or still starting up.
 
@@ -87,7 +87,7 @@ The right column has four Z buttons (two large steps and two small steps, up and
 
 ## Move Tab
 
-The **Move** tab replaces the jog pad with a 3x3 grid of named bed positions, laid out like the bed seen from above: the **Rear** row is at the top, the **Front** row at the bottom, and the columns are **Left**, **Center**, and **Right**. The center position is the middle of the bed; the other eight sit about 10% in from the edges, so the toolhead clears the rails and clamps at the extremes. On delta printers the eight outer positions are spread around a circle instead of a rectangle, matching the round bed.
+The **Move** tab replaces the jog pad with a 3x3 grid of named bed positions, laid out like the bed seen from above: the **Rear** row is at the top, the **Front** row at the bottom, and the columns are **Left**, **Center**, and **Right**. The positions cover the print plate, taken from the probing area in your `[bed_mesh]` config, not the full axis travel: many printers can travel past the plate to reach a purge bucket, a wiper or parked tools, and a named position never sends the head there. The center position is the middle of the plate; the other eight sit about 10% in from its edges. Printers with no `[bed_mesh]` section use the axis travel instead. On delta printers the eight outer positions are spread around a circle instead of a rectangle, matching the round bed.
 
 Tap any position and the toolhead moves there in X and Y only - Z is never changed from this grid. If X or Y isn't homed yet, the printer homes first and then makes the move.
 

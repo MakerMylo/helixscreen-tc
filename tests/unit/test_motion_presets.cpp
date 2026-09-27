@@ -121,3 +121,61 @@ TEST_CASE("circular_bed_kinematics names the round-bed machines", "[motion][pres
     CHECK_FALSE(circular_bed_kinematics("corexy"));
     CHECK_FALSE(circular_bed_kinematics(""));
 }
+
+TEST_CASE("motion presets aim at the plate, not axis overtravel", "[motion][presets]") {
+    // Snapmaker U1: Y travels to 335 but the plate ends at 270; the tool docks
+    // fill the rest. homing_origin (-0.088928, -0.016043) shifts G-code space.
+    const AxisBounds machine = known_bounds(0, 271, 0, 335);
+    const AxisBounds gcode = known_bounds(0.088928f, 271.088928f, 0.016043f, 335.016043f);
+    BuildVolume vol;
+    vol.plate_x_min = 3;
+    vol.plate_x_max = 267;
+    vol.plate_y_min = 3;
+    vol.plate_y_max = 267;
+
+    const AxisBounds area = helix::preset_area(machine, gcode, vol);
+    CHECK(area.x_min == Catch::Approx(3.088928).margin(1e-4));
+    CHECK(area.x_max == Catch::Approx(267.088928).margin(1e-4));
+    CHECK(area.y_min == Catch::Approx(3.016043).margin(1e-4));
+    CHECK(area.y_max == Catch::Approx(267.016043).margin(1e-4));
+
+    const auto rear_left = motion_preset_target(MotionPreset::RearLeft, area, false);
+    REQUIRE(rear_left.has_value());
+    CHECK(*rear_left->x == Catch::Approx(29.488928).margin(1e-4));
+    CHECK(*rear_left->y == Catch::Approx(240.616043).margin(1e-4));
+}
+
+TEST_CASE("preset area falls back to travel and never exceeds it", "[motion][presets]") {
+    const AxisBounds travel = known_bounds(0, 235, 0, 235);
+
+    SECTION("no plate declared") {
+        const AxisBounds area = helix::preset_area(travel, travel, BuildVolume{});
+        CHECK(area.x_min == 0.0f);
+        CHECK(area.x_max == 235.0f);
+        CHECK(area.y_max == 235.0f);
+    }
+
+    SECTION("plate wider than travel is clipped to it") {
+        BuildVolume vol;
+        vol.plate_x_min = -10;
+        vol.plate_x_max = 250;
+        vol.plate_y_min = 5;
+        vol.plate_y_max = 230;
+        const AxisBounds area = helix::preset_area(travel, travel, vol);
+        CHECK(area.x_min == 0.0f);
+        CHECK(area.x_max == 235.0f);
+        CHECK(area.y_min == 5.0f);
+        CHECK(area.y_max == 230.0f);
+    }
+
+    SECTION("unknown travel stays unknown") {
+        AxisBounds unknown = travel;
+        unknown.has_y = false;
+        BuildVolume vol;
+        vol.plate_x_min = 3;
+        vol.plate_x_max = 200;
+        vol.plate_y_min = 3;
+        vol.plate_y_max = 200;
+        CHECK_FALSE(helix::preset_area(unknown, unknown, vol).has_y);
+    }
+}
