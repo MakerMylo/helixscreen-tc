@@ -8,6 +8,7 @@
 #include "app_globals.h"
 #include "config.h"
 #include "data_root_resolver.h"
+#include "helix_fs.h"
 #include "json_utils.h"
 #include "klipper_extruder_naming.h"
 #include "lvgl/src/others/translation/lv_translation.h"
@@ -23,6 +24,8 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cerrno>
+#include <cstring>
 #include <tuple>
 #include <unordered_set>
 #include <vector>
@@ -31,19 +34,12 @@
 #include <malloc.h> // malloc_trim() — see PrinterDatabase::compact()
 #endif
 
-// C++17 filesystem - use std::filesystem if available, fall back to experimental
-#if __cplusplus >= 201703L && __has_include(<filesystem>)
-#include <filesystem>
-namespace fs = std::filesystem;
-#else
-#include <experimental/filesystem>
-namespace fs = std::experimental::filesystem;
-#endif
-
 #include "hv/json.hpp"
 
 using json = nlohmann::json;
 using namespace helix;
+
+namespace hfs = helix::fs;
 
 // ============================================================================
 // JSON Database Loader with User Extensions Support
@@ -166,7 +162,7 @@ struct PrinterDatabase {
         const std::string extensions_dir = helix::writable_path("printer_database.d");
 
         // Check if extensions directory exists
-        if (!fs::exists(extensions_dir) || !fs::is_directory(extensions_dir)) {
+        if (!hfs::exists(extensions_dir) || !hfs::is_directory(extensions_dir)) {
             spdlog::debug("[PrinterDetector] No user extensions directory at {}", extensions_dir);
             return;
         }
@@ -184,16 +180,17 @@ struct PrinterDatabase {
 
         // Scan for JSON files in extensions directory
         std::vector<std::string> extension_files;
-        try {
-            for (const auto& entry : fs::directory_iterator(extensions_dir)) {
-                if (entry.path().extension() == ".json") {
-                    extension_files.push_back(entry.path().string());
-                }
-            }
-        } catch (const std::exception& e) {
-            load_errors.push_back(fmt::format("Failed to scan {}: {}", extensions_dir, e.what()));
+        auto entries = hfs::list_dir(extensions_dir);
+        if (!entries) {
+            load_errors.push_back(
+                fmt::format("Failed to scan {}: {}", extensions_dir, std::strerror(errno)));
             spdlog::warn("[PrinterDetector] {}", load_errors.back());
             return;
+        }
+        for (const auto& e : *entries) {
+            if (hfs::extension(e.path) == ".json") {
+                extension_files.push_back(e.path);
+            }
         }
 
         // Sort for consistent ordering
