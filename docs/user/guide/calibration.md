@@ -16,6 +16,7 @@ The Bed Mesh panel has two parts: a 3D visualization of your bed surface on the 
 
 - **Color gradient**: Blue (low) to Red (high)
 - **Touch to rotate** the 3D view
+- **Pinch** to zoom in on the spot, **two-finger drag** to move a zoomed view around; pinching all the way out returns to the full view
 - When no mesh is loaded, the panel shows a "No mesh loaded" placeholder
 
 **Current Mesh card (right):** shows the active profile name, mesh size (probe-point grid), highest and lowest points, and the overall Z range (variance).

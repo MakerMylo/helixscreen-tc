@@ -97,9 +97,11 @@ extern "C" {
 #define BED_MESH_ANGLE_X_MAX (0.0)            // Edge-on view (horizontal)
 #define BED_MESH_DEFAULT_Z_SCALE 60.0         // Default height amplification factor
 #define BED_MESH_DEFAULT_Z_TARGET_HEIGHT 80.0 // Target projected height range (world units)
-#define BED_MESH_MIN_Z_SCALE 35.0             // Min Z scale (prevents flatness)
-#define BED_MESH_MAX_Z_SCALE 120.0            // Max Z scale (prevents extreme projection)
-#define BED_MESH_COLOR_COMPRESSION 0.8        // Color range compression (0.8 = 80% of data range)
+#define BED_MESH_ZOOM_MIN 1.0                 // Two-finger magnify range; 1.0 is the fitted view
+#define BED_MESH_ZOOM_MAX 8.0
+#define BED_MESH_MIN_Z_SCALE 35.0      // Min Z scale (prevents flatness)
+#define BED_MESH_MAX_Z_SCALE 120.0     // Max Z scale (prevents extreme projection)
+#define BED_MESH_COLOR_COMPRESSION 0.8 // Color range compression (0.8 = 80% of data range)
 #define BED_MESH_Z_ORIGIN_VERTICAL_POS                                                             \
     0.5 // Canvas Y position for Z=0 plane (0=top, 0.5=center, 1=bottom)
 #define BED_MESH_GRADIENT_SEGMENTS 6       // Max gradient segments per scanline
@@ -160,6 +162,12 @@ struct bed_mesh_view_state_t {
     // Layer offset (updated every frame to track panel position during animations)
     int layer_offset_x; // Layer's X position on screen (from clip area)
     int layer_offset_y; // Layer's Y position on screen (from clip area)
+
+    // Two-finger magnify, applied in screen space after the perspective divide.
+    // zoom == BED_MESH_ZOOM_MIN implies pan_x == pan_y == 0.
+    double zoom = 1.0;  // Magnification about the projection origin
+    double pan_x = 0.0; // Screen-space offset, canvas pixels
+    double pan_y = 0.0;
 };
 
 // Main renderer instance (opaque handle)
@@ -241,6 +249,15 @@ void bed_mesh_renderer_set_bounds(bed_mesh_renderer_t* renderer, double bed_x_mi
  * @param angle_z Spin angle in degrees (horizontal rotation around vertical axis; wrapped)
  */
 void bed_mesh_renderer_set_rotation(bed_mesh_renderer_t* renderer, double angle_x, double angle_z);
+
+/**
+ * @brief Apply one frame of a two-finger gesture: pan by (pan_dx, pan_dy) canvas px,
+ * then zoom by `zoom` about canvas-local (anchor_x, anchor_y).
+ * Caller holds the render mutex in async mode.
+ */
+void bed_mesh_renderer_apply_two_finger(bed_mesh_renderer_t* renderer, double pan_dx, double pan_dy,
+                                        double zoom, double anchor_x, double anchor_y,
+                                        int canvas_width, int canvas_height);
 
 /**
  * @brief Get current view state (for interactive controls)
