@@ -5,7 +5,9 @@ one size itself responsively. The nozzle-temps widget is the exemplar to copy:
 `src/ui/panel_widgets/nozzle_temps_widget.{h,cpp}`,
 `src/ui/panel_widgets/nozzle_layout.h`, and its three XML components. The eighteen
 centred-icon tiles run the same pattern one instance deeper; see
-[The tile instance of the pattern](#the-tile-instance-of-the-pattern) below.
+[The tile instance of the pattern](#the-tile-instance-of-the-pattern) below, and the
+printer image's live callouts are a third instance
+([The printer image callouts instance](#the-printer-image-callouts-instance)).
 
 **Related**: `LAYOUT_SYSTEM.md` (the home grid that sizes tiles),
 `LVGL9_XML_GUIDE.md` (bindings), `ARCHITECTURE.md` (subjects).
@@ -130,6 +132,53 @@ On the XML side, the rung styles `styles.tile_icon_xs` .. `styles.tile_icon_xl`,
 link renders tofu. The seven single-icon action tiles share
 `ui_xml/components/home_action_tile.xml`, whose `tile_icon_subject` prop installs the
 per-instance rung binding (empty installs none).
+
+### The printer image callouts instance
+
+`PrinterImageWidget` (`src/ui/panel_widgets/printer_image_widget.{h,cpp}`) runs the pattern
+over live chips on the home printer picture: temperature chips for the nozzle, bed and
+chamber, the part fan's speed, and a light chip (prestonbrown/helixscreen#1397). The pure
+decision is `helix::compute_callout_layout()` (`src/ui/panel_widgets/callout_layout.h`),
+which returns a `CalloutMode`, the image rect, and each chip's rect and leader line.
+
+- **The mode ladder.** Image only (one cell on both axes, or an image too short for three
+  chip heights); both sides (each side band of the centred image fits a chip column, each
+  chip on the side nearer its point); one side (the image moves to the near edge and every
+  chip stacks in the far band); pinned (tagged image, no band: chips sit on their points,
+  and nozzle + fan merge into one toolhead chip); docked (untagged image: chips in the
+  free band, else along the bottom edge, never a line). A tile taller than the image's
+  aspect runs the same ladder with bands above and below.
+- **The budget decides the mode; the active chips get positions.** `CalloutLayoutInput`
+  carries both: `budget` is every chip this printer can ever show at its widest text,
+  `active` is what shows now. Fitting against the budget is what keeps the image still
+  as chips come and go. A capability (`printer_has_led`, `printer_has_chamber_heater`)
+  changes the budget, so its observer relayouts even when no chip text changes.
+- **Chips are measured with the composer they render.** `apply_callout_layout()` measures
+  in the chips' own fonts, takes padding and border from the live chip's style, and
+  `around_text()` is the single expression for everything in a chip except its text. It
+  sizes the chip and bounds the label's `max_width`, so a chip clamped narrower than its
+  text ends in dots instead of spilling.
+- **Geometry is set only from the deferred timer.** Observers publish subjects and call
+  `schedule_callout_layout()`; the one-shot timer measures and places. Nothing forces a
+  layout pass during a grid rebuild (#983, #1025). Unchanged coordinates are not
+  rewritten, since every style write invalidates and temperatures relayout every tick.
+- **One side and the exact-size image cache.** A moved image declares a pixel rect whose
+  coords only follow at the next layout pass, and the cache check runs from timers that
+  can fire first, so the cache reads the DECLARED size
+  (`src/ui/panel_widgets/printer_image_widget.cpp#declared_image_size`), never the coords.
+  A generated copy whose size no longer matches the declared rect is dropped and the check
+  rescheduled. An exact copy is shown 1:1: `show_exact_copy()` sets the inner align to
+  CENTER, then `LV_SCALE_NONE`, then the source, because LVGL keeps the scale CONTAIN
+  computed until the align changes and refuses a scale while CONTAIN is still set.
+- **Leader lines keep their points alive.** `<leader_line>` (`include/ui_leader_line.h`)
+  is a bare `lv_line`, and `lv_line` keeps the pointer it is given, so each line's two
+  points live in the widget (`callout_line_pts_`, one pair per `CalloutKind` that can draw
+  a line) for as long as the line exists.
+- **Where the points come from.** Each shipped image's nozzle, bed edge, part fan, chamber
+  and light are hand-tagged, normalized over the source PNG, in
+  `assets/images/printers/regions.json`; `assets/images/printers/README.md` documents the
+  format and `tools/printer-regions-tagger.html` is the tagging tool. `[regions]` fails,
+  naming the image, when a PNG no longer matches its recorded size.
 
 ### Engine contracts this pattern relies on
 
