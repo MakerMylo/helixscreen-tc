@@ -780,6 +780,10 @@ translations:
   Could not resolve printer RFCOMM channel: RFCOMM-Kanal des Druckers konnte nicht
     ermittelt werden
   Could not save filament: Filament konnte nicht gespeichert werden
+  Could not save the drying state: Trocknungsstatus konnte nicht gespeichert werden
+
+  'Could not save the drying state: nothing was heated': 'Trocknungsstatus konnte nicht gespeichert werden: Es wurde nichts geheizt'
+
   "Could not save the mesh as '{}': {}": "Netz konnte nicht als '{}' gespeichert werden: {}"
   Could not start Bluetooth discovery: Bluetooth-Erkennung konnte nicht gestartet
     werden
@@ -2052,6 +2056,8 @@ translations:
   No spool assigned: Keine Spule zugewiesen
   No spools found — tap to retry: Keine Spulen gefunden — tippen zum Wiederholen
   No spools match your search: Keine Spulen entsprechen Ihrer Suche
+  No spools placed: Keine Spulen eingelegt
+
   No tape detected in printer: Kein Band im Drucker erkannt
   No target printer configured: Kein Zieldrucker konfiguriert
   No temperature sensors detected: 'Keine Temperatursensoren erkannt'
@@ -3007,6 +3013,8 @@ translations:
   Spoolman was not configured.: Spoolman war nicht konfiguriert.
   'Spoolman: %zu Spool%s': 'Spoolman: %zu Spule%s'
   'Spoolman: %zu/%zu Spool%s': 'Spoolman: %zu/%zu Spule%s'
+  'Spools on the bed: start drying, or confirm none were placed': 'Spulen auf dem Heizbett: Trocknung starten oder bestätigen, dass keine eingelegt wurden'
+
   Spools removed: Spulen entnommen
 
   Square Corner Velocity: Eckgeschwindigkeit

@@ -151,8 +151,9 @@ class SettingsManager {
     /// The persisted bed-drying run; `latched` false when there is none.
     helix::bed_drying::RunRecord get_bed_drying_record() const;
     /// Written and saved at once: the latch must reach disk before any heat.
-    void set_bed_drying_record(const helix::bed_drying::RunRecord& record);
-    void clear_bed_drying_record();
+    /// False when the save failed.
+    [[nodiscard]] bool set_bed_drying_record(const helix::bed_drying::RunRecord& record);
+    bool clear_bed_drying_record();
 
     // =========================================================================
     // CHAMBER ASSIGNMENT (owned by SettingsManager — sensor/heater override)

@@ -704,6 +704,10 @@ translations:
   Could not remove the job from the queue: 无法从队列中移除任务
   Could not resolve printer RFCOMM channel: 无法解析打印机 RFCOMM 通道
   Could not save filament: 无法保存耗材
+  Could not save the drying state: 无法保存烘干状态
+
+  'Could not save the drying state: nothing was heated': 无法保存烘干状态:未进行任何加热
+
   "Could not save the mesh as '{}': {}": "无法将网格保存为 '{}'：{}"
   Could not start Bluetooth discovery: 无法启动蓝牙发现
   Could not update filaments: 无法更新耗材
@@ -1898,6 +1902,8 @@ translations:
   No spool assigned: 未分配料盘
   No spools found — tap to retry: 未找到料盘 - 点击重试
   No spools match your search: 没有符合搜索条件的料盘
+  No spools placed: 未放置料盘
+
   No tape detected in printer: 打印机中未检测到标签带
   No target printer configured: 未配置目标打印机
   No temperature sensors detected: '未检测到温度传感器'
@@ -2787,6 +2793,8 @@ translations:
   Spoolman was not configured.: Spoolman 未配置。
   'Spoolman: %zu Spool%s': 'Spoolman: %zu 个线轴%s'
   'Spoolman: %zu/%zu Spool%s': 'Spoolman: %zu/%zu 个线轴%s'
+  'Spools on the bed: start drying, or confirm none were placed': 料盘在热床上:开始烘干,或确认未放置料盘
+
   Spools removed: 料盘已取下
 
   Square Corner Velocity: 直角转弯速度

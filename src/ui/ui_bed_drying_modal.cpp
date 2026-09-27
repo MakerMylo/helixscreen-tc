@@ -77,15 +77,31 @@ void BedDryingModal::on_ok() {
 namespace {
 
 void show_place_prompt() {
-    modal_confirm(lv_tr("Place the spools"),
-                  lv_tr("Clear the area above and below the plate. Lay the spools on the "
-                        "plate, cover them with a box (a printed lid or the filament's "
-                        "packaging) and close the door."),
-                  ModalSeverity::Warning, lv_tr("Start drying"), [] {
-                      if (auto* ctrl = get_bed_drying_controller()) {
-                          ctrl->confirm_placed();
-                      }
-                  });
+    ConfirmOptions opts;
+    opts.cancel_text = lv_tr("No spools placed");
+    opts.on_cancel = [] {
+        if (auto* ctrl = get_bed_drying_controller()) {
+            ctrl->cancel_placement();
+        }
+    };
+    // Any other way out leaves the spools possibly on the plate, so the latch
+    // stays and the user confirms them off instead.
+    opts.on_dismiss = [] { show_bed_drying_remove_prompt(); };
+    modal_confirm(
+        lv_tr("Place the spools"),
+        lv_tr("Clear the area above and below the plate. Lay the spools on the "
+              "plate, cover them with a box (a printed lid or the filament's "
+              "packaging) and close the door."),
+        ModalSeverity::Warning, lv_tr("Start drying"),
+        [] {
+            auto* ctrl = get_bed_drying_controller();
+            if (ctrl && !ctrl->confirm_placed()) {
+                ToastManager::instance().show(
+                    ToastSeverity::ERROR,
+                    lv_tr("Could not save the drying state: nothing was heated"), 6000);
+            }
+        },
+        opts);
 }
 
 void prepare_plate(const Material& material, bool with_appliance) {
@@ -189,6 +205,9 @@ void on_bed_drying_banner_clicked() {
         break;
     case BedDryingController::State::ReadyToRemove:
         show_bed_drying_remove_prompt();
+        break;
+    case BedDryingController::State::Placing:
+        show_place_prompt();
         break;
     case BedDryingController::State::Idle:
         break;

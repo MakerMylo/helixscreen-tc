@@ -37,7 +37,7 @@ class TemperatureController;
  */
 class BedDryingController {
   public:
-    enum class State { Idle = 0, Running = 1, Cooling = 2, ReadyToRemove = 3 };
+    enum class State { Idle = 0, Running = 1, Cooling = 2, ReadyToRemove = 3, Placing = 4 };
 
     using Clock = std::function<long long()>;
 
@@ -56,14 +56,21 @@ class BedDryingController {
     /// sensor can say for certain.
     [[nodiscard]] std::optional<bool> toolhead_loaded() const;
 
-    /// Home if needed, then the clearance move and park. @p on_ready fires on
-    /// the main thread once the plate is in place; @p on_error with a message
-    /// when a move was refused or failed.
+    /// Home if needed, then the clearance move and park. Once the plate is in
+    /// place the latch is set and persisted before @p on_ready fires (the place
+    /// prompt): spools can land on the plate from then on. @p on_error with a
+    /// message when a move was refused or failed, or the latch could not be
+    /// saved.
     void prepare(const bed_drying::Material& material, bool with_appliance,
                  std::function<void()> on_ready, std::function<void(const std::string&)> on_error);
 
-    /// The spools are on the plate: latch, persist, heat.
-    void confirm_placed();
+    /// The spools are on the plate: persist the run, heat. False, with nothing
+    /// heated, when the run could not be saved.
+    bool confirm_placed();
+
+    /// The user says no spools went on the plate: the only way out of
+    /// Placing without the removal confirmation.
+    void cancel_placement();
 
     /// End the run early. The latch stays.
     void stop();
@@ -103,6 +110,9 @@ class BedDryingController {
 
     long long now() const;
     void end_run(const char* why);
+    bool begin_placement();
+    void hold_idle(int seconds);
+    [[nodiscard]] bool klipper_ready() const;
     void publish();
     void set_latch(bool on);
     void cancel_timer();

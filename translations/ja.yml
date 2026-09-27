@@ -706,6 +706,10 @@ translations:
   Could not remove the job from the queue: キューからジョブを削除できませんでした
   Could not resolve printer RFCOMM channel: プリンターの RFCOMM チャンネルを解決できませんでした
   Could not save filament: フィラメントを保存できませんでした
+  Could not save the drying state: 乾燥の状態を保存できませんでした
+
+  'Could not save the drying state: nothing was heated': '乾燥の状態を保存できませんでした: 何も加熱していません'
+
   "Could not save the mesh as '{}': {}": "メッシュを '{}' として保存できませんでした: {}"
   Could not start Bluetooth discovery: Bluetooth の検出を開始できませんでした
   Could not update filaments: フィラメントを更新できませんでした
@@ -1905,6 +1909,8 @@ translations:
   No spool assigned: スプール未割当
   No spools found — tap to retry: スプールが見つかりません — タップして再試行
   No spools match your search: 検索に一致するスプールがありません
+  No spools placed: スプールは置いていません
+
   No tape detected in printer: プリンターにテープが検出されません
   No target printer configured: 対象プリンターが設定されていません
   No temperature sensors detected: '温度センサーが検出されません'
@@ -2796,6 +2802,8 @@ translations:
   Spoolman was not configured.: Spoolman は設定されていませんでした。
   'Spoolman: %zu Spool%s': 'Spoolman: %zu 個のスプール%s'
   'Spoolman: %zu/%zu Spool%s': 'Spoolman: %zu/%zu 個のスプール%s'
+  'Spools on the bed: start drying, or confirm none were placed': 'ベッドにスプールがあります: 乾燥を開始するか、置いていないことを確認してください'
+
   Spools removed: スプールを取り出しました
 
   Square Corner Velocity: 直角コーナー速度

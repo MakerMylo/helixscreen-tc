@@ -746,6 +746,8 @@ translations:
   Could not remove the job from the queue: Could not remove the job from the queue
   Could not resolve printer RFCOMM channel: Could not resolve printer RFCOMM channel
   Could not save filament: Could not save filament
+  Could not save the drying state: Could not save the drying state
+  'Could not save the drying state: nothing was heated': 'Could not save the drying state: nothing was heated'
   "Could not save the mesh as '{}': {}": "Could not save the mesh as '{}': {}"
   Could not start Bluetooth discovery: Could not start Bluetooth discovery
   Could not update filaments: Could not update filaments
@@ -1981,6 +1983,7 @@ translations:
   No spool assigned: No spool assigned
   No spools found — tap to retry: No spools found — tap to retry
   No spools match your search: No spools match your search
+  No spools placed: No spools placed
   No tape detected in printer: No tape detected in printer
   No target printer configured: No target printer configured
   No temperature sensors detected: No temperature sensors detected
@@ -2911,6 +2914,7 @@ translations:
   Spoolman was not configured.: Spoolman was not configured.
   'Spoolman: %zu Spool%s': 'Spoolman: %zu Spool%s'
   'Spoolman: %zu/%zu Spool%s': 'Spoolman: %zu/%zu Spool%s'
+  'Spools on the bed: start drying, or confirm none were placed': 'Spools on the bed: start drying, or confirm none were placed'
   Spools removed: Spools removed
   Square Corner Velocity: Square Corner Velocity
   Stable: Stable

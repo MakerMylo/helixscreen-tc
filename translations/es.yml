@@ -777,6 +777,10 @@ translations:
   Could not resolve printer RFCOMM channel: No se pudo resolver el canal RFCOMM de
     la impresora
   Could not save filament: No se pudo guardar el filamento
+  Could not save the drying state: No se pudo guardar el estado del secado
+
+  'Could not save the drying state: nothing was heated': 'No se pudo guardar el estado del secado: no se calentó nada'
+
   "Could not save the mesh as '{}': {}": "No se pudo guardar la malla como '{}': {}"
   Could not start Bluetooth discovery: No se pudo iniciar el descubrimiento Bluetooth
   Could not update filaments: No se pudieron actualizar los filamentos
@@ -2044,6 +2048,8 @@ translations:
   No spool assigned: Sin bobina asignada
   No spools found — tap to retry: No se encontraron bobinas — toque para reintentar
   No spools match your search: Ninguna bobina coincide con su búsqueda
+  No spools placed: No coloqué bobinas
+
   No tape detected in printer: No se detectó cinta en la impresora
   No target printer configured: Ninguna impresora de destino configurada
   No temperature sensors detected: 'No se detectaron sensores de temperatura'
@@ -2998,6 +3004,8 @@ translations:
   Spoolman was not configured.: Spoolman no estaba configurado.
   'Spoolman: %zu Spool%s': 'Spoolman: %zu bobina%s'
   'Spoolman: %zu/%zu Spool%s': 'Spoolman: %zu/%zu bobina%s'
+  'Spools on the bed: start drying, or confirm none were placed': 'Bobinas en la cama: inicia el secado o confirma que no colocaste ninguna'
+
   Spools removed: Bobinas retiradas
 
   Square Corner Velocity: Velocidad de Esquina Cuadrada

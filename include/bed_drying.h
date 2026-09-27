@@ -50,6 +50,11 @@ inline constexpr double kCoolDownC = 40.0;
 /// Klipper's idle timeout is held to the planned end plus this, so a run
 /// HelixScreen can no longer end is ended by Klipper's own TURN_OFF_HEATERS.
 inline constexpr int kDeadManMarginS = 10 * 60;
+/// The hold while spools lie on an unheated bed: placing them, cooling down,
+/// waiting to be taken off. Nothing is hot then, so the idle timeout's only
+/// effect would be its M84, which lets a gantry sink onto the spools. 24 h
+/// covers a run that ends overnight and a removal the next day.
+inline constexpr int kSpoolsOnBedHoldS = 24 * 3600;
 
 /// Open printers never offer it; an owner marks a DIY enclosure through the
 /// enclosure override instead.
@@ -68,17 +73,20 @@ inline constexpr int kDeadManMarginS = 10 * 60;
 
 struct Material {
     std::string_view name;
-    int bed_c; ///< upper end of Bambu's range
+    int bed_c; ///< upper end of Bambu's heated-bed range
+    int air_c; ///< drying air temperature for a chamber appliance, Bambu's AMS HT / oven column
     int hours;
 };
 
-/// Bambu's heated-bed drying table, upper value of each range, all 12 h.
+/// Bambu's drying tables, all 12 h. The bed value is the upper end of its
+/// heated-bed range; the air value is what a chamber dryer should hold, far
+/// below the bed's, since the air around PLA must stay under its softening point.
 inline constexpr std::array<Material, 5> kMaterials = {{
-    {"PLA", 70, 12},
-    {"PLA Silk/CF", 75, 12},
-    {"PETG", 85, 12},
-    {"TPU", 90, 12},
-    {"ABS/ASA/PC/PA", 100, 12},
+    {"PLA", 70, 50, 12},
+    {"PLA Silk/CF", 75, 55, 12},
+    {"PETG", 85, 65, 12},
+    {"TPU", 90, 75, 12},
+    {"ABS/ASA/PC/PA", 100, 80, 12},
 }};
 
 /// The bed temperature a material dries at: its table value, capped at
@@ -145,6 +153,7 @@ enum class Phase { Running, Ended };
 /// power loss.
 struct RunRecord {
     bool latched = false;
+    bool placing = false;  ///< latched while the place prompt is up; nothing heats yet
     long long start_s = 0; ///< wall clock, seconds
     long long end_s = 0;   ///< planned end, wall clock, seconds
     int bed_c = 0;

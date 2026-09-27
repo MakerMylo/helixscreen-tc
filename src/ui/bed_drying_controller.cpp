@@ -94,6 +94,9 @@ BedDryingController::State BedDryingController::state() const {
     if (!record_.latched) {
         return State::Idle;
     }
+    if (record_.placing) {
+        return State::Placing;
+    }
     if (!record_.ended) {
         return State::Running;
     }
@@ -159,14 +162,20 @@ void BedDryingController::prepare(const Material& material, bool with_appliance,
             }
         });
     };
-    auto do_move = [this, tok, move, on_ready, fail]() {
+    auto do_move = [this, tok, move, on_ready, on_error, fail]() {
         api_->execute_gcode(
             move,
-            [tok, on_ready]() {
+            [this, tok, on_ready, on_error]() {
                 if (tok.expired()) {
                     return;
                 }
-                tok.defer("BedDrying::placed_ready", [on_ready]() {
+                tok.defer("BedDrying::placed_ready", [this, on_ready, on_error]() {
+                    if (!begin_placement()) {
+                        if (on_error) {
+                            on_error(lv_tr("Could not save the drying state"));
+                        }
+                        return;
+                    }
                     if (on_ready) {
                         on_ready();
                     }
@@ -195,21 +204,53 @@ void BedDryingController::prepare(const Material& material, bool with_appliance,
         fail);
 }
 
-void BedDryingController::confirm_placed() {
-    if (record_.latched || !api_) {
-        return;
+// Spools can land on the plate from the moment the place prompt opens, so the
+// latch is set and saved here, before the prompt is shown.
+bool BedDryingController::begin_placement() {
+    RunRecord placing;
+    placing.latched = true;
+    placing.placing = true;
+    if (!SettingsManager::instance().set_bed_drying_record(placing)) {
+        return false;
+    }
+    record_ = placing;
+    set_latch(true);
+    removal_prompted_ = false;
+    // The motors are live after the move; the idle timeout's M84 must not fire
+    // while spools go onto the plate.
+    if (tc_) {
+        auto tok = lifetime_.token();
+        tc_->read_configured_idle_timeout([this, tok](int configured_s) {
+            if (tok.expired() || !record_.latched) {
+                return;
+            }
+            record_.idle_restore_s = configured_s;
+            (void)SettingsManager::instance().set_bed_drying_record(record_);
+            hold_idle(kSpoolsOnBedHoldS);
+        });
+    }
+    restore();
+    return true;
+}
+
+bool BedDryingController::confirm_placed() {
+    if (!record_.latched || !record_.placing || !api_) {
+        return false;
     }
     const Material& m = pending_material_;
     const long long start = now();
-    record_ = RunRecord{};
-    record_.latched = true;
-    record_.start_s = start;
-    record_.end_s = start + static_cast<long long>(m.hours) * 3600;
-    record_.bed_c = bed_temp_for(m);
-    record_.appliance = pending_appliance_ && tc_ && tc_->chamber_dryer().supported;
+    RunRecord run = record_;
+    run.placing = false;
+    run.start_s = start;
+    run.end_s = start + static_cast<long long>(m.hours) * 3600;
+    run.bed_c = bed_temp_for(m);
+    run.appliance = pending_appliance_ && tc_ && tc_->chamber_dryer().supported;
 
-    // The latch reaches disk before any heat is sent.
-    SettingsManager::instance().set_bed_drying_record(record_);
+    // The run reaches disk before any heat is sent.
+    if (!SettingsManager::instance().set_bed_drying_record(run)) {
+        return false;
+    }
+    record_ = run;
     set_latch(true);
     bed_target_seen_ = false;
     removal_prompted_ = false;
@@ -219,23 +260,34 @@ void BedDryingController::confirm_placed() {
     if (tc_) {
         tc_->set_target(HeaterType::Bed, record_.bed_c);
         if (record_.appliance) {
-            tc_->start_chamber_drying(static_cast<float>(record_.bed_c), m.hours * 60, false,
-                                      false);
+            // The appliance heats the air around the spools, far below the bed.
+            tc_->start_chamber_drying(static_cast<float>(m.air_c), m.hours * 60, false, false);
         }
-        const long long end = record_.end_s;
-        auto tok = lifetime_.token();
-        tc_->read_configured_idle_timeout([this, tok, end](int configured_s) {
-            if (tok.expired() || !record_.latched || record_.ended || record_.end_s != end ||
-                !api_) {
-                return;
-            }
-            record_.idle_restore_s = configured_s;
-            SettingsManager::instance().set_bed_drying_record(record_);
-            const long long hold = (end - now()) + kDeadManMarginS;
-            api_->execute_gcode(fmt::format("SET_IDLE_TIMEOUT TIMEOUT={}", hold), nullptr, nullptr);
-        });
     }
+    // Held to the planned end plus the dead-man margin: if HelixScreen can no
+    // longer end the run, Klipper's own idle timeout does.
+    hold_idle(static_cast<int>(record_.end_s - now()) + kDeadManMarginS);
     restore();
+    return true;
+}
+
+void BedDryingController::cancel_placement() {
+    if (!record_.latched || !record_.placing) {
+        return;
+    }
+    spdlog::info("[BedDrying] No spools placed");
+    confirm_removed();
+}
+
+void BedDryingController::hold_idle(int seconds) {
+    if (api_) {
+        api_->execute_gcode(fmt::format("SET_IDLE_TIMEOUT TIMEOUT={}", seconds), nullptr, nullptr);
+    }
+}
+
+bool BedDryingController::klipper_ready() const {
+    lv_subject_t* klippy = state_.get_klippy_state_subject();
+    return klippy && lv_subject_get_int(klippy) == static_cast<int>(KlippyState::READY);
 }
 
 void BedDryingController::stop() {
@@ -250,7 +302,7 @@ void BedDryingController::stop() {
 void BedDryingController::end_run(const char* why) {
     spdlog::info("[BedDrying] Run ended ({})", why);
     record_.ended = true;
-    SettingsManager::instance().set_bed_drying_record(record_);
+    (void)SettingsManager::instance().set_bed_drying_record(record_);
     if (tc_) {
         lv_subject_t* target = state_.get_bed_target_subject();
         const int target_deci = target ? lv_subject_get_int(target) : 0;
@@ -261,10 +313,9 @@ void BedDryingController::end_run(const char* why) {
             tc_->stop_chamber_drying();
         }
     }
-    if (record_.idle_restore_s > 0 && api_) {
-        api_->execute_gcode(fmt::format("SET_IDLE_TIMEOUT TIMEOUT={}", record_.idle_restore_s),
-                            nullptr, nullptr);
-    }
+    // The heat is off but the spools are still on the plate: keep the motors
+    // held until they are confirmed off, rather than restoring the timeout.
+    hold_idle(kSpoolsOnBedHoldS);
     publish();
 }
 
@@ -272,12 +323,15 @@ void BedDryingController::confirm_removed() {
     if (!record_.latched) {
         return;
     }
-    if (!record_.ended) {
+    if (!record_.ended && !record_.placing) {
         end_run("spools removed");
     }
-    spdlog::info("[BedDrying] Spools removed; latch cleared");
+    if (record_.idle_restore_s > 0) {
+        hold_idle(record_.idle_restore_s);
+    }
+    spdlog::info("[BedDrying] Spools off the bed; latch cleared");
     record_ = RunRecord{};
-    SettingsManager::instance().clear_bed_drying_record();
+    (void)SettingsManager::instance().clear_bed_drying_record();
     set_latch(false);
     removal_prompted_ = false;
     cancel_timer();
@@ -292,6 +346,12 @@ void BedDryingController::tick(long long now_s) {
     // A run restored before discovery registered no dryer tokens; picking them
     // up here lets the dryer's stop through once the appliance is known.
     set_latch(true);
+    // Sends made before Klipper is ready go nowhere and are never retried, so
+    // the run is only advanced once it is (a restore runs before connecting).
+    if (record_.placing || !klipper_ready()) {
+        publish();
+        return;
+    }
     if (!record_.ended) {
         lv_subject_t* target = state_.get_bed_target_subject();
         const int target_deci = target ? lv_subject_get_int(target) : 0;
@@ -306,7 +366,7 @@ void BedDryingController::tick(long long now_s) {
             end_run("bed turned off");
         } else if (!record_.flip_notified && flip_due(now_s, record_.start_s, record_.end_s)) {
             record_.flip_notified = true;
-            SettingsManager::instance().set_bed_drying_record(record_);
+            (void)SettingsManager::instance().set_bed_drying_record(record_);
             ui_notification_info(lv_tr("Flip the spools"),
                                  lv_tr("Halfway through drying: flip the spools over. Use "
                                        "gloves, the plate is hot."));
@@ -348,6 +408,9 @@ void BedDryingController::publish() {
     }
     case State::ReadyToRemove:
         text = lv_tr("Remove the spools from the bed");
+        break;
+    case State::Placing:
+        text = lv_tr("Spools on the bed: start drying, or confirm none were placed");
         break;
     case State::Idle:
         break;

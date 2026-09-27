@@ -466,10 +466,11 @@ helix::bed_drying::RunRecord SettingsManager::get_bed_drying_record() const {
     r.appliance = j.value("appliance", false);
     r.ended = j.value("ended", false);
     r.flip_notified = j.value("flip_notified", false);
+    r.placing = j.value("placing", false);
     return r;
 }
 
-void SettingsManager::set_bed_drying_record(const helix::bed_drying::RunRecord& r) {
+bool SettingsManager::set_bed_drying_record(const helix::bed_drying::RunRecord& r) {
     Config* config = Config::get_instance();
     config->set<json>(config->df() + "bed_drying", json{{"latched", r.latched},
                                                         {"start_s", r.start_s},
@@ -478,12 +479,17 @@ void SettingsManager::set_bed_drying_record(const helix::bed_drying::RunRecord& 
                                                         {"idle_restore_s", r.idle_restore_s},
                                                         {"appliance", r.appliance},
                                                         {"ended", r.ended},
-                                                        {"flip_notified", r.flip_notified}});
-    config->save();
+                                                        {"flip_notified", r.flip_notified},
+                                                        {"placing", r.placing}});
+    if (!config->save()) {
+        spdlog::error("[SettingsManager] Could not save the bed drying record");
+        return false;
+    }
+    return true;
 }
 
-void SettingsManager::clear_bed_drying_record() {
-    set_bed_drying_record(helix::bed_drying::RunRecord{});
+bool SettingsManager::clear_bed_drying_record() {
+    return set_bed_drying_record(helix::bed_drying::RunRecord{});
 }
 
 // =============================================================================

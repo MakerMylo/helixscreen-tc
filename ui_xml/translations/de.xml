@@ -687,6 +687,8 @@
   <translation tag="Could not remove the job from the queue" de="Der Auftrag konnte nicht aus der Warteschlange entfernt werden"/>
   <translation tag="Could not resolve printer RFCOMM channel" de="RFCOMM-Kanal des Druckers konnte nicht ermittelt werden"/>
   <translation tag="Could not save filament" de="Filament konnte nicht gespeichert werden"/>
+  <translation tag="Could not save the drying state" de="Trocknungsstatus konnte nicht gespeichert werden"/>
+  <translation tag="Could not save the drying state: nothing was heated" de="Trocknungsstatus konnte nicht gespeichert werden: Es wurde nichts geheizt"/>
   <translation tag="Could not save the mesh as &apos;{}&apos;: {}" de="Netz konnte nicht als &apos;{}&apos; gespeichert werden: {}"/>
   <translation tag="Could not start Bluetooth discovery" de="Bluetooth-Erkennung konnte nicht gestartet werden"/>
   <translation tag="Could not update filaments" de="Filamente konnten nicht aktualisiert werden"/>
@@ -1834,6 +1836,7 @@
   <translation tag="No spool assigned" de="Keine Spule zugewiesen"/>
   <translation tag="No spools found — tap to retry" de="Keine Spulen gefunden — tippen zum Wiederholen"/>
   <translation tag="No spools match your search" de="Keine Spulen entsprechen Ihrer Suche"/>
+  <translation tag="No spools placed" de="Keine Spulen eingelegt"/>
   <translation tag="No tape detected in printer" de="Kein Band im Drucker erkannt"/>
   <translation tag="No target printer configured" de="Kein Zieldrucker konfiguriert"/>
   <translation tag="No temperature sensors detected" de="Keine Temperatursensoren erkannt"/>
@@ -2689,6 +2692,7 @@
   <translation tag="Spoolman was not configured." de="Spoolman war nicht konfiguriert."/>
   <translation tag="Spoolman: %zu Spool%s" de="Spoolman: %zu Spule%s"/>
   <translation tag="Spoolman: %zu/%zu Spool%s" de="Spoolman: %zu/%zu Spule%s"/>
+  <translation tag="Spools on the bed: start drying, or confirm none were placed" de="Spulen auf dem Heizbett: Trocknung starten oder bestätigen, dass keine eingelegt wurden"/>
   <translation tag="Spools removed" de="Spulen entnommen"/>
   <translation tag="Square Corner Velocity" de="Eckgeschwindigkeit"/>
   <translation tag="Stable" de="Stabil"/>
