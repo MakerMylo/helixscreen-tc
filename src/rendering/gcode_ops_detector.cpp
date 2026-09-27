@@ -174,14 +174,14 @@ void GCodeOpsDetector::add_pattern(OperationPattern pattern) {
     patterns_.push_back(std::move(pattern));
 }
 
-ScanResult GCodeOpsDetector::scan_file(const std::filesystem::path& filepath) const {
-    helix::text_io::LineReader file(filepath.string());
+ScanResult GCodeOpsDetector::scan_file(const std::string& filepath) const {
+    helix::text_io::LineReader file(filepath);
     if (!file) {
-        spdlog::warn("[GCodeOpsDetector] Failed to open file: {}", filepath.string());
+        spdlog::warn("[GCodeOpsDetector] Failed to open file: {}", filepath);
         return {};
     }
 
-    spdlog::debug("[GCodeOpsDetector] Scanning file: {}", filepath.string());
+    spdlog::debug("[GCodeOpsDetector] Scanning file: {}", filepath);
     return scan_lines([&file](std::string& line) { return file.next(line); });
 }
 

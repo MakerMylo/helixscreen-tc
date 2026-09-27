@@ -4,6 +4,7 @@
 #include "gcode_file_modifier.h"
 
 #include "app_globals.h"
+#include "helix_fs.h"
 #include "helix_regex.h"
 #include "streaming_policy.h"
 #include "text_io.h"
@@ -11,8 +12,10 @@
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
+#include <cerrno>
 #include <chrono>
 #include <cstdlib>
+#include <cstring>
 #include <random>
 #include <unordered_map>
 
@@ -185,23 +188,23 @@ std::string GCodeFileModifier::apply_to_content(const std::string& content) {
     return out;
 }
 
-ModificationResult GCodeFileModifier::apply(const std::filesystem::path& filepath) {
+ModificationResult GCodeFileModifier::apply(const std::string& filepath) {
     // Check file size to decide between buffered and streaming modes
-    std::error_code ec;
-    auto file_size = std::filesystem::file_size(filepath, ec);
-    if (ec) {
+    const auto size = helix::text_io::file_size(filepath);
+    if (!size || !helix::fs::is_regular_file(filepath)) {
         ModificationResult result;
         result.success = false;
-        result.error_message = "Failed to get file size: " + filepath.string();
+        result.error_message = "Failed to get file size: " + filepath;
         spdlog::error("[GCodeFileModifier] {}", result.error_message);
         return result;
     }
 
     // Use centralized policy for streaming decisions
     // This ensures consistent threshold behavior across all file operations
+    const auto file_size = *size;
     if (helix::StreamingPolicy::instance().should_stream(file_size)) {
         spdlog::info("[GCodeFileModifier] File {} ({} MB) - streaming mode (threshold={}MB)",
-                     filepath.filename().string(), file_size / (1024 * 1024),
+                     std::string(helix::fs::filename(filepath)), file_size / (1024 * 1024),
                      helix::StreamingPolicy::instance().get_threshold_bytes() / (1024 * 1024));
         return apply_streaming(filepath);
     }
@@ -209,14 +212,14 @@ ModificationResult GCodeFileModifier::apply(const std::filesystem::path& filepat
     return apply_buffered(filepath);
 }
 
-ModificationResult GCodeFileModifier::apply_buffered(const std::filesystem::path& filepath) {
+ModificationResult GCodeFileModifier::apply_buffered(const std::string& filepath) {
     ModificationResult result;
 
     // Read original file
-    helix::text_io::LineReader infile(filepath.string());
+    helix::text_io::LineReader infile(filepath);
     if (!infile) {
         result.success = false;
-        result.error_message = "Failed to open file: " + filepath.string();
+        result.error_message = "Failed to open file: " + filepath;
         spdlog::error("[GCodeFileModifier] {}", result.error_message);
         return result;
     }
@@ -230,7 +233,7 @@ ModificationResult GCodeFileModifier::apply_buffered(const std::filesystem::path
     }
 
     spdlog::info("[GCodeFileModifier] Loaded {} lines ({} bytes) from {}", lines.size(),
-                 result.original_size, filepath.filename().string());
+                 result.original_size, std::string(helix::fs::filename(filepath)));
 
     if (modifications_.empty()) {
         // No modifications - just copy to temp
@@ -323,14 +326,14 @@ std::unordered_map<size_t, Modification> GCodeFileModifier::build_streaming_look
     return lookup;
 }
 
-ModificationResult GCodeFileModifier::apply_streaming(const std::filesystem::path& filepath) {
+ModificationResult GCodeFileModifier::apply_streaming(const std::string& filepath) {
     ModificationResult result;
 
     // Open input file
-    helix::text_io::LineReader infile(filepath.string());
+    helix::text_io::LineReader infile(filepath);
     if (!infile) {
         result.success = false;
-        result.error_message = "Failed to open file: " + filepath.string();
+        result.error_message = "Failed to open file: " + filepath;
         spdlog::error("[GCodeFileModifier] {}", result.error_message);
         return result;
     }
@@ -561,7 +564,7 @@ bool GCodeFileModifier::add_print_start_skip_params(
     return true;
 }
 
-std::string GCodeFileModifier::generate_temp_path(const std::filesystem::path& original_path) {
+std::string GCodeFileModifier::generate_temp_path(const std::string& original_path) {
     // Generate unique temp file path in persistent cache directory
     // Format: <cache_dir>/mod_XXXXXX_filename.gcode
 
@@ -571,7 +574,7 @@ std::string GCodeFileModifier::generate_temp_path(const std::filesystem::path& o
         return "";
     }
 
-    std::string filename = original_path.filename().string();
+    std::string filename = std::string(helix::fs::filename(original_path));
 
     // Generate random suffix
     std::random_device rd;
@@ -590,35 +593,41 @@ size_t GCodeFileModifier::cleanup_temp_files(int max_age_seconds) {
         return 0;
     }
 
-    try {
-        auto now = std::chrono::system_clock::now();
+    const auto entries = helix::fs::list_dir(cache_dir);
+    if (!entries) {
+        spdlog::warn("[GCodeFileModifier] Error cleaning up temp files: {}", std::strerror(errno));
+        return 0;
+    }
+    const auto now_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                            std::chrono::system_clock::now().time_since_epoch())
+                            .count();
 
-        for (const auto& entry : std::filesystem::directory_iterator(cache_dir)) {
-            if (!std::filesystem::is_regular_file(entry.path())) {
+    for (const auto& entry : *entries) {
+        if (!entry.is_regular) {
+            continue;
+        }
+
+        const std::string& name = entry.name;
+        if (name.rfind("mod_", 0) != 0) {
+            continue; // Not our file
+        }
+
+        // Check file age
+        const auto mtime = helix::fs::mtime_ns(entry.path);
+        if (!mtime) {
+            continue; // Removed since the listing
+        }
+        const auto age = (now_ns - *mtime) / 1'000'000'000;
+
+        if (age > max_age_seconds) {
+            if (!helix::fs::remove(entry.path)) {
+                spdlog::warn("[GCodeFileModifier] Error cleaning up temp file {}: {}", name,
+                             std::strerror(errno));
                 continue;
             }
-
-            std::string name = entry.path().filename().string();
-            if (name.rfind("mod_", 0) != 0) {
-                continue; // Not our file
-            }
-
-            // Check file age
-            auto ftime = std::filesystem::last_write_time(entry.path());
-            auto sctp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
-                ftime - std::filesystem::file_time_type::clock::now() +
-                std::chrono::system_clock::now());
-
-            auto age = std::chrono::duration_cast<std::chrono::seconds>(now - sctp).count();
-
-            if (age > max_age_seconds) {
-                std::filesystem::remove(entry.path());
-                deleted++;
-                spdlog::debug("[GCodeFileModifier] Cleaned up old temp file: {}", name);
-            }
+            deleted++;
+            spdlog::debug("[GCodeFileModifier] Cleaned up old temp file: {}", name);
         }
-    } catch (const std::exception& e) {
-        spdlog::warn("[GCodeFileModifier] Error cleaning up temp files: {}", e.what());
     }
 
     if (deleted > 0) {
