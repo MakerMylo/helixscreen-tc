@@ -557,3 +557,23 @@ TEST_CASE("Invalidating a printer PNG spares the prerendered variants' caches",
     std::error_code ec;
     std::filesystem::remove(tier150_entry, ec);
 }
+
+TEST_CASE("Printer cache names carry libstdc++'s file_clock tick count", "[assets][printer]") {
+    // Cache files already on disk are named from file_time_type's tick count; a
+    // name computed any other way would orphan every one of them.
+    const std::string src = std::filesystem::temp_directory_path().string() +
+                            "/helix_fingerprint_" + std::to_string(::getpid()) + ".png";
+    {
+        std::ofstream out(src, std::ios::binary);
+        out << "twelve bytes";
+    }
+    const auto ticks = std::filesystem::last_write_time(src).time_since_epoch().count();
+    const std::string expected = "-" + std::to_string(static_cast<unsigned long long>(ticks)) +
+                                 "-" + std::to_string(std::filesystem::file_size(src)) + ".bin";
+
+    const std::string name = get_cached_printer_image_path(src, 10, 10);
+    std::filesystem::remove(src);
+
+    REQUIRE(name.size() > expected.size());
+    CHECK(name.substr(name.size() - expected.size()) == expected);
+}
