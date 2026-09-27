@@ -81,6 +81,12 @@ void ensure_homed_then(IMoonrakerAPI* api, AsyncLifetimeGuard& guard, std::funct
                        guard.bg_cb("ensure_homed_then::g28_done",
                                    [then = std::move(then)]() {
                                        spdlog::info("[ensure_homed_then] G28 complete, proceeding");
+                                       // A homing macro can still be moving when G28
+                                       // acks, so idle_timeout reads "Printing". That
+                                       // busy is ours: without this stamp the motion
+                                       // guard refuses the continuation's move as an
+                                       // external operation.
+                                       get_printer_state().app_motion_activity().note_done();
                                        if (then) {
                                            then();
                                        }
