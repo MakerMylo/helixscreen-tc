@@ -1118,7 +1118,7 @@ void PrintStartController::recover_pending_remap() {
     int backend_idx = helix::json_util::safe_int(j, "backend_index", -1);
     std::vector<int> mapping;
     bool mapping_bad = false;
-    if (const auto* tm = helix::json_util::detail::find(j, "tool_mapping")) {
+    if (const auto* tm = helix::json_util::find_member(j, "tool_mapping")) {
         if (!tm->is_array()) {
             mapping_bad = true;
         } else {

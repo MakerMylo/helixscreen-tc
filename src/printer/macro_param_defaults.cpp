@@ -56,7 +56,7 @@ MacroParamDefaultRecord MacroParamDefaults::get(const std::string& macro_name) c
     MacroParamDefaultRecord record;
     const json table = read_record_table();
     const std::string key = store_key(macro_name);
-    const json* stored = helix::json_util::detail::find(table, key.c_str());
+    const json* stored = helix::json_util::find_member(table, key.c_str());
     const json node = stored ? *stored : json();
     if (!node.is_object()) {
         return record;

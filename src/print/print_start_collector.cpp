@@ -2440,9 +2440,9 @@ void PrintStartCollector::query_mesh_probe_count() {
             // printers only). probe_count config overstates on adaptive printers.
             // A missing or wrong-typed result/status chain leaves total at 0 and
             // falls through to the configfile probe_count fallback below.
-            const json* result = json_util::detail::find(response, "result");
+            const json* result = json_util::find_member(response, "result");
             const json* status =
-                result != nullptr ? json_util::detail::find(*result, "status") : nullptr;
+                result != nullptr ? json_util::find_member(*result, "status") : nullptr;
             if (!adaptive && status != nullptr) {
                 if (status->contains("bed_mesh") &&
                     (*status)["bed_mesh"].contains("probed_matrix")) {
@@ -2465,9 +2465,9 @@ void PrintStartCollector::query_mesh_probe_count() {
             // than "Bed Mesh (5/169)" lying.
             const bool skip_config_fallback = adaptive;
             if (total == 0 && !skip_config_fallback && status != nullptr) {
-                const json* configfile = json_util::detail::find(*status, "configfile");
+                const json* configfile = json_util::find_member(*status, "configfile");
                 const json* settings = configfile != nullptr
-                                           ? json_util::detail::find(*configfile, "settings")
+                                           ? json_util::find_member(*configfile, "settings")
                                            : nullptr;
                 if (settings != nullptr && settings->contains("bed_mesh") &&
                     (*settings)["bed_mesh"].contains("probe_count")) {

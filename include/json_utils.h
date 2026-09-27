@@ -127,16 +127,16 @@ inline bool to_u64(const nlohmann::json& v, std::uint64_t& out) {
     return false;
 }
 
+} // namespace detail
+
 /// The value under @p key, or nullptr when @p j is not an object or lacks it.
-inline const nlohmann::json* find(const nlohmann::json& j, const char* key) {
+inline const nlohmann::json* find_member(const nlohmann::json& j, const char* key) {
     if (!j.is_object()) {
         return nullptr;
     }
     const auto it = j.find(key);
     return it == j.end() ? nullptr : &*it;
 }
-
-} // namespace detail
 
 /// A string value. @p accept_number also takes a JSON integer, returned as its
 /// decimal text. Off by default because a number arriving where a string was
@@ -272,42 +272,42 @@ inline std::size_t as_size_t(const nlohmann::json& v, std::size_t def = 0) {
 
 inline std::string safe_string(const nlohmann::json& j, const char* key,
                                const std::string& def = "", bool accept_number = false) {
-    const auto* v = detail::find(j, key);
+    const auto* v = find_member(j, key);
     return v ? as_string(*v, def, accept_number) : def;
 }
 
 inline float safe_float(const nlohmann::json& j, const char* key, float def = 0.0f) {
-    const auto* v = detail::find(j, key);
+    const auto* v = find_member(j, key);
     return v ? as_float(*v, def) : def;
 }
 
 inline double safe_double(const nlohmann::json& j, const char* key, double def = 0.0) {
-    const auto* v = detail::find(j, key);
+    const auto* v = find_member(j, key);
     return v ? as_double(*v, def) : def;
 }
 
 inline bool safe_bool(const nlohmann::json& j, const char* key, bool def = false) {
-    const auto* v = detail::find(j, key);
+    const auto* v = find_member(j, key);
     return v ? as_bool(*v, def) : def;
 }
 
 inline int safe_int(const nlohmann::json& j, const char* key, int def = 0) {
-    const auto* v = detail::find(j, key);
+    const auto* v = find_member(j, key);
     return v ? as_int(*v, def) : def;
 }
 
 inline std::int64_t safe_int64(const nlohmann::json& j, const char* key, std::int64_t def = 0) {
-    const auto* v = detail::find(j, key);
+    const auto* v = find_member(j, key);
     return v ? as_int64(*v, def) : def;
 }
 
 inline std::uint64_t safe_uint64(const nlohmann::json& j, const char* key, std::uint64_t def = 0) {
-    const auto* v = detail::find(j, key);
+    const auto* v = find_member(j, key);
     return v ? as_uint64(*v, def) : def;
 }
 
 inline std::size_t safe_size_t(const nlohmann::json& j, const char* key, std::size_t def = 0) {
-    const auto* v = detail::find(j, key);
+    const auto* v = find_member(j, key);
     return v ? as_size_t(*v, def) : def;
 }
 

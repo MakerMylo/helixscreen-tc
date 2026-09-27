@@ -265,7 +265,7 @@ void MoonrakerManager::process_notifications() {
 
         // Check for connection state change (queued from state_change_callback)
         if (notification.contains("_connection_state")) {
-            const json* new_state_json = helix::json_util::detail::find(notification, "new_state");
+            const json* new_state_json = helix::json_util::find_member(notification, "new_state");
             if (!new_state_json || !(new_state_json->is_number() || new_state_json->is_boolean())) {
                 spdlog::warn("[MoonrakerManager] Connection-state notification without a numeric "
                              "new_state");

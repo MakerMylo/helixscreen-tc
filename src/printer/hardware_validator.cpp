@@ -108,7 +108,7 @@ HardwareSnapshot HardwareSnapshot::from_json(const json& j) {
     // non-string element discards the whole snapshot, so the caller never acts
     // on a half-populated one.
     const auto read_string_array = [&j](const char* key, std::vector<std::string>& out) -> bool {
-        const json* v = helix::json_util::detail::find(j, key);
+        const json* v = helix::json_util::find_member(j, key);
         if (v == nullptr || !v->is_array()) {
             return true;
         }

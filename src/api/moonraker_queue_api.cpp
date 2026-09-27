@@ -18,12 +18,12 @@ namespace {
 /// post_job both return `queue_state` + `queued_jobs` in result).
 JobQueueStatus parse_queue_status(const json& response) {
     JobQueueStatus status;
-    const json* result = helix::json_util::detail::find(response, "result");
+    const json* result = helix::json_util::find_member(response, "result");
     if (!result) {
         return status;
     }
     status.queue_state = helix::json_util::safe_string(*result, "queue_state", "ready");
-    const json* queued_jobs = helix::json_util::detail::find(*result, "queued_jobs");
+    const json* queued_jobs = helix::json_util::find_member(*result, "queued_jobs");
     if (queued_jobs && queued_jobs->is_array()) {
         for (const auto& job : *queued_jobs) {
             JobQueueEntry entry;

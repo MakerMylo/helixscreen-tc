@@ -212,7 +212,7 @@ void MoonrakerAPI::database_get_item(const std::string& namespace_name, const st
             if (on_success) {
                 const json& result =
                     response.contains("result") ? response["result"] : json::object();
-                const json* value = json_util::detail::find(result, "value");
+                const json* value = json_util::find_member(result, "value");
                 on_success(value ? *value : json{});
             }
         },
@@ -253,7 +253,7 @@ void MoonrakerAPI::database_get_namespace(const std::string& namespace_name,
             if (on_success) {
                 const json& result =
                     response.contains("result") ? response["result"] : json::object();
-                const json* value = json_util::detail::find(result, "value");
+                const json* value = json_util::find_member(result, "value");
                 on_success(value ? *value : json::object());
             }
         },

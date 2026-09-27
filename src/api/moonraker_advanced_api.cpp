@@ -2602,7 +2602,7 @@ void MoonrakerAdvancedAPI::get_input_shaper_config(InputShaperConfigCallback on_
             // like a parse error does.
             bool parse_ok = true;
             auto read_string = [&parse_ok](const json& shaper, const char* key) -> std::string {
-                const json* v = json_util::detail::find(shaper, key);
+                const json* v = json_util::find_member(shaper, key);
                 if (!v) {
                     return "";
                 }
@@ -2613,7 +2613,7 @@ void MoonrakerAdvancedAPI::get_input_shaper_config(InputShaperConfigCallback on_
                 return v->get<std::string>();
             };
             auto read_float = [&parse_ok](const json& shaper, const char* key, float& out) {
-                const json* v = json_util::detail::find(shaper, key);
+                const json* v = json_util::find_member(shaper, key);
                 if (!v) {
                     return;
                 }
