@@ -203,7 +203,7 @@ what gets saved.
 - **Jog limits are quiet, and the edge is visible before you press** - holding into a limit
   simply stops; a fresh press that cannot move at all says which axis is at its limit and
   what the limit is; a partial move happens silently. The Z buttons grey out at their limit
-  (whichever of the pair that is, since on a bed-slinger the bed is what moves), and the
+  (on printers whose bed moves in Z, that is the pair that would move the bed past it), and the
   limits account for the printer's G-code offset.
 - **Motors Off has a second home and a print guard** - it sits on the Move tab as well as
   the Controls panel, is disabled while a print runs or is paused, and if a print starts
