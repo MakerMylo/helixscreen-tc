@@ -16,6 +16,9 @@
 #include "config.h"
 #include "display_settings_manager.h"
 #include "grid_layout.h"
+#include "helix-xml/src/xml/lv_xml_parser.h"
+#include "helix-xml/src/xml/lv_xml_widget.h"
+#include "helix-xml/src/xml/parsers/lv_xml_obj_parser.h"
 #include "http_executor.h"
 #include "led/ui_led_control_overlay.h"
 #include "observer_factory.h"
@@ -68,6 +71,29 @@ static lv_subject_t s_callout_toolhead_text;
 static char s_callout_toolhead_text_buf[32];
 
 static bool s_subjects_initialized = false;
+
+namespace {
+
+/// The callout leader lines, indexed by CalloutKind (Nozzle..Light).
+constexpr const char* kLineNames[] = {"callout_line_nozzle", "callout_line_bed",
+                                      "callout_line_chamber", "callout_line_fan",
+                                      "callout_line_light"};
+
+/// `<leader_line>`: a bare lv_line for the callout layer; apply_callout_layout()
+/// gives it its two points.
+void* leader_line_create(lv_xml_parser_state_t* state, const char** /*attrs*/) {
+    return lv_line_create(static_cast<lv_obj_t*>(lv_xml_state_get_parent(state)));
+}
+
+constexpr lv_opa_t GLOW_OPA_LOW = 30;
+constexpr lv_opa_t GLOW_OPA_HIGH = 70;
+constexpr uint32_t GLOW_PULSE_MS = 900;
+
+void glow_opa_anim_cb(void* glow, int32_t opa) {
+    lv_obj_set_style_bg_opa(static_cast<lv_obj_t*>(glow), static_cast<lv_opa_t>(opa), 0);
+}
+
+} // namespace
 
 static void printer_image_widget_init_subjects() {
     if (s_subjects_initialized) {
@@ -186,6 +212,7 @@ void register_printer_image_widget() {
                              PrinterImageWidget::printer_callout_fan_cb);
     lv_xml_register_event_cb(nullptr, "printer_callout_light_cb",
                              PrinterImageWidget::printer_callout_light_cb);
+    lv_xml_register_widget("leader_line", leader_line_create, lv_xml_obj_apply);
 
     // Prune old cached printer images on startup
     prune_printer_image_cache();
@@ -259,7 +286,15 @@ void PrinterImageWidget::detach() {
     if (widget_obj_) {
         for (const char* n : {"callout_fan_icon", "callout_toolhead_fan_icon"})
             helix::ui::fan_spin_stop(lv_obj_find_by_name(widget_obj_, n));
+        // The lines point into this instance's arrays, which die with it; a
+        // tree that outlives the instance must not keep drawing from them.
+        for (const char* n : kLineNames) {
+            if (lv_obj_t* line = lv_obj_find_by_name(widget_obj_, n))
+                lv_line_set_points(line, nullptr, 0);
+        }
     }
+    set_glow_pulse(false);
+    callout_glow_pulsing_ = false; // a dead tree took its pulse with it
     cancel_callout_timer();
 
     // Cancel any pending timers. detach() runs from the destructor, so cancelling
@@ -717,7 +752,8 @@ void PrinterImageWidget::arm_callout_observers() {
         [](PrinterImageWidget* w, const char*) { w->schedule_callout_layout(); }, tools_life));
 
     const auto chip = [&](const char* name) { return lv_obj_find_by_name(widget_obj_, name); };
-    callout_spin_pct_ = -1; // fresh icons: the next update sets their spin
+    callout_spin_pct_ = -1;        // fresh icons: the next update sets their spin
+    callout_glow_pulsing_ = false; // fresh glow: nothing animates it yet
     nozzle_binder_.bind(chip("callout_chip_nozzle"), ps, HeaterType::Nozzle);
     toolhead_binder_.bind(chip("callout_chip_toolhead"), ps, HeaterType::Nozzle);
     bed_binder_.bind(chip("callout_chip_bed"), ps, HeaterType::Bed);
@@ -777,9 +813,11 @@ void PrinterImageWidget::update_callouts() {
     set_text(&s_callout_toolhead_text,
              std::string(lv_subject_get_string(&s_callout_nozzle_text)) + "  " + fan_buf);
 
+    const bool animate = DisplaySettingsManager::instance().get_animations_enabled();
+    set_glow_pulse(bed_heating && animate);
     // Restarting a spin resets its rotation, so only a speed or preference
     // change touches it, never a temperature tick.
-    const int spin = DisplaySettingsManager::instance().get_animations_enabled() ? fan : 0;
+    const int spin = animate ? fan : 0;
     if (widget_obj_ && spin != callout_spin_pct_) {
         callout_spin_pct_ = spin;
         for (const char* n : {"callout_fan_icon", "callout_toolhead_fan_icon"}) {
@@ -831,8 +869,9 @@ void PrinterImageWidget::apply_callout_layout() {
     lv_obj_t* container = lv_obj_find_by_name(widget_obj_, "printer_container");
     if (!container)
         return;
-    const auto image_only = [] {
+    const auto image_only = [this] {
         lv_subject_set_int(&s_printer_callout_mode, static_cast<int>(CalloutMode::ImageOnly));
+        place_printer_image(nullptr);
     };
 
     CalloutLayoutInput in;
@@ -970,6 +1009,27 @@ void PrinterImageWidget::apply_callout_layout() {
     const CalloutLayout out = compute_callout_layout(in);
     lv_subject_set_int(&s_callout_toolhead_merged, out.toolhead_merged ? 1 : 0);
     lv_subject_set_int(&s_printer_callout_mode, static_cast<int>(out.mode));
+    place_printer_image(out.mode == CalloutMode::OneSide ? &out.image : nullptr);
+
+    // The glow is an ellipse over the bed's near edge, as wide as the edge.
+    lv_obj_t* glow = lv_obj_find_by_name(widget_obj_, "callout_bed_glow");
+    if (r && glow) {
+        using callout_detail::px;
+        const int x0 = px(std::min(r->bed_left.x, r->bed_right.x), out.image.x, out.image.w);
+        const int w = px(std::max(r->bed_left.x, r->bed_right.x), out.image.x, out.image.w) - x0;
+        const int h = w / 4;
+        const int y = px((r->bed_left.y + r->bed_right.y) / 2, out.image.y, out.image.h) - h / 2;
+        if (lv_obj_get_style_x(glow, LV_PART_MAIN) != x0 ||
+            lv_obj_get_style_y(glow, LV_PART_MAIN) != y) {
+            // DECLARATIVE_OK: measured callout layout
+            lv_obj_set_pos(glow, x0, y);
+        }
+        if (lv_obj_get_style_width(glow, LV_PART_MAIN) != w ||
+            lv_obj_get_style_height(glow, LV_PART_MAIN) != h) {
+            // DECLARATIVE_OK: measured callout layout
+            lv_obj_set_size(glow, w, h);
+        }
+    }
     for (const CalloutChipOut& c : out.chips) {
         const char* name = "callout_chip_toolhead";
         int icons = toolhead_icons;
@@ -977,6 +1037,22 @@ void PrinterImageWidget::apply_callout_layout() {
             if (k.kind == c.kind) {
                 name = k.name;
                 icons = k.icons;
+            }
+        }
+        const auto k = static_cast<size_t>(c.kind);
+        lv_obj_t* line = c.has_line && k < std::size(kLineNames)
+                             ? lv_obj_find_by_name(widget_obj_, kLineNames[k])
+                             : nullptr;
+        if (line) {
+            auto& pts = callout_line_pts_[k];
+            const bool same = lv_line_get_points(line) == pts.data() && pts[0].x == c.line_x0 &&
+                              pts[0].y == c.line_y0 && pts[1].x == c.line_x1 &&
+                              pts[1].y == c.line_y1;
+            if (!same) {
+                const auto v = [](int n) { return static_cast<lv_value_precise_t>(n); };
+                pts = {{{v(c.line_x0), v(c.line_y0)}, {v(c.line_x1), v(c.line_y1)}}};
+                // DECLARATIVE_OK: measured callout layout
+                lv_line_set_points(line, pts.data(), 2);
             }
         }
         lv_obj_t* obj = lv_obj_find_by_name(widget_obj_, name);
@@ -1002,4 +1078,46 @@ void PrinterImageWidget::apply_callout_layout() {
             lv_obj_set_style_max_width(label, label_max, 0);
         }
     }
+}
+
+void PrinterImageWidget::place_printer_image(const CalloutRect* moved) {
+    lv_obj_t* img = widget_obj_ ? lv_obj_find_by_name(widget_obj_, "printer_image") : nullptr;
+    if (!img)
+        return;
+    const int32_t x = moved ? moved->x : 0;
+    const int32_t y = moved ? moved->y : 0;
+    const int32_t w = moved ? moved->w : LV_PCT(100);
+    const int32_t h = moved ? moved->h : LV_PCT(100);
+    if (lv_obj_get_style_x(img, LV_PART_MAIN) == x && lv_obj_get_style_y(img, LV_PART_MAIN) == y &&
+        lv_obj_get_style_width(img, LV_PART_MAIN) == w &&
+        lv_obj_get_style_height(img, LV_PART_MAIN) == h)
+        return;
+    // DECLARATIVE_OK: measured callout layout
+    lv_obj_set_pos(img, x, y);
+    // DECLARATIVE_OK: measured callout layout
+    lv_obj_set_size(img, w, h);
+    // The exact-size copy on screen was cut for the old rect. The refresh
+    // relayouts callouts only on a new source, so this cannot loop.
+    schedule_image_refresh();
+}
+
+void PrinterImageWidget::set_glow_pulse(bool on) {
+    lv_obj_t* glow = widget_obj_ ? lv_obj_find_by_name(widget_obj_, "callout_bed_glow") : nullptr;
+    if (!glow || on == callout_glow_pulsing_)
+        return;
+    callout_glow_pulsing_ = on;
+    // The anim runs on the glow object, so LVGL deletes it with the object.
+    lv_anim_delete(glow, glow_opa_anim_cb);
+    if (!on)
+        return;
+    lv_anim_t a;
+    lv_anim_init(&a);
+    lv_anim_set_var(&a, glow);
+    lv_anim_set_values(&a, GLOW_OPA_LOW, GLOW_OPA_HIGH);
+    lv_anim_set_duration(&a, GLOW_PULSE_MS);
+    lv_anim_set_playback_duration(&a, GLOW_PULSE_MS);
+    lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
+    lv_anim_set_path_cb(&a, lv_anim_path_ease_in_out);
+    lv_anim_set_exec_cb(&a, glow_opa_anim_cb);
+    lv_anim_start(&a);
 }

@@ -11,6 +11,7 @@
 #include "callout_layout.h"
 #include "panel_widget.h"
 
+#include <array>
 #include <string>
 #include <vector>
 
@@ -108,6 +109,10 @@ class PrinterImageWidget : public PanelWidget {
     void schedule_callout_layout(); ///< one-shot deferred apply_callout_layout()
     void cancel_callout_timer();
     void apply_callout_layout(); ///< measure, decide, position
+    /// Moves and sizes printer_image to `moved`, or back to filling its
+    /// container when null; refreshes the image only when the rect changes.
+    void place_printer_image(const CalloutRect* moved);
+    void set_glow_pulse(bool on); ///< start/stop the bed glow's opacity pulse
     void handle_callout_clicked(CalloutKind kind);
     /// Recovers the widget from a chip's click (chip -> callout_layer -> printer_container).
     static void route_callout_click(lv_event_t* e, CalloutKind kind);
@@ -118,6 +123,10 @@ class PrinterImageWidget : public PanelWidget {
     int callout_colspan_ = 0;
     int callout_rowspan_ = 0;
     int callout_spin_pct_ = -1; ///< speed the fan icons spin at; -1 = not yet applied
+    bool callout_glow_pulsing_ = false;
+    /// lv_line keeps the pointer it is given, so each leader line's two points
+    /// live here, one pair per CalloutKind from Nozzle to Light.
+    std::array<std::array<lv_point_precise_t, 2>, 5> callout_line_pts_{};
     std::vector<ObserverGuard> callout_observers_;
     SubjectLifetime bed_temp_lt_, bed_target_lt_, chamber_temp_lt_, chamber_target_lt_;
     helix::ui::HeaterIconBinder nozzle_binder_, bed_binder_, chamber_binder_, toolhead_binder_;
