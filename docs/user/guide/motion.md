@@ -119,7 +119,7 @@ Both are disabled during an active print and while another operation is running.
 
 ## Motors Off
 
-The **Motors Off** button on the Controls panel's **Calibration & Tools** card releases all stepper motors, letting you move the gantry and bed by hand. The button shows a lit motor icon when steppers are energized and a dimmed one when they're already off — when the motors are already disabled, the button is greyed out and does nothing.
+The **Motors Off** button beside **Motion** on the Controls panel's **Position** card releases all stepper motors, letting you move the gantry and bed by hand. The button shows a lit motor icon when steppers are energized and a dimmed one when they're already off — when the motors are already disabled, the button is greyed out and does nothing.
 
 Tapping it asks for confirmation ("Release all stepper motors. Position will be lost.") before disabling the steppers.
 
