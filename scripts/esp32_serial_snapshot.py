@@ -7,6 +7,10 @@ answers with the active screen as raw-deflated RGB565, base64 on "SNAP:" lines
 between HELIX-SNAP markers. Log lines interleave between them and are ignored.
 
     esp32_serial_snapshot.py /dev/ttyUSB0 out.png [--timeout 120] [--settle 45]
+        [--tap X,Y ...] [--tap-wait 1.5]
+
+--tap sends "tap X Y" (panel coordinates) before the screenshot, in order,
+pausing --tap-wait seconds after each so the UI settles.
 
 Needs pyserial. On Linux, opening a CH340/CP210x port can pulse DTR/RTS before
 pyserial holds them low, which resets a board wired for auto-reset. The request
@@ -72,6 +76,9 @@ def main() -> int:
     ap.add_argument("--timeout", type=float, default=120.0)
     ap.add_argument("--settle", type=float, default=0.0,
                     help="seconds to wait after opening the port before asking")
+    ap.add_argument("--tap", action="append", default=[], metavar="X,Y",
+                    help="tap at X,Y before the screenshot; repeatable")
+    ap.add_argument("--tap-wait", type=float, default=1.5)
     args = ap.parse_args()
 
     import serial
@@ -83,7 +90,12 @@ def main() -> int:
     port.open()
     port.reset_input_buffer()
 
-    next_ask = time.time() + args.settle
+    time.sleep(args.settle)
+    for tap in args.tap:
+        x, y = (int(v) for v in tap.split(","))
+        port.write(f"\ntap {x} {y}\n".encode())
+        time.sleep(args.tap_wait)
+    next_ask = time.time()
     lines, buf, deadline = [], b"", next_ask + args.timeout
     while time.time() < deadline:
         started = any(l.startswith("=====HELIX-SNAP") for l in lines)
