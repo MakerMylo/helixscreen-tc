@@ -1346,6 +1346,7 @@ translations:
   Heat bed before calibrating for accurate offset with thermal expansion.: Heat bed
     before calibrating for accurate offset with thermal expansion.
   Heat nozzle: Heat nozzle
+  Heat the bed to {}°C: Heat the bed to {}°C
   Heat the extruder to at least {}°C before loading filament: Heat the extruder to at least {}°C before loading filament
   Heat to at least %d°C for filament operations: Heat to at least %d°C for filament operations
   Heatbed Temperature: Heatbed Temperature

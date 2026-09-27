@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 
+#include "ams_types.h"
+
 #include <cmath>
 #include <optional>
 #include <string>
@@ -52,6 +54,12 @@ struct ChamberHeaterDiagnostics {
     std::optional<int> filter_fan_percent;            ///< negative = unknown
     std::optional<std::string> filter_fan_reason;     ///< raw vendor reason, logs only
     std::optional<FilterFanDriver> filter_fan_driver; ///< classified driver for UI
+    /// A filament-drying cycle is running on the device.
+    std::optional<bool> drying_active;
+    /// Seconds left in the drying cycle; 0 before the device reports a countdown.
+    std::optional<int> drying_remaining_s;
+    std::optional<int> drying_target_c;     ///< the cycle's target temperature
+    std::optional<int> drying_duration_min; ///< the cycle's full length
 };
 
 /// One chamber-heater style/brand behind an interface (AMS-backend pattern).
@@ -79,6 +87,21 @@ class ChamberHeaterBackend {
     virtual double conservative_max_temp() const = 0;
     /// Device may self-drive the heater (stock-firmware Auto mode).
     virtual bool device_autonomous_control() const = 0;
+    /// What this backend's filament-drying cycle accepts. supported=false (the
+    /// default) = no dryer; the cycle's live state arrives through
+    /// parse_diagnostics() like every other surface.
+    virtual DryerInfo dryer_capabilities() const {
+        return {};
+    }
+    /// Gcode starting a drying cycle ("" = no dryer). Takes a request already
+    /// clamped by dryer_capabilities(); the backend still bounds what it sends.
+    virtual std::string dryer_start_gcode(float /*temp_c*/, int /*duration_min*/) const {
+        return {};
+    }
+    /// Gcode ending a drying cycle ("" = no dryer).
+    virtual std::string_view dryer_stop_gcode() const {
+        return {};
+    }
     /// Parse this backend's status JSON. nullopt = payload is not mine/unusable.
     virtual std::optional<ChamberHeaterDiagnostics>
     parse_diagnostics(const nlohmann::json& status) const = 0;

@@ -376,6 +376,10 @@ class PrinterState {
     lv_subject_t* get_chamber_temp_subject() {
         return temperature_state_.get_chamber_temp_subject();
     }
+    /// A chamber filament-drying cycle is running (0/1).
+    lv_subject_t* get_chamber_dryer_active_subject() {
+        return temperature_state_.get_chamber_dryer_active_subject();
+    }
     lv_subject_t* get_chamber_temp_subject(SubjectLifetime& lifetime) {
         return temperature_state_.get_chamber_temp_subject(lifetime);
     }

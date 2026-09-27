@@ -468,3 +468,81 @@ TEST_CASE("keyword_confidence pins the keyword rule", "[chamber][backend]") {
         CHECK(keyword_confidence(r.name) == r.expected);
     }
 }
+
+// ============================================================================
+// Dryer (#1299)
+// ============================================================================
+
+// Stock drives a drying cycle through two commands that take whole hours, and
+// the binding refuses anything outside 1-12. The cycle is the appliance
+// running itself, so it cannot share the chamber with a print.
+TEST_CASE("panda_breath backend: a dryer stock can drive", "[chamber][backend][dryer][1299]") {
+    const auto* pb = backend_by_id("panda_breath");
+    REQUIRE(pb != nullptr);
+
+    const helix::DryerInfo caps = pb->dryer_capabilities();
+    CHECK(caps.supported);
+    CHECK_FALSE(caps.allows_during_print);
+    CHECK(caps.max_temp_c == 60.0f);
+    CHECK(caps.max_duration_min == 720);
+    CHECK(caps.duration_step_min == 60);
+
+    CHECK(pb->dryer_start_gcode(55.0f, 240) == "PANDA_BREATH_DRY_START TEMP=55 HOURS=4");
+    CHECK(pb->dryer_start_gcode(55.0f, 90) == "PANDA_BREATH_DRY_START TEMP=55 HOURS=2");
+    CHECK(pb->dryer_start_gcode(55.0f, 20) == "PANDA_BREATH_DRY_START TEMP=55 HOURS=1");
+    CHECK(pb->dryer_start_gcode(55.0f, 5000) == "PANDA_BREATH_DRY_START TEMP=55 HOURS=12");
+    CHECK(pb->dryer_start_gcode(54.6f, 60) == "PANDA_BREATH_DRY_START TEMP=55 HOURS=1");
+    CHECK(pb->dryer_stop_gcode() == "PANDA_BREATH_DRY_STOP");
+}
+
+// DragonBreath's glue publishes no drying command or status, and a plain
+// heater_generic has no drying cycle at all.
+TEST_CASE("dryer: backends without one say so", "[chamber][backend][dryer][1299]") {
+    for (const char* id : {"dragonbreath", "generic"}) {
+        CAPTURE(id);
+        const auto* b = backend_by_id(id);
+        REQUIRE(b != nullptr);
+        CHECK_FALSE(b->dryer_capabilities().supported);
+        CHECK(b->dryer_start_gcode(55.0f, 240).empty());
+        CHECK(b->dryer_stop_gcode().empty());
+    }
+}
+
+// filament_temp is the cycle's target, filament_timer its length in hours and
+// remaining_seconds the countdown. Each engages only when the frame names it.
+TEST_CASE("panda_breath parse: the drying cycle", "[chamber][backend][dryer][1299]") {
+    const auto* pb = backend_by_id("panda_breath");
+    REQUIRE(pb != nullptr);
+
+    auto running = pb->parse_diagnostics(nlohmann::json::parse(R"({
+        "work_mode":3,"work_on":true,"filament_drying_active":true,
+        "filament_temp":55,"filament_timer":4,"remaining_seconds":11520})"));
+    REQUIRE(running.has_value());
+    CHECK(running->drying_active == true);
+    CHECK(running->drying_target_c == 55);
+    CHECK(running->drying_duration_min == 240);
+    CHECK(running->drying_remaining_s == 11520);
+
+    auto stopped = pb->parse_diagnostics(nlohmann::json{{"filament_drying_active", false}});
+    REQUIRE(stopped.has_value());
+    CHECK(stopped->drying_active == false);
+    CHECK_FALSE(stopped->drying_remaining_s.has_value());
+
+    auto tick = pb->parse_diagnostics(nlohmann::json{{"remaining_seconds", 600}});
+    REQUIRE(tick.has_value());
+    CHECK_FALSE(tick->drying_active.has_value());
+    CHECK(tick->drying_remaining_s == 600);
+
+    // A value we cannot read is no report.
+    auto garbage = pb->parse_diagnostics(nlohmann::json{{"filament_drying_active", "yes"},
+                                                        {"remaining_seconds", "soon"},
+                                                        {"filament_timer", nullptr}});
+    REQUIRE(garbage.has_value());
+    CHECK_FALSE(garbage->drying_active.has_value());
+    CHECK_FALSE(garbage->drying_remaining_s.has_value());
+    CHECK_FALSE(garbage->drying_duration_min.has_value());
+
+    auto negative = pb->parse_diagnostics(nlohmann::json{{"remaining_seconds", -5}});
+    REQUIRE(negative.has_value());
+    CHECK(negative->drying_remaining_s == 0);
+}

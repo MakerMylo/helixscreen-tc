@@ -294,6 +294,15 @@ class PrinterTemperatureState {
         return &chamber_filter_fan_percent_text_;
     }
 
+    /// A filament-drying cycle is running on the chamber appliance (0/1).
+    lv_subject_t* get_chamber_dryer_active_subject() {
+        return &chamber_dryer_active_;
+    }
+    /// The running cycle's readout ("41/55°C  3:12 left"), "" when idle.
+    lv_subject_t* get_chamber_dryer_text_subject() {
+        return &chamber_dryer_text_;
+    }
+
     /// Number of tracked extruders
     int extruder_count() const {
         return static_cast<int>(extruders_.size());
@@ -373,6 +382,12 @@ class PrinterTemperatureState {
         chamber_backend_id_ = backend_id;
         chamber_diagnostics_object_ = diagnostics_object;
         chamber_filter_fan_pin_ = filter_fan_pin;
+        chamber_dryer_running_ = false;
+        chamber_dryer_remaining_s_ = 0;
+        chamber_dryer_target_c_ = 0;
+        if (subjects_initialized_) {
+            publish_chamber_dryer();
+        }
     }
 
     /**
@@ -511,6 +526,14 @@ class PrinterTemperatureState {
     char chamber_heater_fault_reason_text_buf_[64] = {};
     char chamber_heater_element_temp_text_buf_[32] = {};
     char chamber_filter_fan_percent_text_buf_[32] = {};
+    lv_subject_t chamber_dryer_active_{}; ///< XML: 0/1
+    lv_subject_t chamber_dryer_text_{};   ///< XML: countdown string, "" when idle
+    char chamber_dryer_text_buf_[64] = {};
+    /// Last reported drying state; frames name only what changed.
+    bool chamber_dryer_running_ = false;
+    int chamber_dryer_remaining_s_ = 0;
+    int chamber_dryer_target_c_ = 0; ///< 0 = not reported
+    void publish_chamber_dryer();
     SubjectLifetime chamber_heater_fault_lifetime_;
     SubjectLifetime chamber_heater_inhibited_lifetime_;
     /// The appliance drops a poll periodically and recovers within a frame or

@@ -286,3 +286,34 @@ TEST_CASE("A zone derived without firmware states reads as idle", "[ams][dryer][
     REQUIRE(active_zones.size() == 1);
     CHECK(active_zones[0].state == ZoneDryingState::Active);
 }
+
+// One clamp for what a dryer accepts, shared by every surface that offers a
+// preset: the value shown is the value sent.
+TEST_CASE("DryerInfo clamps a request to what the dryer accepts", "[ams][dryer][1299]") {
+    helix::DryerInfo dryer;
+    dryer.min_temp_c = 35.0f;
+    dryer.max_temp_c = 60.0f;
+    dryer.max_duration_min = 720;
+
+    CHECK(dryer.clamp_temp(80.0f) == 60.0f);
+    CHECK(dryer.clamp_temp(20.0f) == 35.0f);
+    CHECK(dryer.clamp_temp(50.0f) == 50.0f);
+
+    // Minute granularity by default: only the ceiling applies.
+    CHECK(dryer.clamp_duration(90) == 90);
+    CHECK(dryer.clamp_duration(900) == 720);
+
+    // Whole-hour firmware: round up, never below one step.
+    dryer.duration_step_min = 60;
+    CHECK(dryer.clamp_duration(90) == 120);
+    CHECK(dryer.clamp_duration(240) == 240);
+    CHECK(dryer.clamp_duration(10) == 60);
+    CHECK(dryer.clamp_duration(0) == 60);
+    CHECK(dryer.clamp_duration(900) == 720);
+
+    // An unset range clamps nothing.
+    helix::DryerInfo open;
+    open.min_temp_c = 0.0f;
+    open.max_temp_c = 0.0f;
+    CHECK(open.clamp_temp(95.0f) == 95.0f);
+}

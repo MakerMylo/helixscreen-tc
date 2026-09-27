@@ -1799,6 +1799,10 @@ Some AMS backends include an integrated filament dryer — a heated chamber that
 > The zone model - what a box is, how zones are discovered and folded, and which selector
 > shape the user gets - has its own doc: **[FILAMENT_ENVIRONMENT_ZONES.md](FILAMENT_ENVIRONMENT_ZONES.md)**.
 > This section covers the dryer half: the `DryerInfo` contract and the per-backend commands.
+>
+> A chamber appliance can dry too (the stock Panda Breath): it reuses `DryerInfo`, its
+> `clamp_temp()` / `clamp_duration()` and the drying presets, but hangs off the chamber-heater
+> backend rather than an AMS backend. See **[CHAMBER_HEATER.md § Dryer Mode](CHAMBER_HEATER.md#dryer-mode)**.
 
 ### Data Flow
 

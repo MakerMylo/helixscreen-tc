@@ -887,8 +887,10 @@ void PrinterState::set_hardware(helix::PrinterDiscovery hardware) {
                                             : std::string(),
                                     discovery_.chamber_filter_fan_pin(),
                                     backend ? backend->conservative_max_temp() : 0.0);
+            tc->set_chamber_dryer(backend, discovery_.has_heater_bed());
         } else {
             tc->set_chamber_actions(std::string(), std::string(), 0.0);
+            tc->set_chamber_dryer(nullptr);
         }
     }
 
@@ -905,6 +907,8 @@ void PrinterState::set_hardware(helix::PrinterDiscovery hardware) {
                                   : nullptr;
     capabilities_state_.set_has_chamber_element_temp(chamber_backend &&
                                                      chamber_backend->reports_element_temp());
+    capabilities_state_.set_has_chamber_dryer(chamber_backend &&
+                                              chamber_backend->dryer_capabilities().supported);
 
     // Promote the resolved chamber sensor to CHAMBER role in the sensor
     // manager. Required for vendors whose chamber sensor name doesn't match

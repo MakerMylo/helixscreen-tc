@@ -5,6 +5,7 @@
 
 #include "ui_breakpoint.h"
 #include "ui_callback_helpers.h"
+#include "ui_chamber_dryer_modal.h"
 #include "ui_component_keypad.h"
 #include "ui_error_reporting.h"
 #include "ui_nav_manager.h"
@@ -208,6 +209,8 @@ TemperatureService::TemperatureService(PrinterState& printer_state, IMoonrakerAP
         {"on_heater_custom_clicked", on_heater_custom_clicked},
         {"on_chamber_fault_reset_clicked", on_chamber_fault_reset_clicked},
         {"on_chamber_filter_fan_clicked", on_chamber_filter_fan_clicked},
+        {"on_chamber_dryer_start_clicked", on_chamber_dryer_start_clicked},
+        {"on_chamber_dryer_stop_clicked", on_chamber_dryer_stop_clicked},
     });
 
     // Legacy callbacks (still needed for existing nozzle/bed XML until they're updated)
@@ -952,6 +955,20 @@ void TemperatureService::on_chamber_filter_fan_clicked(lv_event_t* /*e*/) {
     // Klippy not ready) snaps the switch back to the truth.
     if (auto* s = lv_xml_get_subject(nullptr, "chamber_filter_fan_on")) {
         lv_subject_notify(s);
+    }
+}
+
+// Chamber filament dryer (#1299): Start opens the preset modal, Stop ends the
+// cycle, both through the globally registered TemperatureController.
+void TemperatureService::on_chamber_dryer_start_clicked(lv_event_t* /*e*/) {
+    helix::ui::ChamberDryerModal::show_owned();
+}
+
+void TemperatureService::on_chamber_dryer_stop_clicked(lv_event_t* /*e*/) {
+    if (auto* tc = get_temperature_controller()) {
+        tc->stop_chamber_drying();
+    } else {
+        spdlog::warn("[TempPanel] chamber dryer stop clicked with no controller registered");
     }
 }
 
