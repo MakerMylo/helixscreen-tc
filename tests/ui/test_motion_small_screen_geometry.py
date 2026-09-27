@@ -43,7 +43,9 @@ _LANDSCAPE = [
 
 _PORTRAIT = [
     ("272x480", 204),
-    ("320x480", 244),
+    # The coordinate row's 32px touch targets (the coordinates open a keypad,
+    # the swap icon flips commanded/actual) take their height from the pad.
+    ("320x480", 232),
 ]
 
 # 1/100 mm: the widest realistic readout, 3 digits + 2 decimals per axis.

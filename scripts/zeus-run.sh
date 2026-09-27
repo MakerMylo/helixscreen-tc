@@ -206,8 +206,10 @@ D() { sudo -n docker exec -w "$WORKDIR" -e CCACHE_DIR=/work/ccache -e HELIX_J="\
 # the lock is already released; resetting the tree under that build is the
 # corruption the lock exists to prevent. Wait any make out before touching
 # git. The poll interval is the only knob: long enough not to spam the log
-# of a live box, overridable so tests can spin it fast.
-while D 'pgrep -x make >/dev/null'; do
+# of a live box, overridable so tests can spin it fast. Zombies are excluded:
+# an interrupted run's make is reparented to the container's PID 1, which
+# never reaps it, so a bare pgrep -x make would wait on it forever.
+while D 'pgrep -x -r R,S,D,T,t make >/dev/null'; do
     echo "→ orphaned build still running in $CONTAINER; waiting"
     sleep "${ZEUS_ORPHAN_POLL_SECS:-30}"
 done

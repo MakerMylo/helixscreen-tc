@@ -8,6 +8,7 @@
 #include "ui_event_safety.h"
 #include "ui_global_panel_helper.h"
 #include "ui_led_chip_factory.h"
+#include "ui_nav_manager.h"
 #include "ui_update_queue.h"
 #include "ui_utils.h"
 
@@ -36,6 +37,31 @@ DEFINE_GLOBAL_OVERLAY_STORAGE(LedControlOverlay, g_led_control_overlay, get_led_
 void init_led_control_overlay(PrinterState& printer_state) {
     INIT_GLOBAL_OVERLAY(LedControlOverlay, g_led_control_overlay, printer_state);
 }
+
+namespace helix {
+lv_obj_t* open_led_control_overlay(lv_obj_t* parent_screen, lv_obj_t* panel) {
+    auto& overlay = get_led_control_overlay();
+    if (!panel && parent_screen) {
+        if (!overlay.are_subjects_initialized()) {
+            overlay.init_subjects();
+        }
+        overlay.register_callbacks();
+
+        panel = overlay.create(parent_screen);
+        if (!panel) {
+            spdlog::error("[LedControlOverlay] Failed to create LED control overlay");
+            return nullptr;
+        }
+    }
+    if (panel) {
+        // Registered before every push: navbar switches clear the registrations,
+        // so a cached panel loses its own. Registering is idempotent.
+        NavigationManager::instance().register_overlay_instance(panel, &overlay);
+        NavigationManager::instance().push_overlay(panel);
+    }
+    return panel;
+}
+} // namespace helix
 
 // ============================================================================
 // CONSTRUCTOR / DESTRUCTOR

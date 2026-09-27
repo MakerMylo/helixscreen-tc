@@ -11,7 +11,6 @@
 #include "ui_fonts.h"
 #include "ui_icon.h"
 #include "ui_icon_codepoints.h"
-#include "ui_nav_manager.h"
 #include "ui_update_queue.h"
 #include "ui_utils.h"
 
@@ -21,13 +20,13 @@
 #include "grid_layout.h"
 #include "helix-xml/src/xml/lv_xml.h"
 #include "i_moonraker_api.h"
-#include "lvgl/src/misc/lv_text_private.h" // lv_text_get_width, lv_text_attributes_t
 #include "observer_factory.h"
 #include "panel_widget_registry.h"
 #include "panel_widget_size.h"
 #include "printer_fan_state.h"
 #include "printer_state.h"
 #include "stacked_row_layout.h"
+#include "text_measure.h"
 #include "theme_manager.h"
 #include "ui/fan_spin_animation.h"
 
@@ -89,25 +88,13 @@ constexpr const char* FONT_STACKED = "font_body";
 // name beside it does not reflow when a fan spins up from 0% to 100%.
 constexpr const char* WIDEST_SPEED_TEXT = "100%";
 
-// Pixel width of a UTF-8 string in the given font. lv_text_get_width
-// dereferences its attributes argument, so a zeroed attributes block (no
-// recolor, zero letter/line space, unbounded width) is required — NULL crashes.
-int measure_text_px(const char* txt, const lv_font_t* font) {
-    if (!txt || !font)
-        return 0;
-    lv_text_attributes_t attrs;
-    lv_text_attributes_init(&attrs);
-    attrs.letter_space = 0;
-    attrs.max_width = LV_COORD_MAX;
-    return lv_text_get_width(txt, LV_TEXT_LEN_MAX, font, &attrs);
-}
-
 // How much of a fan's name a row has room for, longest first. Letter is the
 // floor: it is used when nothing longer fits.
 enum class NameForm { Resolved, Short, Letter };
 } // namespace
 
 using namespace helix;
+using helix::ui::measure_text_px;
 
 FanStackWidget::FanStackWidget(const std::string& instance_id, PrinterState& printer_state)
     : instance_id_(instance_id), printer_state_(printer_state) {}
@@ -954,33 +941,7 @@ void FanStackWidget::send_carousel_fan_speed(const std::string& object_name, int
 
 void FanStackWidget::handle_clicked() {
     spdlog::debug("[FanStackWidget] Clicked - opening fan control overlay");
-
-    if (!fan_control_panel_ && parent_screen_) {
-        auto& overlay = get_fan_control_overlay();
-
-        if (!overlay.are_subjects_initialized()) {
-            overlay.init_subjects();
-        }
-        overlay.register_callbacks();
-        overlay.set_api(get_moonraker_api());
-
-        fan_control_panel_ = overlay.create(parent_screen_);
-        if (!fan_control_panel_) {
-            spdlog::error("[FanStackWidget] Failed to create fan control overlay");
-            return;
-        }
-        NavigationManager::instance().register_overlay_instance(fan_control_panel_, &overlay);
-    }
-
-    if (fan_control_panel_) {
-        auto& overlay = get_fan_control_overlay();
-        overlay.set_api(get_moonraker_api());
-        // Re-register before every push: navbar switches clear overlay_instances_,
-        // so a cached panel loses its registration after the user leaves and returns.
-        // register_overlay_instance is idempotent, so this is safe on first open too.
-        NavigationManager::instance().register_overlay_instance(fan_control_panel_, &overlay);
-        NavigationManager::instance().push_overlay(fan_control_panel_);
-    }
+    fan_control_panel_ = helix::open_fan_control_overlay(parent_screen_, fan_control_panel_);
 }
 
 void FanStackWidget::on_fan_stack_clicked(lv_event_t* e) {

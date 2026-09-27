@@ -1923,6 +1923,10 @@
       },
       "inherits": "lv_obj"
     },
+    "leader_line": {
+      "attributes": {},
+      "inherits": "lv_obj"
+    },
     "pluck_animation": {
       "attributes": {},
       "inherits": "lv_obj"
@@ -2872,6 +2876,7 @@
     "ams_lane_bar",
     "ams_lane_spool",
     "belt_trace",
+    "leader_line",
     "pluck_animation"
   ],
   "runtime_constants": [
@@ -3418,6 +3423,12 @@
     "meter_track_h_xlarge",
     "meter_track_h_xxlarge",
     "modal_backdrop_opacity",
+    "motion_z_col_w",
+    "motion_z_col_w_large",
+    "motion_z_col_w_medium",
+    "motion_z_col_w_micro",
+    "motion_z_col_w_small",
+    "motion_z_col_w_tiny",
     "nav_padding",
     "nav_width",
     "nav_width_large",
