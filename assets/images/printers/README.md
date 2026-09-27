@@ -126,8 +126,9 @@ the home widget shows, and writes `<config dir>/printer_image_regions.json` in t
 format. Its entries override `regions.json` for their key only: a shipped image by basename,
 a custom image as `custom:<name>`. Their `size` is the natural size of the image that was
 tagged (the prerendered tier or imported `.bin` the widget draws, not the source PNG), and an
-entry whose `size` no longer matches that image is ignored until it is re-tagged. Reset tags
-deletes the entry.
+entry whose `size` no longer matches that image (another screen tier, or re-cut art) is
+ignored until it is re-tagged. Importing a custom image, or deleting it, clears its tags,
+since a new photo of the same aspect has the same size. Reset tags deletes the entry.
 
 ## Custom images
 

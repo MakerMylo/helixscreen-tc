@@ -92,7 +92,8 @@ class PrinterImageManager {
         std::string error; // Error message on failure
     };
 
-    /// Import and convert a PNG/JPEG to LVGL .bin format (synchronous)
+    /// Import and convert a PNG/JPEG to LVGL .bin format (synchronous). Clears
+    /// the image's user tags, so main thread only.
     ImportResult import_image(const std::string& source_path);
 
     /// Async version — callback on completion
@@ -101,6 +102,7 @@ class PrinterImageManager {
 
     // --- Cleanup ---
 
+    /// Removes both tiers and the image's user tags. Main thread only.
     bool delete_custom_image(const std::string& name);
     std::string get_custom_dir() const {
         return custom_dir_;

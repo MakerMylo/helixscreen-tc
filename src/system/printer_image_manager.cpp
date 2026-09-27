@@ -8,6 +8,7 @@
 #include "helix_fs.h"
 #include "lvgl_image_writer.h"
 #include "prerendered_images.h"
+#include "printer_image_regions.h"
 #include "printer_images.h"
 #include "settings_manager.h"
 #include "static_subject_registry.h"
@@ -540,6 +541,8 @@ PrinterImageManager::import_image(const std::string& source_path) {
     result.success = true;
     result.id = "custom:" + stem;
     spdlog::info("[PrinterImageManager] Imported '{}' as '{}'", source_path, result.id);
+    // Tags made on the old picture would pin chips to the wrong places on this one.
+    reset_user_image_regions(printer_image_region_key(path_300));
     return result;
 }
 
@@ -573,6 +576,7 @@ bool PrinterImageManager::delete_custom_image(const std::string& name) {
 
     if (any_removed) {
         spdlog::info("[PrinterImageManager] Deleted custom image: '{}'", name);
+        reset_user_image_regions(printer_image_region_key(custom_dir_ + name + "-300.bin"));
     } else {
         spdlog::warn("[PrinterImageManager] No files found to delete for: '{}'", name);
     }

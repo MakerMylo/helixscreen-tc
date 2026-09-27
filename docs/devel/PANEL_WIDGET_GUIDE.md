@@ -208,9 +208,13 @@ which returns a `CalloutMode`, the image rect, and each chip's rect and leader l
   saves to `<config dir>/printer_image_regions.json` through `save_user_image_regions()`.
   Both files are keyed by `printer_image_region_key()`, which gives a custom photo
   `custom:<name>`. `lookup_image_regions()` prefers a user entry, but only when its `size`
-  matches the displayed image's natural size, so a replaced photo falls back to the shipped
-  entry or to docked chips instead of pinning chips to the wrong places. Save and Reset tags
-  bump `PrinterImageManager::notify_image_changed()`, which relayouts the widget.
+  matches the displayed image's natural size, so tags made on another screen tier, or on
+  shipped art that has since been re-cut, fall back to the shipped entry or to docked chips.
+  The size cannot tell one custom photo from another of the same aspect, so
+  `PrinterImageManager::import_image()` and `delete_custom_image()` clear that image's tags.
+  A save or reset changes memory only after the file is written, and neither writes over a
+  user file that exists but cannot be read. Save and Reset tags bump
+  `PrinterImageManager::notify_image_changed()`, which relayouts the widget.
 
 ### Engine contracts this pattern relies on
 
