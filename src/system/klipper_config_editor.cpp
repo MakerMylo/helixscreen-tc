@@ -82,14 +82,12 @@ void KlipperConfigEditor::cancel_restart_monitors() {
     for (auto& monitor : pending) {
         if (!monitor.valid())
             continue;
-        try {
-            if (monitor.wait_until(deadline) != std::future_status::ready) {
-                spdlog::warn("[ConfigEditor] Restart monitor did not finish within {}s — "
-                             "giving up the wait",
-                             MONITOR_JOIN_TIMEOUT.count());
-            }
-        } catch (const std::exception& e) {
-            spdlog::warn("[ConfigEditor] Waiting on restart monitor failed: {}", e.what());
+        // valid() holds here, so wait_until cannot throw future_error for a
+        // missing shared state.
+        if (monitor.wait_until(deadline) != std::future_status::ready) {
+            spdlog::warn("[ConfigEditor] Restart monitor did not finish within {}s — "
+                         "giving up the wait",
+                         MONITOR_JOIN_TIMEOUT.count());
         }
     }
 }

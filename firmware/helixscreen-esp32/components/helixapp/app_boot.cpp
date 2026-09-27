@@ -85,6 +85,7 @@
 #include "src/xml/lv_xml.h"
 #include "subject_initializer.h"
 #include "temperature_sensor_manager.h"
+#include "text_io.h"
 #include "theme_manager.h"
 #include "tips_manager.h"
 #include "tool_state.h"
@@ -173,12 +174,8 @@ HostPort parse_moonraker_kconfig_url(const std::string& url) {
         return {working, 7125};
     }
     std::string host = working.substr(0, colon_pos);
-    int port = 7125;
-    try {
-        port = std::stoi(working.substr(colon_pos + 1));
-    } catch (const std::exception&) {
-        port = 7125;
-    }
+    const int port =
+        helix::text_io::parse_leading<int>(working.substr(colon_pos + 1)).value_or(7125);
     return {host, port};
 }
 

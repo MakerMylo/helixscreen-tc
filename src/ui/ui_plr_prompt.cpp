@@ -9,6 +9,7 @@
 #include "ui_update_queue.h"
 
 #include "app_globals.h"
+#include "exception_policy.h"
 #include "lvgl/src/others/translation/lv_translation.h"
 #include "moonraker_api.h"
 #include "moonraker_error.h"
@@ -138,14 +139,12 @@ std::string plr_prompt_body(const std::string& file_path, const char* with_file_
     if (name.empty()) {
         return generic;
     }
-    try {
-        return fmt::format(fmt::runtime(with_file_fmt), name);
-    } catch (const std::exception& ex) {
-        // A mistranslated placeholder must never abort through the LVGL C
-        // dispatch frame — fall back to the generic body.
-        spdlog::warn("[PLR] body format failed: {}", ex.what());
-        return generic;
-    }
+    // A mistranslated placeholder must never abort through the LVGL C dispatch
+    // frame: the generic body stands in if formatting fails.
+    std::string body = generic;
+    helix::contain_exceptions("[PLR] Body format",
+                              [&] { body = fmt::format(fmt::runtime(with_file_fmt), name); });
+    return body;
 }
 
 PlrPromptStrings plr_prompt_strings(PlrBackendType backend, const PlrPromptStrings& creality,

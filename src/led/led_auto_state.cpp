@@ -4,6 +4,7 @@
 
 #include "color_utils.h"
 #include "config.h"
+#include "json_utils.h"
 #include "led/led_color_utils.h"
 #include "led/led_controller.h"
 #include "observer_factory.h"
@@ -264,7 +265,7 @@ void LedAutoState::load_config() {
                 continue;
             }
             LedStateAction action;
-            action.action_type = it.value().value("action", "color");
+            action.action_type = helix::json_util::safe_string(it.value(), "action", "color");
             // Color: accept both integer (legacy) and "#RRGGBB" string
             auto color_it = it.value().find("color");
             if (color_it != it.value().end()) {
@@ -277,10 +278,10 @@ void LedAutoState::load_config() {
                     }
                 }
             }
-            action.brightness = it.value().value("brightness", 100);
-            action.effect_name = it.value().value("effect_name", "");
-            action.wled_preset = it.value().value("wled_preset", 0);
-            action.macro_gcode = it.value().value("macro_gcode", "");
+            action.brightness = helix::json_util::safe_int(it.value(), "brightness", 100);
+            action.effect_name = helix::json_util::safe_string(it.value(), "effect_name", "");
+            action.wled_preset = helix::json_util::safe_int(it.value(), "wled_preset", 0);
+            action.macro_gcode = helix::json_util::safe_string(it.value(), "macro_gcode", "");
             mappings_[it.key()] = action;
         }
     }

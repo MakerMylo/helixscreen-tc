@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Fail if the ESP32 app image exceeds its budget, or if the link pulled in
-libstdc++'s std::locale machinery. Usage:
+libstdc++'s std::locale machinery or any exception-handling support. Usage:
    check_esp32_size.py build/helixscreen_esp32.bin firmware/helixscreen-esp32/size_budget.json \\
        [build/helixscreen_esp32.map]"""
 import json
@@ -14,6 +14,13 @@ import sys
 # std::filesystem. app_srcs.txt files are linted for those includes; this catches
 # the ones that arrive through a header or a library.
 LOCALE_MEMBER = "locale_init.o"
+
+# The image is built without exceptions (sdkconfig.defaults). Re-enabling them
+# costs ~1.3MB and still fits the budget, so the size check alone would not
+# notice: the personality routine is linked only for code compiled with
+# exceptions, and IDF emits an .eh_frame output section only when they are on.
+EH_MEMBER = "eh_personality.o"
+EH_FRAME_SECTION = re.compile(r"^\.eh_frame\s+0x[0-9a-f]+\s+0x([0-9a-f]+)", re.M)
 
 
 def inclusion_chain(map_text: str, member: str) -> list[str]:
@@ -36,7 +43,7 @@ def inclusion_chain(map_text: str, member: str) -> list[str]:
     while member in why and member not in seen:
         seen.add(member)
         ref, sym = why[member]
-        chain.append(f"{member} <- {ref} ({sym})")
+        chain.append(f"{member} <- {ref or 'the linker command line'} ({sym})")
         member = ref
     return chain
 
@@ -60,6 +67,20 @@ def main() -> int:
                 print(f"        {step}", file=sys.stderr)
             print("      Replace the stream, <regex> or std::filesystem use at the end of the "
                   "chain with text_io.h, helix_regex.h or helix_fs.h.", file=sys.stderr)
+            failed = True
+        map_text = open(sys.argv[3], errors="replace").read()
+        eh_chain = inclusion_chain(map_text, EH_MEMBER)
+        eh_frame = EH_FRAME_SECTION.search(map_text)
+        if eh_chain or (eh_frame and int(eh_frame.group(1), 16) > 0):
+            print("FAIL: the image links exception-handling support; the firmware is built "
+                  "without exceptions.", file=sys.stderr)
+            for step in eh_chain:
+                print(f"        {step}", file=sys.stderr)
+            if eh_frame:
+                print(f"        .eh_frame output section: {int(eh_frame.group(1), 16)} bytes",
+                      file=sys.stderr)
+            print("      Check CONFIG_COMPILER_CXX_EXCEPTIONS in sdkconfig.defaults and the "
+                  "object at the end of the chain.", file=sys.stderr)
             failed = True
     return 1 if failed else 0
 

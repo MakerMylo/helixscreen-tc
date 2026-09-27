@@ -614,39 +614,34 @@ void GCodeParser::parse_metadata_comment(const std::string& line) {
         metadata_printer_model_ = value;
         spdlog::trace("[GCode Parser] Parsed printer model: {}", value);
     } else if (contains_all({"nozzle", "diameter"})) {
-        try {
-            metadata_nozzle_diameter_ = std::stof(value);
+        if (const auto v = helix::text_io::parse_leading<float>(value)) {
+            metadata_nozzle_diameter_ = *v;
             spdlog::trace("[GCode Parser] Parsed nozzle diameter: {}mm", metadata_nozzle_diameter_);
-        } catch (...) {
         }
     } else if (contains_all({"filament"}) &&
                (key_lower.find("[mm]") != std::string::npos || contains_all({"length"}))) {
-        try {
-            metadata_filament_length_ = std::stof(value);
+        if (const auto v = helix::text_io::parse_leading<float>(value)) {
+            metadata_filament_length_ = *v;
             spdlog::trace("[GCode Parser] Parsed filament length: {}mm", metadata_filament_length_);
-        } catch (...) {
         }
     } else if (contains_all({"filament"}) &&
                (key_lower.find("[g]") != std::string::npos || contains_all({"weight"}))) {
-        try {
-            metadata_filament_weight_ = std::stof(value);
+        if (const auto v = helix::text_io::parse_leading<float>(value)) {
+            metadata_filament_weight_ = *v;
             spdlog::trace("[GCode Parser] Parsed filament weight: {}g", metadata_filament_weight_);
-        } catch (...) {
         }
     } else if (contains_all({"filament", "cost"}) || contains_all({"material", "cost"})) {
-        try {
-            metadata_filament_cost_ = std::stof(value);
+        if (const auto v = helix::text_io::parse_leading<float>(value)) {
+            metadata_filament_cost_ = *v;
             spdlog::trace("[GCode Parser] Parsed filament cost: ${}", metadata_filament_cost_);
-        } catch (...) {
         }
     } else if (contains_all({"layer"}) && contains_all({"total"}) &&
                (contains_all({"number"}) || contains_all({"count"}) ||
                 key_lower.find("total layer") != std::string::npos)) {
         // Match "total layer number", "total layers count", but NOT "interlocking_beam_layer_count"
-        try {
-            metadata_layer_count_ = std::stoi(value);
+        if (const auto v = helix::text_io::parse_leading<int>(value)) {
+            metadata_layer_count_ = *v;
             spdlog::trace("[GCode Parser] Parsed total layer count: {}", metadata_layer_count_);
-        } catch (...) {
         }
     } else if ((contains_all({"time"}) &&
                 (contains_all({"print"}) || contains_all({"estimated"}))) ||
@@ -708,8 +703,8 @@ void GCodeParser::parse_metadata_comment(const std::string& line) {
         if (mm_pos != std::string::npos) {
             numeric_value = numeric_value.substr(0, mm_pos);
         }
-        try {
-            float h = std::stof(numeric_value);
+        if (const auto parsed = helix::text_io::parse_leading<float>(numeric_value)) {
+            const float h = *parsed;
             if (h > 0.01f && h < 2.0f) {
                 if (key_lower.find("first") != std::string::npos) {
                     metadata_first_layer_height_ = h;
@@ -719,7 +714,6 @@ void GCodeParser::parse_metadata_comment(const std::string& line) {
                     spdlog::trace("[GCode Parser] Parsed layer height: {}mm", h);
                 }
             }
-        } catch (...) {
         }
     }
     // Parse extrusion width metadata
@@ -744,35 +738,36 @@ void GCodeParser::parse_metadata_comment(const std::string& line) {
             numeric_value = numeric_value.substr(0, mm_pos);
         }
 
-        try {
-            float width = std::stof(numeric_value);
-
-            // Sanity check: extrusion widths should be 0.05mm to 3.0mm
-            if (width < 0.05f || width > 3.0f) {
-                spdlog::debug("[GCode Parser] Ignoring out-of-range extrusion width: {}mm", width);
-                return;
-            }
-
-            // Categorize by feature type
-            if (contains_all({"first", "layer"}) || contains_all({"initial", "layer"})) {
-                metadata_first_layer_extrusion_width_ = width;
-                spdlog::trace("[GCode Parser] Parsed first layer extrusion width: {}mm", width);
-            } else if (contains_all({"perimeter"}) || key_lower.find("wall") != std::string::npos) {
-                // Handles "perimeter" (Prusa/Orca) and "wall" (Cura)
-                metadata_perimeter_extrusion_width_ = width;
-                spdlog::trace("[GCode Parser] Parsed perimeter/wall extrusion width: {}mm", width);
-            } else if (contains_all({"infill"})) {
-                metadata_infill_extrusion_width_ = width;
-                spdlog::trace("[GCode Parser] Parsed infill extrusion width: {}mm", width);
-            } else {
-                // General extrusion width (fallback for "line_width", etc.)
-                if (metadata_extrusion_width_ == 0.0f) {
-                    metadata_extrusion_width_ = width;
-                    spdlog::trace("[GCode Parser] Parsed default extrusion width: {}mm", width);
-                }
-            }
-        } catch (...) {
+        const auto parsed_width = helix::text_io::parse_leading<float>(numeric_value);
+        if (!parsed_width) {
             // Failed to parse width value
+            return;
+        }
+        const float width = *parsed_width;
+
+        // Sanity check: extrusion widths should be 0.05mm to 3.0mm
+        if (width < 0.05f || width > 3.0f) {
+            spdlog::debug("[GCode Parser] Ignoring out-of-range extrusion width: {}mm", width);
+            return;
+        }
+
+        // Categorize by feature type
+        if (contains_all({"first", "layer"}) || contains_all({"initial", "layer"})) {
+            metadata_first_layer_extrusion_width_ = width;
+            spdlog::trace("[GCode Parser] Parsed first layer extrusion width: {}mm", width);
+        } else if (contains_all({"perimeter"}) || key_lower.find("wall") != std::string::npos) {
+            // Handles "perimeter" (Prusa/Orca) and "wall" (Cura)
+            metadata_perimeter_extrusion_width_ = width;
+            spdlog::trace("[GCode Parser] Parsed perimeter/wall extrusion width: {}mm", width);
+        } else if (contains_all({"infill"})) {
+            metadata_infill_extrusion_width_ = width;
+            spdlog::trace("[GCode Parser] Parsed infill extrusion width: {}mm", width);
+        } else {
+            // General extrusion width (fallback for "line_width", etc.)
+            if (metadata_extrusion_width_ == 0.0f) {
+                metadata_extrusion_width_ = width;
+                spdlog::trace("[GCode Parser] Parsed default extrusion width: {}mm", width);
+            }
         }
     }
 }
@@ -840,7 +835,12 @@ void GCodeParser::parse_tool_change_command(const std::string& line) {
     }
 
     std::string tool_str = line.substr(1, i - 1);
-    int tool_num = std::stoi(tool_str);
+    // All digits, but a run long enough still overflows int.
+    const auto parsed_tool = helix::text_io::parse_leading<int>(tool_str);
+    if (!parsed_tool) {
+        return;
+    }
+    const int tool_num = *parsed_tool;
 
     current_tool_index_ = tool_num;
     tools_used_.insert(tool_num);
@@ -1774,10 +1774,9 @@ bool parse_metadata_line(const std::string& line, GCodeHeaderMetadata& metadata)
     // ====================
     const std::string cura_time = ";TIME:";
     if (line.rfind(cura_time, 0) == 0) {
-        try {
-            metadata.estimated_time_seconds = std::stod(line.substr(cura_time.length()));
+        if (const auto t = helix::text_io::parse_leading<double>(line.substr(cura_time.length()))) {
+            metadata.estimated_time_seconds = *t;
             return true;
-        } catch (...) {
         }
     }
 
@@ -1805,9 +1804,9 @@ bool parse_metadata_line(const std::string& line, GCodeHeaderMetadata& metadata)
     // ====================
     const std::string cura_layer_height = ";Layer height: ";
     if (line.rfind(cura_layer_height, 0) == 0) {
-        try {
-            metadata.layer_height = std::stod(line.substr(cura_layer_height.length()));
-        } catch (...) {
+        if (const auto h =
+                helix::text_io::parse_leading<double>(line.substr(cura_layer_height.length()))) {
+            metadata.layer_height = *h;
         }
         return true;
     }
@@ -1905,11 +1904,11 @@ bool parse_metadata_line(const std::string& line, GCodeHeaderMetadata& metadata)
                     end = value.size();
                 }
                 std::string token = value.substr(pos, end - pos);
-                try {
-                    double v = std::stod(token);
-                    metadata.filament_used_per_tool_g.push_back(v);
-                    total_g += v;
-                } catch (...) {
+                const auto v = helix::text_io::parse_leading<double>(token);
+                if (v) {
+                    metadata.filament_used_per_tool_g.push_back(*v);
+                    total_g += *v;
+                } else {
                     metadata.filament_used_per_tool_g.push_back(0.0);
                 }
                 pos = end + 1;
@@ -1921,45 +1920,37 @@ bool parse_metadata_line(const std::string& line, GCodeHeaderMetadata& metadata)
                 metadata.filament_used_g = total_g;
             }
         } else {
-            try {
-                metadata.filament_used_g = std::stod(value);
-            } catch (...) {
+            if (const auto v = helix::text_io::parse_leading<double>(value)) {
+                metadata.filament_used_g = *v;
             }
         }
     } else if (key == "filament used [mm]" || key == "total filament used [mm]") {
-        try {
-            metadata.filament_used_mm = std::stod(value);
-        } catch (...) {
+        if (const auto v = helix::text_io::parse_leading<double>(value)) {
+            metadata.filament_used_mm = *v;
         }
     } else if (key == "total layers" || key == "total layer number") {
-        try {
-            metadata.layer_count = static_cast<uint32_t>(std::stoul(value));
-        } catch (...) {
+        if (const auto v = helix::text_io::parse_leading<unsigned long>(value)) {
+            metadata.layer_count = static_cast<uint32_t>(*v);
         }
     } else if (key == "first_layer_bed_temperature" || key == "bed_temperature") {
-        try {
-            metadata.first_layer_bed_temp = std::stod(value);
-        } catch (...) {
+        if (const auto v = helix::text_io::parse_leading<double>(value)) {
+            metadata.first_layer_bed_temp = *v;
         }
     } else if (key == "first_layer_temperature" || key == "nozzle_temperature") {
-        try {
-            metadata.first_layer_nozzle_temp = std::stod(value);
-        } catch (...) {
+        if (const auto v = helix::text_io::parse_leading<double>(value)) {
+            metadata.first_layer_nozzle_temp = *v;
         }
     } else if (key == "layer_height") {
-        try {
-            metadata.layer_height = std::stod(value);
-        } catch (...) {
+        if (const auto v = helix::text_io::parse_leading<double>(value)) {
+            metadata.layer_height = *v;
         }
     } else if (key == "first_layer_height") {
-        try {
-            metadata.first_layer_height = std::stod(value);
-        } catch (...) {
+        if (const auto v = helix::text_io::parse_leading<double>(value)) {
+            metadata.first_layer_height = *v;
         }
     } else if (key == "max_z_height") {
-        try {
-            metadata.object_height = std::stod(value);
-        } catch (...) {
+        if (const auto v = helix::text_io::parse_leading<double>(value)) {
+            metadata.object_height = *v;
         }
     } else if (key == "filament_type") {
         // Slicers output multiple types separated by semicolons (e.g., "PLA;PLA;ASA;PETG")

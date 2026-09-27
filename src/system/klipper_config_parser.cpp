@@ -205,11 +205,7 @@ float KlipperConfigParser::get_float(const std::string& section, const std::stri
     std::string val = get(section, key, "");
     if (val.empty())
         return default_val;
-    try {
-        return std::stof(val);
-    } catch (...) {
-        return default_val;
-    }
+    return helix::text_io::parse_leading<float>(val).value_or(default_val);
 }
 
 int KlipperConfigParser::get_int(const std::string& section, const std::string& key,
@@ -217,11 +213,7 @@ int KlipperConfigParser::get_int(const std::string& section, const std::string& 
     std::string val = get(section, key, "");
     if (val.empty())
         return default_val;
-    try {
-        return std::stoi(val);
-    } catch (...) {
-        return default_val;
-    }
+    return helix::text_io::parse_leading<int>(val).value_or(default_val);
 }
 
 void KlipperConfigParser::set(const std::string& section, const std::string& key,

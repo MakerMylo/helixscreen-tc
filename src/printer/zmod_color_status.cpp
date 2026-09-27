@@ -3,6 +3,7 @@
 #include "zmod_color_status.h"
 
 #include "color_utils.h"
+#include "text_io.h"
 
 namespace helix::zmod_color {
 
@@ -19,11 +20,7 @@ std::optional<int> slot_id(const nlohmann::json& entry) {
         return it->get<int>();
     }
     if (it->is_string()) {
-        try {
-            return std::stoi(it->get<std::string>());
-        } catch (...) {
-            return std::nullopt;
-        }
+        return helix::text_io::parse_leading<int>(it->get<std::string>());
     }
     return std::nullopt;
 }

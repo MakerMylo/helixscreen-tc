@@ -642,16 +642,8 @@ AmsBackendCfs::parse_stock_box_status(const nlohmann::json& box_json,
             helix::json_util::safe_string(unit_json, "dry_and_humidity", "None");
         if (temp_str != "None" && temp_str != "-1" && humid_str != "None" && humid_str != "-1") {
             EnvironmentData env;
-            try {
-                env.temperature_c = std::stof(temp_str);
-            } catch (...) {
-                env.temperature_c = 0.0f;
-            }
-            try {
-                env.humidity_pct = std::stof(humid_str);
-            } catch (...) {
-                env.humidity_pct = 0.0f;
-            }
+            env.temperature_c = helix::text_io::parse_leading<float>(temp_str).value_or(0.0f);
+            env.humidity_pct = helix::text_io::parse_leading<float>(humid_str).value_or(0.0f);
             env.has_humidity = true;
             unit.environment = env;
         }
@@ -745,11 +737,8 @@ AmsBackendCfs::parse_stock_box_status(const nlohmann::json& box_json,
                 remain_str = remain_arr[i].get<std::string>();
             }
             if (remain_str != "-1" && remain_str != "None") {
-                try {
-                    slot.remaining_length_m = std::stof(remain_str);
-                } catch (...) {
-                    slot.remaining_length_m = 0.0f;
-                }
+                slot.remaining_length_m =
+                    helix::text_io::parse_leading<float>(remain_str).value_or(0.0f);
             }
 
             // Presence, in priority order. Each firmware field is used only

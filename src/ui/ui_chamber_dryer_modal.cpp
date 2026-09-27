@@ -2,6 +2,7 @@
 #include "ui_chamber_dryer_modal.h"
 
 #include "app_globals.h"
+#include "exception_policy.h"
 #include "lvgl/src/others/translation/lv_translation.h"
 #include "temperature_controller.h"
 
@@ -25,15 +26,13 @@ bool ChamberDryerModal::show_owned() {
         spdlog::warn("[ChamberDryerModal] no chamber dryer to drive");
         return false;
     }
-    std::string bed_label;
-    try {
+    // A mistranslated {} must never abort through the LVGL C dispatch frame:
+    // the unformatted text stands in if formatting fails.
+    std::string bed_label = lv_tr("Heat the bed to {}°C");
+    helix::contain_exceptions("[ChamberDryerModal] Bed label format", [&] {
         bed_label = fmt::format(fmt::runtime(lv_tr("Heat the bed to {}°C")),
                                 tc->chamber_dryer_bed_assist_c());
-    } catch (const std::exception& e) {
-        // A mistranslated {} must never abort through the LVGL C dispatch frame.
-        spdlog::warn("[ChamberDryerModal] bed label format failed: {}", e.what());
-        bed_label = lv_tr("Heat the bed to {}°C");
-    }
+    });
     const char* attrs[] = {"bed_label", bed_label.c_str(), nullptr};
 
     auto modal = std::make_unique<ChamberDryerModal>();

@@ -3,6 +3,7 @@
 
 #include "moonraker_queue_api.h"
 
+#include "json_utils.h"
 #include "moonraker_client.h"
 #include "moonraker_gcode_guards.h"
 #include "spdlog/spdlog.h"
@@ -17,15 +18,21 @@ namespace {
 /// post_job both return `queue_state` + `queued_jobs` in result).
 JobQueueStatus parse_queue_status(const json& response) {
     JobQueueStatus status;
-    auto result = response.value("result", json::object());
-    status.queue_state = result.value("queue_state", "ready");
-    for (const auto& job : result.value("queued_jobs", json::array())) {
-        JobQueueEntry entry;
-        entry.job_id = job.value("job_id", "");
-        entry.filename = job.value("filename", "");
-        entry.time_added = job.value("time_added", 0.0);
-        entry.time_in_queue = job.value("time_in_queue", 0.0);
-        status.queued_jobs.push_back(std::move(entry));
+    const json* result = helix::json_util::find_member(response, "result");
+    if (!result) {
+        return status;
+    }
+    status.queue_state = helix::json_util::safe_string(*result, "queue_state", "ready");
+    const json* queued_jobs = helix::json_util::find_member(*result, "queued_jobs");
+    if (queued_jobs && queued_jobs->is_array()) {
+        for (const auto& job : *queued_jobs) {
+            JobQueueEntry entry;
+            entry.job_id = helix::json_util::safe_string(job, "job_id", "");
+            entry.filename = helix::json_util::safe_string(job, "filename", "");
+            entry.time_added = helix::json_util::safe_double(job, "time_added", 0.0);
+            entry.time_in_queue = helix::json_util::safe_double(job, "time_in_queue", 0.0);
+            status.queued_jobs.push_back(std::move(entry));
+        }
     }
     return status;
 }

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "helix_regex.h"
+#include "text_io.h"
 
 #include <algorithm>
 #include <cmath>
@@ -46,11 +47,12 @@ inline std::optional<ProbeProgress> parse_probe_progress(const std::string& line
 
     helix::RegexMatch match;
     if (helix::regex_search(line, match, probe_regex) && match.size() == 3) {
-        try {
-            return ProbeProgress{std::stoi(match[1].str()), std::stoi(match[2].str())};
-        } catch (...) {
+        const auto current = helix::text_io::parse_leading<int>(match[1].str());
+        const auto total = helix::text_io::parse_leading<int>(match[2].str());
+        if (!current || !total) {
             return std::nullopt;
         }
+        return ProbeProgress{*current, *total};
     }
     return std::nullopt;
 }
@@ -116,14 +118,10 @@ inline std::optional<int> parse_adapted_probe_count(const std::string& line) {
     static const helix::Regex adapt_regex(R"(Adapted probe count:\s*(\d+)\s*,\s*(\d+))");
     helix::RegexMatch match;
     if (helix::regex_search(line, match, adapt_regex) && match.size() == 3) {
-        try {
-            int x = std::stoi(match[1].str());
-            int y = std::stoi(match[2].str());
-            if (x > 0 && y > 0) {
-                return x * y;
-            }
-        } catch (...) {
-            // fall through
+        const auto x = helix::text_io::parse_leading<int>(match[1].str());
+        const auto y = helix::text_io::parse_leading<int>(match[2].str());
+        if (x && y && *x > 0 && *y > 0) {
+            return *x * *y;
         }
     }
     return std::nullopt;
@@ -135,11 +133,12 @@ inline std::optional<ProbePosition> parse_probe_position(const std::string& line
         R"(probe at (?:x:\s*)?(-?\d+(?:\.\d+)?)[,\s]+(?:y:\s*)?(-?\d+(?:\.\d+)?)\s+is z=)");
     helix::RegexMatch match;
     if (helix::regex_search(line, match, pos_regex) && match.size() == 3) {
-        try {
-            return ProbePosition{std::stod(match[1].str()), std::stod(match[2].str())};
-        } catch (...) {
+        const auto x = helix::text_io::parse_leading<double>(match[1].str());
+        const auto y = helix::text_io::parse_leading<double>(match[2].str());
+        if (!x || !y) {
             return std::nullopt;
         }
+        return ProbePosition{*x, *y};
     }
     return std::nullopt;
 }

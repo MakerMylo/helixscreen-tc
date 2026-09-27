@@ -3,6 +3,8 @@
 
 #include "utils/network_validation.h"
 
+#include "text_io.h"
+
 #include <algorithm>
 #include <cctype>
 
@@ -83,12 +85,8 @@ bool is_valid_ip_or_hostname(const std::string& host_raw) {
                     return false;
                 }
 
-                try {
-                    int num = std::stoi(segment);
-                    if (num < 0 || num > 255) {
-                        return false;
-                    }
-                } catch (...) {
+                const auto num = helix::text_io::parse_leading<int>(segment);
+                if (!num || *num < 0 || *num > 255) {
                     return false;
                 }
 
@@ -183,12 +181,8 @@ bool is_valid_port(const std::string& port_str_raw) {
     }
 
     // Parse and validate range
-    try {
-        int port = std::stoi(port_str);
-        return port > 0 && port <= 65535;
-    } catch (...) {
-        return false;
-    }
+    const auto port = helix::text_io::parse_leading<int>(port_str);
+    return port && *port > 0 && *port <= 65535;
 }
 
 std::string resolve_moonraker_host_default(const std::string& stored_host, bool is_android) {
