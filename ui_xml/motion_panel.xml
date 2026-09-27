@@ -312,13 +312,13 @@
                two buttons sit beside QGL in the row the jog modes occupy on
                the Jog tab. Landscape keeps them inside the grid. -->
           <ui_button name="move_park"
-                     text="Park" translation_tag="Park" variant="secondary" flex_grow="1" moves_machine="true">
+                     text="Park" translation_tag="Park" variant="outline" flex_grow="1" moves_machine="true">
             <bind_flag_if_not_eq subject="motion_tab" flag="hidden" ref_value="1"/>
             <bind_state_if_eq subject="nav_buttons_enabled" state="disabled" ref_value="0"/>
             <event_cb trigger="clicked" callback="on_motion_park_clicked"/>
           </ui_button>
           <ui_button name="move_motors_off"
-                     text="Motors Off" translation_tag="Motors Off" icon="power" variant="secondary" flex_grow="1"
+                     text="Motors Off" translation_tag="Motors Off" icon="power" variant="outline" flex_grow="1"
                      moves_machine="true">
             <bind_flag_if_not_eq subject="motion_tab" flag="hidden" ref_value="1"/>
             <bind_state_if_eq subject="nav_buttons_enabled" state="disabled" ref_value="0"/>
