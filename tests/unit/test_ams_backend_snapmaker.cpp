@@ -1,6 +1,8 @@
 // Copyright (C) 2025-2026 356C LLC
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "ui_batch_filament_modal.h"
+
 #include "../helix_test_fixture.h"
 #include "../test_helpers/backend_user_edit.h"
 #include "../test_helpers/printer_state_test_access.h"
@@ -13,6 +15,7 @@
 #include "ams_types.h"
 #include "app_globals.h"
 #include "display_numbering.h"
+#include "filament_op_execute.h"
 #include "filament_slot_override.h"
 #include "filament_slot_override_store.h"
 #include "lane_translation.h"
@@ -511,12 +514,11 @@ TEST_CASE_METHOD(SnapmakerFixture,
     }
 }
 
-// can_unload_from_toolhead must require filament AT the toolhead, not merely
-// present in the buffer. After an unload the U1 retracts filament to the buffer:
-// filament_exist stays true (slot AVAILABLE) and — the firmware bug this fix
-// targets — the motion sensor e{N}_filament even stays true, but channel_state
-// reports unload_finish. Keying off the channel_state latch (not is_present or
-// the motion sensor) stops offering Unload for an already-unloaded tool.
+// can_unload_from_toolhead answers "loaded to the nozzle", not merely present in
+// the buffer. After an unload filament_exist stays true (slot AVAILABLE) and the
+// toolhead switch e{N}_filament stays true too, since the retracted tip is still
+// in the toolhead, but channel_state reports unload_finish. The channel_state
+// latch answers it; the switch answers slot_filament_parked_in_toolhead().
 TEST_CASE_METHOD(
     SnapmakerFixture,
     "Snapmaker can_unload_from_toolhead requires filament at the toolhead, not just buffer",
@@ -537,8 +539,8 @@ TEST_CASE_METHOD(
     REQUIRE(backend.can_unload_from_toolhead(2));
 
     SECTION("a tool unloaded to the buffer (channel_state unload_finish) is NOT unloadable") {
-        // Post-unload: filament parked in the buffer (still detected=true, the
-        // firmware bug), channel_state unload_finish → the loaded latch clears.
+        // Post-unload: the port still reads filament (detected=true) and
+        // channel_state reports unload_finish, so the loaded latch clears.
         SnapmakerTestAccess::handle_status(backend, make_feed_status(2, "unload_finish", true));
         CHECK_FALSE(backend.can_unload_from_toolhead(2));
         // Tools still loaded at their toolhead remain unloadable.
@@ -874,11 +876,9 @@ TEST_CASE_METHOD(
     SnapmakerFixture,
     "Snapmaker unload_finish clears the loaded latch even while motion sensor stays true",
     "[ams][snapmaker][channel_state]") {
-    // The exact live-captured condition (U1 firmware 20260608, lanes 3&4 just
-    // unloaded): channel_state=unload_finish but the motion sensor still reads
-    // filament_detected=true. Before the fix the toolhead-load queries keyed off
-    // the motion sensor, so an unloaded lane kept rendering filament at the
-    // toolhead and kept offering Unload. Now the channel_state latch governs.
+    // The live-captured condition (U1 firmware 20260608, lanes 3&4 just
+    // unloaded): channel_state=unload_finish while the toolhead switch still
+    // reads filament_detected=true. The channel_state latch answers "loaded".
     helix::test::RegisteredBackend<AmsBackendSnapmaker> backend_reg(nullptr, nullptr);
     AmsBackendSnapmaker& backend = *backend_reg;
 
@@ -886,7 +886,7 @@ TEST_CASE_METHOD(
     SnapmakerTestAccess::handle_status(backend, make_feed_status(2, "load_finish"));
     REQUIRE(SnapmakerTestAccess::loaded_at_toolhead(backend, 2));
 
-    // Motion sensor is (wrongly) still reporting present — the firmware bug.
+    // The toolhead switch still reads present: the tip sits in the toolhead.
     SnapmakerTestAccess::set_sensor_present(backend, 2, true);
     // Now the lane reports unload_finish while filament_detected is still true.
     SnapmakerTestAccess::handle_status(backend, make_feed_status(2, "unload_finish",
@@ -942,6 +942,139 @@ TEST_CASE_METHOD(SnapmakerFixture, "Snapmaker wait_insert means not loaded",
                                                                  /*filament_detected=*/false));
     CHECK_FALSE(SnapmakerTestAccess::loaded_at_toolhead(backend, 1));
     CHECK_FALSE(backend.slot_has_filament_at_toolhead(1));
+}
+
+// The U1 toolhead switch (filament_motion_sensor e{N}_filament) reads its pin
+// directly outside a print. After a firmware unload, and after filament is fed
+// to the nozzle by plain extrusion, it reads filament while channel_state says
+// preload_finish: filament parked in the toolhead. Unload and Load are both
+// offered for it, and no answer depends on which frame carried which field.
+namespace {
+json t3_picked() {
+    return json{{"toolhead", json{{"extruder", "extruder3"}}}};
+}
+json t3_feed() {
+    return make_feed_status(3, "preload_finish", /*filament_detected=*/true);
+}
+json t3_switch(bool detected) {
+    return json{{"filament_motion_sensor e3_filament",
+                 json{{"filament_detected", detected}, {"enabled", true}}}};
+}
+json merged(std::initializer_list<json> frames) {
+    json out = json::object();
+    for (const auto& f : frames) {
+        out.update(f);
+    }
+    return out;
+}
+
+struct LoadAnswers {
+    bool filament_loaded;
+    SlotStatus status;
+    bool actively_loaded;
+    bool at_nozzle;
+    bool parked;
+    bool operator==(const LoadAnswers& o) const {
+        return filament_loaded == o.filament_loaded && status == o.status &&
+               actively_loaded == o.actively_loaded && at_nozzle == o.at_nozzle &&
+               parked == o.parked;
+    }
+};
+} // namespace
+
+template <> struct Catch::StringMaker<LoadAnswers> {
+    static std::string convert(const LoadAnswers& a) {
+        return "{filament_loaded=" + std::to_string(a.filament_loaded) +
+               " status=" + std::to_string(static_cast<int>(a.status)) +
+               " actively=" + std::to_string(a.actively_loaded) +
+               " at_nozzle=" + std::to_string(a.at_nozzle) + " parked=" + std::to_string(a.parked) +
+               "}";
+    }
+};
+
+namespace {
+LoadAnswers answers(const AmsBackendSnapmaker& b, int slot) {
+    return {b.get_system_info().filament_loaded, b.get_slot_info(slot).status,
+            b.slot_is_actively_loaded(slot), b.slot_has_filament_at_toolhead(slot),
+            b.slot_filament_parked_in_toolhead(slot)};
+}
+LoadAnswers fed(std::initializer_list<json> frames) {
+    helix::test::RegisteredBackend<AmsBackendSnapmaker> reg(nullptr, nullptr);
+    for (const auto& f : frames) {
+        SnapmakerTestAccess::handle_status(*reg, f);
+    }
+    return answers(*reg, 3);
+}
+} // namespace
+
+TEST_CASE_METHOD(SnapmakerFixture,
+                 "Snapmaker filament parked in the toolhead offers Unload and Load",
+                 "[ams][snapmaker][channel_state][unload][parked]") {
+    helix::test::RegisteredBackend<AmsBackendSnapmaker> backend_reg(nullptr, nullptr);
+    AmsBackendSnapmaker& backend = *backend_reg;
+    SnapmakerTestAccess::handle_status(backend, merged({t3_picked(), t3_feed(), t3_switch(true)}));
+
+    CHECK(answers(backend, 3) == LoadAnswers{/*filament_loaded=*/true, SlotStatus::AVAILABLE,
+                                             /*actively=*/false,
+                                             /*at_nozzle=*/false, /*parked=*/true});
+    CHECK_FALSE(backend.can_unload_from_toolhead(3));
+
+    // The single-slot executors resolve the unload target through this.
+    CHECK(helix::ui::read_unload_target_loaded(&backend, backend.get_system_info(), 3));
+
+    // Batch picker: both directions offer head 3.
+    using helix::ui::BatchFilamentModal;
+    const auto rows = BatchFilamentModal::collect_rows(backend);
+    CHECK(BatchFilamentModal::head_can_act(rows.heads_for(false)[3], rows.lane_presence[3],
+                                           /*for_load=*/false));
+    CHECK(BatchFilamentModal::head_can_act(rows.heads_for(true)[3], rows.lane_presence[3],
+                                           /*for_load=*/true));
+}
+
+TEST_CASE_METHOD(SnapmakerFixture, "Snapmaker loaded answers do not depend on frame order",
+                 "[ams][snapmaker][channel_state][unload][parked]") {
+    const LoadAnswers parked{true, SlotStatus::AVAILABLE, false, false, true};
+
+    SECTION("parked head, however the frames are split") {
+        CHECK(fed({merged({t3_picked(), t3_feed(), t3_switch(true)})}) == parked);
+        CHECK(fed({t3_picked(), t3_feed(), t3_switch(true)}) == parked);
+        CHECK(fed({t3_feed(), t3_switch(true), t3_picked()}) == parked);
+        CHECK(fed({t3_switch(true), t3_picked(), t3_feed()}) == parked);
+    }
+    SECTION("a pick with no switch reading says nothing is loaded") {
+        const LoadAnswers empty{false, SlotStatus::AVAILABLE, false, false, false};
+        CHECK(fed({t3_feed(), t3_picked()}) == empty);
+        CHECK(fed({t3_picked(), t3_feed()}) == empty);
+    }
+    SECTION("load_finish on the picked head is loaded to the nozzle") {
+        const auto loaded = make_feed_status(3, "load_finish", true);
+        const LoadAnswers at_nozzle{true, SlotStatus::LOADED, true, true, false};
+        CHECK(fed({t3_picked(), loaded, t3_switch(true)}) == at_nozzle);
+        CHECK(fed({loaded, t3_switch(true), t3_picked()}) == at_nozzle);
+    }
+    SECTION("a reported runout on a loaded head drops the loaded readout") {
+        const auto loaded = make_feed_status(3, "load_finish", true);
+        const LoadAnswers runout{false, SlotStatus::AVAILABLE, false, true, false};
+        CHECK(fed({t3_picked(), loaded, t3_switch(false)}) == runout);
+        CHECK(fed({t3_switch(false), loaded, t3_picked()}) == runout);
+    }
+}
+
+TEST_CASE_METHOD(SnapmakerFixture, "Snapmaker unloaded head with a clear switch offers only Load",
+                 "[ams][snapmaker][channel_state][unload][parked]") {
+    helix::test::RegisteredBackend<AmsBackendSnapmaker> backend_reg(nullptr, nullptr);
+    AmsBackendSnapmaker& backend = *backend_reg;
+    SnapmakerTestAccess::handle_status(
+        backend,
+        merged({t3_picked(), make_feed_status(3, "unload_finish", true), t3_switch(false)}));
+
+    CHECK(answers(backend, 3) == LoadAnswers{false, SlotStatus::AVAILABLE, false, false, false});
+    using helix::ui::BatchFilamentModal;
+    const auto rows = BatchFilamentModal::collect_rows(backend);
+    CHECK_FALSE(BatchFilamentModal::head_can_act(rows.heads_for(false)[3], rows.lane_presence[3],
+                                                 /*for_load=*/false));
+    CHECK(BatchFilamentModal::head_can_act(rows.heads_for(true)[3], rows.lane_presence[3],
+                                           /*for_load=*/true));
 }
 
 TEST_CASE_METHOD(SnapmakerFixture, "Snapmaker preload_finish is present-but-not-loaded",
@@ -1146,14 +1279,14 @@ TEST_CASE_METHOD(SnapmakerFixture,
     helix::test::RegisteredBackend<AmsBackendSnapmaker> backend_reg(nullptr, nullptr);
     AmsBackendSnapmaker& backend = *backend_reg;
 
-    // Active tool 0 loaded (pin state) with filament present everywhere.
+    // Active tool 0 loaded to its nozzle, with filament present everywhere.
     json loaded = json{
         {"toolhead", json{{"extruder", "extruder"}}},
+        {"filament_feed left",
+         json{{"extruder0", json{{"filament_detected", true}, {"channel_state", "load_finish"}}}}},
         {"print_task_config", json{{"filament_exist", json::array({true, true, true, true})}}}};
     SnapmakerTestAccess::handle_status(backend, loaded);
     REQUIRE(backend.get_system_info().filament_loaded);
-    // And latch it loaded via channel_state.
-    SnapmakerTestAccess::set_loaded_at_toolhead(backend, 0, true);
 
     // Active lane's motion sensor drops during extrusion → runout.
     json runout = json{{"filament_motion_sensor e0_filament", json{{"filament_detected", false}}}};

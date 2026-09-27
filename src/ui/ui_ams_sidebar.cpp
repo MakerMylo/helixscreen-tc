@@ -1145,7 +1145,7 @@ helix::ui::OpButtonState AmsOperationSidebar::read_unload_gating_state() const {
     if (backend && backend->supports_batch_filament_ops()) {
         const auto rows = BatchFilamentModal::collect_rows(*backend);
         unload_available =
-            BatchFilamentModal::any_head_for_direction(rows.at_toolhead, rows.lane_presence,
+            BatchFilamentModal::any_head_for_direction(rows.heads_for(false), rows.lane_presence,
                                                        /*for_load=*/false);
     } else {
         lv_subject_t* loaded = AmsState::instance().get_filament_loaded_subject();
@@ -1180,7 +1180,7 @@ helix::ui::OpButtonState AmsOperationSidebar::read_batch_load_gating_state() con
     if (backend && backend->supports_batch_filament_ops()) {
         const auto rows = BatchFilamentModal::collect_rows(*backend);
         any_loadable =
-            BatchFilamentModal::any_head_for_direction(rows.at_toolhead, rows.lane_presence,
+            BatchFilamentModal::any_head_for_direction(rows.heads_for(true), rows.lane_presence,
                                                        /*for_load=*/true);
     }
     const OpInputs in = read_op_inputs();

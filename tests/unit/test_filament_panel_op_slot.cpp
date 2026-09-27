@@ -106,6 +106,10 @@ class RecordingBackend : public helix::AmsBackendMock {
     [[nodiscard]] bool slot_has_filament_at_toolhead(int slot) const override {
         return slot == loaded_slot_;
     }
+    int parked_slot_ = -1; ///< Which slot reports filament parked in its toolhead
+    [[nodiscard]] bool slot_filament_parked_in_toolhead(int slot) const override {
+        return slot == parked_slot_;
+    }
     // Deterministic per-lane presence for the button gating (the base mock owns
     // its own slot table, which this test does not populate).
     [[nodiscard]] SlotInfo get_slot_info(int slot) const override {
@@ -690,6 +694,31 @@ TEST_CASE_METHOD(LVGLUITestFixture,
     // Cancelling/finishing the print hands the buttons back.
     set_job_state(helix::PrintJobState::STANDBY);
     CHECK(read("filament_load_disabled") == 1); // still loaded
+    CHECK(read("filament_unload_disabled") == 0);
+}
+
+// Filament parked in the toolhead short of the nozzle is not loaded, so Load
+// stays lit, and a heated unload still acts on it, so Unload and Purge light too.
+TEST_CASE_METHOD(LVGLUITestFixture,
+                 "Filament panel offers Load and Unload for filament parked in the toolhead",
+                 "[filament][op_slot][panel][op_gating]") {
+    auto read = [](const char* name) {
+        lv_subject_t* s = lv_xml_get_subject(nullptr, name);
+        REQUIRE(s != nullptr);
+        return lv_subject_get_int(s);
+    };
+
+    OpSlotHarness h(*this, boxturtle_sys(), /*loaded_slot=*/-1, identity_topo());
+    h.select_tool(2);
+    TA::handle_extruder_changed(*h.panel);
+    process_lvgl(10);
+    REQUIRE(read("filament_load_disabled") == 0);
+    REQUIRE(read("filament_unload_disabled") == 1);
+
+    h.mock->parked_slot_ = 2;
+    TA::handle_extruder_changed(*h.panel);
+    process_lvgl(10);
+    CHECK(read("filament_load_disabled") == 0);
     CHECK(read("filament_unload_disabled") == 0);
 }
 

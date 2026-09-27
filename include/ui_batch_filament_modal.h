@@ -87,13 +87,21 @@ class BatchFilamentModal : public Modal {
                   const std::vector<AmsBackend::FilamentOpEligibility>& per_slot);
 
     /// What each picker row needs from the backend. Lane presence answers the
-    /// label ("what is in this lane"); toolhead state answers the Unload tick
-    /// ("is this head loaded"). They disagree on a lane holding filament that
-    /// has not been fed to the nozzle.
+    /// label ("what is in this lane"); toolhead state answers the ticks. They
+    /// disagree on a lane holding filament that has not been fed to the nozzle.
+    /// at_toolhead is "loaded to the nozzle" (the Load direction's question);
+    /// unloadable adds filament parked in the toolhead short of it, which a
+    /// heated unload still acts on.
     struct BatchRowSource {
         std::vector<SlotInfo> slots;
         std::vector<std::optional<bool>> lane_presence;
         std::vector<std::optional<bool>> at_toolhead;
+        std::vector<std::optional<bool>> unloadable;
+
+        /// The toolhead answer head_can_act() reads for this direction.
+        [[nodiscard]] const std::vector<std::optional<bool>>& heads_for(bool for_load) const {
+            return for_load ? at_toolhead : unloadable;
+        }
     };
 
     // Pure: gather every row's inputs. Extracted so the gathering itself is

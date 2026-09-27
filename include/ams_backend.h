@@ -721,6 +721,21 @@ class AmsBackend {
     }
 
     /**
+     * @brief Filament sits in this slot's toolhead but short of the nozzle.
+     *
+     * Not loaded, so Load stays offered, yet a heated unload still has filament
+     * to act on, so Unload and Purge are offered too. Every Unload gate ORs this
+     * onto its own loaded answer; no Load gate reads it.
+     *
+     * Default false: only a backend with a per-toolhead presence switch that
+     * reads independently of the load state can answer it.
+     */
+    [[nodiscard]] virtual bool slot_filament_parked_in_toolhead(int slot_index) const {
+        (void)slot_index;
+        return false;
+    }
+
+    /**
      * @brief Infer which segment has an error
      *
      * When an error occurs, this determines which segment of the path
