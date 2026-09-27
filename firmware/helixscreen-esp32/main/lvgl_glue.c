@@ -15,6 +15,7 @@
 #include "ktouch.h"
 #include "lvgl.h"
 #include "ota_health.h"
+#include "serial_snapshot.h"
 #include "src/xml/lv_xml.h"
 #include "touch_input.h"
 
@@ -362,6 +363,7 @@ static void* ui_thread_main(void* arg) {
 
     s_ui_build();
     ota_health_confirm();
+    serial_snapshot_start();
     ESP_LOGI(TAG, "ui: render loop");
     int64_t underrun_log_us = esp_timer_get_time();
     int32_t underrun_prev_drift = 0;
@@ -398,6 +400,7 @@ static void* ui_thread_main(void* arg) {
         if (s_ui_tick) {
             s_ui_tick();
         }
+        serial_snapshot_poll();
         vTaskDelay(pdMS_TO_TICKS(delay < 5 ? 5 : delay > 50 ? 50 : delay));
     }
     return NULL;

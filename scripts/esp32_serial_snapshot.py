@@ -1,0 +1,106 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
+"""Screenshot an ESP32 panel over its serial console.
+
+Sends "snap"; the firmware (firmware/helixscreen-esp32/main/serial_snapshot.c)
+answers with the active screen as raw-deflated RGB565, base64 on "SNAP:" lines
+between HELIX-SNAP markers. Log lines interleave between them and are ignored.
+
+    esp32_serial_snapshot.py /dev/ttyUSB0 out.png [--timeout 120] [--settle 45]
+
+Needs pyserial. On Linux, opening a CH340/CP210x port can pulse DTR/RTS before
+pyserial holds them low, which resets a board wired for auto-reset. The request
+is repeated until the dump starts, so a reset costs one boot, not the capture.
+Linux raises the modem lines on every open, so expect that reset: --settle waits
+before the first request, for a screen that has finished booting and connecting.
+"""
+
+import argparse
+import base64
+import struct
+import sys
+import time
+import zlib
+
+
+def rgb565_to_png(raw: bytes, width: int, height: int) -> bytes:
+    rows = bytearray()
+    for y in range(height):
+        rows.append(0)  # filter: none
+        line = raw[y * width * 2:(y + 1) * width * 2]
+        for (px,) in struct.iter_unpack("<H", line):
+            rows += bytes(((px >> 11) << 3 | px >> 13, (px >> 5 & 0x3F) << 2 | (px >> 9 & 3),
+                           (px & 0x1F) << 3 | (px >> 2 & 7)))
+
+    def chunk(tag: bytes, data: bytes) -> bytes:
+        return struct.pack(">I", len(data)) + tag + data + struct.pack(">I", zlib.crc32(tag + data))
+
+    return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0))
+            + chunk(b"IDAT", zlib.compress(bytes(rows), 6)) + chunk(b"IEND", b""))
+
+
+def parse_dump(lines: list[str]) -> tuple[int, int, bytes]:
+    """(width, height, rgb565) from the lines of one dump; raises ValueError."""
+    width = height = None
+    payload = []
+    for line in lines:
+        if line.startswith("=====HELIX-SNAP-ERROR"):
+            raise ValueError(line)
+        if line.startswith("=====HELIX-SNAP "):
+            _, w, h, fmt, enc = line.split()
+            if (fmt, enc) != ("RGB565", "DEFLATE"):
+                raise ValueError(f"unsupported dump: {fmt} {enc}")
+            width, height, payload = int(w), int(h), []
+        elif line.startswith("SNAP:") and width is not None:
+            payload.append(line[5:].strip())
+        elif line.startswith("=====HELIX-SNAP-END") and width is not None:
+            compressed = base64.b64decode("".join(payload))
+            if len(compressed) != int(line.split()[1]):
+                raise ValueError(f"truncated: {len(compressed)} of {line.split()[1]} bytes")
+            raw = zlib.decompress(compressed, -15)
+            if len(raw) != width * height * 2:
+                raise ValueError(f"expected {width * height * 2} pixel bytes, got {len(raw)}")
+            return width, height, raw
+    raise ValueError("no complete dump")
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("port")
+    ap.add_argument("out")
+    ap.add_argument("--baud", type=int, default=115200)
+    ap.add_argument("--timeout", type=float, default=120.0)
+    ap.add_argument("--settle", type=float, default=0.0,
+                    help="seconds to wait after opening the port before asking")
+    args = ap.parse_args()
+
+    import serial
+
+    port = serial.Serial()
+    port.port, port.baudrate, port.timeout = args.port, args.baud, 0.5
+    port.dtr = False
+    port.rts = False
+    port.open()
+    port.reset_input_buffer()
+
+    next_ask = time.time() + args.settle
+    lines, buf, deadline = [], b"", next_ask + args.timeout
+    while time.time() < deadline:
+        started = any(l.startswith("=====HELIX-SNAP") for l in lines)
+        if not started and time.time() >= next_ask:
+            port.write(b"\nsnap\n")
+            next_ask = time.time() + 2.0
+        buf += port.read(4096)
+        *done, buf = buf.split(b"\n")
+        lines += [d.decode("ascii", "replace").rstrip("\r") for d in done]
+        if any(l.startswith(("=====HELIX-SNAP-END", "=====HELIX-SNAP-ERROR")) for l in lines):
+            break
+    width, height, raw = parse_dump(lines)
+    with open(args.out, "wb") as f:
+        f.write(rgb565_to_png(raw, width, height))
+    print(f"{args.out}: {width}x{height}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
