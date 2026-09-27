@@ -50,7 +50,8 @@ bool has_shipped_image_regions(std::string_view key);
 
 /// Store the user's tags for `key` in <config dir>/printer_image_regions.json,
 /// replacing any earlier entry for it. False, with nothing changed, when the
-/// file cannot be written, or exists and cannot be read.
+/// file cannot be written, or exists and cannot be read. A file that reads but
+/// does not parse is first moved aside to printer_image_regions.json.bad.
 bool save_user_image_regions(const std::string& key, const ImageRegions& regions);
 
 /// Delete the user's tags for `key`, returning the image to its shipped points

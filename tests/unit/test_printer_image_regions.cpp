@@ -360,15 +360,41 @@ TEST_CASE("user regions: a failed write leaves the saved tags in effect",
     CHECK(v2->nozzle.x == Catch::Approx(0.9f));
 }
 
-TEST_CASE("user regions: a file that cannot be parsed is ignored and never overwritten",
+TEST_CASE("user regions: a file that does not parse is moved aside and tagging carries on",
           "[printer_image][regions][image_tagger]") {
     const ConfigDirGuard cfg("regions_user_unparseable");
-    const std::string garbage = "{\"voron-v2\": {\"size\": [300, 150], oops";
+    const auto bad = cfg.dir / "printer_image_regions.json.bad";
+    const auto read_bad = [&] {
+        std::ifstream f(bad);
+        return std::string((std::istreambuf_iterator<char>(f)), {});
+    };
+    const ScopedImageRegions shipped({{"voron-v2", shipped_entry(0.5f)}});
+    std::ofstream(bad) << "an older bad file";
+
+    for (const std::string original :
+         {std::string("{\"voron-v2\": {\"size\": [300, 150], oops"), std::string()}) {
+        INFO("original: '" << original << "'");
+        write_user_file(cfg, original);
+        reload_user_image_regions();
+
+        CHECK(lookup_user_image_regions("voron-v2", 300, 150) == nullptr);
+        CHECK(read_bad() == original);
+        REQUIRE(save_user_image_regions("custom:mine", user_entry(0.2f)));
+        CHECK(lookup_user_image_regions("custom:mine", 300, 150) != nullptr);
+        CHECK(parse_image_regions(read_user_file(cfg)).count("custom:mine") == 1);
+    }
+}
+
+TEST_CASE("user regions: a bad file that cannot be moved aside is never overwritten",
+          "[printer_image][regions][image_tagger]") {
+    const ConfigDirGuard cfg("regions_user_unmovable");
+    // A non-empty directory where the .bad file goes: neither remove nor rename gets past it.
+    std::filesystem::create_directories(cfg.dir / "printer_image_regions.json.bad" / "keep");
+    const std::string garbage = "not json";
     write_user_file(cfg, garbage);
     const ScopedImageRegions shipped({{"voron-v2", shipped_entry(0.5f)}});
     reload_user_image_regions();
 
-    CHECK(lookup_user_image_regions("voron-v2", 300, 150) == nullptr);
     CHECK_FALSE(save_user_image_regions("custom:mine", user_entry(0.2f)));
     CHECK(lookup_user_image_regions("custom:mine", 300, 150) == nullptr);
     CHECK(read_user_file(cfg) == garbage);

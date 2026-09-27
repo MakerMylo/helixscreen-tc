@@ -212,8 +212,9 @@ which returns a `CalloutMode`, the image rect, and each chip's rect and leader l
   shipped art that has since been re-cut, fall back to the shipped entry or to docked chips.
   The size cannot tell one custom photo from another of the same aspect, so
   `PrinterImageManager::import_image()` and `delete_custom_image()` clear that image's tags.
-  A save or reset changes memory only after the file is written, and neither writes over a
-  user file that exists but cannot be read. Save and Reset tags bump
+  A save or reset changes memory only after the file is written. A user file that does not
+  parse is moved aside to `printer_image_regions.json.bad` on load, so tagging carries on;
+  one that cannot be read, or moved, is never written over. Save and Reset tags bump
   `PrinterImageManager::notify_image_changed()`, which relayouts the widget.
 
 ### Engine contracts this pattern relies on

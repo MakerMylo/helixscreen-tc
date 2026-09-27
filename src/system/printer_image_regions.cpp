@@ -11,6 +11,7 @@
 #include <cctype>
 #include <cerrno>
 #include <cmath>
+#include <cstdio>
 #include <cstring>
 #include <string>
 
@@ -46,7 +47,10 @@ RegionsTable& user() {
 
 constexpr const char* USER_REGIONS_FILE = "printer_image_regions.json";
 
-void load(RegionsTable& t, const std::string& path, const char* what) {
+/// `set_aside_bad`: a file that reads but does not parse is renamed to
+/// `<path>.bad` and the table starts empty, so the next save writes a fresh
+/// one; if the rename fails, the file stays and saving over it is refused.
+void load(RegionsTable& t, const std::string& path, const char* what, bool set_aside_bad = false) {
     if (t.loaded)
         return;
     t = {};
@@ -56,7 +60,19 @@ void load(RegionsTable& t, const std::string& path, const char* what) {
         // A missing file is the usual case; one that exists and cannot be read is not.
         t.unreadable = text_io::file_size(path).has_value();
     } else if (!nlohmann::json::parse(*text, nullptr, /*allow_exceptions=*/false).is_object()) {
-        t.unreadable = true;
+        const std::string bad = path + ".bad";
+        bool moved = false;
+        if (set_aside_bad) {
+            std::remove(bad.c_str()); // rename does not replace an existing file on every VFS
+            moved = std::rename(path.c_str(), bad.c_str()) == 0;
+        }
+        if (moved) {
+            spdlog::warn("[PrinterImageRegions] {} is not a tags file; moved it to {} and "
+                         "starting with no tags",
+                         path, bad);
+        } else {
+            t.unreadable = true;
+        }
     } else {
         t.entries = parse_image_regions(*text);
     }
@@ -151,7 +167,7 @@ std::unordered_map<std::string, ImageRegions> parse_image_regions(const std::str
 }
 
 const ImageRegions* lookup_user_image_regions(std::string_view key, int natural_w, int natural_h) {
-    load(user(), writable_path(USER_REGIONS_FILE), "user");
+    load(user(), writable_path(USER_REGIONS_FILE), "user", /*set_aside_bad=*/true);
     const ImageRegions* r = entry_for(user(), key);
     return r && r->src_w == natural_w && r->src_h == natural_h ? r : nullptr;
 }
@@ -173,7 +189,7 @@ namespace {
 /// only once it is on disk. Refuses to replace a file it could not read, which
 /// would drop every tag in it.
 template <typename Change> bool commit_user_change(Change change) {
-    load(user(), writable_path(USER_REGIONS_FILE), "user");
+    load(user(), writable_path(USER_REGIONS_FILE), "user", /*set_aside_bad=*/true);
     if (user().unreadable) {
         spdlog::error("[PrinterImageRegions] not saving over unreadable {}",
                       writable_path(USER_REGIONS_FILE));
@@ -194,7 +210,7 @@ bool save_user_image_regions(const std::string& key, const ImageRegions& regions
 }
 
 bool reset_user_image_regions(const std::string& key) {
-    load(user(), writable_path(USER_REGIONS_FILE), "user");
+    load(user(), writable_path(USER_REGIONS_FILE), "user", /*set_aside_bad=*/true);
     if (user().entries.count(key) == 0)
         return true;
     return commit_user_change([&](auto& entries) { entries.erase(key); });
