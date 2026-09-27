@@ -2620,7 +2620,6 @@
   <translation tag="Spool #{}" de="Spule #{}" en="Spool #{}" es="Bobina n.º {}" fr="Bobine #{}" it="Bobina #{}" ja="スプール #{}" pt="Bobina #{}" ru="Катушка #{}" zh="线轴 #{}"/>
   <translation tag="Spool Info" de="Spuleninfo" en="Spool Info" es="Info de bobina" fr="Info bobine" it="Info bobina" ja="スプール情報" pt="Info da bobina" ru="Информация о катушке" zh="料盘信息"/>
   <translation tag="Spool Not Found" de="Spule nicht gefunden" en="Spool Not Found" es="Bobina no encontrada" fr="Bobine introuvable" it="Bobina non trovata" ja="スプールが見つかりません" pt="Carretel não encontrado" ru="Катушка не найдена" zh="找不到料盘"/>
-  <translation tag="Spool Weight" de="Spulengewicht" en="Spool Weight" es="Peso de Bobina" fr="Poids de la bobine" it="Peso bobina" ja="スプール重量" pt="Peso do Carretel" ru="Вес катушки" zh="料盘重量"/>
   <translation tag="Spool Weight (g)" de="Spulengewicht (g)" en="Spool Weight (g)" es="Peso de Bobina (g)" fr="Poids de la bobine (g)" it="Peso bobina (g)" ja="スプール重量（g）" pt="Peso do Carretel (g)" ru="Вес катушки (г)" zh="料盘重量（克）"/>
   <translation tag="Spool archived" de="Spule archiviert" en="Spool archived" es="Bobina archivada" fr="Bobine archivée" it="Bobina archiviata" ja="スプールをアーカイブしました" pt="Carretel arquivado" ru="Катушка архивирована" zh="料盘已归档"/>
   <translation tag="Spool created successfully" de="Spule erfolgreich erstellt" en="Spool created successfully" es="Bobina creada correctamente" fr="Bobine créée avec succès" it="Bobina creata con successo" ja="スプールを作成しました" pt="Bobina criada com sucesso" ru="Катушка успешно создана" zh="料盘创建成功"/>

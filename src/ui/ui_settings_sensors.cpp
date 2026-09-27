@@ -728,6 +728,43 @@ void SensorSettingsOverlay::update_load_cell_count() {
     }
 }
 
+void SensorSettingsOverlay::populate_load_cells() {
+    if (!overlay_root_)
+        return;
+
+    lv_obj_t* sensors_list = lv_obj_find_by_name(overlay_root_, "load_cell_list");
+    if (!sensors_list) {
+        spdlog::debug("[{}] Could not find load_cell_list container", get_name());
+        return;
+    }
+
+    // Clear existing rows
+    uint32_t child_count = lv_obj_get_child_count(sensors_list);
+    for (int i = static_cast<int>(child_count) - 1; i >= 0; i--) {
+        lv_obj_t* child = lv_obj_get_child(sensors_list, i);
+        helix::ui::safe_delete(child);
+    }
+
+    auto& mgr = helix::sensors::LoadCellManager::instance();
+    auto sensors = mgr.get_sensors_sorted();
+
+    spdlog::debug("[{}] Populating load cell list with {} load cells", get_name(), sensors.size());
+
+    // Create a row for each load cell using XML component
+    for (const auto& sensor : sensors) {
+        // Create sensor row from XML component
+        const char* attrs[] = {"sensor_name", sensor.display_name.c_str(), nullptr};
+        auto* row = static_cast<lv_obj_t*>(lv_xml_create(sensors_list, "load_cell_row", attrs));
+        if (!row) {
+            spdlog::error("[{}] Failed to create sensor row for {}", get_name(),
+                          sensor.sensor_name);
+            continue;
+        }
+
+        spdlog::debug("[{}]   Created row for load_cell: {}", get_name(), sensor.sensor_name);
+    }
+}
+
 // ============================================================================
 // TEMPERATURE SENSORS
 // ============================================================================
@@ -893,47 +930,6 @@ void SensorSettingsOverlay::populate_chamber_assignment() {
                 spdlog::info("[SensorSettings] Chamber sensor assignment: {}", value);
             },
             LV_EVENT_VALUE_CHANGED, nullptr);
-    }
-}
-
-// ============================================================================
-// LOAD CELLS
-// ============================================================================
-
-void SensorSettingsOverlay::populate_load_cells() {
-    if (!overlay_root_)
-        return;
-
-    lv_obj_t* sensors_list = lv_obj_find_by_name(overlay_root_, "load_cell_list");
-    if (!sensors_list) {
-        spdlog::debug("[{}] Could not find load_cell_list container", get_name());
-        return;
-    }
-
-    // Clear existing rows
-    uint32_t child_count = lv_obj_get_child_count(sensors_list);
-    for (int i = static_cast<int>(child_count) - 1; i >= 0; i--) {
-        lv_obj_t* child = lv_obj_get_child(sensors_list, i);
-        helix::ui::safe_delete(child);
-    }
-
-    auto& mgr = helix::sensors::LoadCellManager::instance();
-    auto sensors = mgr.get_sensors_sorted();
-
-    spdlog::debug("[{}] Populating load cell list with {} load cells", get_name(), sensors.size());
-
-    // Create a row for each load cell using XML component
-    for (const auto& sensor : sensors) {
-        // Create sensor row from XML component
-        const char* attrs[] = {"sensor_name", sensor.display_name.c_str(), nullptr};
-        auto* row = static_cast<lv_obj_t*>(lv_xml_create(sensors_list, "load_cell_row", attrs));
-        if (!row) {
-            spdlog::error("[{}] Failed to create sensor row for {}", get_name(),
-                          sensor.sensor_name);
-            continue;
-        }
-
-        spdlog::debug("[{}]   Created row for load_cell: {}", get_name(), sensor.sensor_name);
     }
 }
 

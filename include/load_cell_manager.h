@@ -70,10 +70,7 @@ class LoadCellManager : public ISensorManager {
     /// @brief Update state from Moonraker status JSON
     void update_from_status(const nlohmann::json& status) override;
 
-    /**
-     * @brief Load sensor configuration from JSON
-     * @note MUST be called from main LVGL thread (updates subjects directly)
-     */
+    /// @brief No-op: load cell roles are derived at discovery, nothing is persisted
     void load_config(const nlohmann::json& config) override;
 
     /// @brief Save configuration to JSON
@@ -156,8 +153,8 @@ class LoadCellManager : public ISensorManager {
      * @brief Parse Klipper object name to determine if it's a load cell
      *
      * @param klipper_name Full name like "load_cell spool_weight"
-     * @param[out] sensor_name Extracted short name (e.g., "spool_weight")
-     * @return true if successfully parsed as load cell
+     * @return Short name ("spool_weight"; empty for a bare "load_cell"), or
+     *         nullopt if this is not a load cell
      */
     const std::optional<const std::string>
     parse_klipper_name(const std::string& klipper_name) const;

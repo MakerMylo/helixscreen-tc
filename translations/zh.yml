@@ -2692,7 +2692,6 @@ translations:
   'Spool #{}': '线轴 #{}'
   Spool Info: 料盘信息
   Spool Not Found: '找不到料盘'
-  Spool Weight: 料盘重量
   Spool Weight (g): 料盘重量（克）
   Spool archived: 料盘已归档
   Spool created successfully: 料盘创建成功

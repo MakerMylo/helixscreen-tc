@@ -2620,7 +2620,6 @@
   <translation tag="Spool #{}" ru="Катушка #{}"/>
   <translation tag="Spool Info" ru="Информация о катушке"/>
   <translation tag="Spool Not Found" ru="Катушка не найдена"/>
-  <translation tag="Spool Weight" ru="Вес катушки"/>
   <translation tag="Spool Weight (g)" ru="Вес катушки (г)"/>
   <translation tag="Spool archived" ru="Катушка архивирована"/>
   <translation tag="Spool created successfully" ru="Катушка успешно создана"/>

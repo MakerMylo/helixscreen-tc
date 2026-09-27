@@ -7,9 +7,9 @@
 
 #include "ams_state.h"
 #include "device_display_name.h"
+#include "lane_source_store.h"
 #include "spdlog/spdlog.h"
 #include "static_subject_registry.h"
-#include "unit_conversions.h"
 
 #include <algorithm>
 #include <optional>
@@ -346,6 +346,13 @@ void LoadCellManager::update_subjects() {
         if (weight_changed) {
             spool_info.remaining_weight_g = *spool_weight;
             ams_state.set_external_spool_info_in_memory(spool_info);
+
+            // Views read the resolved record, where the bypass lane's sources
+            // outrank the raw one; filing the reading as Metered is what lets
+            // it show over a stale user edit.
+            helix::ams::Observation measured(helix::ams::ObservationSource::Metered);
+            measured.remaining_weight_g = *spool_weight;
+            helix::ams::ingest(helix::ams::BYPASS_LANE_ID, measured);
 
             spdlog::debug("[LoadCellManager] Publishing updated spool weight to AmsState: {} g",
                           *spool_weight);

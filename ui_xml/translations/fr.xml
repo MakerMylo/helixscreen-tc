@@ -2620,7 +2620,6 @@
   <translation tag="Spool #{}" fr="Bobine #{}"/>
   <translation tag="Spool Info" fr="Info bobine"/>
   <translation tag="Spool Not Found" fr="Bobine introuvable"/>
-  <translation tag="Spool Weight" fr="Poids de la bobine"/>
   <translation tag="Spool Weight (g)" fr="Poids de la bobine (g)"/>
   <translation tag="Spool archived" fr="Bobine archivée"/>
   <translation tag="Spool created successfully" fr="Bobine créée avec succès"/>
