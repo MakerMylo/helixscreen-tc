@@ -297,3 +297,75 @@ TEST_CASE("parse_double is strict and locale-independent", "[text_io]") {
     CHECK_FALSE(tio::parse_double("1,5").has_value());
     std::setlocale(LC_NUMERIC, saved.c_str());
 }
+
+namespace {
+// What the std:: form returns, or nullopt where it throws.
+template <typename T, typename F> std::optional<T> std_or_nullopt(F f) {
+    try {
+        return static_cast<T>(f());
+    } catch (const std::exception&) {
+        return std::nullopt;
+    }
+}
+} // namespace
+
+TEST_CASE("parse_leading matches std::sto* value for value", "[text_io]") {
+    const std::vector<std::string> inputs = {"",
+                                             " ",
+                                             "42",
+                                             "  42abc",
+                                             "\t\n-7",
+                                             "+7",
+                                             "abc",
+                                             "-",
+                                             "+",
+                                             "3.9",
+                                             "1e5",
+                                             "0x1A",
+                                             "0x1p3",
+                                             "inf",
+                                             "-nan",
+                                             "1e400",
+                                             "1e-400",
+                                             "1e39",
+                                             "-1",
+                                             "007",
+                                             "2147483647",
+                                             "2147483648",
+                                             "-2147483648",
+                                             "-2147483649",
+                                             "9223372036854775807",
+                                             "9223372036854775808",
+                                             "18446744073709551615",
+                                             "18446744073709551616",
+                                             "4294967295",
+                                             "4294967296",
+                                             " 12 34",
+                                             "1,5"};
+    for (const auto& s : inputs) {
+        CAPTURE(s);
+        CHECK(tio::parse_leading<int>(s) == std_or_nullopt<int>([&] { return std::stoi(s); }));
+        CHECK(tio::parse_leading<long>(s) == std_or_nullopt<long>([&] { return std::stol(s); }));
+        CHECK(tio::parse_leading<long long>(s) ==
+              std_or_nullopt<long long>([&] { return std::stoll(s); }));
+        CHECK(tio::parse_leading<unsigned long>(s) ==
+              std_or_nullopt<unsigned long>([&] { return std::stoul(s); }));
+        CHECK(tio::parse_leading<unsigned long long>(s) ==
+              std_or_nullopt<unsigned long long>([&] { return std::stoull(s); }));
+        CHECK(tio::parse_leading<unsigned long>(s, 16) ==
+              std_or_nullopt<unsigned long>([&] { return std::stoul(s, nullptr, 16); }));
+
+        const auto d = tio::parse_leading<double>(s);
+        const auto sd = std_or_nullopt<double>([&] { return std::stod(s); });
+        REQUIRE(d.has_value() == sd.has_value());
+        if (d && !std::isnan(*d)) {
+            CHECK(*d == *sd);
+        }
+        const auto f = tio::parse_leading<float>(s);
+        const auto sf = std_or_nullopt<float>([&] { return std::stof(s); });
+        REQUIRE(f.has_value() == sf.has_value());
+        if (f && !std::isnan(*f)) {
+            CHECK(*f == *sf);
+        }
+    }
+}

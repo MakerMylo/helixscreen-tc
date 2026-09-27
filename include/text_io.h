@@ -6,9 +6,12 @@
 // std::locale reference links every libstdc++ facet (~184K), so code in the
 // ESP32 cut reads, writes, splits and parses through these instead.
 
+#include <cerrno>
 #include <charconv>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <string>
@@ -234,5 +237,48 @@ template <typename T = long long> std::optional<T> parse_int(std::string_view s,
 /// A decimal floating-point number ("1.5", "-2e3", "inf", "nan"). nullopt on
 /// empty input, trailing characters or out-of-range magnitude.
 std::optional<double> parse_double(std::string_view s);
+
+// ---------------------------------------------------------------------------
+// Numbers by std::sto* rules: leading whitespace skipped, the number read up to
+// the first character that cannot continue it, the rest ignored ("12abc" is 12,
+// "3.9" is 3 as an int). nullopt exactly where the std:: form throws: no number
+// at all, or a value outside T. The non-throwing drop-in for std::stoi, stol,
+// stoll, stoul, stoull, stof and stod; prefer parse_int/parse_double where a
+// caller has no reason to accept trailing text.
+// ---------------------------------------------------------------------------
+
+template <typename T> std::optional<T> parse_leading(std::string_view s, int base = 10) {
+    static_assert(std::is_arithmetic_v<T> && !std::is_same_v<T, bool>);
+    const std::string buf(s); // strto* reads up to a terminator
+    const char* begin = buf.c_str();
+    char* end = nullptr;
+    errno = 0;
+    if constexpr (std::is_floating_point_v<T>) {
+        static_assert(!std::is_same_v<T, long double>);
+        const T v = std::is_same_v<T, float> ? std::strtof(begin, &end) : std::strtod(begin, &end);
+        if (end == begin || errno == ERANGE) {
+            return std::nullopt;
+        }
+        return v;
+    } else if constexpr (std::is_signed_v<T>) {
+        const long long v = std::strtoll(begin, &end, base);
+        if (end == begin || errno == ERANGE || v < std::numeric_limits<T>::min() ||
+            v > std::numeric_limits<T>::max()) {
+            return std::nullopt;
+        }
+        return static_cast<T>(v);
+    } else {
+        // strtoul/strtoull negate a leading '-' in the unsigned type, so "-1" is
+        // the maximum rather than an error, as std::stoul and std::stoull return.
+        using Wide = std::conditional_t<(sizeof(T) <= sizeof(unsigned long)), unsigned long,
+                                        unsigned long long>;
+        const Wide v = std::is_same_v<Wide, unsigned long> ? std::strtoul(begin, &end, base)
+                                                           : std::strtoull(begin, &end, base);
+        if (end == begin || errno == ERANGE || v > std::numeric_limits<T>::max()) {
+            return std::nullopt;
+        }
+        return static_cast<T>(v);
+    }
+}
 
 } // namespace helix::text_io

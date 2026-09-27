@@ -559,3 +559,25 @@ TEST_CASE("dump() escapes multi-byte UTF-8 through the real decoder table",
     // handler has nothing to act on: 0xFF is a legal byte in no position.
     CHECK_THROWS_AS(json("\xff").dump(-1, ' ', true), nlohmann::json::type_error);
 }
+
+TEST_CASE("as_* read a value in hand and never throw", "[json_utils]") {
+    const json arr = json::parse(R"([12, "7", "12abc", null, true, "x", 5000000000, 2.5])");
+    CHECK(ju::as_int(arr[0]) == 12);
+    CHECK(ju::as_int(arr[1]) == 7);
+    CHECK(ju::as_int(arr[2]) == 12); // std::stoi rules: trailing text ignored
+    CHECK(ju::as_int(arr[3], -1) == -1);
+    CHECK(ju::as_int(arr[5], -1) == -1);
+    CHECK(ju::as_int(arr[6], -1) == -1);
+    CHECK(ju::as_int64(arr[6]) == 5000000000LL);
+    CHECK(ju::as_double(arr[7]) == 2.5);
+    CHECK(ju::as_string(arr[0], "d") == "d");
+    CHECK(ju::as_string(arr[0], "d", true) == "12");
+    CHECK(ju::as_bool(arr[4]) == true);
+    CHECK(ju::as_bool(arr[3], true) == true);
+}
+
+TEST_CASE("safe_* on a non-object returns the default", "[json_utils]") {
+    CHECK(ju::safe_int(json::array({1, 2}), "k", 7) == 7);
+    CHECK(ju::safe_string(json("text"), "k", "d") == "d");
+    CHECK(ju::safe_double(json(nullptr), "k", 1.5) == 1.5);
+}
