@@ -174,3 +174,29 @@ TEST_CASE("untagged image with a side band: chips stack in the band",
     for (const auto& c : l.chips)
         CHECK(c.rect.x >= l.image.x + l.image.w);
 }
+
+TEST_CASE("docked: a chip wider than the area is clamped to fit, not left overhanging",
+          "[printer_image][callout_layout]") {
+    auto in = base();
+    in.tagged = false;
+    in.active = {{CalloutKind::Nozzle, 200, std::nullopt}}; // wider than area_w (160)
+    const auto l = compute_callout_layout(in);
+    REQUIRE(l.mode == CalloutMode::Docked);
+    REQUIRE(l.chips.size() == 1);
+    CHECK(inside(l.chips[0].rect, in.area_w, in.area_h));
+    CHECK(l.chips[0].rect.w <= in.area_w);
+}
+
+TEST_CASE("pinned: a merged toolhead chip wider than the area is clamped inside",
+          "[printer_image][callout_layout]") {
+    auto in = base();
+    in.area_w = 136; // narrower than the merged toolhead chip (150)
+    in.active = {{CalloutKind::Nozzle, 70, NormPoint{0.51f, 0.28f}},
+                 {CalloutKind::Fan, 40, NormPoint{0.49f, 0.21f}}};
+    in.toolhead = CalloutChipIn{CalloutKind::Toolhead, 150, NormPoint{0.51f, 0.28f}};
+    const auto l = compute_callout_layout(in);
+    REQUIRE(l.toolhead_merged);
+    const auto* th = find(l, CalloutKind::Toolhead);
+    REQUIRE(th);
+    CHECK(inside(th->rect, in.area_w, in.area_h));
+}

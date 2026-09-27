@@ -9,6 +9,7 @@
 #include "printer_image_regions.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <optional>
 #include <vector>
 
@@ -104,6 +105,8 @@ inline int px(float n, int origin, int extent) {
 }
 
 inline CalloutRect clamp_into(CalloutRect r, int area_w, int area_h) {
+    r.w = std::min(r.w, area_w);
+    r.h = std::min(r.h, area_h);
     r.x = std::clamp(r.x, 0, std::max(0, area_w - r.w));
     r.y = std::clamp(r.y, 0, std::max(0, area_h - r.h));
     return r;
