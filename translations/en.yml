@@ -495,6 +495,7 @@ translations:
     calibrate sent — use Z-Offset panel to adjust
   Cartographer touch calibrate sent: Cartographer touch calibrate sent
   Category: Category
+  Center: Center
   Center QR code in frame: Center QR code in frame
   'Chamb:': 'Chamb:'
   Chamber: Chamber
@@ -1292,6 +1293,7 @@ translations:
   Flying Toasters: Flying Toasters
   Follow active tool: Follow active tool
   Follow graph screen: Follow graph screen
+  Force/weight sensors: Force/weight sensors
   Forget: Forget
   Forget Network?: Forget Network?
   Forget network '{}'? You will need the password to reconnect.: Forget network '{}'? You will need the password to reconnect.
@@ -1307,6 +1309,9 @@ translations:
   : "Frequency Delta: Difference between Path A and B. Anything under 2 Hz is below what this measurement can resolve, so it counts as matched.\n\nMatch: How close the two belts are, as a percentage of belt A's frequency. Above 95% is excellent; below 90% is worth adjusting."
   From Buffer: From Buffer
   From Version: From Version
+  Front: Front
+  Front Left: Front Left
+  Front Right: Front Right
   Full: Full
   G-code Console: G-code Console
   G-code Preview: G-code Preview
@@ -1565,6 +1570,7 @@ translations:
   It's a new spool: It's a new spool
   Jammed at the Toolhead: Jammed at the Toolhead
   Job Queue: Job Queue
+  Jog: Jog
   Jog Speed XY: Jog Speed XY
   Jog Speed Z: Jog Speed Z
   Jog Y until the nozzle is centered over the chute opening, then tap Save.: Jog Y until the nozzle is centered over the chute opening, then tap Save.
@@ -1618,6 +1624,7 @@ translations:
   LED strip available for lighting control: LED strip available for lighting control
   LEDs: LEDs
   LEDs controlled by the light button: LEDs controlled by the light button
+  LOAD CELLS: LOAD CELLS
   LOADED: LOADED
   LOCKED: LOCKED
   LOT-2024-001: LOT-2024-001
@@ -1649,6 +1656,7 @@ translations:
   Layout: Layout
   Learn More: Learn More
   LedSelect: LedSelect
+  Left: Left
   Length of filament to purge: Length of filament to purge
   Length of the cooling tube section: Length of the cooling tube section
   'Length:': 'Length:'
@@ -1665,6 +1673,8 @@ translations:
   Listening: Listening
   Live view from your webcam: Live view from your webcam
   Load: Load
+  Load Cell: Load Cell
+  Load Cells: Load Cells
   Load Failed: Load Failed
   Load Filament: Load Filament
   Load a filament first before trying to unload: Load a filament first before trying to unload
@@ -1747,6 +1757,7 @@ translations:
   Macro to cancel an active print: Macro to cancel an active print
   Macro to clean/wipe the nozzle: Macro to clean/wipe the nozzle
   Macro to load filament into extruder: Macro to load filament into extruder
+  Macro to park the toolhead at a safe position: Macro to park the toolhead at a safe position
   Macro to pause an active print: Macro to pause an active print
   Macro to purge/prime the nozzle: Macro to purge/prime the nozzle
   Macro to resume a paused print: Macro to resume a paused print
@@ -1846,6 +1857,8 @@ translations:
   Motors Off: Motors Off
   'Motors disable failed: {}': 'Motors disable failed: {}'
   Motors disabled: Motors disabled
+  Motors off: Motors off
+  Motors stay on while a print is active: Motors stay on while a print is active
   Mount: Mount
   Move: Move
   Move out of range: Move out of range
@@ -2136,6 +2149,7 @@ translations:
   Parameters: Parameters
   Park: Park
   Park the AFC system: Park the AFC system
+  Park Toolhead: Park Toolhead
   Part: Part
   Part Cooling Fan: Part Cooling Fan
   Part Fan: Part Fan
@@ -2431,6 +2445,9 @@ translations:
   Ready to Apply: Ready to Apply
   Ready to calibrate: Ready to calibrate
   Ready to pluck: Ready to pluck
+  Rear: Rear
+  Rear Left: Rear Left
+  Rear Right: Rear Right
   Reason: Reason
   ? "Reason: {}\n\nThe printer cannot resume this print. Restart from the beginning?"
   : "Reason: {}\n\nThe printer cannot resume this print. Restart from the beginning?"
@@ -2594,6 +2611,7 @@ translations:
   Review your configuration below, then click Finish to save: Review your configuration
     below, then click Finish to save
   Rewinding: Rewinding
+  Right: Right
   'Role:': 'Role:'
   Rotating tips for using your printer: Rotating tips for using your printer
   Rotation: Rotation

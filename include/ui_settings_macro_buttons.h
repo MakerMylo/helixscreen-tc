@@ -235,6 +235,7 @@ class MacroButtonsOverlay : public OverlayBase {
     static void on_bed_mesh_changed(lv_event_t* e);
     static void on_bed_level_changed(lv_event_t* e);
     static void on_clean_nozzle_changed(lv_event_t* e);
+    static void on_park_toolhead_changed(lv_event_t* e);
     static void on_heat_soak_changed(lv_event_t* e);
 };
 

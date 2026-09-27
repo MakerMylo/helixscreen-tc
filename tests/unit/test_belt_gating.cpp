@@ -179,6 +179,17 @@ TEST_CASE("park_x_center refuses when X bounds are unknown", "[belt][gating][spa
     CHECK_FALSE(park_x_center(unknown).has_value());
 }
 
+TEST_CASE("axis_center refuses a degenerate or inverted range", "[belt][gating][span]") {
+    using helix::calibration::axis_center;
+    CHECK_FALSE(axis_center(true, 100.0f, 100.0f).has_value());
+    CHECK_FALSE(axis_center(true, 200.0f, 100.0f).has_value());
+    CHECK_FALSE(axis_center(false, 0.0f, 300.0f).has_value());
+
+    const auto mid = axis_center(true, -20.0f, 280.0f);
+    REQUIRE(mid.has_value());
+    CHECK(*mid == Catch::Approx(130.0f));
+}
+
 TEST_CASE("belt span offset is negative for a model with no measured value",
           "[belt][gating][span]") {
     CHECK(PrinterDetector::get_belt_span_offset_mm("No Such Printer 9000") < 0.0);

@@ -520,6 +520,7 @@ translations:
     gesendet — Z-Offset-Panel zum Anpassen verwenden
   Cartographer touch calibrate sent: Cartographer Touch-Kalibrierung gesendet
   Category: Kategorie
+  Center: 'Mitte'
   Center QR code in frame: QR-Code im Rahmen zentrieren
   'Chamb:': 'Kamm.:'
   Chamber: Kammer
@@ -1350,6 +1351,7 @@ translations:
   Flying Toasters: Flying Toasters
   Follow active tool: Aktivem Werkzeug folgen
   Follow graph screen: Diagrammbildschirm folgen
+  Force/weight sensors: 'Kraft-/Gewichtssensoren'
   Forget: Vergessen
   Forget Network?: Netzwerk vergessen?
   Forget network '{}'? You will need the password to reconnect.: Netzwerk '{}' vergessen? Sie benötigen das Passwort zum erneuten Verbinden.
@@ -1365,6 +1367,9 @@ translations:
   : "Frequenzdelta: Unterschied zwischen Pfad A und B. Alles unter 2 Hz liegt unterhalb der Auflösung dieser Messung und zählt daher als übereinstimmend.\n\nÜbereinstimmung: Wie nah die beiden Riemen beieinander liegen, als Prozentsatz der Frequenz von Riemen A. Über 95% ist ausgezeichnet; unter 90% lohnt sich eine Anpassung."
   From Buffer: Aus Puffer
   From Version: Von Version
+  Front: 'Vorne'
+  Front Left: 'Vorne links'
+  Front Right: 'Vorne rechts'
   Full: Vollständig
   G-code Console: G-Code-Konsole
   G-code Preview: G-Code-Vorschau
@@ -1627,6 +1632,7 @@ translations:
   It's a new spool: Es ist eine neue Spule
   Jammed at the Toolhead: Stau am Werkzeugkopf
   Job Queue: Auftragswarteschlange
+  Jog: 'Verfahren'
   Jog Speed XY: Bewegungsgeschwindigkeit XY
   Jog Speed Z: Bewegungsgeschwindigkeit Z
   Jog Y until the nozzle is centered over the chute opening, then tap Save.: Verfahren Sie Y, bis die Düse mittig über der Rinnenöffnung steht, und tippen Sie dann auf Speichern.
@@ -1686,6 +1692,7 @@ translations:
     verfügbar
   LEDs: LEDs
   LEDs controlled by the light button: LEDs gesteuert durch die Lichttaste
+  LOAD CELLS: 'WÄGEZELLEN'
   LOADED: GELADEN
   LOCKED: GESPERRT
   LOT-2024-001: LOT-2024-001
@@ -1717,6 +1724,7 @@ translations:
   Layout: Layout
   Learn More: Mehr erfahren
   LedSelect: LED auswählen
+  Left: 'Links'
   Length of filament to purge: 'Zu entlüftende Filamentlänge'
   Length of the cooling tube section: 'Länge des Kühlrohrabschnitts'
   'Length:': 'Länge:'
@@ -1734,6 +1742,8 @@ translations:
   Listening: Zuhören
   Live view from your webcam: Livebild Ihrer Webcam
   Load: Laden
+  Load Cell: 'Wägezelle'
+  Load Cells: 'Wägezellen'
   Load Failed: 'Laden fehlgeschlagen'
   Load Filament: Filament laden
   Load a filament first before trying to unload: Laden Sie zuerst Filament, bevor Sie entladen
@@ -1817,6 +1827,7 @@ translations:
   Macro to cancel an active print: Makro zum Abbrechen eines aktiven Drucks
   Macro to clean/wipe the nozzle: Makro zum Reinigen/Wischen der Düse
   Macro to load filament into extruder: Makro zum Laden von Filament in den Extruder
+  Macro to park the toolhead at a safe position: 'Makro, um den Werkzeugkopf in eine sichere Position zu fahren'
   Macro to pause an active print: Makro zum Pausieren eines aktiven Drucks
   Macro to purge/prime the nozzle: Makro zum Entlüften/Primen der Düse
   Macro to resume a paused print: Makro zum Fortsetzen eines pausierten Drucks
@@ -1916,6 +1927,8 @@ translations:
   Motors Off: Motoren aus
   'Motors disable failed: {}': 'Motoren deaktivieren fehlgeschlagen: {}'
   Motors disabled: Motoren deaktiviert
+  Motors off: ''
+  Motors stay on while a print is active: Motoren bleiben an, solange ein Druck läuft
   Mount: Montieren
   Move: Bewegen
   Move out of range: 'Bewegung außerhalb des Bereichs'
@@ -2213,6 +2226,7 @@ translations:
   Parameters: Parameter
   Park: 'Parken'
   Park the AFC system: 'Das AFC-System parken'
+  Park Toolhead: 'Werkzeugkopf parken'
   Part: Teile
   Part Cooling Fan: Teile-Kühllüfter
   Part Fan: Teile-Lüfter
@@ -2515,6 +2529,9 @@ translations:
   Ready to Apply: Bereit zum Anwenden
   Ready to calibrate: Bereit zur Kalibrierung
   Ready to pluck: Bereit zum Zupfen
+  Rear: 'Hinten'
+  Rear Left: 'Hinten links'
+  Rear Right: 'Hinten rechts'
   Reason: Grund
   ? "Reason: {}\n\nThe printer cannot resume this print. Restart from the beginning?"
   : "Grund: {}\n\nDer Drucker kann diesen Druck nicht fortsetzen. Von Anfang an neu starten?"
@@ -2682,6 +2699,7 @@ translations:
   Review your configuration below, then click Finish to save: Überprüfen Sie Ihre
     Konfiguration unten und klicken Sie auf Fertig, um zu speichern
   Rewinding: Zurückspulen
+  Right: 'Rechts'
   'Role:': 'Rolle:'
   Rotating tips for using your printer: Wechselnde Tipps zu Ihrem Drucker
   Rotation: Drehung

@@ -460,6 +460,7 @@
   <translation tag="Cartographer scan calibrate sent — use Z-Offset panel to adjust" ru="Cartographer сканирующая калибровка отправлена — используйте панель Z-Offset для настройки"/>
   <translation tag="Cartographer touch calibrate sent" ru="Cartographer тактильная калибровка отправлена"/>
   <translation tag="Category" ru="Категория"/>
+  <translation tag="Center" ru="Центр"/>
   <translation tag="Center QR code in frame" ru="Расположите QR-код в центре кадра"/>
   <translation tag="Chamb:" ru="Камера:"/>
   <translation tag="Chamber" ru="Камера"/>
@@ -1207,6 +1208,7 @@
   <translation tag="Flying Toasters" ru="Летающие тостеры"/>
   <translation tag="Follow active tool" ru="Следовать активному инструменту"/>
   <translation tag="Follow graph screen" ru="Следовать экрану графика"/>
+  <translation tag="Force/weight sensors" ru="Датчики силы/веса"/>
   <translation tag="Forget" ru="Забыть"/>
   <translation tag="Forget Network?" ru="Забыть сеть?"/>
   <translation tag="Forget network &apos;{}&apos;? You will need the password to reconnect." ru="Забыть сеть «{}»? Для повторного подключения потребуется пароль."/>
@@ -1221,6 +1223,9 @@
   <translation tag="Frequency Delta: Difference between Path A and B. Anything under 2 Hz is below what this measurement can resolve, so it counts as matched.&#10;&#10;Match: How close the two belts are, as a percentage of belt A&apos;s frequency. Above 95% is excellent; below 90% is worth adjusting." ru="Разница частот: разница между путями A и B. Значения менее 2 Гц ниже точности этого измерения, поэтому считаются совпадением.&#10;&#10;Совпадение: насколько близки два ремня, в процентах от частоты ремня A. Выше 95% — отлично; ниже 90% стоит отрегулировать."/>
   <translation tag="From Buffer" ru="Из буфера"/>
   <translation tag="From Version" ru="С версии"/>
+  <translation tag="Front" ru="Спереди"/>
+  <translation tag="Front Left" ru="Спереди слева"/>
+  <translation tag="Front Right" ru="Спереди справа"/>
   <translation tag="Full" ru="Полный"/>
   <translation tag="G-code Console" ru="Консоль G-code"/>
   <translation tag="G-code Preview" ru="Просмотр G-code"/>
@@ -1450,6 +1455,7 @@
   <translation tag="It&apos;s a new spool" ru="Это новая катушка"/>
   <translation tag="Jammed at the Toolhead" ru="Замятие в печатающей головке"/>
   <translation tag="Job Queue" ru="Очередь заданий"/>
+  <translation tag="Jog" ru="Джог"/>
   <translation tag="Jog Speed XY" ru="Скорость перемещения XY"/>
   <translation tag="Jog Speed Z" ru="Скорость перемещения Z"/>
   <translation tag="Jog Y until the nozzle is centered over the chute opening, then tap Save." ru="Двигайте Y, пока сопло не встанет по центру отверстия жёлоба, затем нажмите «Сохранить»."/>
@@ -1494,6 +1500,7 @@
   <translation tag="LED strip available for lighting control" ru="Светодиодная лента доступна для управления освещением"/>
   <translation tag="LEDs" ru="LED"/>
   <translation tag="LEDs controlled by the light button" ru="LED, управляемые кнопкой света"/>
+  <translation tag="LOAD CELLS" ru="ТЕНЗОДАТЧИКИ"/>
   <translation tag="LOADED" ru="ЗАГРУЖЕН"/>
   <translation tag="LOCKED" ru="ЗАБЛОКИРОВАНО"/>
   <translation tag="LOT-2024-001" ru="LOT-2024-001"/>
@@ -1522,6 +1529,7 @@
   <translation tag="Layout" ru="Раскладка"/>
   <translation tag="Learn More" ru="Подробнее"/>
   <translation tag="LedSelect" ru="Выбрать LED"/>
+  <translation tag="Left" ru="Слева"/>
   <translation tag="Length of filament to purge" ru="Длина продуваемого филамента"/>
   <translation tag="Length of the cooling tube section" ru="Длина участка трубки охлаждения"/>
   <translation tag="Length:" ru="Длина:"/>
@@ -1537,6 +1545,8 @@
   <translation tag="Listening" ru="Прослушивание"/>
   <translation tag="Live view from your webcam" ru="Прямая трансляция с веб-камеры"/>
   <translation tag="Load" ru="Загрузить"/>
+  <translation tag="Load Cell" ru="Тензодатчик"/>
+  <translation tag="Load Cells" ru="Тензодатчики"/>
   <translation tag="Load Failed" ru="Не удалось загрузить"/>
   <translation tag="Load Filament" ru="Загрузить филамент"/>
   <translation tag="Load a filament first before trying to unload" ru="Сначала загрузите филамент, прежде чем пытаться его выгрузить"/>
@@ -1616,6 +1626,7 @@
   <translation tag="Macro to cancel an active print" ru="Макрос для отмены текущей печати"/>
   <translation tag="Macro to clean/wipe the nozzle" ru="Макрос для очистки/протирки сопла"/>
   <translation tag="Macro to load filament into extruder" ru="Макрос для загрузки филамента в экструдер"/>
+  <translation tag="Macro to park the toolhead at a safe position" ru="Макрос для парковки печатающей головы в безопасное положение"/>
   <translation tag="Macro to pause an active print" ru="Макрос для паузы текущей печати"/>
   <translation tag="Macro to purge/prime the nozzle" ru="Макрос для продувки/подготовки сопла"/>
   <translation tag="Macro to resume a paused print" ru="Макрос для возобновления приостановленной печати"/>
@@ -1711,6 +1722,8 @@
   <translation tag="Motors Off" ru="Отключить моторы"/>
   <translation tag="Motors disable failed: {}" ru="Ошибка отключения моторов: {}"/>
   <translation tag="Motors disabled" ru="Моторы отключены"/>
+  <translation tag="Motors off"/>
+  <translation tag="Motors stay on while a print is active" ru="Моторы остаются включены во время печати"/>
   <translation tag="Mount" ru="Установить"/>
   <translation tag="Move" ru="Двигать"/>
   <translation tag="Move out of range" ru="Движение за пределами диапазона"/>
@@ -1982,6 +1995,7 @@
   <translation tag="Paper Test Calibration" ru="Калибровка бумажным тестом"/>
   <translation tag="Parameters" ru="Параметры"/>
   <translation tag="Park" ru="Парковка"/>
+  <translation tag="Park Toolhead" ru="Припарковать печатающую головку"/>
   <translation tag="Park the AFC system" ru="Припарковать систему AFC"/>
   <translation tag="Part" ru="Деталь"/>
   <translation tag="Part Cooling Fan" ru="Вентилятор охлаждения детали"/>
@@ -2257,6 +2271,9 @@
   <translation tag="Ready to Apply" ru="Готово к применению"/>
   <translation tag="Ready to calibrate" ru="Готов к калибровке"/>
   <translation tag="Ready to pluck" ru="Готово к щипку"/>
+  <translation tag="Rear" ru="Сзади"/>
+  <translation tag="Rear Left" ru="Сзади слева"/>
+  <translation tag="Rear Right" ru="Сзади справа"/>
   <translation tag="Reason" ru="Причина"/>
   <translation tag="Reason: {}&#10;&#10;The printer cannot resume this print. Restart from the beginning?" ru="Причина: {}&#10;&#10;Принтер не может возобновить эту печать. Начать заново?"/>
   <translation tag="Reboot" ru="Перезагрузка"/>
@@ -2409,6 +2426,7 @@
   <translation tag="Review your changes" ru="Просмотр ваших изменений"/>
   <translation tag="Review your configuration below, then click Finish to save" ru="Проверьте конфигурацию ниже, затем нажмите «Готово» для сохранения"/>
   <translation tag="Rewinding" ru="Перемотка"/>
+  <translation tag="Right" ru="Справа"/>
   <translation tag="Role:" ru="Тип:"/>
   <translation tag="Rotating tips for using your printer" ru="Сменяющиеся советы по печати"/>
   <translation tag="Rotation" ru="Поворот"/>

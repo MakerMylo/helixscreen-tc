@@ -460,6 +460,7 @@
   <translation tag="Cartographer scan calibrate sent — use Z-Offset panel to adjust" es="Cartographer calibración de escaneo enviada — use el panel de Z-Offset para ajustar"/>
   <translation tag="Cartographer touch calibrate sent" es="Cartographer calibración táctil enviada"/>
   <translation tag="Category" es="Categoría"/>
+  <translation tag="Center" es="Centro"/>
   <translation tag="Center QR code in frame" es="Centre el código QR en el marco"/>
   <translation tag="Chamb:" es="Cámara:"/>
   <translation tag="Chamber" es="Cámara"/>
@@ -1207,6 +1208,7 @@
   <translation tag="Flying Toasters" es="Flying Toasters"/>
   <translation tag="Follow active tool" es="Seguir herramienta activa"/>
   <translation tag="Follow graph screen" es="Seguir pantalla del gráfico"/>
+  <translation tag="Force/weight sensors" es="Sensores de fuerza/peso"/>
   <translation tag="Forget" es="Olvidar"/>
   <translation tag="Forget Network?" es="¿Olvidar red?"/>
   <translation tag="Forget network &apos;{}&apos;? You will need the password to reconnect." es="¿Olvidar la red &apos;{}&apos;? Necesitará la contraseña para reconectar."/>
@@ -1221,6 +1223,9 @@
   <translation tag="Frequency Delta: Difference between Path A and B. Anything under 2 Hz is below what this measurement can resolve, so it counts as matched.&#10;&#10;Match: How close the two belts are, as a percentage of belt A&apos;s frequency. Above 95% is excellent; below 90% is worth adjusting." es="Delta de frecuencia: diferencia entre la trayectoria A y la B. Cualquier valor por debajo de 2 Hz está por debajo de lo que esta medición puede resolver, así que se considera coincidente.&#10;&#10;Coincidencia: qué tan cerca están las dos correas, como porcentaje de la frecuencia de la correa A. Por encima del 95% es excelente; por debajo del 90% vale la pena ajustar."/>
   <translation tag="From Buffer" es="Desde búfer"/>
   <translation tag="From Version" es="Desde la versión"/>
+  <translation tag="Front" es="Delante"/>
+  <translation tag="Front Left" es="Delante izquierda"/>
+  <translation tag="Front Right" es="Delante derecha"/>
   <translation tag="Full" es="Completo"/>
   <translation tag="G-code Console" es="Consola G-code"/>
   <translation tag="G-code Preview" es="Vista Previa de G-code"/>
@@ -1450,6 +1455,7 @@
   <translation tag="It&apos;s a new spool" es="Es una bobina nueva"/>
   <translation tag="Jammed at the Toolhead" es="Atascado en el cabezal"/>
   <translation tag="Job Queue" es="Cola de trabajos"/>
+  <translation tag="Jog" es="Jog"/>
   <translation tag="Jog Speed XY" es="Velocidad de movimiento XY"/>
   <translation tag="Jog Speed Z" es="Velocidad de movimiento Z"/>
   <translation tag="Jog Y until the nozzle is centered over the chute opening, then tap Save." es="Mueva Y hasta que la boquilla quede centrada sobre la apertura del conducto y toque Guardar."/>
@@ -1494,6 +1500,7 @@
   <translation tag="LED strip available for lighting control" es="Tira LED disponible para control de iluminación"/>
   <translation tag="LEDs" es="LEDs"/>
   <translation tag="LEDs controlled by the light button" es="LEDs controlados por el botón de luz"/>
+  <translation tag="LOAD CELLS" es="CELDAS DE CARGA"/>
   <translation tag="LOADED" es="CARGADO"/>
   <translation tag="LOCKED" es="BLOQUEADO"/>
   <translation tag="LOT-2024-001" es="LOT-2024-001"/>
@@ -1522,6 +1529,7 @@
   <translation tag="Layout" es="Distribución"/>
   <translation tag="Learn More" es="Más información"/>
   <translation tag="LedSelect" es="Seleccionar LED"/>
+  <translation tag="Left" es="Izquierda"/>
   <translation tag="Length of filament to purge" es="Longitud de filamento a purgar"/>
   <translation tag="Length of the cooling tube section" es="Longitud de la sección del tubo de enfriamiento"/>
   <translation tag="Length:" es="Longitud:"/>
@@ -1537,6 +1545,8 @@
   <translation tag="Listening" es="Escuchando"/>
   <translation tag="Live view from your webcam" es="Vista en vivo de tu webcam"/>
   <translation tag="Load" es="Cargar"/>
+  <translation tag="Load Cell" es="Celda de carga"/>
+  <translation tag="Load Cells" es="Celdas de carga"/>
   <translation tag="Load Failed" es="Fallo al cargar"/>
   <translation tag="Load Filament" es="Cargar Filamento"/>
   <translation tag="Load a filament first before trying to unload" es="Cargue primero filamento antes de intentar descargar"/>
@@ -1616,6 +1626,7 @@
   <translation tag="Macro to cancel an active print" es="Macro para cancelar una impresión activa"/>
   <translation tag="Macro to clean/wipe the nozzle" es="Macro para limpiar la boquilla"/>
   <translation tag="Macro to load filament into extruder" es="Macro para cargar filamento en el extrusor"/>
+  <translation tag="Macro to park the toolhead at a safe position" es="Macro para llevar el cabezal a una posición segura"/>
   <translation tag="Macro to pause an active print" es="Macro para pausar una impresión activa"/>
   <translation tag="Macro to purge/prime the nozzle" es="Macro para purgar/cebar la boquilla"/>
   <translation tag="Macro to resume a paused print" es="Macro para reanudar una impresión pausada"/>
@@ -1711,6 +1722,8 @@
   <translation tag="Motors Off" es="Motores Apagados"/>
   <translation tag="Motors disable failed: {}" es="Error al desactivar motores: {}"/>
   <translation tag="Motors disabled" es="Motores desactivados"/>
+  <translation tag="Motors off"/>
+  <translation tag="Motors stay on while a print is active" es="Los motores siguen activos durante una impresión"/>
   <translation tag="Mount" es="Montar"/>
   <translation tag="Move" es="Mover"/>
   <translation tag="Move out of range" es="Movimiento fuera de rango"/>
@@ -1982,6 +1995,7 @@
   <translation tag="Paper Test Calibration" es="Calibración con Prueba de Papel"/>
   <translation tag="Parameters" es="Parámetros"/>
   <translation tag="Park" es="Aparcar"/>
+  <translation tag="Park Toolhead" es="Aparcar el cabezal"/>
   <translation tag="Park the AFC system" es="Aparcar el sistema AFC"/>
   <translation tag="Part" es="Pieza"/>
   <translation tag="Part Cooling Fan" es="Ventilador de Enfriamiento de Pieza"/>
@@ -2257,6 +2271,9 @@
   <translation tag="Ready to Apply" es="Listo para Aplicar"/>
   <translation tag="Ready to calibrate" es="Listo para calibrar"/>
   <translation tag="Ready to pluck" es="Listo para puntear"/>
+  <translation tag="Rear" es="Atrás"/>
+  <translation tag="Rear Left" es="Atrás izquierda"/>
+  <translation tag="Rear Right" es="Atrás derecha"/>
   <translation tag="Reason" es="Motivo"/>
   <translation tag="Reason: {}&#10;&#10;The printer cannot resume this print. Restart from the beginning?" es="Motivo: {}&#10;&#10;La impresora no puede reanudar esta impresión. ¿Reiniciar desde el principio?"/>
   <translation tag="Reboot" es="Reiniciar"/>
@@ -2409,6 +2426,7 @@
   <translation tag="Review your changes" es="Revisar sus cambios"/>
   <translation tag="Review your configuration below, then click Finish to save" es="Revisa tu configuración abajo, luego toca Finalizar para guardar"/>
   <translation tag="Rewinding" es="Rebobinando"/>
+  <translation tag="Right" es="Derecha"/>
   <translation tag="Role:" es="Rol:"/>
   <translation tag="Rotating tips for using your printer" es="Consejos rotativos para tu impresora"/>
   <translation tag="Rotation" es="Rotación"/>

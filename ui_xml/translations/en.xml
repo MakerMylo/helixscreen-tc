@@ -460,6 +460,7 @@
   <translation tag="Cartographer scan calibrate sent — use Z-Offset panel to adjust" en="Cartographer scan calibrate sent — use Z-Offset panel to adjust"/>
   <translation tag="Cartographer touch calibrate sent" en="Cartographer touch calibrate sent"/>
   <translation tag="Category" en="Category"/>
+  <translation tag="Center" en="Center"/>
   <translation tag="Center QR code in frame" en="Center QR code in frame"/>
   <translation tag="Chamb:" en="Chamb:"/>
   <translation tag="Chamber" en="Chamber"/>
@@ -1207,6 +1208,7 @@
   <translation tag="Flying Toasters" en="Flying Toasters"/>
   <translation tag="Follow active tool" en="Follow active tool"/>
   <translation tag="Follow graph screen" en="Follow graph screen"/>
+  <translation tag="Force/weight sensors" en="Force/weight sensors"/>
   <translation tag="Forget" en="Forget"/>
   <translation tag="Forget Network?" en="Forget Network?"/>
   <translation tag="Forget network &apos;{}&apos;? You will need the password to reconnect." en="Forget network &apos;{}&apos;? You will need the password to reconnect."/>
@@ -1221,6 +1223,9 @@
   <translation tag="Frequency Delta: Difference between Path A and B. Anything under 2 Hz is below what this measurement can resolve, so it counts as matched.&#10;&#10;Match: How close the two belts are, as a percentage of belt A&apos;s frequency. Above 95% is excellent; below 90% is worth adjusting." en="Frequency Delta: Difference between Path A and B. Anything under 2 Hz is below what this measurement can resolve, so it counts as matched.&#10;&#10;Match: How close the two belts are, as a percentage of belt A&apos;s frequency. Above 95% is excellent; below 90% is worth adjusting."/>
   <translation tag="From Buffer" en="From Buffer"/>
   <translation tag="From Version" en="From Version"/>
+  <translation tag="Front" en="Front"/>
+  <translation tag="Front Left" en="Front Left"/>
+  <translation tag="Front Right" en="Front Right"/>
   <translation tag="Full" en="Full"/>
   <translation tag="G-code Console" en="G-code Console"/>
   <translation tag="G-code Preview" en="G-code Preview"/>
@@ -1450,6 +1455,7 @@
   <translation tag="It&apos;s a new spool" en="It&apos;s a new spool"/>
   <translation tag="Jammed at the Toolhead" en="Jammed at the Toolhead"/>
   <translation tag="Job Queue" en="Job Queue"/>
+  <translation tag="Jog" en="Jog"/>
   <translation tag="Jog Speed XY" en="Jog Speed XY"/>
   <translation tag="Jog Speed Z" en="Jog Speed Z"/>
   <translation tag="Jog Y until the nozzle is centered over the chute opening, then tap Save." en="Jog Y until the nozzle is centered over the chute opening, then tap Save."/>
@@ -1494,6 +1500,7 @@
   <translation tag="LED strip available for lighting control" en="LED strip available for lighting control"/>
   <translation tag="LEDs" en="LEDs"/>
   <translation tag="LEDs controlled by the light button" en="LEDs controlled by the light button"/>
+  <translation tag="LOAD CELLS" en="LOAD CELLS"/>
   <translation tag="LOADED" en="LOADED"/>
   <translation tag="LOCKED" en="LOCKED"/>
   <translation tag="LOT-2024-001" en="LOT-2024-001"/>
@@ -1522,6 +1529,7 @@
   <translation tag="Layout" en="Layout"/>
   <translation tag="Learn More" en="Learn More"/>
   <translation tag="LedSelect" en="LedSelect"/>
+  <translation tag="Left" en="Left"/>
   <translation tag="Length of filament to purge" en="Length of filament to purge"/>
   <translation tag="Length of the cooling tube section" en="Length of the cooling tube section"/>
   <translation tag="Length:" en="Length:"/>
@@ -1537,6 +1545,8 @@
   <translation tag="Listening" en="Listening"/>
   <translation tag="Live view from your webcam" en="Live view from your webcam"/>
   <translation tag="Load" en="Load"/>
+  <translation tag="Load Cell" en="Load Cell"/>
+  <translation tag="Load Cells" en="Load Cells"/>
   <translation tag="Load Failed" en="Load Failed"/>
   <translation tag="Load Filament" en="Load Filament"/>
   <translation tag="Load a filament first before trying to unload" en="Load a filament first before trying to unload"/>
@@ -1616,6 +1626,7 @@
   <translation tag="Macro to cancel an active print" en="Macro to cancel an active print"/>
   <translation tag="Macro to clean/wipe the nozzle" en="Macro to clean/wipe the nozzle"/>
   <translation tag="Macro to load filament into extruder" en="Macro to load filament into extruder"/>
+  <translation tag="Macro to park the toolhead at a safe position" en="Macro to park the toolhead at a safe position"/>
   <translation tag="Macro to pause an active print" en="Macro to pause an active print"/>
   <translation tag="Macro to purge/prime the nozzle" en="Macro to purge/prime the nozzle"/>
   <translation tag="Macro to resume a paused print" en="Macro to resume a paused print"/>
@@ -1711,6 +1722,8 @@
   <translation tag="Motors Off" en="Motors Off"/>
   <translation tag="Motors disable failed: {}" en="Motors disable failed: {}"/>
   <translation tag="Motors disabled" en="Motors disabled"/>
+  <translation tag="Motors off" en="Motors off"/>
+  <translation tag="Motors stay on while a print is active" en="Motors stay on while a print is active"/>
   <translation tag="Mount" en="Mount"/>
   <translation tag="Move" en="Move"/>
   <translation tag="Move out of range" en="Move out of range"/>
@@ -1982,6 +1995,7 @@
   <translation tag="Paper Test Calibration" en="Paper Test Calibration"/>
   <translation tag="Parameters" en="Parameters"/>
   <translation tag="Park" en="Park"/>
+  <translation tag="Park Toolhead" en="Park Toolhead"/>
   <translation tag="Park the AFC system" en="Park the AFC system"/>
   <translation tag="Part" en="Part"/>
   <translation tag="Part Cooling Fan" en="Part Cooling Fan"/>
@@ -2257,6 +2271,9 @@
   <translation tag="Ready to Apply" en="Ready to Apply"/>
   <translation tag="Ready to calibrate" en="Ready to calibrate"/>
   <translation tag="Ready to pluck" en="Ready to pluck"/>
+  <translation tag="Rear" en="Rear"/>
+  <translation tag="Rear Left" en="Rear Left"/>
+  <translation tag="Rear Right" en="Rear Right"/>
   <translation tag="Reason" en="Reason"/>
   <translation tag="Reason: {}&#10;&#10;The printer cannot resume this print. Restart from the beginning?" en="Reason: {}&#10;&#10;The printer cannot resume this print. Restart from the beginning?"/>
   <translation tag="Reboot" en="Reboot"/>
@@ -2409,6 +2426,7 @@
   <translation tag="Review your changes" en="Review your changes"/>
   <translation tag="Review your configuration below, then click Finish to save" en="Review your configuration below, then click Finish to save"/>
   <translation tag="Rewinding" en="Rewinding"/>
+  <translation tag="Right" en="Right"/>
   <translation tag="Role:" en="Role:"/>
   <translation tag="Rotating tips for using your printer" en="Rotating tips for using your printer"/>
   <translation tag="Rotation" en="Rotation"/>

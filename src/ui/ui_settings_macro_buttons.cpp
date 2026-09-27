@@ -80,6 +80,7 @@ void MacroButtonsOverlay::register_callbacks() {
         {"on_bed_level_changed", on_bed_level_changed},
         {"on_clean_nozzle_changed", on_clean_nozzle_changed},
         {"on_heat_soak_changed", on_heat_soak_changed},
+        {"on_park_toolhead_changed", on_park_toolhead_changed},
     });
 
     spdlog::debug("[{}] Callbacks registered", get_name());
@@ -250,6 +251,7 @@ void MacroButtonsOverlay::populate_dropdowns() {
         {StandardMacroSlot::BedLevel, "row_bed_level"},
         {StandardMacroSlot::CleanNozzle, "row_clean_nozzle"},
         {StandardMacroSlot::HeatSoak, "row_heat_soak"},
+        {StandardMacroSlot::ParkToolhead, "row_park_toolhead"},
     };
 
     for (const auto& [slot, row_name] : slot_rows) {
@@ -499,6 +501,14 @@ void MacroButtonsOverlay::on_clean_nozzle_changed(lv_event_t* e) {
     LVGL_SAFE_EVENT_CB_BEGIN("[MacroButtonsOverlay] on_clean_nozzle_changed");
     auto* dropdown = static_cast<lv_obj_t*>(lv_event_get_current_target(e));
     get_macro_buttons_overlay().handle_standard_macro_changed(StandardMacroSlot::CleanNozzle,
+                                                              dropdown);
+    LVGL_SAFE_EVENT_CB_END();
+}
+
+void MacroButtonsOverlay::on_park_toolhead_changed(lv_event_t* e) {
+    LVGL_SAFE_EVENT_CB_BEGIN("[MacroButtonsOverlay] on_park_toolhead_changed");
+    auto* dropdown = static_cast<lv_obj_t*>(lv_event_get_current_target(e));
+    get_macro_buttons_overlay().handle_standard_macro_changed(StandardMacroSlot::ParkToolhead,
                                                               dropdown);
     LVGL_SAFE_EVENT_CB_END();
 }

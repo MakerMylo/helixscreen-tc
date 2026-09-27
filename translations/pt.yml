@@ -513,6 +513,7 @@ translations:
     de varredura enviada — use o painel Z-Offset para ajustar
   Cartographer touch calibrate sent: Cartographer calibração por toque enviada
   Category: Categoria
+  Center: 'Centro'
   Center QR code in frame: Centralize o código QR no quadro
   'Chamb:': 'Câmara:'
   Chamber: Câmara
@@ -1340,6 +1341,7 @@ translations:
   Flying Toasters: Torradeiras Voadoras
   Follow active tool: Seguir ferramenta ativa
   Follow graph screen: Acompanhar tela do gráfico
+  Force/weight sensors: 'Sensores de força/peso'
   Forget: Esquecer
   Forget Network?: Esquecer Rede?
   Forget network '{}'? You will need the password to reconnect.: Esquecer a rede '{}'? Você precisará da senha para reconectar.
@@ -1355,6 +1357,9 @@ translations:
   : "Delta de Frequência: Diferença entre o Caminho A e B. Qualquer valor abaixo de 2 Hz está fora do que esta medição consegue resolver, portanto conta como correspondente.\n\nCorrespondência: O quão próximas as duas correias estão, como uma porcentagem da frequência da correia A. Acima de 95% é excelente; abaixo de 90% vale a pena ajustar."
   From Buffer: Do buffer
   From Version: Da Versão
+  Front: 'Frente'
+  Front Left: 'Frente esquerda'
+  Front Right: 'Frente direita'
   Full: Completo
   G-code Console: Console G-code
   G-code Preview: Visualização G-code
@@ -1620,6 +1625,7 @@ translations:
   It's a new spool: É um carretel novo
   Jammed at the Toolhead: Atolado no cabeçote
   Job Queue: Fila de Trabalhos
+  Jog: Jog
   Jog Speed XY: Velocidade de movimento XY
   Jog Speed Z: Velocidade de movimento Z
   Jog Y until the nozzle is centered over the chute opening, then tap Save.: Mova Y até o bocal ficar centralizado sobre a abertura da calha e toque em Salvar.
@@ -1679,6 +1685,7 @@ translations:
     iluminação
   LEDs: LEDs
   LEDs controlled by the light button: LEDs controlados pelo botão de luz
+  LOAD CELLS: 'CÉLULAS DE CARGA'
   LOADED: CARREGADO
   LOCKED: BLOQUEADO
   LOT-2024-001: LOT-2024-001
@@ -1710,6 +1717,7 @@ translations:
   Layout: Disposição
   Learn More: Saiba Mais
   LedSelect: Selecionar LED
+  Left: 'Esquerda'
   Length of filament to purge: 'Comprimento de filamento a purgar'
   Length of the cooling tube section: 'Comprimento da seção do tubo de resfriamento'
   'Length:': 'Comprimento:'
@@ -1727,6 +1735,8 @@ translations:
   Listening: Escutando
   Live view from your webcam: Visão ao vivo da sua webcam
   Load: Carregar
+  Load Cell: 'Célula de carga'
+  Load Cells: 'Células de carga'
   Load Failed: 'Falha ao carregar'
   Load Filament: Carregar Filamento
   Load a filament first before trying to unload: Carregue primeiro filamento antes de tentar descarregar
@@ -1811,6 +1821,7 @@ translations:
   Macro to cancel an active print: Macro para cancelar uma impressão ativa
   Macro to clean/wipe the nozzle: Macro para limpar o bico
   Macro to load filament into extruder: Macro para carregar filamento no extrusor
+  Macro to park the toolhead at a safe position: 'Macro para levar o cabeçote a uma posição segura'
   Macro to pause an active print: Macro para pausar uma impressão ativa
   Macro to purge/prime the nozzle: Macro para purgar/preparar o bico
   Macro to resume a paused print: Macro para retomar uma impressão pausada
@@ -1910,6 +1921,8 @@ translations:
   Motors Off: Desligar Motores
   'Motors disable failed: {}': 'Falha ao desativar motores: {}'
   Motors disabled: Motores desativados
+  Motors off: ''
+  Motors stay on while a print is active: Os motores permanecem ativos durante uma impressão
   Mount: Montar
   Move: Mover
   Move out of range: 'Movimento fora do alcance'
@@ -2208,6 +2221,7 @@ translations:
   Parameters: Parâmetros
   Park: 'Estacionar'
   Park the AFC system: 'Estacionar o sistema AFC'
+  Park Toolhead: 'Estacionar o cabeçote'
   Part: Peça
   Part Cooling Fan: Ventoinha de Resfriamento da Peça
   Part Fan: Ventoinha da Peça
@@ -2510,6 +2524,9 @@ translations:
   Ready to Apply: Pronto para Aplicar
   Ready to calibrate: Pronto para calibrar
   Ready to pluck: Pronto para dedilhar
+  Rear: 'Trás'
+  Rear Left: 'Trás esquerda'
+  Rear Right: 'Trás direita'
   Reason: Motivo
   ? "Reason: {}\n\nThe printer cannot resume this print. Restart from the beginning?"
   : "Motivo: {}\n\nA impressora não pode retomar esta impressão. Reiniciar do início?"
@@ -2678,6 +2695,7 @@ translations:
   Review your configuration below, then click Finish to save: Revise sua configuração
     abaixo e clique em Finalizar para salvar
   Rewinding: Rebobinando
+  Right: 'Direita'
   'Role:': 'Função:'
   Rotating tips for using your printer: Dicas rotativas para sua impressora
   Rotation: Rotação

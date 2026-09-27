@@ -506,6 +506,7 @@ translations:
     калибровка отправлена — используйте панель Z-Offset для настройки
   Cartographer touch calibrate sent: Cartographer тактильная калибровка отправлена
   Category: Категория
+  Center: 'Центр'
   Center QR code in frame: Расположите QR-код в центре кадра
   'Chamb:': 'Камера:'
   Chamber: Камера
@@ -1324,6 +1325,7 @@ translations:
   Flying Toasters: Летающие тостеры
   Follow active tool: Следовать активному инструменту
   Follow graph screen: Следовать экрану графика
+  Force/weight sensors: 'Датчики силы/веса'
   Forget: Забыть
   Forget Network?: Забыть сеть?
   Forget network '{}'? You will need the password to reconnect.: Забыть сеть «{}»? Для повторного подключения потребуется пароль.
@@ -1339,6 +1341,9 @@ translations:
   : "Разница частот: разница между путями A и B. Значения менее 2 Гц ниже точности этого измерения, поэтому считаются совпадением.\n\nСовпадение: насколько близки два ремня, в процентах от частоты ремня A. Выше 95% — отлично; ниже 90% стоит отрегулировать."
   From Buffer: Из буфера
   From Version: С версии
+  Front: 'Спереди'
+  Front Left: 'Спереди слева'
+  Front Right: 'Спереди справа'
   Full: Полный
   G-code Console: Консоль G-code
   G-code Preview: Просмотр G-code
@@ -1600,6 +1605,7 @@ translations:
   It's a new spool: Это новая катушка
   Jammed at the Toolhead: Замятие в печатающей головке
   Job Queue: Очередь заданий
+  Jog: 'Джог'
   Jog Speed XY: Скорость перемещения XY
   Jog Speed Z: Скорость перемещения Z
   Jog Y until the nozzle is centered over the chute opening, then tap Save.: Двигайте Y, пока сопло не встанет по центру отверстия жёлоба, затем нажмите «Сохранить».
@@ -1657,6 +1663,7 @@ translations:
     освещением
   LEDs: LED
   LEDs controlled by the light button: LED, управляемые кнопкой света
+  LOAD CELLS: 'ТЕНЗОДАТЧИКИ'
   LOADED: ЗАГРУЖЕН
   LOCKED: ЗАБЛОКИРОВАНО
   LOT-2024-001: LOT-2024-001
@@ -1689,6 +1696,7 @@ translations:
   Layout: Раскладка
   Learn More: Подробнее
   LedSelect: Выбрать LED
+  Left: 'Слева'
   Length of filament to purge: 'Длина продуваемого филамента'
   Length of the cooling tube section: 'Длина участка трубки охлаждения'
   'Length:': 'Длина:'
@@ -1706,6 +1714,8 @@ translations:
   Listening: Прослушивание
   Live view from your webcam: Прямая трансляция с веб-камеры
   Load: Загрузить
+  Load Cell: 'Тензодатчик'
+  Load Cells: 'Тензодатчики'
   Load Failed: 'Не удалось загрузить'
   Load Filament: Загрузить филамент
   Load a filament first before trying to unload: Сначала загрузите филамент, прежде чем пытаться его выгрузить
@@ -1790,6 +1800,7 @@ translations:
   Macro to cancel an active print: Макрос для отмены текущей печати
   Macro to clean/wipe the nozzle: Макрос для очистки/протирки сопла
   Macro to load filament into extruder: Макрос для загрузки филамента в экструдер
+  Macro to park the toolhead at a safe position: 'Макрос для парковки печатающей головы в безопасное положение'
   Macro to pause an active print: Макрос для паузы текущей печати
   Macro to purge/prime the nozzle: Макрос для продувки/подготовки сопла
   Macro to resume a paused print: Макрос для возобновления приостановленной печати
@@ -1887,6 +1898,8 @@ translations:
   Motors Off: Отключить моторы
   'Motors disable failed: {}': 'Ошибка отключения моторов: {}'
   Motors disabled: Моторы отключены
+  Motors off: ''
+  Motors stay on while a print is active: Моторы остаются включены во время печати
   Mount: Установить
   Move: Двигать
   Move out of range: 'Движение за пределами диапазона'
@@ -2183,6 +2196,7 @@ translations:
   Parameters: Параметры
   Park: 'Парковка'
   Park the AFC system: 'Припарковать систему AFC'
+  Park Toolhead: 'Припарковать печатающую головку'
   Part: Деталь
   Part Cooling Fan: Вентилятор охлаждения детали
   Part Fan: Вент. детали
@@ -2483,6 +2497,9 @@ translations:
   Ready to Apply: Готово к применению
   Ready to calibrate: Готов к калибровке
   Ready to pluck: Готово к щипку
+  Rear: 'Сзади'
+  Rear Left: 'Сзади слева'
+  Rear Right: 'Сзади справа'
   Reason: Причина
   ? "Reason: {}\n\nThe printer cannot resume this print. Restart from the beginning?"
   : "Причина: {}\n\nПринтер не может возобновить эту печать. Начать заново?"
@@ -2649,6 +2666,7 @@ translations:
   Review your configuration below, then click Finish to save: Проверьте конфигурацию
     ниже, затем нажмите «Готово» для сохранения
   Rewinding: Перемотка
+  Right: 'Справа'
   'Role:': 'Тип:'
   Rotating tips for using your printer: Сменяющиеся советы по печати
   Rotation: Поворот

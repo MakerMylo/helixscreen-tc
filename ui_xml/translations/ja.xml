@@ -460,6 +460,7 @@
   <translation tag="Cartographer scan calibrate sent — use Z-Offset panel to adjust" ja="Cartographerスキャンキャリブレーション送信済み — Z-Offsetパネルで調整してください"/>
   <translation tag="Cartographer touch calibrate sent" ja="Cartographerタッチキャリブレーション送信済み"/>
   <translation tag="Category" ja="カテゴリー"/>
+  <translation tag="Center" ja="中央"/>
   <translation tag="Center QR code in frame" ja="QR コードをフレームの中央に合わせてください"/>
   <translation tag="Chamb:" ja="チャンバ:"/>
   <translation tag="Chamber" ja="チャンバー"/>
@@ -1207,6 +1208,7 @@
   <translation tag="Flying Toasters" ja="フライングトースター"/>
   <translation tag="Follow active tool" ja="アクティブツールに追従"/>
   <translation tag="Follow graph screen" ja="グラフ画面に追従"/>
+  <translation tag="Force/weight sensors" ja="力/重量センサー"/>
   <translation tag="Forget" ja="登録解除"/>
   <translation tag="Forget Network?" ja="ネットワークを登録解除しますか？"/>
   <translation tag="Forget network &apos;{}&apos;? You will need the password to reconnect." ja="ネットワーク &apos;{}&apos; を登録解除しますか？再接続にはパスワードが必要です。"/>
@@ -1221,6 +1223,9 @@
   <translation tag="Frequency Delta: Difference between Path A and B. Anything under 2 Hz is below what this measurement can resolve, so it counts as matched.&#10;&#10;Match: How close the two belts are, as a percentage of belt A&apos;s frequency. Above 95% is excellent; below 90% is worth adjusting." ja="周波数差: パス A と B の差。2 Hz 未満はこの測定の分解能を下回るため、一致とみなされます。&#10;&#10;一致度: 2つのベルトの周波数がどれだけ近いかを、ベルトAの周波数に対する割合で示したもの。95% を超えれば優秀で、90% を下回ると調整が必要です。"/>
   <translation tag="From Buffer" ja="バッファから"/>
   <translation tag="From Version" ja="更新前バージョン"/>
+  <translation tag="Front" ja="手前"/>
+  <translation tag="Front Left" ja="左手前"/>
+  <translation tag="Front Right" ja="右手前"/>
   <translation tag="Full" ja="フル"/>
   <translation tag="G-code Console" ja="G-code コンソール"/>
   <translation tag="G-code Preview" ja="G-code プレビュー"/>
@@ -1450,6 +1455,7 @@
   <translation tag="It&apos;s a new spool" ja="新しいスプールです"/>
   <translation tag="Jammed at the Toolhead" ja="ツールヘッドで詰まり"/>
   <translation tag="Job Queue" ja="ジョブキュー"/>
+  <translation tag="Jog" ja="ジョグ"/>
   <translation tag="Jog Speed XY" ja="XY ジョグ速度"/>
   <translation tag="Jog Speed Z" ja="Z ジョグ速度"/>
   <translation tag="Jog Y until the nozzle is centered over the chute opening, then tap Save." ja="Yをジョグしてノズルがシュートの開口部の中心に来たら、保存をタップします。"/>
@@ -1494,6 +1500,7 @@
   <translation tag="LED strip available for lighting control" ja="照明制御用の LED ストリップが利用可能です"/>
   <translation tag="LEDs" ja="LED"/>
   <translation tag="LEDs controlled by the light button" ja="ライトボタンで制御される LED"/>
+  <translation tag="LOAD CELLS" ja="ロードセル"/>
   <translation tag="LOADED" ja="装填済み"/>
   <translation tag="LOCKED" ja="ロック中"/>
   <translation tag="LOT-2024-001" ja="LOT-2024-001"/>
@@ -1522,6 +1529,7 @@
   <translation tag="Layout" ja="レイアウト"/>
   <translation tag="Learn More" ja="詳細を見る"/>
   <translation tag="LedSelect" ja="LEDを選択"/>
+  <translation tag="Left" ja="左"/>
   <translation tag="Length of filament to purge" ja="パージするフィラメントの長さ"/>
   <translation tag="Length of the cooling tube section" ja="冷却チューブ区間の長さ"/>
   <translation tag="Length:" ja="長さ:"/>
@@ -1537,6 +1545,8 @@
   <translation tag="Listening" ja="聞き取り中"/>
   <translation tag="Live view from your webcam" ja="ウェブカメラのライブ表示"/>
   <translation tag="Load" ja="装填"/>
+  <translation tag="Load Cell" ja="ロードセル"/>
+  <translation tag="Load Cells" ja="ロードセル"/>
   <translation tag="Load Failed" ja="装填に失敗しました"/>
   <translation tag="Load Filament" ja="フィラメントを装填"/>
   <translation tag="Load a filament first before trying to unload" ja="排出する前にまずフィラメントを装填してください"/>
@@ -1616,6 +1626,7 @@
   <translation tag="Macro to cancel an active print" ja="アクティブな印刷をキャンセルするマクロ"/>
   <translation tag="Macro to clean/wipe the nozzle" ja="ノズルを清掃/ワイプするマクロ"/>
   <translation tag="Macro to load filament into extruder" ja="フィラメントをエクストルーダーに装填するマクロ"/>
+  <translation tag="Macro to park the toolhead at a safe position" ja="ヘッドを安全な位置へ移動するマクロ"/>
   <translation tag="Macro to pause an active print" ja="アクティブな印刷を一時停止するマクロ"/>
   <translation tag="Macro to purge/prime the nozzle" ja="ノズルをパージ/プライムするマクロ"/>
   <translation tag="Macro to resume a paused print" ja="一時停止した印刷を再開するマクロ"/>
@@ -1711,6 +1722,8 @@
   <translation tag="Motors Off" ja="モーターオフ"/>
   <translation tag="Motors disable failed: {}" ja="モーターの無効化に失敗しました: {}"/>
   <translation tag="Motors disabled" ja="モーターを無効化しました"/>
+  <translation tag="Motors off"/>
+  <translation tag="Motors stay on while a print is active" ja="印刷中はモーターを停止できません"/>
   <translation tag="Mount" ja="装着"/>
   <translation tag="Move" ja="移動"/>
   <translation tag="Move out of range" ja="移動範囲外です"/>
@@ -1982,6 +1995,7 @@
   <translation tag="Paper Test Calibration" ja="紙テストキャリブレーション"/>
   <translation tag="Parameters" ja="パラメータ"/>
   <translation tag="Park" ja="パーキング"/>
+  <translation tag="Park Toolhead" ja="ツールヘッドをパーキング"/>
   <translation tag="Park the AFC system" ja="AFCシステムをパーキング"/>
   <translation tag="Part" ja="パーツ"/>
   <translation tag="Part Cooling Fan" ja="パーツ冷却ファン"/>
@@ -2257,6 +2271,9 @@
   <translation tag="Ready to Apply" ja="適用の準備完了"/>
   <translation tag="Ready to calibrate" ja="キャリブレーション準備完了"/>
   <translation tag="Ready to pluck" ja="はじく準備完了"/>
+  <translation tag="Rear" ja="奥"/>
+  <translation tag="Rear Left" ja="左奥"/>
+  <translation tag="Rear Right" ja="右奥"/>
   <translation tag="Reason" ja="理由"/>
   <translation tag="Reason: {}&#10;&#10;The printer cannot resume this print. Restart from the beginning?" ja="理由: {}&#10;&#10;プリンターはこの印刷を再開できません。最初からやり直しますか？"/>
   <translation tag="Reboot" ja="再起動"/>
@@ -2409,6 +2426,7 @@
   <translation tag="Review your changes" ja="変更を確認"/>
   <translation tag="Review your configuration below, then click Finish to save" ja="以下の設定を確認し、「完了」をクリックして保存してください"/>
   <translation tag="Rewinding" ja="巻き戻し中"/>
+  <translation tag="Right" ja="右"/>
   <translation tag="Role:" ja="役割:"/>
   <translation tag="Rotating tips for using your printer" ja="プリンターの使い方のヒントを順に表示"/>
   <translation tag="Rotation" ja="回転"/>
