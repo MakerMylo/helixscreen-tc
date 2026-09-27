@@ -28,6 +28,7 @@ struct TwoFingerState {
     float last_dx = 0.0f;
     float last_dy = 0.0f;
     float last_scale = 1.0f;
+    bool recognized = false; ///< A Recognized frame has been applied since the last reset
 };
 
 /// What a view applies this frame: pan first, then zoom about the anchor.

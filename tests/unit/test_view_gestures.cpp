@@ -90,6 +90,26 @@ TEST_CASE("two_finger_step: an implausible frame ratio holds zoom but still pans
     CHECK(low.zoom == 1.0f);
 }
 
+TEST_CASE(
+    "two_finger_step: the first recognized pinch frame catches up zoom beyond the frame filter",
+    "[gesture]") {
+    TwoFingerState st;
+    auto first = two_finger_step(sample(Kind::Pinch, Phase::Recognized, 0, 0, 1.46f), st);
+    CHECK(first.zoom == Approx(1.46f));
+    auto second = two_finger_step(sample(Kind::Pinch, Phase::Recognized, 0, 0, 1.5f), st);
+    CHECK(second.zoom == Approx(1.5f / 1.46f));
+    auto third = two_finger_step(sample(Kind::Pinch, Phase::Recognized, 0, 0, 3.0f), st);
+    CHECK(third.zoom == 1.0f);
+}
+
+TEST_CASE(
+    "two_finger_step: the first recognized pinch frame catches up zoom below the frame filter",
+    "[gesture]") {
+    TwoFingerState st;
+    auto first = two_finger_step(sample(Kind::Pinch, Phase::Recognized, 0, 0, 0.6f), st);
+    CHECK(first.zoom == Approx(0.6f));
+}
+
 TEST_CASE("two_finger_step: a non-positive scale holds zoom and keeps the baseline", "[gesture]") {
     TwoFingerState st;
     two_finger_step(sample(Kind::Pinch, Phase::Recognized, 0, 0, 1.0f), st);

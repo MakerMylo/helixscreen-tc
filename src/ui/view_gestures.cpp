@@ -14,7 +14,9 @@ namespace helix::ui {
 
 namespace {
 // Normal per-frame pinch ratios sit near 0.85-1.15; anything outside this
-// open interval is a recognizer restart, not finger motion.
+// open interval is a recognizer restart, not finger motion. The bounds apply
+// from the second Recognized frame on: the first catches up the spread made
+// before recognition, which a fast pinch can push past any bound.
 constexpr float kMinFrameZoom = 0.7f;
 constexpr float kMaxFrameZoom = 1.4f;
 } // namespace
@@ -44,11 +46,12 @@ TwoFingerStep two_finger_step(const TwoFingerSample& s, TwoFingerState& st) {
 
     if (s.kind == TwoFingerSample::Kind::Pinch && s.scale > 0.0f) {
         const float ratio = s.scale / st.last_scale;
-        if (ratio > kMinFrameZoom && ratio < kMaxFrameZoom) {
+        if (!st.recognized || (ratio > kMinFrameZoom && ratio < kMaxFrameZoom)) {
             out.zoom = ratio;
         }
         st.last_scale = s.scale;
     }
+    st.recognized = true;
 
     out.anchor_x = s.start_x + static_cast<int>(std::lround(s.delta_x));
     out.anchor_y = s.start_y + static_cast<int>(std::lround(s.delta_y));
