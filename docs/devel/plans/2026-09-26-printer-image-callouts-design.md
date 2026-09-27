@@ -111,6 +111,18 @@ AD5M Pro, K2 Plus, Trident, K1 Max, K1C, U1, Voron 0.2, Q2, K1, Creator 5 Pro, S
 | `activity_chip.xml` | icon + bound text + colour variant | design tokens; `status_pill` / `beta_badge` styling |
 | `PrinterImageWidget` | observes the subjects; classifies; formats; publishes per-widget chip text/state subjects the XML binds; positions chips and lines from the layout result | existing observers and deferred timer |
 
+This is the measure / decide / publish / bind pattern in `docs/devel/PANEL_WIDGET_GUIDE.md`
+(`NozzleTempsWidget` is its exemplar), and follows its rules:
+
+- Chip text is measured with the same function that composes it for display, so the layout
+  never decides on a string the chip does not draw. Measure the values actually showing, and
+  keep a comfort margin on every text-budgeted threshold: an exact fit renders as an overlap.
+- The mode and each chip's state/variant are published as widget subjects registered through
+  `register_widget_subjects()`, so they exist before the XML that binds them parses. The XML
+  binds visibility, variant and lines-shown off them.
+- Chip x/y and line points are the one imperative part: geometry XML cannot bind, set from the
+  layout result.
+
 Existing helpers reused:
 
 - State and colour: `classify_heater_status()`, `classify_heat_state[_with_mode]()`,
