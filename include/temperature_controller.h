@@ -180,17 +180,23 @@ class TemperatureController {
     const chamber::ChamberHeaterBackend* chamber_dryer_backend_ = nullptr;
     bool chamber_dryer_has_bed_ = false;
 
-    /// The bed the dryer heated, owed an off when the cycle ends. seen_running
-    /// holds the off back until the cycle has actually been reported running,
-    /// so the idle frames before the appliance picks up the start do not end it.
-    struct BedAssist {
+    /// A drying cycle we started, owed its cleanup when it ends. seen_running
+    /// holds the cleanup back until the cycle has actually been reported
+    /// running, so the idle frames before the appliance picks up the start do
+    /// not end it. bed_c is the bed it heated (0: none); idle_restore_s is the
+    /// configured idle timeout it held off (0: none held yet).
+    struct DryRun {
         bool armed = false;
         bool seen_running = false;
-        int target_c = 0;
-    } bed_assist_;
+        int bed_c = 0;
+        int idle_restore_s = 0;
+        uint32_t id = 0;
+    } dry_run_;
+    uint32_t next_dry_run_id_ = 0;
     ObserverGuard dryer_active_observer_;
     void on_chamber_dryer_active(bool running);
-    void end_bed_assist(const char* why);
+    void hold_idle_timeout(uint32_t run_id, int run_s);
+    void end_dry_run(const char* why);
 };
 
 /// Null-safe face of TemperatureController::effective_keypad_max(): the shared
