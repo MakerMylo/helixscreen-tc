@@ -109,10 +109,11 @@
     </header_bar>
     <if cond="ui_is_portrait eq 1">
       <!-- PORTRAIT: header too narrow for coordinates, so a slim full-width
-           strip under the header carries them, spread evenly. Below it one
-           row pairs the jog pad (largest square the row allows) with a tall
-           Z column, then a single bottom row carries the jog modes plus the
-           capability-gated leveling buttons, icons above labels. -->
+           strip under the header carries them, spread evenly. The tab strip
+           sits under that row; below it one row pairs the jog pad (largest
+           square the row allows) with a tall Z column, then a single bottom
+           row carries the jog modes plus the capability-gated leveling
+           buttons, icons above labels. -->
       <lv_obj name="coord_row"
               width="100%" height="content" style_pad_all="0" style_pad_hor="#space_lg" style_bg_opa="0"
               style_border_width="0" scrollable="false" clickable="false" flex_flow="row"
@@ -173,25 +174,48 @@
           </icon>
         </lv_obj>
       </lv_obj>
+      <!-- Portrait tab strip: icon + label pills in one horizontal row. -->
+      <lv_obj name="motion_tab_strip"
+              width="100%" height="content" style_pad_all="0" style_pad_hor="#space_lg" style_bg_opa="0"
+              style_border_width="0" scrollable="false" clickable="false" flex_flow="row" style_flex_main_place="center"
+              style_pad_gap="#space_xs">
+        <zone_tab label_subject="motion_tab_label_0"
+                  active_subject="motion_tab_active_0" tab_index="0" icon="cursor_move" callback="on_motion_tab_clicked"/>
+        <zone_tab label_subject="motion_tab_label_1"
+                  active_subject="motion_tab_active_1" tab_index="1" icon="crosshairs_gps"
+                  callback="on_motion_tab_clicked"/>
+        <!-- The Bed tab arrives with its content in a later step; its pill
+             stays out of the strip until then. -->
+        <zone_tab label_subject="motion_tab_label_2"
+                  active_subject="motion_tab_active_2" tab_index="2" icon="grid_large" callback="on_motion_tab_clicked"
+                  hidden="true"/>
+      </lv_obj>
       <lv_obj name="overlay_content"
               width="100%" flex_grow="1" style_pad_all="#space_sm" scrollable="false" style_border_opa="0"
               flex_flow="column" style_pad_gap="#space_sm">
         <!-- Disable content when printer not connected or klippy not ready -->
         <bind_state_if_not_eq subject="nav_buttons_enabled" state="disabled" ref_value="1"/>
         <!-- Pad row: jog pad left, Z column right. The row is the only
-             flex-growing child, so the coordinate strip above and the bottom
-             row below take their height first and the pad row gets the rest;
-             the pad is the largest square its wrapper allows (clamped in
-             MotionPanel::setup_jog_pad), so a width-bound wrapper leaves no
-             dead band beside the circle. -->
+             flex-growing child, so the coordinate strip and tab strip above
+             and the bottom row below take their height first and the pad row
+             gets the rest; the pad is the largest square its wrapper allows
+             (clamped in MotionPanel::setup_jog_pad), so a width-bound wrapper
+             leaves no dead band beside the circle. On the Move tab the preset
+             grid takes the wrapper's slot; the Z column stays on every tab. -->
         <lv_obj name="pad_row"
                 width="100%" height="0" flex_grow="1" style_pad_all="0" style_border_opa="0" scrollable="false"
                 flex_flow="row" style_pad_gap="#space_sm">
           <lv_obj name="jog_pad_wrapper"
                   width="0" height="100%" flex_grow="1" style_pad_all="0" style_border_opa="0" scrollable="false">
+            <bind_flag_if_not_eq subject="motion_tab" flag="hidden" ref_value="0"/>
             <lv_obj name="jog_pad_container"
                     width="content" height="content" style_pad_all="0" style_border_opa="0" scrollable="false"
-                    clickable="true" align="center"/>
+                    clickable="true" align="left_mid"/>
+          </lv_obj>
+          <lv_obj name="move_tab"
+                  width="0" height="100%" flex_grow="1" style_pad_all="0" style_border_opa="0" scrollable="false">
+            <bind_flag_if_not_eq subject="motion_tab" flag="hidden" ref_value="1"/>
+            <move_preset_grid/>
           </lv_obj>
           <!-- The landscape Z column stood on its side: same bindings (arrow
                icons, mm step labels, the kinematics-aware axis label),
@@ -244,24 +268,28 @@
         </lv_obj>
         <!-- Bottom row: jog modes plus leveling in one row, icon above the
              word. The leveling buttons are capability-gated, so the row
-             carries three to five buttons depending on the printer. -->
+             carries three to five buttons depending on the printer; the jog
+             modes are Jog-tab-only. -->
         <lv_obj name="bottom_row"
                 width="100%" height="content" style_pad_all="0" flex_flow="row" style_pad_gap="#space_xs"
                 scrollable="false">
           <ui_button name="jog_mode_fine"
                      text="Fine" translation_tag="Fine" icon="tortoise" icon_position="top" flex_grow="1">
+            <bind_flag_if_not_eq subject="motion_tab" flag="hidden" ref_value="0"/>
             <bind_style name="filter_btn_selected" subject="motion_jog_mode_fine_active" ref_value="1"/>
             <bind_style name="filter_btn_unselected" subject="motion_jog_mode_fine_active" ref_value="0"/>
             <event_cb trigger="clicked" callback="on_jog_mode_fine"/>
           </ui_button>
           <ui_button name="jog_mode_coarse"
                      text="Coarse" translation_tag="Coarse" icon="rabbit" icon_position="top" flex_grow="1">
+            <bind_flag_if_not_eq subject="motion_tab" flag="hidden" ref_value="0"/>
             <bind_style name="filter_btn_selected" subject="motion_jog_mode_coarse_active" ref_value="1"/>
             <bind_style name="filter_btn_unselected" subject="motion_jog_mode_coarse_active" ref_value="0"/>
             <event_cb trigger="clicked" callback="on_jog_mode_coarse"/>
           </ui_button>
           <ui_button name="jog_mode_turbo"
                      text="Turbo" translation_tag="Turbo" icon="flash" icon_position="top" flex_grow="1">
+            <bind_flag_if_not_eq subject="motion_tab" flag="hidden" ref_value="0"/>
             <bind_style name="filter_btn_selected" subject="motion_jog_mode_turbo_active" ref_value="1"/>
             <bind_style name="filter_btn_unselected" subject="motion_jog_mode_turbo_active" ref_value="0"/>
             <event_cb trigger="clicked" callback="on_jog_mode_turbo"/>
@@ -283,52 +311,91 @@
         </lv_obj>
       </lv_obj>
       <else/>
-      <!-- LANDSCAPE: coordinates in the header slot, jog pad filling the left
-           column, Z column on the right. -->
+      <!-- LANDSCAPE: coordinates in the header slot, a vertical tab rail on the
+           far left, jog pad filling the rest of the left column, Z column on
+           the right. -->
       <lv_obj name="overlay_content"
               width="100%" flex_grow="1" style_pad_all="#space_sm" style_pad_hor="#space_lg" scrollable="false"
               style_border_opa="0" flex_flow="row" style_pad_gap="#space_md">
         <!-- Disable content when printer not connected or klippy not ready -->
         <bind_state_if_not_eq subject="nav_buttons_enabled" state="disabled" ref_value="1"/>
-        <!-- Left Column: jog pad with mode toggle below -->
+        <!-- Left Column: tab rail + tab content. The rail takes the width the
+             height-bound pad leaves free at every landscape size (the pad is
+             sized to its wrapper height in MotionPanel::setup_jog_pad, so
+             shaving wrapper width does not shrink it). -->
         <lv_obj name="left_column"
                 width="0" height="100%" flex_grow="3" style_pad_all="0" scrollable="false" style_border_opa="0"
-                flex_flow="column" style_pad_gap="#space_sm">
-          <!-- jog_row is the pad's own container inside left_column: a strip
-               added as a left_column sibling above it shrinks jog_row (the
-               only flex-growing child), not the mode row below. -->
-          <lv_obj name="jog_row"
-                  width="100%" flex_grow="1" style_pad_all="0" style_border_opa="0" scrollable="false" flex_flow="row"
-                  style_pad_gap="#space_sm" style_flex_cross_place="center">
-            <!-- Circular Jog Pad: Custom-Drawn Two-Zone Design (Bambu Lab Style).
-                 In a row, flex_grow drives WIDTH, so width="0" is the basis
-                 here and height="100%" claims the full row height. -->
-            <lv_obj name="jog_pad_wrapper"
-                    width="0" height="100%" flex_grow="1" style_pad_all="0" style_border_opa="0" scrollable="false">
-              <lv_obj name="jog_pad_container"
-                      width="content" height="content" style_pad_all="0" style_border_opa="0" scrollable="false"
-                      clickable="true" align="center"/>
-            </lv_obj>
+                flex_flow="row" style_pad_gap="#space_sm">
+          <lv_obj name="motion_tab_rail"
+                  width="52" height="100%" style_pad_all="0" style_border_opa="0" scrollable="false" flex_flow="column"
+                  style_pad_gap="#space_xs" style_flex_cross_place="center">
+            <zone_tab label_subject="motion_tab_label_0"
+                      active_subject="motion_tab_active_0" tab_index="0" icon="cursor_move" layout="column"
+                      cross_place="center" callback="on_motion_tab_clicked"/>
+            <zone_tab label_subject="motion_tab_label_1"
+                      active_subject="motion_tab_active_1" tab_index="1" icon="crosshairs_gps" layout="column"
+                      cross_place="center" callback="on_motion_tab_clicked"/>
+            <!-- The Bed tab arrives with its content in a later step; its pill
+                 stays out of the rail until then. -->
+            <zone_tab label_subject="motion_tab_label_2"
+                      active_subject="motion_tab_active_2" tab_index="2" icon="grid_large" layout="column"
+                      cross_place="center" callback="on_motion_tab_clicked" hidden="true"/>
           </lv_obj>
-          <!-- Fine/Coarse/Turbo jog mode toggle -->
-          <lv_obj width="100%"
-                  height="content" style_pad_all="0" flex_flow="row" style_pad_gap="#space_xs" scrollable="false"
-                  style_flex_main_place="center">
-            <ui_button name="jog_mode_fine" text="Fine" translation_tag="Fine" icon="tortoise" flex_grow="1">
-              <bind_style name="filter_btn_selected" subject="motion_jog_mode_fine_active" ref_value="1"/>
-              <bind_style name="filter_btn_unselected" subject="motion_jog_mode_fine_active" ref_value="0"/>
-              <event_cb trigger="clicked" callback="on_jog_mode_fine"/>
-            </ui_button>
-            <ui_button name="jog_mode_coarse" text="Coarse" translation_tag="Coarse" icon="rabbit" flex_grow="1">
-              <bind_style name="filter_btn_selected" subject="motion_jog_mode_coarse_active" ref_value="1"/>
-              <bind_style name="filter_btn_unselected" subject="motion_jog_mode_coarse_active" ref_value="0"/>
-              <event_cb trigger="clicked" callback="on_jog_mode_coarse"/>
-            </ui_button>
-            <ui_button name="jog_mode_turbo" text="Turbo" translation_tag="Turbo" icon="flash" flex_grow="1">
-              <bind_style name="filter_btn_selected" subject="motion_jog_mode_turbo_active" ref_value="1"/>
-              <bind_style name="filter_btn_unselected" subject="motion_jog_mode_turbo_active" ref_value="0"/>
-              <event_cb trigger="clicked" callback="on_jog_mode_turbo"/>
-            </ui_button>
+          <lv_obj name="tab_content"
+                  width="0" height="100%" flex_grow="1" style_pad_all="0" scrollable="false" style_border_opa="0"
+                  flex_flow="column" style_pad_gap="#space_sm">
+            <!-- jog_row is the pad's own container inside tab_content: a strip
+                 added as a tab_content sibling above it shrinks jog_row (the
+                 only flex-growing child), not the mode row below. -->
+            <lv_obj name="jog_row"
+                    width="100%" flex_grow="1" style_pad_all="0" style_border_opa="0" scrollable="false" flex_flow="row"
+                    style_pad_gap="#space_sm" style_flex_cross_place="center">
+              <bind_flag_if_not_eq subject="motion_tab" flag="hidden" ref_value="0"/>
+              <!-- Circular Jog Pad: Custom-Drawn Two-Zone Design (Bambu Lab Style).
+                   In a row, flex_grow drives WIDTH, so width="0" is the basis
+                   here and height="100%" claims the full row height. -->
+              <lv_obj name="jog_pad_wrapper"
+                      width="0" height="100%" flex_grow="1" style_pad_all="0" style_border_opa="0" scrollable="false">
+                <lv_obj name="jog_pad_container"
+                        width="content" height="content" style_pad_all="0" style_border_opa="0" scrollable="false"
+                        clickable="true" align="center"/>
+              </lv_obj>
+            </lv_obj>
+            <!-- Move tab: the bed preset grid replaces the pad in this slot;
+                 the mode row below is jog-only. -->
+            <lv_obj name="move_tab" width="100%" flex_grow="1" style_pad_all="0" style_border_opa="0" scrollable="false">
+              <bind_flag_if_not_eq subject="motion_tab" flag="hidden" ref_value="1"/>
+              <move_preset_grid/>
+            </lv_obj>
+            <!-- Bed tab content arrives in a later step; the container and its
+                 visibility binding are the seam it plugs into. -->
+            <lv_obj name="bed_tab" width="100%" flex_grow="1" style_pad_all="0" style_border_opa="0" scrollable="false">
+              <bind_flag_if_not_eq subject="motion_tab" flag="hidden" ref_value="2"/>
+            </lv_obj>
+            <!-- Fine/Coarse/Turbo jog mode toggle -->
+            <lv_obj width="100%"
+                    height="content" style_pad_all="0" flex_flow="row" style_pad_gap="#space_xs" scrollable="false"
+                    style_flex_main_place="center">
+              <bind_flag_if_not_eq subject="motion_tab" flag="hidden" ref_value="0"/>
+              <ui_button name="jog_mode_fine" text="Fine" translation_tag="Fine" icon="tortoise" flex_grow="1">
+                <bind_flag_if_not_eq subject="motion_tab" flag="hidden" ref_value="0"/>
+                <bind_style name="filter_btn_selected" subject="motion_jog_mode_fine_active" ref_value="1"/>
+                <bind_style name="filter_btn_unselected" subject="motion_jog_mode_fine_active" ref_value="0"/>
+                <event_cb trigger="clicked" callback="on_jog_mode_fine"/>
+              </ui_button>
+              <ui_button name="jog_mode_coarse" text="Coarse" translation_tag="Coarse" icon="rabbit" flex_grow="1">
+                <bind_flag_if_not_eq subject="motion_tab" flag="hidden" ref_value="0"/>
+                <bind_style name="filter_btn_selected" subject="motion_jog_mode_coarse_active" ref_value="1"/>
+                <bind_style name="filter_btn_unselected" subject="motion_jog_mode_coarse_active" ref_value="0"/>
+                <event_cb trigger="clicked" callback="on_jog_mode_coarse"/>
+              </ui_button>
+              <ui_button name="jog_mode_turbo" text="Turbo" translation_tag="Turbo" icon="flash" flex_grow="1">
+                <bind_flag_if_not_eq subject="motion_tab" flag="hidden" ref_value="0"/>
+                <bind_style name="filter_btn_selected" subject="motion_jog_mode_turbo_active" ref_value="1"/>
+                <bind_style name="filter_btn_unselected" subject="motion_jog_mode_turbo_active" ref_value="0"/>
+                <event_cb trigger="clicked" callback="on_jog_mode_turbo"/>
+              </ui_button>
+            </lv_obj>
           </lv_obj>
         </lv_obj>
         <!-- Right Column: Z-Axis Controls + Leveling (extends full height) -->

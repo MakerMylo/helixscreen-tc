@@ -622,6 +622,11 @@ void register_xml_components() {
     register_xml("components/home_next_page_slot.xml");
     register_xml("home_panel.xml");
     register_xml("controls_panel.xml");
+    // The AMS environment overlay registers zone_tab lazily on first open; the
+    // motion panel's tab rail instantiates it too, so it must be known here,
+    // before motion_panel.xml parses — along with the Move tab's bed grid.
+    register_xml("components/zone_tab.xml");
+    register_xml("components/move_preset_grid.xml");
     register_xml("motion_panel.xml");
     // TempGraphOverlay is the only temperature overlay; there are no per-heater
     // nozzle/bed/chamber_temp_panel.xml components. TemperatureService::setup_panel()

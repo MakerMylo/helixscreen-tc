@@ -9,8 +9,10 @@
 #include "axis.h"
 #include "hold_repeat_timer.h"
 #include "jog_coalescer.h"
+#include "motion_presets.h"
 #include "overlay_base.h"
 #include "subject_managed_panel.h"
+#include "ui/ui_modal_guard.h"
 
 #include <optional>
 
@@ -149,6 +151,22 @@ class MotionPanel : public OverlayBase {
     /// target for that one axis.
     void request_axis_target(char axis, double mm);
 
+    /// Select the content tab: 0=Jog, 1=Move, 2=Bed. Jog is re-selected every
+    /// time the panel opens.
+    void set_motion_tab(int tab);
+
+    /// Move tab: send the toolhead to one of the nine bed grid positions. The
+    /// target is computed at tap time; unknown axis bounds warn instead of
+    /// moving, and an unhomed machine homes first.
+    void handle_preset(helix::MotionPreset preset);
+
+    /// Move tab: run the ParkToolhead macro when the slot resolves to one,
+    /// else the bounds-derived Front preset.
+    void handle_park();
+
+    /// Move tab: raise the shared Disable Motors confirmation.
+    void handle_motors_off();
+
     /// Clamp one axis against its bounds. Partial travel is silent; a fully
     /// clamped FRESH press (anything but a hold repeat tick) warns every time
     /// with the limit it hit. Returns the permitted delta, 0.0 when blocked.
@@ -187,6 +205,14 @@ class MotionPanel : public OverlayBase {
     // the bed_moves inversion inside update_z_button_blocked() maps them.
     lv_subject_t motion_z_up_blocked_;
     lv_subject_t motion_z_down_blocked_;
+    // Content tab selection (0=Jog, 1=Move, 2=Bed). zone_tab instances bind
+    // one active subject each and their labels are subject-bound, matching the
+    // AMS environment strip that shares the component.
+    lv_subject_t motion_tab_subject_;
+    lv_subject_t motion_tab_active_[3];
+    lv_subject_t motion_tab_label_[3];
+    char motion_tab_label_buf_[3][16];
+    int motion_tab_ = 0;
     char pos_x_buf_[32];
     char pos_y_buf_[32];
     char pos_z_buf_[32];
@@ -209,6 +235,10 @@ class MotionPanel : public OverlayBase {
     bool callbacks_registered_ = false;
 
     helix::JogCoalescer jog_coalescer_;
+
+    /// The Move tab's Disable Motors confirmation. The guard hides the dialog
+    /// if the panel is destroyed while it is open.
+    helix::ui::ModalGuard motors_off_dialog_;
     /// Z the toolhead will sit at when the latest target's script starts,
     /// captured at enqueue time. Feeds move_to's travel-before-descend
     /// ordering; delta moves ignore it.
@@ -231,6 +261,15 @@ class MotionPanel : public OverlayBase {
     /// teardown path.
     void stop_hold_repeat();
     static bool z_hold_fire(void* user_data);
+
+    /// Gating backstop behind the Move tab's XML disabled bindings: commands
+    /// are allowed only while nav buttons are enabled (connected + klippy
+    /// ready) and no print is active.
+    bool moves_allowed() const;
+
+    /// Write motion_tab_ into the tab subject and the three per-tab active
+    /// subjects.
+    void sync_motion_tab_subjects();
 
     // Route a tap/flush through the coalescer and send if idle. Returns
     // whether the move was dispatched or accepted as pending.

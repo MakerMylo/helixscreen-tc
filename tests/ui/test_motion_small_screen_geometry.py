@@ -42,8 +42,10 @@ _LANDSCAPE = [
 ]
 
 _PORTRAIT = [
-    ("272x480", 204),
-    ("320x480", 244),
+    # The Jog/Move tab strip under the coordinate row claims this much of the
+    # pad's column, so the portrait floors sit below the landscape-era sizes.
+    ("272x480", 198),
+    ("320x480", 192),
 ]
 
 # 1/100 mm: the widest realistic readout, 3 digits + 2 decimals per axis.
