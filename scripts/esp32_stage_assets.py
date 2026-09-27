@@ -285,6 +285,11 @@ def stage_printer_images(repo_root: Path, out_dir: Path) -> tuple[int, bool]:
         return 0, False
     dest = out_dir / "assets" / "images" / "printers"
     shutil.copytree(src, dest, dirs_exist_ok=True)
+
+    regions = repo_root / "assets" / "images" / "printers" / "regions.json"
+    if regions.is_file():
+        shutil.copy2(regions, dest / "regions.json")
+
     total = sum(f.stat().st_size for f in dest.rglob("*") if f.is_file())
     return total, True
 
