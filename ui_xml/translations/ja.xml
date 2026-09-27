@@ -813,6 +813,7 @@
   <translation tag="Discord Community" ja="Discordコミュニティ"/>
   <translation tag="Discovered Printers" ja="検出されたプリンター"/>
   <translation tag="Dismiss" ja="閉じる"/>
+  <translation tag="Display" ja="ディスプレイ"/>
   <translation tag="Display &amp; Sound" ja="ディスプレイとサウンド"/>
   <translation tag="Display Mode" ja="表示モード"/>
   <translation tag="Display Sleep" ja="ディスプレイスリープ"/>
@@ -1520,6 +1521,7 @@
   <translation tag="Lane tests and motor resets" ja="レーンテストとモーターリセット"/>
   <translation tag="Lanes" ja="レーン"/>
   <translation tag="Language" ja="言語"/>
+  <translation tag="Language &amp; Time" ja="言語と時刻"/>
   <translation tag="Language, theme, brightness, and sound" ja="言語、テーマ、明るさ、サウンド"/>
   <translation tag="Last" ja="最後"/>
   <translation tag="Last 7 days" ja="過去7日間"/>
@@ -2677,6 +2679,7 @@
   <translation tag="Some filaments don&apos;t match the slicer&apos;s intent." ja="一部のフィラメントがスライサーの意図と一致しません。"/>
   <translation tag="Some mapped slots are short on filament:" ja="一部の割り当て済みスロットのフィラメントが不足しています:"/>
   <translation tag="Some settings will take effect after restart." ja="一部の設定は再起動後に有効になります。"/>
+  <translation tag="Sound" ja="サウンド"/>
   <translation tag="Sound Theme" ja="サウンドテーマ"/>
   <translation tag="Sounds" ja="サウンド"/>
   <translation tag="Source" ja="ソース"/>

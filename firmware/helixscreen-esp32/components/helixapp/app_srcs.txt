@@ -506,11 +506,13 @@ src/ui/ui_pause_markers.cpp
 src/ui/ui_resume_dispatch.cpp
 src/ui/ui_runout_guidance_modal.cpp
 src/ui/ui_settings_about.cpp
-src/ui/ui_settings_display_sound.cpp
+src/ui/ui_settings_appearance.cpp
+src/ui/ui_settings_display.cpp
 src/ui/ui_settings_fans.cpp
 src/ui/ui_settings_hardware.cpp
 src/ui/ui_settings_hardware_health.cpp
 src/ui/ui_settings_help.cpp
+src/ui/ui_settings_language_time.cpp
 src/ui/ui_settings_led.cpp
 src/ui/ui_settings_machine_limits.cpp
 src/ui/ui_settings_macro_buttons.cpp
@@ -520,6 +522,7 @@ src/ui/ui_settings_printing.cpp
 src/ui/ui_settings_safety.cpp
 src/ui/ui_settings_security.cpp
 src/ui/ui_settings_sensors.cpp
+src/ui/ui_settings_sound.cpp
 src/ui/ui_settings_system.cpp
 src/ui/ui_settings_telemetry_data.cpp
 src/ui/ui_settings_touch.cpp

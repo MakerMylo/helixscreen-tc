@@ -127,7 +127,6 @@
 #include "ui_runout_guidance_modal.h"
 #include "ui_settings_about.h"
 #include "ui_settings_barcode_scanner.h"
-#include "ui_settings_display_sound.h"
 #include "ui_settings_fans.h"
 #include "ui_settings_hardware_health.h"
 #include "ui_settings_label_printer.h"

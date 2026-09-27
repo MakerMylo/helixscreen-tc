@@ -178,11 +178,8 @@ class SettingsPanel : public PanelBase {
     // === Event Handlers ===
     //
 
-    void handle_dark_mode_changed(bool enabled);
-    void handle_animations_changed(bool enabled);
     void handle_led_light_changed(bool enabled);
     void handle_led_settings_clicked();
-    void handle_sound_settings_clicked();
     void handle_security_settings_clicked();
 #if HELIX_HAS_LABEL_PRINTER
     void handle_label_printer_settings_clicked();
@@ -196,7 +193,6 @@ class SettingsPanel : public PanelBase {
     void handle_discord_clicked();
     void handle_docs_clicked();
     void handle_printers_clicked();
-    void handle_display_settings_clicked();
     void handle_filament_sensors_clicked();
     void handle_fans_settings_clicked();
     void handle_ams_settings_clicked();
@@ -236,11 +232,9 @@ class SettingsPanel : public PanelBase {
     // === XML Callbacks (public for global registration) ===
     // These are registered before settings_panel.xml is parsed [L013]
     //
-    static void on_animations_changed(lv_event_t* e);
     static void on_led_light_changed(lv_event_t* e);
     static void on_led_settings_clicked(lv_event_t* e);
     static void on_timelapse_settings_clicked(lv_event_t* e);
-    static void on_sound_settings_clicked(lv_event_t* e);
     static void on_security_clicked(lv_event_t* e);
 #if HELIX_HAS_LABEL_PRINTER
     static void on_label_printer_settings_clicked(lv_event_t* e);
@@ -252,7 +246,6 @@ class SettingsPanel : public PanelBase {
     static void on_docs_clicked(lv_event_t* e);
     static void on_telemetry_changed(lv_event_t* e);
     static void on_printers_clicked(lv_event_t* e);
-    static void on_display_settings_clicked(lv_event_t* e);
     static void on_filament_sensors_clicked(lv_event_t* e);
     static void on_fans_settings_clicked(lv_event_t* e);
     static void on_ams_settings_clicked(lv_event_t* e);
@@ -272,7 +265,10 @@ class SettingsPanel : public PanelBase {
     static void on_about_clicked(lv_event_t* e);
 
     // Category navigation callbacks (open sub-panel overlays)
-    static void on_display_sound_clicked(lv_event_t* e);
+    static void on_display_clicked(lv_event_t* e);
+    static void on_appearance_clicked(lv_event_t* e);
+    static void on_sound_clicked(lv_event_t* e);
+    static void on_language_time_clicked(lv_event_t* e);
     static void on_printing_clicked(lv_event_t* e);
     static void on_hardware_clicked(lv_event_t* e);
     static void on_safety_clicked(lv_event_t* e);
@@ -281,11 +277,6 @@ class SettingsPanel : public PanelBase {
     static void on_touch_input_clicked(lv_event_t* e);
 
   private:
-    //
-    // === Static Trampolines (private - only used internally) ===
-    //
-    static void on_dark_mode_changed(lv_event_t* e);
-
     // Static callbacks for overlays
     static void on_restart_later_clicked(lv_event_t* e);
     static void on_restart_now_clicked(lv_event_t* e);

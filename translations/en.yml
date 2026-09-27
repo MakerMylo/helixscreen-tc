@@ -873,6 +873,7 @@ translations:
   Discord Community: Discord Community
   Discovered Printers: Discovered Printers
   Dismiss: Dismiss
+  Display: Display
   Display & Sound: Display & Sound
   Display Mode: Display Mode
   Display Sleep: Display Sleep
@@ -1644,6 +1645,7 @@ translations:
   Lane tests and motor resets: Lane tests and motor resets
   Lanes: Lanes
   Language: Language
+  Language & Time: Language & Time
   Language, theme, brightness, and sound: Language, theme, brightness, and sound
   Last: Last
   # Source: history_dashboard_panel.xml:114
@@ -2896,6 +2898,7 @@ translations:
   'Some mapped slots are short on filament:': 'Some mapped slots are short on filament:'
   Some settings will take effect after restart.: Some settings will take effect after
     restart.
+  Sound: Sound
   Sound Theme: Sound Theme
   Sounds: Sounds
   Source: Source

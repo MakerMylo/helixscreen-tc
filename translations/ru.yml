@@ -893,6 +893,7 @@ translations:
   Discord Community: Сообщество Discord
   Discovered Printers: Обнаруженные принтеры
   Dismiss: Отклонить
+  Display: Дисплей
   Display & Sound: Дисплей и звук
   Display Mode: Режим отображения
   Display Sleep: Спящий режим экрана
@@ -1683,6 +1684,7 @@ translations:
   Lane tests and motor resets: 'Тесты каналов и сброс моторов'
   Lanes: Каналы
   Language: Язык
+  Language & Time: Язык и время
   Language, theme, brightness, and sound: Язык, тема, яркость и звук
   Last: Последняя
   # Source: history_dashboard_panel.xml:114
@@ -2957,6 +2959,7 @@ translations:
   'Some mapped slots are short on filament:': 'В некоторых назначенных слотах мало филамента:'
   Some settings will take effect after restart.: Некоторые настройки вступят в силу
     после перезапуска.
+  Sound: Звук
   Sound Theme: Звуковая тема
   Sounds: Звуки
   Source: Источник

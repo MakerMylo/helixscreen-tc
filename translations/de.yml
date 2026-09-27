@@ -910,6 +910,7 @@ translations:
   Discord Community: Discord Community
   Discovered Printers: Gefundene Drucker
   Dismiss: Verwerfen
+  Display: Anzeige
   Display & Sound: Anzeige & Ton
   Display Mode: Anzeigemodus
   Display Sleep: Bildschirm-Ruhezustand
@@ -1712,6 +1713,7 @@ translations:
   Lane tests and motor resets: 'Spurtests und Motor-Rücksetzungen'
   Lanes: Spuren
   Language: Sprache
+  Language & Time: Sprache & Zeit
   Language, theme, brightness, and sound: Sprache, Thema, Helligkeit und Ton
   Last: Letzte
   # Source: history_dashboard_panel.xml:114
@@ -2994,6 +2996,7 @@ translations:
   'Some mapped slots are short on filament:': 'Einige zugeordnete Slots haben zu wenig Filament:'
   Some settings will take effect after restart.: Einige Einstellungen werden nach
     dem Neustart wirksam.
+  Sound: Ton
   Sound Theme: Klangthema
   Sounds: Töne
   Source: Quelle

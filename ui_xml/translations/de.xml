@@ -813,6 +813,7 @@
   <translation tag="Discord Community" de="Discord Community"/>
   <translation tag="Discovered Printers" de="Gefundene Drucker"/>
   <translation tag="Dismiss" de="Verwerfen"/>
+  <translation tag="Display" de="Anzeige"/>
   <translation tag="Display &amp; Sound" de="Anzeige &amp; Ton"/>
   <translation tag="Display Mode" de="Anzeigemodus"/>
   <translation tag="Display Sleep" de="Bildschirm-Ruhezustand"/>
@@ -1520,6 +1521,7 @@
   <translation tag="Lane tests and motor resets" de="Spurtests und Motor-Rücksetzungen"/>
   <translation tag="Lanes" de="Spuren"/>
   <translation tag="Language" de="Sprache"/>
+  <translation tag="Language &amp; Time" de="Sprache &amp; Zeit"/>
   <translation tag="Language, theme, brightness, and sound" de="Sprache, Thema, Helligkeit und Ton"/>
   <translation tag="Last" de="Letzte"/>
   <translation tag="Last 7 days" de="Letzte 7 Tage"/>
@@ -2677,6 +2679,7 @@
   <translation tag="Some filaments don&apos;t match the slicer&apos;s intent." de="Einige Filamente stimmen nicht mit der Vorgabe des Slicers überein."/>
   <translation tag="Some mapped slots are short on filament:" de="Einige zugeordnete Slots haben zu wenig Filament:"/>
   <translation tag="Some settings will take effect after restart." de="Einige Einstellungen werden nach dem Neustart wirksam."/>
+  <translation tag="Sound" de="Ton"/>
   <translation tag="Sound Theme" de="Klangthema"/>
   <translation tag="Sounds" de="Töne"/>
   <translation tag="Source" de="Quelle"/>

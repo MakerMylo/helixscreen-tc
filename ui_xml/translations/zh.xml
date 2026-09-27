@@ -813,6 +813,7 @@
   <translation tag="Discord Community" zh="Discord 社区"/>
   <translation tag="Discovered Printers" zh="已发现的打印机"/>
   <translation tag="Dismiss" zh="忽略"/>
+  <translation tag="Display" zh="显示"/>
   <translation tag="Display &amp; Sound" zh="显示与声音"/>
   <translation tag="Display Mode" zh="显示模式"/>
   <translation tag="Display Sleep" zh="显示休眠"/>
@@ -1520,6 +1521,7 @@
   <translation tag="Lane tests and motor resets" zh="耗材通道测试与电机重置"/>
   <translation tag="Lanes" zh="耗材通道"/>
   <translation tag="Language" zh="语言"/>
+  <translation tag="Language &amp; Time" zh="语言与时间"/>
   <translation tag="Language, theme, brightness, and sound" zh="语言、主题、亮度和声音"/>
   <translation tag="Last" zh="最近"/>
   <translation tag="Last 7 days" zh="最近 7 天"/>
@@ -2677,6 +2679,7 @@
   <translation tag="Some filaments don&apos;t match the slicer&apos;s intent." zh="部分耗材与切片软件的意图不符。"/>
   <translation tag="Some mapped slots are short on filament:" zh="部分已映射槽位耗材不足："/>
   <translation tag="Some settings will take effect after restart." zh="某些设置将在重启后生效。"/>
+  <translation tag="Sound" zh="声音"/>
   <translation tag="Sound Theme" zh="声音主题"/>
   <translation tag="Sounds" zh="声音"/>
   <translation tag="Source" zh="来源"/>

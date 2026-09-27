@@ -2,7 +2,7 @@
 <!-- Copyright (C) 2025-2026 356C LLC -->
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <!-- Settings Panel - Category Navigation -->
-<!-- Six category rows that open sub-panel overlays for grouped settings -->
+<!-- Category rows that open sub-panel overlays for grouped settings -->
 <!-- All styling controlled via XML - C++ only handles callbacks -->
 <component>
   <styles>
@@ -16,13 +16,15 @@
     <setting_section_header title="SETTINGS" title_tag="SETTINGS" icon="settings"/>
     <!-- Category navigation rows grouped in one card -->
     <setting_group name="group_settings">
-      <!-- ================================================================== -->
-      <!-- DISPLAY & SOUND -->
-      <!-- ================================================================== -->
-      <setting_action_row name="row_display_sound"
-                          label="Display &amp; Sound" label_tag="Display &amp; Sound" icon="light"
-                          description="Language, theme, brightness, and sound"
-                          description_tag="Language, theme, brightness, and sound" callback="on_display_sound_clicked"/>
+      <setting_action_row name="row_display"
+                          label="Display" label_tag="Display" icon="light" callback="on_display_clicked"/>
+      <setting_action_row name="row_appearance"
+                          label="Appearance" label_tag="Appearance" icon="palette" callback="on_appearance_clicked"/>
+      <setting_action_row name="row_sound"
+                          label="Sound" label_tag="Sound" icon="volume_high" callback="on_sound_clicked"/>
+      <setting_action_row name="row_language_time"
+                          label="Language &amp; Time" label_tag="Language &amp; Time" icon="translate"
+                          callback="on_language_time_clicked"/>
       <!-- ================================================================== -->
       <!-- PRINTING -->
       <!-- ================================================================== -->

@@ -835,6 +835,7 @@ translations:
   Discord Community: Discordコミュニティ
   Discovered Printers: 検出されたプリンター
   Dismiss: 閉じる
+  Display: ディスプレイ
   Display & Sound: ディスプレイとサウンド
   Display Mode: 表示モード
   Display Sleep: ディスプレイスリープ
@@ -1582,6 +1583,7 @@ translations:
   Lane tests and motor resets: 'レーンテストとモーターリセット'
   Lanes: レーン
   Language: 言語
+  Language & Time: 言語と時刻
   Language, theme, brightness, and sound: 言語、テーマ、明るさ、サウンド
   Last: 最後
   # Source: history_dashboard_panel.xml:114
@@ -2786,6 +2788,7 @@ translations:
   Some filaments don't match the slicer's intent.: 一部のフィラメントがスライサーの意図と一致しません。
   'Some mapped slots are short on filament:': '一部の割り当て済みスロットのフィラメントが不足しています:'
   Some settings will take effect after restart.: 一部の設定は再起動後に有効になります。
+  Sound: サウンド
   Sound Theme: サウンドテーマ
   Sounds: サウンド
   Source: ソース
