@@ -299,3 +299,37 @@ TEST_CASE("tall widget uses bands above and below", "[printer_image][callout_lay
         CHECK((above || below));
     }
 }
+
+TEST_CASE("a budget chip with no tagged point falls through to pinned, docked not at the origin",
+          "[printer_image][callout_layout]") {
+    auto in = wide();
+    in.area_w = 186 + 2 * (70 + in.gap + in.min_line); // otherwise fits both sides
+    for (auto& c : in.budget)
+        if (c.kind == CalloutKind::Chamber)
+            c.anchor = std::nullopt;
+    for (auto& c : in.active)
+        if (c.kind == CalloutKind::Chamber)
+            c.anchor = std::nullopt;
+    const auto l = compute_callout_layout(in);
+    REQUIRE(l.mode == CalloutMode::Pinned);
+    const auto* chamber = find(l, CalloutKind::Chamber);
+    REQUIRE(chamber);
+    CHECK(inside(chamber->rect, in.area_w, in.area_h));
+    CHECK(chamber->rect.y + chamber->rect.h == in.area_h - in.gap); // bottom dock row
+}
+
+TEST_CASE("an active chip with no tagged point falls through to pinned even when the "
+          "budget is fully anchored",
+          "[printer_image][callout_layout]") {
+    auto in = wide();
+    in.area_w = 186 + 2 * (70 + in.gap + in.min_line); // otherwise fits both sides
+    for (auto& c : in.active)
+        if (c.kind == CalloutKind::Chamber)
+            c.anchor = std::nullopt;
+    const auto l = compute_callout_layout(in);
+    REQUIRE(l.mode == CalloutMode::Pinned);
+    const auto* chamber = find(l, CalloutKind::Chamber);
+    REQUIRE(chamber);
+    CHECK(inside(chamber->rect, in.area_w, in.area_h));
+    CHECK(chamber->rect.y + chamber->rect.h == in.area_h - in.gap); // bottom dock row
+}
