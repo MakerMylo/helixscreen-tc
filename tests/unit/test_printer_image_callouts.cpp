@@ -47,3 +47,22 @@ TEST_CASE_METHOD(LVGLUITestFixture,
     CHECK(lv_xml_get_event_cb(nullptr, "printer_callout_light_cb") ==
           PrinterImageWidget::printer_callout_light_cb);
 }
+
+TEST_CASE_METHOD(LVGLUITestFixture, "printer image: the light chip has no text label or subject",
+                 "[printer_image][callouts]") {
+    // callout_chip_light has no text to show: it borrows activity_chip's
+    // styles.activity_chip look as a plain lv_obj holding only its icon,
+    // rather than being an activity_chip instance with no text_subject.
+    helix::init_widget_registrations();
+    helix::PanelWidgetManager::instance().init_widget_subjects();
+
+    PanelWidgetHarness<PrinterImageWidget> h(test_screen());
+    lv_obj_t* light = h.child("callout_chip_light");
+    REQUIRE(light);
+    CHECK(lv_obj_find_by_name(light, "chip_text") == nullptr);
+    // Still looks like a pill: same styles.activity_chip look every other
+    // chip borrows (bg_opa and border_width are literals in that style, not
+    // theme-token defaults a bare lv_obj would already carry).
+    CHECK(lv_obj_get_style_bg_opa(light, LV_PART_MAIN) == 220);
+    CHECK(lv_obj_get_style_border_width(light, LV_PART_MAIN) == 1);
+}

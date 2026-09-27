@@ -3,16 +3,14 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <!-- A small pill: an icon (nested as the instance's plain children) beside one
      line of bound text. Sized to content; the owner positions and widths it.
-     row_reverse so a nested icon renders left of the label declared here. -->
+     Pill styling (colors, padding, row_reverse) lives in styles.activity_chip
+     so an icon-only chip with no label can borrow the identical look. -->
 <component>
   <api>
     <prop name="text_subject" type="subject" default=""/>
   </api>
-  <view extends="lv_obj"
-        width="content" height="content" flex_flow="row_reverse" style_flex_cross_place="center"
-        style_pad_hor="#space_xs" style_pad_ver="#space_xxs" style_pad_column="#space_xxs" style_radius="#space_md"
-        style_bg_color="#card_bg" style_bg_opa="220" style_border_width="1" style_border_color="#border"
-        scrollable="false" clickable="true">
+  <view extends="lv_obj" width="content" height="content" scrollable="false" clickable="true">
+    <style name="styles.activity_chip"/>
     <text_small name="chip_text" bind_text="$text_subject" long_mode="dots"/>
   </view>
 </component>
