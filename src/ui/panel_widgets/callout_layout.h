@@ -168,6 +168,41 @@ inline void place_docked(const CalloutLayoutInput& in, const CalloutRect& img,
     }
 }
 
+/// Pinned chips sit on their points and can land on each other. Chips whose
+/// x-ranges intersect form a column, and spread_1d moves each column's chips
+/// apart vertically by the least that clears them; the rest stay put.
+inline void slide_apart(const CalloutLayoutInput& in, std::vector<CalloutChipOut>& chips) {
+    std::vector<CalloutChipOut*> by_x;
+    for (auto& c : chips)
+        by_x.push_back(&c);
+    std::sort(by_x.begin(), by_x.end(), [](const CalloutChipOut* a, const CalloutChipOut* b) {
+        return a->rect.x < b->rect.x;
+    });
+    for (size_t b = 0; b < by_x.size();) {
+        size_t e = b + 1;
+        int right = by_x[b]->rect.x + by_x[b]->rect.w;
+        for (; e < by_x.size() && by_x[e]->rect.x < right; ++e)
+            right = std::max(right, by_x[e]->rect.x + by_x[e]->rect.w);
+        if (e - b > 1) {
+            std::vector<CalloutChipOut*> col(by_x.begin() + long(b), by_x.begin() + long(e));
+            std::sort(col.begin(), col.end(), [](const CalloutChipOut* p, const CalloutChipOut* q) {
+                return p->rect.y < q->rect.y;
+            });
+            std::vector<int> start, size;
+            for (const auto* c : col) {
+                start.push_back(c->rect.y);
+                size.push_back(c->rect.h);
+            }
+            spread_1d(start, size, in.gap, in.area_h - in.gap, in.gap);
+            for (size_t i = 0; i < col.size(); ++i) {
+                col[i]->rect.y = start[i];
+                col[i]->rect = clamp_into(col[i]->rect, in.area_w, in.area_h);
+            }
+        }
+        b = e;
+    }
+}
+
 inline CalloutChipOut chip_at(const CalloutChipIn& c, int x, int y, int h, int ax, int ay) {
     CalloutChipOut o{c.kind, {x, y, c.w, h}, true};
     o.line_x0 = ax;
@@ -322,6 +357,7 @@ inline bool try_line_modes(const CalloutLayoutInput& in, CalloutLayout& out) {
         }
         // Unanchored chips always use the bottom row: the side bands belong to the image here.
         place_docked(in, CalloutRect{0, 0, in.area_w, 0}, unanchored, out.chips);
+        slide_apart(in, out.chips);
         return out;
     }
 

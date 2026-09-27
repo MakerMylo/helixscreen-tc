@@ -434,3 +434,98 @@ TEST_CASE("leader lines from the layout end level into side chips, vertical into
         CHECK(c.line_xm == c.line_x1);
     }
 }
+
+// ---------------------------------------------------------------------------
+// Pinned chips slide apart instead of landing on each other
+// ---------------------------------------------------------------------------
+
+namespace {
+
+bool overlaps(const CalloutRect& a, const CalloutRect& b) {
+    return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+}
+
+void check_apart_and_inside(const CalloutLayout& l, const CalloutLayoutInput& in) {
+    for (size_t i = 0; i < l.chips.size(); ++i) {
+        INFO("chip " << int(l.chips[i].kind));
+        CHECK(inside(l.chips[i].rect, in.area_w, in.area_h));
+        for (size_t j = i + 1; j < l.chips.size(); ++j) {
+            INFO("vs chip " << int(l.chips[j].kind));
+            CHECK_FALSE(overlaps(l.chips[i].rect, l.chips[j].rect));
+        }
+    }
+}
+
+// A K1C 2x2 tile: the merged toolhead chip on the nozzle, the light chip on
+// the light, which sits just above and left of it.
+CalloutLayoutInput k1c_2x2() {
+    auto in = base();
+    in.area_w = 240;
+    in.area_h = 200;
+    in.chip_h = 30;
+    in.active = {{CalloutKind::Nozzle, 100, NormPoint{0.513f, 0.279f}},
+                 {CalloutKind::Fan, 50, NormPoint{0.488f, 0.206f}},
+                 {CalloutKind::Light, 40, NormPoint{0.321f, 0.164f}}};
+    in.toolhead = CalloutChipIn{CalloutKind::Toolhead, 184, NormPoint{0.513f, 0.279f}};
+    return in;
+}
+
+} // namespace
+
+TEST_CASE("pinned: the toolhead chip and the light chip slide apart (K1C 2x2)",
+          "[printer_image][callout_layout]") {
+    const auto in = k1c_2x2();
+    const auto l = compute_callout_layout(in);
+    REQUIRE(l.mode == CalloutMode::Pinned);
+    REQUIRE(l.toolhead_merged);
+    const auto* th = find(l, CalloutKind::Toolhead);
+    const auto* light = find(l, CalloutKind::Light);
+    REQUIRE(th);
+    REQUIRE(light);
+    // Placed on their points, the two would collide.
+    const int nx = l.image.x + int(0.513f * l.image.w), ny = l.image.y + int(0.279f * l.image.h);
+    const int lx = l.image.x + int(0.321f * l.image.w), ly = l.image.y + int(0.164f * l.image.h);
+    REQUIRE(overlaps({nx - 92, ny - 15, 184, 30}, {lx - 20, ly - 15, 40, 30}));
+    check_apart_and_inside(l, in);
+    // Only vertical moves: each chip stays centred on its point's x.
+    CHECK(th->rect.x == nx - 92);
+    CHECK(light->rect.x == lx - 20);
+}
+
+TEST_CASE("pinned: chamber and nozzle chips slide apart (Q2-like)",
+          "[printer_image][callout_layout]") {
+    auto in = base();
+    in.area_w = 240;
+    in.area_h = 200;
+    in.image_w = 1000;
+    in.image_h = 1000;
+    in.chip_h = 30;
+    in.active = {{CalloutKind::Chamber, 70, NormPoint{0.368f, 0.531f}},
+                 {CalloutKind::Nozzle, 70, NormPoint{0.574f, 0.398f}}};
+    const auto l = compute_callout_layout(in);
+    REQUIRE(l.mode == CalloutMode::Pinned);
+    REQUIRE(l.chips.size() == 2);
+    check_apart_and_inside(l, in);
+}
+
+TEST_CASE("pinned: chips that do not collide stay centred on their points",
+          "[printer_image][callout_layout]") {
+    auto in = base();
+    in.area_w = 240;
+    in.area_h = 200;
+    in.chip_h = 30;
+    // Same column, far apart vertically; and one level with the nozzle, off to the side.
+    in.active = {{CalloutKind::Nozzle, 60, NormPoint{0.5f, 0.25f}},
+                 {CalloutKind::Bed, 60, NormPoint{0.5f, 0.75f}},
+                 {CalloutKind::Light, 30, NormPoint{0.1f, 0.25f}}};
+    const auto l = compute_callout_layout(in);
+    REQUIRE(l.mode == CalloutMode::Pinned);
+    for (const auto& a : in.active) {
+        const auto* c = find(l, a.kind);
+        REQUIRE(c);
+        const int px = l.image.x + int(a.anchor->x * l.image.w);
+        const int py = l.image.y + int(a.anchor->y * l.image.h);
+        CHECK(c->rect.x == px - a.w / 2);
+        CHECK(c->rect.y == py - in.chip_h / 2);
+    }
+}
