@@ -1192,3 +1192,51 @@ TEST_CASE_METHOD(LVGLUITestFixture,
     REQUIRE(btn_clear != nullptr);
     CHECK_FALSE(lv_obj_has_state(btn_clear, LV_STATE_DISABLED));
 }
+
+// ============================================================================
+// on_created: Preload follows the backend capability and the print gate
+// ============================================================================
+
+TEST_CASE_METHOD(LVGLUITestFixture,
+                 "AmsContextMenu: Preload shows for a preloading backend and greys mid-print",
+                 "[ui][ams][context_menu][preload]") {
+    auto backend = std::make_unique<AmsBackendMock>(4);
+    REQUIRE(backend->supports_lane_preload());
+
+    REQUIRE(lv_xml_register_component_from_file("A:ui_xml/ams_context_menu.xml") == LV_RESULT_OK);
+
+    SECTION("machine free: shown and enabled") {
+        ScopedWireState idle(state(), helix::PrintJobState::STANDBY);
+        AmsContextMenu menu;
+        REQUIRE(menu.show_near_widget(test_screen(), /*slot_index=*/1, test_screen(),
+                                      /*is_loaded=*/false, backend.get()));
+        lv_obj_t* btn = lv_obj_find_by_name(test_screen(), "btn_preload");
+        REQUIRE(btn != nullptr);
+        CHECK_FALSE(lv_obj_has_flag(btn, LV_OBJ_FLAG_HIDDEN));
+        CHECK_FALSE(lv_obj_has_state(btn, LV_STATE_DISABLED));
+    }
+
+    SECTION("mid-print: shown but disabled") {
+        ScopedWireState printing(state(), helix::PrintJobState::PRINTING);
+        AmsContextMenu menu;
+        REQUIRE(menu.show_near_widget(test_screen(), /*slot_index=*/1, test_screen(),
+                                      /*is_loaded=*/false, backend.get()));
+        lv_obj_t* btn = lv_obj_find_by_name(test_screen(), "btn_preload");
+        REQUIRE(btn != nullptr);
+        CHECK_FALSE(lv_obj_has_flag(btn, LV_OBJ_FLAG_HIDDEN));
+        CHECK(lv_obj_has_state(btn, LV_STATE_DISABLED));
+    }
+
+    SECTION("external spool: hidden, even after a lane menu showed it") {
+        {
+            AmsContextMenu lane_menu;
+            REQUIRE(lane_menu.show_near_widget(test_screen(), /*slot_index=*/1, test_screen(),
+                                               /*is_loaded=*/false, backend.get()));
+        }
+        AmsContextMenu ext_menu;
+        REQUIRE(ext_menu.show_for_external_spool(test_screen(), test_screen()));
+        lv_obj_t* btn = lv_obj_find_by_name(test_screen(), "btn_preload");
+        REQUIRE(btn != nullptr);
+        CHECK(lv_obj_has_flag(btn, LV_OBJ_FLAG_HIDDEN));
+    }
+}
