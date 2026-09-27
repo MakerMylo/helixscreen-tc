@@ -20,6 +20,7 @@
 #include "platform_capabilities.h"
 #include "printer_detector.h"
 #include "runtime_config.h"
+#include "text_io.h"
 #include "wizard_config_paths.h"
 
 #include <algorithm>
@@ -27,11 +28,8 @@
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
-#include <fstream>
-#include <iterator>
 #include <map>
 #include <optional>
-#include <sstream>
 #include <sys/stat.h>
 // C++17 filesystem - use std::filesystem if available, fall back to experimental
 #if __cplusplus >= 201703L && __has_include(<filesystem>)
@@ -43,6 +41,8 @@ namespace fs = std::experimental::filesystem;
 #endif
 
 using namespace helix;
+
+namespace tio = helix::text_io;
 
 using AppConstants::Update::config_backup_fallback;
 using AppConstants::Update::config_backup_primary;
@@ -727,9 +727,7 @@ static void migrate_v13_to_v14(json& config, const std::string& config_path) {
     }
 
     try {
-        std::ifstream f(legacy_path);
-        json legacy;
-        f >> legacy;
+        json legacy = json::parse(tio::read_file(legacy_path.string()).value_or(""));
         if (!has_key && legacy.contains("enabled") && legacy["enabled"].is_boolean()) {
             bool legacy_enabled = legacy["enabled"].get<bool>();
             config["telemetry_enabled"] = legacy_enabled;
@@ -1872,9 +1870,7 @@ static void recover_config_from_backup_or_defaults(json& data, ConfigStorage& st
     bool restored = false;
     if (!backup_src.empty()) {
         try {
-            // ifstream, not fstream: fstream's default openmode is in|out, so a
-            // read-only backup fails to open and parses as empty input.
-            data = json::parse(std::ifstream(backup_src));
+            data = json::parse(tio::read_file(backup_src).value_or(""));
             restored = true;
             spdlog::info("[Config] Restored from backup: {}", backup_src);
             NOTIFY_WARNING("Settings were corrupted — restored from backup");
@@ -2122,7 +2118,7 @@ void Config::init(const std::string& config_path) {
                                                  : find_backup(config_backup_search_paths());
                     if (!backup_src.empty()) {
                         try {
-                            auto backup_data = json::parse(std::ifstream(backup_src));
+                            auto backup_data = json::parse(tio::read_file(backup_src).value_or(""));
                             if (helix::json_util::safe_int(backup_data, "config_version", 0) > 0) {
                                 spdlog::warn("[Config] Loaded config is a tarball default "
                                              "(no config_version) — restoring from backup: {}",
@@ -2189,7 +2185,7 @@ void Config::init(const std::string& config_path) {
                 int snapshot_version = 0;
                 try {
                     snapshot_version = helix::json_util::safe_int(
-                        json::parse(std::ifstream(snapshot)), "config_version", 0);
+                        json::parse(tio::read_file(snapshot).value_or("")), "config_version", 0);
                 } catch (const json::exception&) {
                     // Absent or unreadable: nothing worth keeping.
                 }
@@ -2718,9 +2714,7 @@ bool Config::save() {
     // LVGL event callbacks, where an escaping exception unwinds through a C
     // frame.
     try {
-        std::ostringstream oss;
-        oss << helix::json_util::safe_dump(data, 2) << std::endl;
-        if (!storage_->store(oss.str())) {
+        if (!storage_->store(helix::json_util::safe_dump(data, 2) + "\n")) {
             // FileConfigStorage (the default backend) already reports the specific
             // failure via NOTIFY_ERROR + CONFIG_RECORD_ERROR at the failing phase
             // (open/write/rename/exception) — don't double-toast here. Non-file
@@ -2846,7 +2840,7 @@ bool Config::apply_preset_file(const std::string& preset_name) {
         }
         json preset_json;
         try {
-            preset_json = json::parse(std::ifstream(preset_path));
+            preset_json = json::parse(tio::read_file(preset_path).value_or(""));
         } catch (const json::exception&) {
             spdlog::info("[Config] Wizard completed, skipping preset '{}' merge", preset_name);
             return false;
@@ -3043,7 +3037,7 @@ bool Config::apply_preset_file(const std::string& preset_name) {
     // Load and parse preset JSON
     json preset_json;
     try {
-        preset_json = json::parse(std::ifstream(preset_path));
+        preset_json = json::parse(tio::read_file(preset_path).value_or(""));
     } catch (const json::exception& e) {
         spdlog::error("[Config] Failed to parse preset '{}': {}", preset_path, e.what());
         return false;

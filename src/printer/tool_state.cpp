@@ -25,6 +25,7 @@
 #include "state/subject_macros.h"
 #include "static_subject_registry.h"
 #include "system/helix_paths.h"
+#include "text_io.h"
 #include "tool_offsets.h"
 
 #include <spdlog/fmt/fmt.h>
@@ -37,7 +38,6 @@
 #include <cstdio>
 #include <cstring>
 #include <filesystem>
-#include <fstream>
 
 namespace helix {
 
@@ -994,30 +994,10 @@ void ToolState::save_spool_json() const {
         path = helix::paths::write_target(path.string());
 
         // Atomic save: write to temp file, then rename to avoid partial writes on crash/power loss
-        auto tmp_path = path;
-        tmp_path += ".tmp";
-        {
-            std::ofstream ofs(tmp_path);
-            if (!ofs.is_open()) {
-                spdlog::error("[ToolState] Failed to open {} for writing: {}", tmp_path.string(),
-                              strerror(errno));
-                std::remove(tmp_path.c_str());
-                return;
-            }
-            ofs << helix::json_util::safe_dump(json_data, 2);
-            ofs.flush();
-            if (!ofs.good()) {
-                spdlog::error("[ToolState] Failed to write spool JSON to {}: {}", tmp_path.string(),
-                              strerror(errno));
-                std::remove(tmp_path.c_str());
-                return;
-            }
-        }
-
-        if (std::rename(tmp_path.c_str(), path.c_str()) != 0) {
-            spdlog::error("[ToolState] Failed to rename '{}' to '{}': {}", tmp_path.string(),
-                          path.string(), strerror(errno));
-            std::remove(tmp_path.c_str());
+        if (!helix::text_io::write_file_atomic(path.string(),
+                                               helix::json_util::safe_dump(json_data, 2))) {
+            spdlog::error("[ToolState] Failed to write spool JSON to {}: {}", path.string(),
+                          strerror(errno));
             return;
         }
 
@@ -1038,13 +1018,13 @@ bool ToolState::load_spool_json() {
     }
 
     try {
-        std::ifstream ifs(path);
-        if (!ifs.is_open()) {
+        auto text = helix::text_io::read_file(path.string());
+        if (!text) {
             spdlog::warn("[ToolState] Failed to open {}", path.string());
             return false;
         }
 
-        auto data = nlohmann::json::parse(ifs);
+        auto data = nlohmann::json::parse(*text);
         apply_spool_assignments(data);
         spdlog::info("[ToolState] Loaded spool assignments from {}", path.string());
         return true;

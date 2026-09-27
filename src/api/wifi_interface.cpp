@@ -3,15 +3,16 @@
 
 #include "wifi_interface.h"
 
+#include "text_io.h"
+
 #include <algorithm>
 #include <cctype>
 #include <cstdlib>
 #include <filesystem>
-#include <fstream>
-#include <sstream>
 #include <vector>
 
 namespace fs = std::filesystem;
+namespace tio = helix::text_io;
 
 namespace helix::wifi {
 
@@ -19,9 +20,8 @@ namespace detail {
 
 std::string parse_wpa_state(const std::string& status_reply) {
     static const std::string prefix = "wpa_state=";
-    std::istringstream iss(status_reply);
-    std::string line;
-    while (std::getline(iss, line)) {
+    for (std::string_view sv : tio::lines(status_reply)) {
+        std::string line(sv);
         if (line.compare(0, prefix.size(), prefix) != 0)
             continue;
         std::string value = line.substr(prefix.size());
@@ -50,12 +50,12 @@ std::vector<DaemonInfo> list_wpa_daemons(const std::string& proc_root) {
             continue;
 
         // /proc/<pid>/cmdline is NUL-separated argv.
-        std::ifstream cmd(entry.path() / "cmdline", std::ios::binary);
-        if (!cmd.is_open())
+        tio::LineReader cmd((entry.path() / "cmdline").string(), '\0');
+        if (!cmd)
             continue;
         std::vector<std::string> argv;
         std::string arg;
-        while (std::getline(cmd, arg, '\0'))
+        while (cmd.next(arg))
             argv.push_back(arg);
         if (argv.empty())
             continue;
@@ -132,12 +132,11 @@ std::string find_rfkill_node(const std::string& sys_root, const std::string& net
             const std::string rfkill_name = entry.path().filename().string();
             const std::string type_file = entry.path() / "type";
 
-            std::ifstream f(type_file);
-            if (!f.is_open())
+            auto type_line = tio::read_first_line(type_file);
+            if (!type_line)
                 continue;
 
-            std::string type_value;
-            std::getline(f, type_value);
+            std::string type_value = std::move(*type_line);
             // Trim trailing whitespace.
             while (!type_value.empty() && (type_value.back() == '\r' || type_value.back() == '\n' ||
                                            type_value.back() == ' ' || type_value.back() == '\t'))
@@ -172,11 +171,10 @@ bool has_non_wifi_network_path(const std::string& sys_root, const std::string& w
         if (fs::is_directory(entry.path() / "wireless", wec) && !wec)
             continue;
 
-        std::ifstream f(entry.path() / "operstate");
-        if (!f.is_open())
+        auto operstate_line = tio::read_first_line((entry.path() / "operstate").string());
+        if (!operstate_line)
             continue;
-        std::string operstate;
-        std::getline(f, operstate);
+        std::string operstate = std::move(*operstate_line);
         while (!operstate.empty() &&
                (operstate.back() == '\r' || operstate.back() == '\n' || operstate.back() == ' '))
             operstate.pop_back();

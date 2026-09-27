@@ -5,10 +5,10 @@
 
 #include "filament_catalog.h"
 #include "json_utils.h"
+#include "text_io.h"
 
 #include <spdlog/spdlog.h>
 
-#include <fstream>
 #include <mutex>
 #include <unordered_set>
 
@@ -109,14 +109,14 @@ bool has_usable_nozzle_range(const nlohmann::json& t) {
 /// it: a freed DOM does not hand its pages back, so parsing them here would
 /// raise the arena high-water mark for good on the smallest boards.
 nlohmann::json read_asset_types(const std::string& path) {
-    std::ifstream f(path);
-    if (!f.is_open()) {
+    auto text = helix::text_io::read_file(path);
+    if (!text) {
         spdlog::error("[filament] material types asset not found: '{}'", path);
         return nlohmann::json::array();
     }
     try {
         auto doc = nlohmann::json::parse(
-            f, [](int depth, nlohmann::json::parse_event_t event, nlohmann::json& parsed) {
+            *text, [](int depth, nlohmann::json::parse_event_t event, nlohmann::json& parsed) {
                 return !(depth == 1 && event == nlohmann::json::parse_event_t::key &&
                          parsed != "types");
             });
