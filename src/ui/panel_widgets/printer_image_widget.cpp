@@ -231,6 +231,9 @@ void PrinterImageWidget::attach(lv_obj_t* widget_obj, lv_obj_t* parent_screen) {
         [](PrinterImageWidget* w, const char* /*type*/) { w->schedule_image_refresh(); },
         get_printer_state().get_subjects_lifetime());
 
+    // A recycled instance's mode is the last tree's; hide the layer until the
+    // timer has positioned this tree's chips.
+    lv_subject_set_int(&s_printer_callout_mode, static_cast<int>(CalloutMode::ImageOnly));
     arm_callout_observers();
     schedule_callout_layout();
 
@@ -787,12 +790,8 @@ void PrinterImageWidget::update_callouts() {
                 helix::ui::fan_spin_stop(icon);
         }
     }
-    // Laid out now, not on the deferred timer: a chip that just appeared has no
-    // measured width yet, and its label collapses until it gets one. This reads
-    // the geometry the last layout pass left and forces none; a tree not laid
-    // out yet reads a zero area and stays ImageOnly until attach()'s timer.
     if (changed)
-        apply_callout_layout();
+        schedule_callout_layout();
 }
 
 void PrinterImageWidget::on_size_changed(int colspan, int rowspan, int /*width_px*/,
@@ -880,11 +879,13 @@ void PrinterImageWidget::apply_callout_layout() {
     };
     // Measured text and rendered text disagree by a few pixels, so a chip with
     // text gets a comfort margin; an icon-only chip is exactly its glyph.
+    // Everything in a text chip but its text: chrome, icons, and the gap before
+    // the label. Sizes the chip here and bounds its label in the apply loop.
+    const auto around_text = [&](int icons) { return chrome_w + icons + col_gap; };
     const auto chip_w = [&](int icons, const std::string& text) {
         if (text.empty())
             return chrome_w + icons;
-        return chrome_w + icons + col_gap + helix::ui::measure_text_px(text.c_str(), text_font) +
-               comfort;
+        return around_text(icons) + helix::ui::measure_text_px(text.c_str(), text_font) + comfort;
     };
     in.chip_h = std::max(lv_font_get_line_height(text_font), lv_font_get_line_height(icon_font)) +
                 lv_obj_get_style_pad_top(probe, LV_PART_MAIN) +
@@ -971,9 +972,12 @@ void PrinterImageWidget::apply_callout_layout() {
     lv_subject_set_int(&s_printer_callout_mode, static_cast<int>(out.mode));
     for (const CalloutChipOut& c : out.chips) {
         const char* name = "callout_chip_toolhead";
+        int icons = toolhead_icons;
         for (const Chip& k : chips) {
-            if (k.kind == c.kind)
+            if (k.kind == c.kind) {
                 name = k.name;
+                icons = k.icons;
+            }
         }
         lv_obj_t* obj = lv_obj_find_by_name(widget_obj_, name);
         if (!obj)
@@ -988,6 +992,14 @@ void PrinterImageWidget::apply_callout_layout() {
         if (lv_obj_get_style_width(obj, LV_PART_MAIN) != c.rect.w) {
             // DECLARATIVE_OK: measured callout layout
             lv_obj_set_width(obj, c.rect.w);
+        }
+        // The label keeps its content width up to what the icons leave, so a
+        // chip clamped narrower than its text ends in dots instead of spilling.
+        lv_obj_t* label = lv_obj_find_by_name(obj, "chip_text");
+        const int label_max = std::max(0, c.rect.w - around_text(icons));
+        if (label && lv_obj_get_style_max_width(label, LV_PART_MAIN) != label_max) {
+            // DECLARATIVE_OK: measured callout layout
+            lv_obj_set_style_max_width(label, label_max, 0);
         }
     }
 }

@@ -88,12 +88,12 @@ namespace {
 /// Registers the widget's subjects and tags the fallback image (the widget shows
 /// generic-corexy with no printer type) with the K1C's points, so the widget
 /// under test is "tagged". Pair with set_image_regions_for_testing({}).
-void prepare_tagged_widget() {
+void prepare_tagged_widget(int src_w = 1601, int src_h = 1204) {
     helix::init_widget_registrations();
     helix::PanelWidgetManager::instance().init_widget_subjects();
     ImageRegions r;
-    r.src_w = 1601;
-    r.src_h = 1204;
+    r.src_w = src_w;
+    r.src_h = src_h;
     r.nozzle = {0.513f, 0.279f};
     r.part_fan = NormPoint{0.488f, 0.206f};
     r.chamber = NormPoint{0.313f, 0.379f};
@@ -101,6 +101,14 @@ void prepare_tagged_widget() {
     r.bed_left = {0.308f, 0.571f};
     r.bed_right = {0.611f, 0.573f};
     set_image_regions_for_testing({{"generic-corexy", r}});
+}
+
+/// True when `obj` lies inside `chip`'s content box horizontally.
+bool within_chip(lv_obj_t* chip, lv_obj_t* obj) {
+    lv_area_t chip_box, box;
+    lv_obj_get_content_coords(chip, &chip_box);
+    lv_obj_get_coords(obj, &box);
+    return box.x1 >= chip_box.x1 && box.x2 <= chip_box.x2;
 }
 
 /// Observer handlers run from the UpdateQueue, and the layout from a one-shot
@@ -262,23 +270,23 @@ TEST_CASE_METHOD(LVGLUITestFixture, "callouts: a detached widget stops publishin
 
 TEST_CASE_METHOD(LVGLUITestFixture, "callouts: a chip narrower than its text dots the label",
                  "[printer_image][callouts]") {
-    prepare_tagged_widget();
+    // A tall image in a narrow tile: pinned, but the area is narrower than the
+    // bed chip, so clamp_into shrinks the chip below its text.
+    prepare_tagged_widget(400, 1600);
     PanelWidgetHarness<PrinterImageWidget> h(test_screen());
-    h.resize(4, 4, 160, 160);
+    h.resize(4, 4, 80, 320);
     lv_subject_set_int(state().get_bed_temp_subject(), 400);
     lv_subject_set_int(state().get_bed_target_subject(), 600);
     settle();
+    lv_obj_update_layout(h.root());
+    REQUIRE_FALSE(lv_obj_has_flag(h.child("callout_layer"), LV_OBJ_FLAG_HIDDEN));
     lv_obj_t* chip = h.child("callout_chip_bed");
     lv_obj_t* label = lv_obj_find_by_name(chip, "chip_text");
     REQUIRE(label);
-    // Squeeze the chip well below its text, as clamp_into does on a narrow area.
-    lv_obj_set_width(chip, 40);
-    lv_obj_update_layout(h.root());
-    lv_area_t chip_box, label_box;
-    lv_obj_get_content_coords(chip, &chip_box);
-    lv_obj_get_coords(label, &label_box);
-    CHECK(label_box.x1 >= chip_box.x1);
-    CHECK(label_box.x2 <= chip_box.x2);
+    REQUIRE(lv_obj_get_width(label) <
+            helix::ui::measure_text_px(lv_label_get_text(label),
+                                       lv_obj_get_style_text_font(label, LV_PART_MAIN)));
+    CHECK(within_chip(chip, label));
     CHECK(lv_label_get_long_mode(label) == LV_LABEL_LONG_MODE_DOTS);
     set_image_regions_for_testing({});
 }
@@ -299,26 +307,27 @@ TEST_CASE_METHOD(LVGLUITestFixture, "callouts: a laid-out chip is not narrower t
     set_image_regions_for_testing({});
 }
 
-// The chip label collapses while its chip is content-sized, so a chip has to be
-// measured in the same tick that shows it, before any timer runs.
-TEST_CASE_METHOD(LVGLUITestFixture, "callouts: a chip is sized the moment it appears",
+TEST_CASE_METHOD(LVGLUITestFixture,
+                 "callouts: a chip shows its full text before its first layout, and fits its "
+                 "rect after it",
                  "[printer_image][callouts]") {
     prepare_tagged_widget();
     PanelWidgetHarness<PrinterImageWidget> h(test_screen());
     h.resize(4, 4, 160, 160);
-    lv_subject_set_int(state().get_bed_target_subject(), 0);
-    lv_subject_set_int(state().get_bed_temp_subject(), 250);
-    settle();
-    lv_obj_update_layout(h.root());
+    lv_subject_set_int(state().get_bed_temp_subject(), 400);
     lv_subject_set_int(state().get_bed_target_subject(), 600);
     helix::ui::UpdateQueueTestAccess::drain_all(helix::ui::UpdateQueue::instance());
-    lv_obj_t* chip = h.child("callout_chip_bed");
-    REQUIRE_FALSE(lv_obj_has_flag(chip, LV_OBJ_FLAG_HIDDEN));
     lv_obj_update_layout(h.root());
+    lv_obj_t* chip = h.child("callout_chip_bed");
     lv_obj_t* label = lv_obj_find_by_name(chip, "chip_text");
-    CHECK(lv_obj_get_width(label) >=
-          helix::ui::measure_text_px(lv_label_get_text(label),
-                                     lv_obj_get_style_text_font(label, LV_PART_MAIN)));
+    REQUIRE_FALSE(lv_obj_has_flag(chip, LV_OBJ_FLAG_HIDDEN));
+    const int text_px = helix::ui::measure_text_px(lv_label_get_text(label),
+                                                   lv_obj_get_style_text_font(label, LV_PART_MAIN));
+    CHECK(lv_obj_get_width(label) >= text_px);
+    settle();
+    lv_obj_update_layout(h.root());
+    CHECK(lv_obj_get_width(label) >= text_px);
+    CHECK(within_chip(chip, label));
     set_image_regions_for_testing({});
 }
 
@@ -355,6 +364,8 @@ TEST_CASE_METHOD(LVGLUITestFixture, "callouts: the nozzle chip budgets the tool 
     CHECK(lv_obj_get_width(label) >=
           helix::ui::measure_text_px(lv_label_get_text(label),
                                      lv_obj_get_style_text_font(label, LV_PART_MAIN)));
+    CHECK(within_chip(chip, label));
+    CHECK(within_chip(chip, badge));
     set_image_regions_for_testing({});
 }
 
@@ -380,6 +391,8 @@ TEST_CASE_METHOD(LVGLUITestFixture, "callouts: a recycled instance drives its ne
         static_cast<lv_obj_t*>(lv_xml_create(test_screen(), "panel_widget_printer_image", nullptr));
     REQUIRE(comp2);
     widget.attach(comp2, test_screen());
+    // Until the timer positions its chips, the new tree shows none of them.
+    CHECK(lv_obj_has_flag(lv_obj_find_by_name(comp2, "callout_layer"), LV_OBJ_FLAG_HIDDEN));
     lv_obj_update_layout(comp2);
     widget.on_size_changed(4, 4, 160, 160);
     lv_subject_set_int(get_printer_state().get_bed_target_subject(), 650);
