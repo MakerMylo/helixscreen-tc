@@ -91,6 +91,15 @@ struct CalloutLayout {
     return r;
 }
 
+/// The point of `img` (a fit_image() rect) under area pixel (x, y), or nullopt
+/// when that pixel is in the letterbox rather than on the image.
+[[nodiscard]] inline std::optional<NormPoint> image_point_at(const CalloutRect& img, int x, int y) {
+    if (img.w <= 0 || img.h <= 0 || x < img.x || y < img.y || x >= img.x + img.w ||
+        y >= img.y + img.h)
+        return std::nullopt;
+    return NormPoint{float(x - img.x) / float(img.w), float(y - img.y) / float(img.h)};
+}
+
 /// Resolve overlaps along one axis. `start` holds each item's ideal start,
 /// sorted ascending; items are pushed apart by `gap`, then pulled back so the
 /// last ends by `hi`. The caller has already checked the items fit in [lo, hi].
