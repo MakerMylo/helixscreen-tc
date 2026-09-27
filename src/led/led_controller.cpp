@@ -16,13 +16,14 @@
 #include "observer_factory.h"
 #include "printer_discovery.h"
 #include "static_subject_registry.h"
+#include "text_io.h"
 
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <cctype>
 #include <set>
-#include <sstream>
+#include <string_view>
 
 namespace {
 
@@ -596,9 +597,8 @@ void LedController::update_effect_targets(const nlohmann::json& configfile_confi
 
         // Parse the leds field: may contain multiple LED targets separated by newlines
         std::vector<std::string> targets;
-        std::istringstream stream(leds_str);
-        std::string line;
-        while (std::getline(stream, line)) {
+        for (std::string_view sv : helix::text_io::lines(leds_str)) {
+            std::string line(sv);
             // Trim whitespace
             size_t start = line.find_first_not_of(" \t\r\n");
             if (start == std::string::npos) {

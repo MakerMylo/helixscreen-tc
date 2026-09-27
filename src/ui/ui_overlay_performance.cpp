@@ -6,11 +6,12 @@
 
 #include "observer_factory.h"
 #include "performance_state.h" // helix::perf::PerformanceState::subjects_lifetime()
+#include "text_io.h"
 
 #include <spdlog/spdlog.h>
 
-#include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace helix {
@@ -85,9 +86,8 @@ void UiOverlayPerformance::rebuild_mcu_rows() {
         return;
 
     std::vector<std::string> names;
-    std::stringstream ss(names_str);
-    std::string item;
-    while (std::getline(ss, item, ',')) {
+    for (std::string_view sv : helix::text_io::lines(names_str, ',')) {
+        std::string item(sv);
         if (!item.empty()) {
             names.push_back(item);
         }

@@ -15,6 +15,7 @@
 #include "printer_discovery.h"
 #include "printer_state.h"
 #include "probe_preparation.h"
+#include "text_io.h"
 #include "thermal_rate_model.h"
 #include "wizard_config_paths.h"
 
@@ -22,7 +23,6 @@
 
 #include <algorithm>
 #include <cctype>
-#include <fstream>
 #include <tuple>
 #include <unordered_set>
 #include <vector>
@@ -78,14 +78,14 @@ struct PrinterDatabase {
         // Phase 1: Load bundled database
         try {
             const std::string db_path = helix::find_readable("printer_database.json");
-            std::ifstream file(db_path);
-            if (!file.is_open()) {
+            const auto db_text = helix::text_io::read_file(db_path);
+            if (!db_text) {
                 NOTIFY_ERROR(lv_tr("Could not load printer database"));
                 LOG_ERROR_INTERNAL("[PrinterDetector] Failed to open {}", db_path);
                 return false;
             }
 
-            data = json::parse(file);
+            data = json::parse(*db_text);
             loaded_files.push_back(db_path);
             // safe_string, not .value(): a null "version" would throw
             // type_error.302 from inside this log statement, and the catch below
@@ -213,14 +213,14 @@ struct PrinterDatabase {
     void merge_extension_file(const std::string& file_path,
                               std::map<std::string, size_t>& bundled_index) {
         try {
-            std::ifstream file(file_path);
-            if (!file.is_open()) {
+            const auto extension_text = helix::text_io::read_file(file_path);
+            if (!extension_text) {
                 load_errors.push_back(fmt::format("Could not open {}", file_path));
                 spdlog::warn("[PrinterDetector] {}", load_errors.back());
                 return;
             }
 
-            json extension_data = json::parse(file);
+            json extension_data = json::parse(*extension_text);
             loaded_files.push_back(file_path);
 
             // Console filter sets merge into the shared table before the printer
