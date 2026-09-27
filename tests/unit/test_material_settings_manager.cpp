@@ -615,3 +615,28 @@ TEST_CASE_METHOD(MaterialSettingsFixture, "clearing a user-defined type keeps it
     CHECK(overlay_type("PEKK")["nozzle_min"] == 330);
     CHECK(find_material("PEKK")->nozzle_min == 330);
 }
+
+TEST_CASE_METHOD(MaterialSettingsFixture, "a hand-written 205.0 counts as an override",
+                 "[material_settings]") {
+    write_overlay(R"({"types": [{"name": "PLA", "nozzle_min": 205.0}]})");
+    MaterialSettingsManager::instance().init();
+    REQUIRE(MaterialSettingsManager::instance().has_override("PLA"));
+    CHECK(MaterialSettingsManager::instance().get_override("PLA")->nozzle_min == 205);
+}
+
+TEST_CASE_METHOD(MaterialSettingsFixture, "an unparseable overlay blocks the migration",
+                 "[material_settings][migration]") {
+    // Saving over it would replace the user's hand edits with the migrated
+    // entries alone; settings keep the only copy until the file is fixed.
+    std::ofstream(overlay_path()) << R"({"types": [ {"name": "PLA", )";
+    Config::get_instance()->get_json("/material_overrides") =
+        nlohmann::json::parse(R"({"PLA": {"bed_temp": 65}})");
+
+    MaterialSettingsManager::instance().init();
+
+    REQUIRE(Config::get_instance()->exists("/material_overrides"));
+    CHECK(Config::get_instance()->get_json("/material_overrides")["PLA"]["bed_temp"] == 65);
+    std::ifstream f(overlay_path());
+    std::string body((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+    CHECK(body == R"({"types": [ {"name": "PLA", )");
+}

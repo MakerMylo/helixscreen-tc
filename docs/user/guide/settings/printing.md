@@ -125,7 +125,8 @@ The file has two lists: `types` for material types (PLA, PETG and so on) and `fi
 **Material types (`types`).** An entry whose `name` matches a built-in material changes only the fields you list; everything else keeps the built-in value. The Material Temperatures screen writes here too, so a change you make on the screen shows up in this file and the other way round. An entry with a new `name` adds a material type, which then appears in the Material Temperatures list and can be used as a product's `type`.
 
 - Fields: `nozzle_min`, `nozzle_max`, `bed`, `chamber` (0 means no chamber heat), `preheat_macro`, `macro_handles_heating`, `dry_temp`, `dry_time` (minutes), `density` (g/cm³), `category` and `compat_group`.
-- A new type should set at least `nozzle_min`, `nozzle_max` and `bed`; anything it leaves out is 0. Its `compat_group` defaults to its own name, so endless spool never swaps it with a different material. Set `compat_group` to an existing group (for example `"PLA"`) if it really is interchangeable with that group.
+- Numbers must be written as plain numbers: `205`, not `"205"`. A field whose value is text or `null` is ignored with a warning in the log, and the built-in value stays.
+- A new type must set `nozzle_min` and `nozzle_max`, with `nozzle_max` at least `nozzle_min`; a type without a usable nozzle range is skipped with a warning in the log. Set `bed` too; anything else it leaves out is 0. Its `compat_group` defaults to its own name, so endless spool never swaps it with a different material. Set `compat_group` to an existing group (for example `"PLA"`) if it really is interchangeable with that group.
 - The built-in list is the `types` section of `assets/filaments.json` in the HelixScreen install folder. Read it for names and default values, but don't edit it, because updates replace it.
 - **Reset to Default** on the Material Temperatures screen removes your temperature and macro fields for a built-in type. A type you added has no default, so the button is hidden for it.
 
@@ -136,11 +137,11 @@ The file has two lists: `types` for material types (PLA, PETG and so on) and `fi
 - To change a built-in product, use its `id` and include only the fields you want to change. Built-in products are in the `filaments` section of `assets/filaments.json`.
 - Temperatures set on a product win over its type's values.
 
-Restart HelixScreen after editing so every screen picks up the change. A file that is only a list of products (`[ ... ]`) still works; HelixScreen rewrites it in the form above the next time it saves. If the file stops parsing, HelixScreen ignores it until it's fixed, and the next save from the screen copies it to `user_filaments.json.bak` before starting fresh.
+Restart HelixScreen after editing so every screen picks up the change. A file that is only a list of products (`[ ... ]`) still works; HelixScreen rewrites it in the form above the next time it saves. If the file stops parsing, HelixScreen ignores it until it's fixed, and the next save from the screen (a product or a Material Temperatures change) copies it to `user_filaments.json.bak` before starting fresh.
 
 Before this file was linked into `printer_data`, it lived only in the install folder, where an update from Mainsail or Fluidd deletes it. If you added products on an older version, copy the file somewhere safe before updating.
 
-**Material temperatures from older versions.** Older versions kept Material Temperatures changes in `settings.json` under `material_overrides`. HelixScreen moves them into `types` in `user_filaments.json` the first time it starts, and removes them from `settings.json`. Which material each preset button uses stays in `settings.json` under `preset_materials`, a list of four entries such as `{"type": "PETG"}`; stop HelixScreen before editing `settings.json`, because it rewrites the whole file whenever it saves a setting.
+**Material temperatures from older versions.** Older versions kept Material Temperatures changes in `settings.json` under `material_overrides`. HelixScreen moves them into `types` in `user_filaments.json` the first time it starts, and removes them from `settings.json`. If `user_filaments.json` doesn't parse at that point, they stay in `settings.json` and the move is tried again on the next start. Going back to an older version loses them, because older versions only look in `settings.json`. Which material each preset button uses stays in `settings.json` under `preset_materials`, a list of four entries such as `{"type": "PETG"}`; stop HelixScreen before editing `settings.json`, because it rewrites the whole file whenever it saves a setting.
 
 ---
 

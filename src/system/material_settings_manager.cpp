@@ -10,6 +10,7 @@
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
+#include <fstream>
 #include <optional>
 
 namespace helix {
@@ -53,8 +54,8 @@ std::optional<filament::MaterialOverride> parse_override(const nlohmann::json& e
     filament::MaterialOverride ovr;
     auto read_int = [&](const char* key, std::optional<int>& out) {
         auto it = e.find(key);
-        if (it != e.end() && it->is_number_integer())
-            out = it->get<int>();
+        if (it != e.end() && it->is_number())
+            out = static_cast<int>(it->get<double>());
     };
     read_int(KEY_NOZZLE_MIN, ovr.nozzle_min);
     read_int(KEY_NOZZLE_MAX, ovr.nozzle_max);
@@ -188,6 +189,19 @@ bool MaterialSettingsManager::migrate_settings_overrides() {
     }
     const nlohmann::json legacy = config->get_json("/material_overrides");
     bool wrote = false;
+
+    // Saving over an overlay that will not parse replaces the user's hand
+    // edits with the migrated entries alone. Settings keep the only copy, and
+    // the next start retries once the file is fixed.
+    if (const std::string path = FilamentCatalog::user_overlay_path(); !path.empty()) {
+        std::ifstream f(path);
+        if (nlohmann::json::parse(f, nullptr, /*allow_exceptions=*/false).is_discarded()) {
+            spdlog::warn("[MaterialSettingsManager] {} does not parse; leaving material_overrides "
+                         "in settings.json until it does",
+                         path);
+            return false;
+        }
+    }
 
     if (legacy.is_object() && !legacy.empty()) {
         // settings.json spelled two of the keys differently from the overlay.

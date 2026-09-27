@@ -148,7 +148,9 @@ TEST_CASE_METHOD(TypesFixture, "a bare-array overlay carries products and adds n
 }
 
 TEST_CASE_METHOD(TypesFixture, "a name handed out survives a reload", "[filament][types]") {
-    auto overlay = write("user.json", R"({"types": [{"name": "PEKK", "compat_group": "PAEK"}]})");
+    auto overlay = write(
+        "user.json",
+        R"({"types": [{"name": "PEKK", "nozzle_min": 330, "nozzle_max": 360, "compat_group": "PAEK"}]})");
     filament::load_materials_from(ASSET, overlay);
     const char* group = filament::get_compatibility_group("PEKK");
     REQUIRE(group != nullptr);
@@ -209,4 +211,53 @@ TEST_CASE_METHOD(TypesFixture, "saving products keeps the overlay's types",
         {{{"id", "acme-pla"}, {"brand", "Acme"}, {"name", "PLA"}, {"type", "PLA"}}}, overlay));
     CHECK(FilamentCatalog::load_user_types_from(overlay).size() == 1);
     CHECK(FilamentCatalog::load_user_products_from(overlay).size() == 1);
+}
+
+TEST_CASE_METHOD(TypesFixture, "a null in a type patch keeps the shipped value",
+                 "[filament][types][hand_edit]") {
+    // merge_patch reads null as "delete", which would zero the field.
+    auto overlay = write("user.json", R"({"types": [{"name": "PLA", "nozzle_max": null}]})");
+    filament::load_materials_from(ASSET, overlay);
+    auto pla = filament::find_material("PLA");
+    REQUIRE(pla);
+    CHECK(pla->nozzle_max == 220);
+    CHECK(pla->nozzle_recommended() == 205);
+}
+
+TEST_CASE_METHOD(TypesFixture, "a quoted number in a type patch keeps the shipped value",
+                 "[filament][types][hand_edit]") {
+    auto overlay = write("user.json", R"({"types": [{"name": "PLA", "nozzle_min": "205"}]})");
+    filament::load_materials_from(ASSET, overlay);
+    auto pla = filament::find_material("PLA");
+    REQUIRE(pla);
+    CHECK(pla->nozzle_min == 190);
+    CHECK(pla->nozzle_recommended() == 205);
+}
+
+TEST_CASE_METHOD(TypesFixture, "a new type with no nozzle_max is skipped",
+                 "[filament][types][hand_edit]") {
+    // Kept, it would preheat to the midpoint of 200 and 0.
+    auto overlay =
+        write("user.json", R"({"types": [{"name": "MyPLA", "nozzle_min": 200, "bed": 60}]})");
+    filament::load_materials_from(ASSET, overlay);
+    CHECK_FALSE(filament::find_material("MyPLA"));
+    CHECK(filament::materials()->size() == asset_type_count());
+}
+
+TEST_CASE_METHOD(TypesFixture, "a new type with a reversed nozzle range is skipped",
+                 "[filament][types][hand_edit]") {
+    auto overlay = write("user.json", R"({"types": [
+        {"name": "Backwards", "nozzle_min": 260, "nozzle_max": 230, "bed": 60},
+        {"name": "Fine", "nozzle_min": 230, "nozzle_max": 230, "bed": 60}
+    ]})");
+    filament::load_materials_from(ASSET, overlay);
+    CHECK_FALSE(filament::find_material("Backwards"));
+    CHECK(filament::find_material("Fine"));
+}
+
+TEST_CASE_METHOD(TypesFixture, "a new type with no nozzle_min is skipped",
+                 "[filament][types][hand_edit]") {
+    auto overlay = write("user.json", R"({"types": [{"name": "MaxOnly", "nozzle_max": 230}]})");
+    filament::load_materials_from(ASSET, overlay);
+    CHECK_FALSE(filament::find_material("MaxOnly"));
 }

@@ -900,6 +900,10 @@ materials and brands by hand"), so treat field names as a public format.
     // defines a type: category defaults to "Custom" and compat_group to its own
     // name, so endless spool never cross-matches it. Entries with no name are
     // skipped. preheat_macro / macro_handles_heating live here too.
+    // Hand edits are sanitized: a known numeric field holding a non-number
+    // (a quoted "205", or null, which merge_patch reads as delete) is dropped
+    // with a warning so the shipped value stands, and a new type without
+    // nozzle_min > 0 && nozzle_max >= nozzle_min is skipped with a warning.
     {"name": "PLA", "bed": 65},
     {"name": "PEKK", "nozzle_min": 330, "nozzle_max": 360, "bed": 120}
   ],
@@ -944,8 +948,11 @@ already has wins), writes the overlay, and only then erases the key and saves
 settings. It is keyed on the key's presence rather than a `config_version`
 bump: a versioned migration would bump the version even when the overlay
 write failed and never retry, while this one leaves settings holding the only
-copy and retries next start. A settings restore from the rolling backup brings
-the key back, and the merge is idempotent.
+copy and retries next start. An overlay that exists but does not parse blocks
+the migration the same way, since saving over it would replace the user's hand
+edits with the migrated entries alone. A settings restore from the rolling
+backup brings the key back, and the merge is idempotent. The move is one-way: an
+older build reads only `settings.json`, so a downgrade loses these overrides.
 
 The sections are independent: a user can carry any of `types`, `filaments`
 and `orca_type_map`, or none. A bare array is a product-only overlay (the

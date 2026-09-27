@@ -79,6 +79,32 @@ MaterialInfo to_material_info(const nlohmann::json& t, bool user_defined) {
     return m;
 }
 
+/// Drop every known numeric field of a hand-written patch whose value is not a
+/// number, so the shipped value stands. A quoted "205" would otherwise read as
+/// 0, and a null is merge_patch's "delete": either one preheats to a midpoint
+/// of the real bound and 0.
+void drop_non_numeric_fields(nlohmann::json& patch, const std::string& name,
+                             const std::string& path) {
+    static constexpr const char* NUMERIC_KEYS[] = {"nozzle_min", "nozzle_max", "bed",    "chamber",
+                                                   "dry_temp",   "dry_time",   "density"};
+    for (const char* key : NUMERIC_KEYS) {
+        auto it = patch.find(key);
+        if (it != patch.end() && !it->is_number()) {
+            spdlog::warn("[filament] ignoring non-numeric '{}' of type '{}' in {}", key, name,
+                         path);
+            patch.erase(it);
+        }
+    }
+}
+
+/// A type the user defines needs a nozzle range to preheat to: there is no
+/// shipped row to fill the gaps.
+bool has_usable_nozzle_range(const nlohmann::json& t) {
+    const int lo = get_int(t, "nozzle_min");
+    const int hi = get_int(t, "nozzle_max");
+    return lo > 0 && hi >= lo;
+}
+
 /// The asset's `types` array, without materializing the ~360 products beside
 /// it: a freed DOM does not hand its pages back, so parsing them here would
 /// raise the arena high-water mark for good on the smallest boards.
@@ -116,12 +142,13 @@ Tables build_tables(const std::string& asset_path, const std::string& overlay_pa
     for (const auto& r : rows)
         shipped.push_back(to_material_info(r, false));
 
-    for (const auto& patch : helix::printer::FilamentCatalog::load_user_types_from(overlay_path)) {
+    for (auto& patch : helix::printer::FilamentCatalog::load_user_types_from(overlay_path)) {
         const std::string name = helix::json_util::safe_string(patch, "name");
         if (name.empty()) {
             spdlog::warn("[filament] skipping a user type with no name in {}", overlay_path);
             continue;
         }
+        drop_non_numeric_fields(patch, name, overlay_path);
         const std::string key = lower(std::string(resolve_alias(name)));
         auto hit = std::find_if(rows.begin(), rows.end(), [&](const nlohmann::json& r) {
             return lower(helix::json_util::safe_string(r, "name")) == key;
@@ -131,8 +158,12 @@ Tables build_tables(const std::string& asset_path, const std::string& overlay_pa
             const std::string canonical = helix::json_util::safe_string(*hit, "name");
             hit->merge_patch(patch);
             (*hit)["name"] = canonical;
-        } else {
+        } else if (has_usable_nozzle_range(patch)) {
             rows.push_back(patch);
+        } else {
+            spdlog::warn("[filament] skipping user type '{}' in {}: it needs nozzle_min > 0 and "
+                         "nozzle_max >= nozzle_min",
+                         name, overlay_path);
         }
     }
 
