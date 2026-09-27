@@ -1010,10 +1010,9 @@ static void gcode_viewer_press_cb(lv_event_t* e) {
     lv_indev_get_point(indev, &point);
 
     // Fresh interaction (all fingers were up): clear per-sequence gesture state.
-    // The two-finger latch is otherwise cleared only by the recognizer's
-    // ENDED/CANCELED event, which is not reliably delivered when both fingers
-    // lift in one input poll (finger_cnt 2->0). Resetting here guarantees a
-    // stuck latch can't permanently suppress single-finger rotation.
+    // The two-finger latch clears here and nowhere else, so it holds rotate, tap
+    // and long-press off until every finger has lifted, even when both fingers
+    // lift in one input poll and no ENDED event is delivered.
     if (!st->is_dragging) {
         st->gesture_moved = false;
 #if LV_USE_GESTURE_RECOGNITION
