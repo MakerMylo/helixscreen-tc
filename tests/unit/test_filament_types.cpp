@@ -185,3 +185,28 @@ TEST_CASE_METHOD(TypesFixture, "catalog products inherit a patched shipped type"
     REQUIRE(p != nullptr);
     CHECK(p->chamber_temp_c == 60);
 }
+
+TEST_CASE_METHOD(TypesFixture, "saving types keeps the products of a bare-array overlay",
+                 "[filament][types][filament_catalog]") {
+    // The installer seeds the overlay as `[]`; a hand-edited one may be a
+    // product list. A types save must not drop those products.
+    auto overlay = write("user.json",
+                         R"([{"id": "acme-pla", "brand": "Acme", "name": "PLA", "type": "PLA"}])");
+    REQUIRE(FilamentCatalog::save_user_types_to({{{"name", "PLA"}, {"bed", 64}}}, overlay));
+
+    auto products = FilamentCatalog::load_user_products_from(overlay);
+    REQUIRE(products.size() == 1);
+    CHECK(products[0]["id"] == "acme-pla");
+    auto types = FilamentCatalog::load_user_types_from(overlay);
+    REQUIRE(types.size() == 1);
+    CHECK(types[0]["bed"] == 64);
+}
+
+TEST_CASE_METHOD(TypesFixture, "saving products keeps the overlay's types",
+                 "[filament][types][filament_catalog]") {
+    auto overlay = write("user.json", R"({"types": [{"name": "PLA", "bed": 64}]})");
+    REQUIRE(FilamentCatalog::save_user_products_to(
+        {{{"id", "acme-pla"}, {"brand", "Acme"}, {"name", "PLA"}, {"type", "PLA"}}}, overlay));
+    CHECK(FilamentCatalog::load_user_types_from(overlay).size() == 1);
+    CHECK(FilamentCatalog::load_user_products_from(overlay).size() == 1);
+}
