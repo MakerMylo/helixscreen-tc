@@ -76,6 +76,7 @@ const std::vector<SlotPatterns> DETECTION_PATTERNS = {
     // Shared with PrinterDiscovery's nozzle_clean_macro_ scan — see include/macro_patterns.h.
     {StandardMacroSlot::CleanNozzle,    helix::macro_patterns::clean_nozzle()},
     {StandardMacroSlot::HeatSoak,       {"HEAT_SOAK", "CHAMBER_SOAK", "SOAK"}},
+    {StandardMacroSlot::ParkToolhead,   helix::macro_patterns::park_toolhead()},
 };
 // clang-format on
 
@@ -98,6 +99,7 @@ const std::map<StandardMacroSlot, std::string> FALLBACK_MACROS = {
     {StandardMacroSlot::ScrewsTilt,     ""},
     {StandardMacroSlot::CleanNozzle,    "HELIX_CLEAN_NOZZLE"},
     {StandardMacroSlot::HeatSoak,       ""},
+    {StandardMacroSlot::ParkToolhead,   "HELIX_PARK_TOOLHEAD"},
 };
 // clang-format on
 
@@ -122,6 +124,7 @@ const std::map<StandardMacroSlot, SlotMeta> SLOT_METADATA = {
     {StandardMacroSlot::ScrewsTilt,     {"screws_tilt",     "Bed Screw Adjustment"}},
     {StandardMacroSlot::CleanNozzle,    {"clean_nozzle",    "Clean Nozzle"}},
     {StandardMacroSlot::HeatSoak,       {"heat_soak",       "Heat Soak"}},
+    {StandardMacroSlot::ParkToolhead,   {"park_toolhead",   "Park Toolhead"}},
 };
 // clang-format on
 

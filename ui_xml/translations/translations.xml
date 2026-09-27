@@ -1982,6 +1982,7 @@
   <translation tag="Paper Test Calibration" de="Papiertest-Kalibrierung" en="Paper Test Calibration" es="Calibración con Prueba de Papel" fr="Calibration par test papier" it="Calibrazione test carta" ja="紙テストキャリブレーション" pt="Calibração por Teste de Papel" ru="Калибровка бумажным тестом" zh="纸张测试校准"/>
   <translation tag="Parameters" de="Parameter" en="Parameters" es="Parámetros" fr="Paramètres" it="Parametri" ja="パラメータ" pt="Parâmetros" ru="Параметры" zh="参数"/>
   <translation tag="Park" de="Parken" en="Park" es="Aparcar" fr="Parquer" it="Parcheggia" ja="パーキング" pt="Estacionar" ru="Парковка" zh="停放"/>
+  <translation tag="Park Toolhead" de="Werkzeugkopf parken" en="Park Toolhead" es="Aparcar el cabezal" fr="Parquer la tête d&apos;outil" it="Parcheggia la testina" ja="ツールヘッドをパーキング" pt="Estacionar o cabeçote" ru="Припарковать печатающую головку" zh="停放工具头"/>
   <translation tag="Park the AFC system" de="Das AFC-System parken" en="Park the AFC system" es="Aparcar el sistema AFC" fr="Parquer le système AFC" it="Parcheggia il sistema AFC" ja="AFCシステムをパーキング" pt="Estacionar o sistema AFC" ru="Припарковать систему AFC" zh="停放 AFC 系统"/>
   <translation tag="Part" de="Teile" en="Part" es="Pieza" fr="Pièce" it="Pezzo" ja="パーツ" pt="Peça" ru="Деталь" zh="零件"/>
   <translation tag="Part Cooling Fan" de="Teile-Kühllüfter" en="Part Cooling Fan" es="Ventilador de Enfriamiento de Pieza" fr="Ventilateur de refroidissement pièce" it="Ventola raffreddamento pezzo" ja="パーツ冷却ファン" pt="Ventoinha de Resfriamento da Peça" ru="Вентилятор охлаждения детали" zh="零件冷却风扇"/>
