@@ -119,6 +119,106 @@ ABORTING_CALLS = [
      "std::any_cast<T>(&a) and a null check"),
 ]
 
+# try/catch/throw do not compile without exceptions. The firmware build says so
+# 25 minutes into esp32-build; this says so at commit time. A branch the firmware
+# does not compile is skipped: the firmware's own compile definitions (helixapp's
+# CMakeLists) decide `#if HELIX_HAS_X`, `#if defined(ESP_PLATFORM)` and
+# `#if defined(__cpp_exceptions)`. A condition this cannot evaluate counts as
+# compiled. Code desktop and firmware share keeps a desktop-only net inside
+# `#if defined(__cpp_exceptions)`, or uses exception_policy.h.
+EXCEPTION_CONSTRUCT = re.compile(r"\btry\s*\{|\bcatch\s*\(|\bthrow\b(?!_)")
+STRING_LITERAL = re.compile(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'')
+# Defined by the toolchain or IDF on every firmware compile, or never defined there.
+FIRMWARE_TOOLCHAIN_DEFINES = {"ESP_PLATFORM": "1"}
+FIRMWARE_UNDEFINED = {"__cpp_exceptions", "HELIX_ENABLE_MOCKS"}
+
+
+def firmware_defines(cmake_text: str) -> dict[str, str]:
+    """NAME -> value for helixapp's PRIVATE compile definitions, plus the toolchain's."""
+    defines = dict(FIRMWARE_TOOLCHAIN_DEFINES)
+    m = re.search(r"target_compile_definitions\(\$\{COMPONENT_LIB\} PRIVATE(.*?)\)\s*$",
+                  cmake_text, re.S | re.M)
+    if m:
+        for line in m.group(1).splitlines():
+            for token in line.split("#", 1)[0].split():
+                name, _, value = token.partition("=")
+                if re.fullmatch(r"[A-Za-z_]\w*", name):
+                    defines[name] = value or "1"
+    return defines
+
+
+def firmware_condition(directive: str, defines: dict[str, str]) -> bool | None:
+    """Whether the firmware compiles the branch a #if/#ifdef/#ifndef opens; None if unknown."""
+    def defined(name: str) -> bool | None:
+        if name in defines:
+            return True
+        return False if name in FIRMWARE_UNDEFINED else None
+
+    def negate(v: bool | None) -> bool | None:
+        return None if v is None else not v
+
+    m = re.fullmatch(r"(ifdef|ifndef)\s+(\w+)", directive)
+    if m:
+        v = defined(m.group(2))
+        return v if m.group(1) == "ifdef" else negate(v)
+    m = re.fullmatch(r"if\s+(!?)\s*defined\s*\(?\s*(\w+)\s*\)?", directive)
+    if m:
+        v = defined(m.group(2))
+        return negate(v) if m.group(1) else v
+    m = re.fullmatch(r"if\s+(!?)\s*(\w+)(?:\s*(==|!=)\s*(\d+))?", directive)
+    if m:
+        name = m.group(2)
+        if name.isdigit():
+            value = int(name)
+        elif name in defines:
+            value = int(defines[name]) if defines[name].lstrip("-").isdigit() else None
+        elif name in FIRMWARE_UNDEFINED:
+            value = 0
+        else:
+            return None
+        if value is None:
+            return None
+        if m.group(3):
+            v = (value == int(m.group(4))) == (m.group(3) == "==")
+        else:
+            v = value != 0
+        return not v if m.group(1) else v
+    return None
+
+
+def exception_sites(text: str, defines: dict[str, str]) -> list[tuple[int, str]]:
+    """(line, construct) for each try/catch/throw in a branch the firmware compiles."""
+    sites, stack, in_block_comment = [], [], False
+    for lineno, raw in enumerate(text.splitlines(), 1):
+        line = raw
+        if in_block_comment:
+            if "*/" not in line:
+                continue
+            line, in_block_comment = line.split("*/", 1)[1], False
+        stripped = line.strip()
+        if stripped.startswith("#"):
+            directive = re.sub(r"\s+", " ", stripped[1:].split("//", 1)[0]).strip()
+            if directive.startswith("if"):
+                stack.append(firmware_condition(directive, defines))
+            elif directive.startswith("elif") and stack:
+                stack[-1] = False if stack[-1] else None
+            elif directive.startswith("else") and stack:
+                stack[-1] = None if stack[-1] is None else not stack[-1]
+            elif directive.startswith("endif") and stack:
+                stack.pop()
+            continue
+        code = STRING_LITERAL.sub('""', line).split("//", 1)[0]
+        if "/*" in code:
+            code, rest = code.split("/*", 1)
+            in_block_comment = "*/" not in rest
+        if False in stack:
+            continue
+        m = EXCEPTION_CONSTRUCT.search(code)
+        if m:
+            sites.append((lineno, m.group(0).rstrip("({ ")))
+    return sites
+
+
 EXCLUSIONS_HEADER = [
     "# ESP32 firmware app_srcs exclusion baseline.",
     "#",
@@ -164,12 +264,13 @@ class Findings:
     overlap: list[tuple[str, str]] = field(default_factory=list)  # (file, exclusion entry)
     locale_includes: list[tuple[str, int, str]] = field(default_factory=list)  # (file, lineno, header)
     aborting_calls: list[tuple[str, int, str, str]] = field(default_factory=list)  # (file, lineno, why, fix)
+    exception_constructs: list[tuple[str, int, str]] = field(default_factory=list)  # (file, lineno, construct)
     universe: set[str] = field(default_factory=set)
 
     def any(self) -> bool:
         return bool(self.undecided or self.malformed or self.stale_manifest
                     or self.stale_exclusions or self.overlap or self.locale_includes
-                    or self.aborting_calls)
+                    or self.aborting_calls or self.exception_constructs)
 
 
 def why_cmake_drops(line: str) -> str:
@@ -309,6 +410,9 @@ def compute(manifest: Path, exclusions: Path, src_root: Path) -> Findings:
 
     locale_includes: list[tuple[str, int, str]] = []
     aborting_calls: list[tuple[str, int, str, str]] = []
+    exception_constructs: list[tuple[str, int, str]] = []
+    cmake = manifest.parent / "CMakeLists.txt"
+    defines = firmware_defines(cmake.read_text() if cmake.exists() else "")
     for f in sorted(included):
         if not f.startswith("src/") or f not in universe:
             continue
@@ -322,11 +426,14 @@ def compute(manifest: Path, exclusions: Path, src_root: Path) -> Findings:
             for pattern, why, fix in ABORTING_CALLS:
                 if pattern.search(code):
                     aborting_calls.append((f, lineno, why, fix))
+        for lineno, construct in exception_sites(text, defines):
+            exception_constructs.append((f, lineno, construct))
 
     return Findings(undecided=undecided, malformed=malformed,
                     stale_manifest=stale_manifest, stale_exclusions=stale_exclusions,
                     overlap=overlap, locale_includes=locale_includes,
-                    aborting_calls=aborting_calls, universe=universe)
+                    aborting_calls=aborting_calls,
+                    exception_constructs=exception_constructs, universe=universe)
 
 
 def compress_dirs(undecided_set: set[str], universe: set[str]) -> dict[str, list[str]]:
@@ -437,6 +544,14 @@ def report(f: Findings) -> None:
               "ESP32 image,\n      which is built without exceptions:", file=sys.stderr)
         for path, lineno, why, fix in f.aborting_calls:
             print(f"        {path}:{lineno}: {why}; use {fix}", file=sys.stderr)
+    if f.exception_constructs:
+        print(f"FAIL: {len(f.exception_constructs)} try/catch/throw in firmware-compiled files; "
+              "the ESP32 image\n      is built without exceptions, so these do not compile "
+              "there:", file=sys.stderr)
+        for path, lineno, construct in f.exception_constructs:
+            print(f"        {path}:{lineno}: {construct}", file=sys.stderr)
+        print("\n      Keep a desktop-only net inside #if defined(__cpp_exceptions), or use "
+              "exception_policy.h\n      (throw_or_abort, contain_exceptions).", file=sys.stderr)
     if f.overlap:
         print(f"FAIL: {len(f.overlap)} file(s) in BOTH app_srcs.txt and app_srcs_excluded.txt.\n"
               "      CMake compiles them; the exclusion baseline says it does not. Remove\n"

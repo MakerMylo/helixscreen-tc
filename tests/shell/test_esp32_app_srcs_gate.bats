@@ -233,6 +233,88 @@ CPP
     [ "$status" -eq 0 ]
 }
 
+@test "flags try, catch and throw in a firmware-compiled file" {
+    decide_all
+    cat > "$ROOT/src/printer/compiled.cpp" <<'CPP'
+void f() {
+    try {
+        g();
+    } catch (const std::exception& e) {
+        throw std::runtime_error("x");
+    }
+}
+CPP
+    run_gate
+    [ "$status" -eq 1 ]
+    contains "src/printer/compiled.cpp:2: try" "$output"
+    contains "src/printer/compiled.cpp:4: catch" "$output"
+    contains "src/printer/compiled.cpp:5: throw" "$output"
+    contains "exception_policy.h" "$output"
+}
+
+@test "a desktop-only net inside __cpp_exceptions passes; its #else branch is checked" {
+    decide_all
+    cat > "$ROOT/src/printer/compiled.cpp" <<'CPP'
+#if defined(__cpp_exceptions)
+    try {
+        g();
+    } catch (...) {
+    }
+#else
+    g();
+#endif
+#ifdef __cpp_exceptions
+    throw std::runtime_error("desktop");
+#else
+    try {
+#endif
+CPP
+    run_gate
+    [ "$status" -eq 1 ]
+    contains "src/printer/compiled.cpp:12: try" "$output"
+    lacks "compiled.cpp:2:" "$output"
+    lacks "compiled.cpp:10:" "$output"
+}
+
+@test "branches the firmware does not compile pass, decided by its own compile definitions" {
+    decide_all
+    cat > "$ROOT/CMakeLists.txt" <<'CMAKE'
+target_compile_definitions(${COMPONENT_LIB} PRIVATE
+    # comment lines are skipped
+    HELIX_HAS_VIEWER=0
+    HELIX_HAS_ACE=1)
+CMAKE
+    cat > "$ROOT/src/printer/compiled.cpp" <<'CPP'
+#if defined(ESP_PLATFORM)
+    v = esp_random();
+#else
+    try { v = rd(); } catch (...) {}
+#endif
+#if HELIX_HAS_VIEWER
+    try { build(); } catch (...) {}
+#endif
+#if !HELIX_HAS_ACE
+    throw 1;
+#endif
+    helix::throw_or_abort(std::runtime_error("never"));
+    log("do not throw here"); // a throw in a comment
+CPP
+    run_gate
+    [ "$status" -eq 0 ]
+}
+
+@test "a branch under a macro the gate cannot evaluate is checked" {
+    decide_all
+    cat > "$ROOT/src/printer/compiled.cpp" <<'CPP'
+#if SOME_UNKNOWN_FEATURE && OTHER
+    try { g(); } catch (...) {}
+#endif
+CPP
+    run_gate
+    [ "$status" -eq 1 ]
+    contains "src/printer/compiled.cpp:2: try" "$output"
+}
+
 @test "passes when every src/ file is in the manifest or exclusions" {
     # decide the new file: add it to the manifest
     decide_all

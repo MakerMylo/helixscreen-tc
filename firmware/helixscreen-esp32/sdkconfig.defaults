@@ -32,9 +32,10 @@ CONFIG_COMPILER_OPTIMIZATION_SIZE=y
 # json_util's non-throwing readers, parses numbers with text_io::parse_leading,
 # and writes no try/catch or throw of its own: exception_policy.h holds the two
 # helpers for code desktop and firmware share. A try or throw in a firmware
-# file is a compile error; scripts/check_esp32_app_srcs.py rejects the calls
-# that compile but abort (json .value("k", d), .at("k"), one-argument
-# json::parse, std::sto*, value-form std::any_cast).
+# file is a compile error; scripts/check_esp32_app_srcs.py reports it at commit
+# time, along with the calls that compile but abort (json .value("k", d),
+# .at("k"), one-argument json::parse, std::sto*, value-form std::any_cast), and
+# scripts/check_esp32_size.py fails esp32-build if exception support is linked.
 # CONFIG_COMPILER_CXX_EXCEPTIONS is not set
 
 # RTTI off (IDF's own default; stated explicitly because it is a deliberate
