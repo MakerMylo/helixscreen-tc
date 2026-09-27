@@ -4,6 +4,7 @@
 
 #include "color_utils.h"
 #include "printer_discovery.h"
+#include "text_io.h"
 #include "zmod_color_status.h"
 
 #include <spdlog/fmt/fmt.h>
@@ -170,11 +171,7 @@ std::optional<int> int_field(const nlohmann::json& obj, const char* key) {
         return it->get<int>();
     }
     if (it->is_string()) {
-        try {
-            return std::stoi(it->get<std::string>());
-        } catch (...) {
-            return std::nullopt;
-        }
+        return helix::text_io::parse_leading<int>(it->get<std::string>());
     }
     return std::nullopt;
 }
@@ -212,11 +209,8 @@ std::optional<int> dock_index(const std::string& key) {
                                        [](unsigned char c) { return std::isdigit(c); })) {
         return std::nullopt;
     }
-    try {
-        return std::stoi(digits);
-    } catch (...) {
-        return std::nullopt;
-    }
+    // All digits, but an arbitrarily long run still overflows int.
+    return helix::text_io::parse_leading<int>(digits);
 }
 
 /// 1/0 and true/false both mean the same thing to these controllers.

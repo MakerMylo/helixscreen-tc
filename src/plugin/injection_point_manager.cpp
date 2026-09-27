@@ -10,6 +10,7 @@
 #include <algorithm>
 
 // LVGL includes
+#include "exception_policy.h"
 #include "lvgl.h"
 
 namespace helix::plugin {
@@ -139,13 +140,9 @@ bool InjectionPointManager::inject_widget(const std::string& plugin_id, const st
 
     // Invoke on_create callback AFTER widget is added to container
     if (callbacks.on_create) {
-        try {
-            callbacks.on_create(widget);
-        } catch (const std::exception& e) {
-            spdlog::error("[InjectionPointManager] on_create callback threw exception for plugin "
-                          "'{}': {}",
-                          plugin_id, e.what());
-        }
+        helix::contain_exceptions(
+            fmt::format("[InjectionPointManager] on_create callback for plugin '{}'", plugin_id),
+            [&] { callbacks.on_create(widget); });
     }
 
     return true;
@@ -174,13 +171,10 @@ void InjectionPointManager::remove_plugin_widgets(const std::string& plugin_id) 
     for (const auto& injected : to_remove) {
         // Invoke on_destroy callback BEFORE deleting widget
         if (injected.callbacks.on_destroy && injected.widget != nullptr) {
-            try {
-                injected.callbacks.on_destroy(injected.widget);
-            } catch (const std::exception& e) {
-                spdlog::error("[InjectionPointManager] on_destroy callback threw exception for "
-                              "plugin '{}': {}",
-                              plugin_id, e.what());
-            }
+            helix::contain_exceptions(
+                fmt::format("[InjectionPointManager] on_destroy callback for plugin '{}'",
+                            plugin_id),
+                [&] { injected.callbacks.on_destroy(injected.widget); });
         }
 
         // Delete the LVGL widget (LVGL handles child cleanup)
@@ -216,12 +210,8 @@ bool InjectionPointManager::remove_widget(lv_obj_t* widget) {
 
     // Invoke on_destroy callback
     if (it->callbacks.on_destroy && widget != nullptr) {
-        try {
-            it->callbacks.on_destroy(widget);
-        } catch (const std::exception& e) {
-            spdlog::error("[InjectionPointManager] on_destroy callback threw exception: {}",
-                          e.what());
-        }
+        helix::contain_exceptions("[InjectionPointManager] on_destroy callback",
+                                  [&] { it->callbacks.on_destroy(widget); });
     }
 
     // Delete the widget

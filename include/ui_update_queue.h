@@ -471,6 +471,7 @@ class UpdateQueue {
         // from runtime_error) so the log can carry the numeric code and
         // category that what()'s strerror text alone does not reveal.
         while (!to_process.empty()) {
+#if defined(__cpp_exceptions)
             try {
                 auto& entry = to_process.front();
                 current_tag_ = entry.tag;
@@ -494,6 +495,10 @@ class UpdateQueue {
                               describe_entry(to_process.front()),
                               crash_handler::current_exception_type_name());
             }
+#else
+            current_tag_ = to_process.front().tag;
+            to_process.front().callback();
+#endif
             // Retain the N most-recently-completed tags so a post-callback
             // crash (heap corruption detonating on the next main-thread malloc,
             // or a few callbacks later) still names the prior sequence.

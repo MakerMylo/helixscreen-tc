@@ -99,18 +99,7 @@ void MoonrakerFileAPI::list_files(const std::string& root, const std::string& pa
     client_.send_jsonrpc(
         "server.files.list", params,
         [this, on_success, on_error](json response) {
-            // Only the parse belongs in the try. Leaving on_success() inside it
-            // misattributes a throw from the caller's own UI handler to
-            // Moonraker: on_error would fire after on_success already ran, and a
-            // bogus moonraker_api/parse_error telemetry event would be recorded.
-            std::vector<FileInfo> files;
-            try {
-                files = parse_file_list(response);
-            } catch (const std::exception& e) {
-                LOG_ERROR_INTERNAL("Failed to parse file list: {}", e.what());
-                report_parse_error(on_error, "server.files.list", e.what());
-                return;
-            }
+            std::vector<FileInfo> files = parse_file_list(response);
             spdlog::trace("[FileAPI] Found {} files", files.size());
             on_success(files);
         },
@@ -140,15 +129,7 @@ void MoonrakerFileAPI::get_directory(const std::string& root, const std::string&
     client_.send_jsonrpc(
         "server.files.get_directory", params,
         [this, full_path, on_success, on_error](json response) {
-            // Parse inside the try, deliver outside it — see list_files above.
-            std::vector<FileInfo> files;
-            try {
-                files = parse_file_list(response);
-            } catch (const std::exception& e) {
-                LOG_ERROR_INTERNAL("Failed to parse directory '{}': {}", full_path, e.what());
-                report_parse_error(on_error, "server.files.get_directory", e.what());
-                return;
-            }
+            std::vector<FileInfo> files = parse_file_list(response);
             spdlog::debug("[FileAPI] get_directory response for '{}': {} items", full_path,
                           files.size());
             on_success(files);
@@ -176,15 +157,7 @@ void MoonrakerFileAPI::get_file_metadata(const std::string& filename,
     client_.send_jsonrpc(
         "server.files.metadata", params,
         [this, on_success, on_error](json response) {
-            // Parse inside the try, deliver outside it — see list_files above.
-            FileMetadata metadata;
-            try {
-                metadata = parse_file_metadata(response);
-            } catch (const std::exception& e) {
-                LOG_ERROR_INTERNAL("Failed to parse file metadata: {}", e.what());
-                report_parse_error(on_error, "server.files.metadata", e.what());
-                return;
-            }
+            FileMetadata metadata = parse_file_metadata(response);
             on_success(metadata);
         },
         on_error,
@@ -206,15 +179,7 @@ void MoonrakerFileAPI::metascan_file(const std::string& filename, FileMetadataCa
     client_.send_jsonrpc(
         "server.files.metascan", params,
         [this, on_success, on_error, filename](json response) {
-            // Parse inside the try, deliver outside it — see list_files above.
-            FileMetadata metadata;
-            try {
-                metadata = parse_file_metadata(response);
-            } catch (const std::exception& e) {
-                LOG_ERROR_INTERNAL("Failed to parse metascan response: {}", e.what());
-                report_parse_error(on_error, "server.files.metascan", e.what());
-                return;
-            }
+            FileMetadata metadata = parse_file_metadata(response);
             spdlog::debug("[FileAPI] Metascan successful for: {}", filename);
             on_success(metadata);
         },

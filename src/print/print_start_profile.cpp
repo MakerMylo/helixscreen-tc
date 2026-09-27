@@ -109,11 +109,9 @@ std::shared_ptr<PrintStartProfile> PrintStartProfile::load(const std::string& pr
         return load_default();
     }
 
-    json j;
-    try {
-        j = json::parse(*text);
-    } catch (const json::parse_error& e) {
-        spdlog::warn("[PrintStartProfile] JSON parse error in '{}': {}", path, e.what());
+    json j = json::parse(*text, nullptr, false);
+    if (j.is_discarded()) {
+        spdlog::warn("[PrintStartProfile] JSON parse error in '{}'", path);
         return load_default();
     }
 
@@ -137,11 +135,9 @@ std::shared_ptr<PrintStartProfile> PrintStartProfile::load_default() {
             break;
         }
 
-        json j;
-        try {
-            j = json::parse(*text);
-        } catch (const json::parse_error& e) {
-            spdlog::warn("[PrintStartProfile] JSON parse error in default.json: {}", e.what());
+        json j = json::parse(*text, nullptr, false);
+        if (j.is_discarded()) {
+            spdlog::warn("[PrintStartProfile] JSON parse error in default.json");
             break;
         }
 
@@ -853,7 +849,8 @@ std::string PrintStartProfile::substitute_captures(const std::string& tmpl,
             while (end < tmpl.size() && std::isdigit(tmpl[end])) {
                 ++end;
             }
-            int group = std::stoi(tmpl.substr(start, end - start));
+            int group =
+                helix::text_io::parse_leading<int>(tmpl.substr(start, end - start)).value_or(-1);
 
             if (group >= 0 && static_cast<size_t>(group) < match.size()) {
                 result += match[group].str();

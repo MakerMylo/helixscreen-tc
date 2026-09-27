@@ -44,6 +44,7 @@
 #include "spoolman_manager.h"
 #include "state/subject_macros.h"
 #include "static_subject_registry.h"
+#include "text_io.h"
 #include "tool_state.h"
 
 #include <spdlog/spdlog.h>
@@ -2579,10 +2580,10 @@ void AmsState::on_backend_event(int backend_index, const std::string& event,
         if (data.empty()) {
             queue_sync(true, -1);
         } else {
-            try {
-                int slot_index = std::stoi(data);
-                queue_sync(false, slot_index);
-            } catch (...) {
+            const auto slot_index = helix::text_io::parse_leading<int>(data);
+            if (slot_index) {
+                queue_sync(false, *slot_index);
+            } else {
                 queue_sync(true, -1);
             }
         }

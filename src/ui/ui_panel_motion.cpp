@@ -119,15 +119,12 @@ static std::string clean_gcode_error(const std::string& msg) {
         cleaned = cleaned.substr(3);
     }
 
-    // Parse JSON error objects — extract the "msg" field
+    // Parse JSON error objects — extract the "msg" field; anything that does
+    // not parse or lacks a string "msg" is used as-is
     if (!cleaned.empty() && cleaned[0] == '{') {
-        try {
-            auto j = nlohmann::json::parse(cleaned);
-            if (j.contains("msg") && j["msg"].is_string()) {
-                cleaned = j["msg"].get<std::string>();
-            }
-        } catch (...) {
-            // Not valid JSON, use as-is
+        auto j = nlohmann::json::parse(cleaned, nullptr, false);
+        if (!j.is_discarded() && j.contains("msg") && j["msg"].is_string()) {
+            cleaned = j["msg"].get<std::string>();
         }
     }
 

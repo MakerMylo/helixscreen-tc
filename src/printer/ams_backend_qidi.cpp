@@ -55,13 +55,10 @@ std::optional<int> parse_slot_name(const std::string& val, int slot_count) {
     if (val.rfind("slot", 0) != 0) {
         return std::nullopt;
     }
-    try {
-        int idx = std::stoi(val.substr(4));
-        if (idx >= 0 && idx < slot_count) {
-            return idx;
-        }
-    } catch (const std::exception&) {
-        // Bad slot string — fall through to nullopt
+    // A malformed slot suffix reads as no slot at all.
+    const auto idx = tio::parse_leading<int>(val.substr(4));
+    if (idx && *idx >= 0 && *idx < slot_count) {
+        return idx;
     }
     return std::nullopt;
 }
@@ -91,10 +88,9 @@ std::optional<int> read_slot_id(const nlohmann::json& val, const std::string& ke
         s.erase(std::find_if(s.rbegin(), s.rend(), not_space).base(), s.end());
         const auto is_digit = [](unsigned char c) { return std::isdigit(c) != 0; };
         if (!s.empty() && std::all_of(s.begin(), s.end(), is_digit)) {
-            try {
-                return std::stoi(s);
-            } catch (const std::exception&) {
-                // More digits than an int holds - no palette row is that big.
+            // More digits than an int holds - no palette row is that big.
+            if (const auto id = tio::parse_leading<int>(s)) {
+                return id;
             }
         }
     }
@@ -197,12 +193,9 @@ std::optional<int> parse_box_unit_index(const std::string& key) {
     if (pos == std::string::npos) {
         return std::nullopt;
     }
-    try {
-        int box = std::stoi(key.substr(pos + 3));
-        if (box >= 1 && box <= QIDI_MAX_BOXES) {
-            return box - 1;
-        }
-    } catch (const std::exception&) {
+    const auto box = tio::parse_leading<int>(key.substr(pos + 3));
+    if (box && *box >= 1 && *box <= QIDI_MAX_BOXES) {
+        return *box - 1;
     }
     return std::nullopt;
 }
@@ -346,29 +339,22 @@ void AmsBackendQidi::on_started() {
                 cfg_token.defer("AmsBackendQidi::apply_config_settings", [this,
                                                                           response = std::move(
                                                                               response)]() {
-                    try {
-                        // Guard every level before indexing.
-                        // `response` is const in this
-                        // non-mutable lambda, so operator[]
-                        // resolves to the const overload — on a
-                        // missing key that is a live assert(),
-                        // an uncatchable SIGABRT, not the json
-                        // exception this catch is written for.
-                        if (!response.contains("result") ||
-                            !response["result"].contains("status") ||
-                            !response["result"]["status"].contains("configfile") ||
-                            !response["result"]["status"]["configfile"].contains("settings") ||
-                            !response["result"]["status"]["configfile"]["settings"].is_object()) {
-                            spdlog::warn("{} configfile settings unavailable", backend_log_tag());
-                            return;
-                        }
-                        const auto& settings =
-                            response["result"]["status"]["configfile"]["settings"];
-                        apply_config_settings(settings);
-                        emit_event(EVENT_STATE_CHANGED);
-                    } catch (const nlohmann::json::exception& e) {
-                        spdlog::warn("{} configfile parse failed: {}", backend_log_tag(), e.what());
+                    // Guard every level before indexing.
+                    // `response` is const in this
+                    // non-mutable lambda, so operator[]
+                    // resolves to the const overload — on a
+                    // missing key that is a live assert(),
+                    // an uncatchable SIGABRT.
+                    if (!response.contains("result") || !response["result"].contains("status") ||
+                        !response["result"]["status"].contains("configfile") ||
+                        !response["result"]["status"]["configfile"].contains("settings") ||
+                        !response["result"]["status"]["configfile"]["settings"].is_object()) {
+                        spdlog::warn("{} configfile settings unavailable", backend_log_tag());
+                        return;
                     }
+                    const auto& settings = response["result"]["status"]["configfile"]["settings"];
+                    apply_config_settings(settings);
+                    emit_event(EVENT_STATE_CHANGED);
                 });
             },
             [this](const MoonrakerError& err) {
@@ -1054,12 +1040,11 @@ void AmsBackendQidi::apply_filas_list(const std::string& content) {
         return trim(body);
     };
     auto parse_int_field = [&](const std::string& v, int& out) {
-        try {
-            out = std::stoi(strip_tail(v));
+        if (const auto parsed = tio::parse_leading<int>(strip_tail(v))) {
+            out = *parsed;
             return true;
-        } catch (const std::exception&) {
-            return false;
         }
+        return false;
     };
     enum class Section { None, Fila, Color, Vendor };
 
@@ -1094,14 +1079,12 @@ void AmsBackendQidi::apply_filas_list(const std::string& content) {
                 section = Section::Vendor;
             } else if (name.rfind("fila", 0) == 0) {
                 section = Section::Fila;
-                try {
-                    int id = std::stoi(name.substr(4));
-                    if (id > 0) {
-                        current_id = id;
-                    }
-                } catch (const std::exception&) {
+                const auto id = tio::parse_leading<int>(name.substr(4));
+                if (!id) {
                     // Malformed `fila<N>` — treat as no current section.
                     section = Section::None;
+                } else if (*id > 0) {
+                    current_id = *id;
                 }
             } else {
                 section = Section::None;
@@ -1136,8 +1119,8 @@ void AmsBackendQidi::apply_filas_list(const std::string& content) {
             break;
         }
         case Section::Color: {
-            try {
-                int id = std::stoi(trim(key));
+            // A non-integer key in [colordict] names no row to store.
+            if (const auto id = tio::parse_leading<int>(trim(key))) {
                 // A colordict row is a lane-shaped colour value like any other
                 // producer's, so the tree's one hex grammar reads it: `#RGB`,
                 // a bare `RRGGBB`, an `0x` prefix and the 8-digit `#RRGGBBAA`
@@ -1147,19 +1130,15 @@ void AmsBackendQidi::apply_filas_list(const std::string& content) {
                 // against.
                 const auto reading = helix::ams::read_lane_color(val);
                 if (reading.kind == helix::ams::ColorReadingKind::Observed) {
-                    next_colors[id] = reading.rgb;
+                    next_colors[*id] = reading.rgb;
                 }
-            } catch (const std::exception&) {
-                // Non-integer key in [colordict] — ignore.
             }
             break;
         }
         case Section::Vendor: {
-            try {
-                int id = std::stoi(trim(key));
-                next_vendors[id] = strip_tail(val);
-            } catch (const std::exception&) {
-                // Non-integer key in [vendor_list] — ignore.
+            // A non-integer key in [vendor_list] names no row to store.
+            if (const auto id = tio::parse_leading<int>(trim(key))) {
+                next_vendors[*id] = strip_tail(val);
             }
             break;
         }
@@ -1914,12 +1893,14 @@ AmsBackendQidi::fingerprint_evidence_locked(const std::string& fingerprint) cons
     }
     int fila_id = 0;
     int color_id = 0;
-    try {
-        fila_id = std::stoi(fingerprint.substr(0, sep));
-        color_id = std::stoi(fingerprint.substr(sep + 1));
-    } catch (const std::exception&) {
+    const auto fila = tio::parse_leading<int>(fingerprint.substr(0, sep));
+    const auto color = tio::parse_leading<int>(fingerprint.substr(sep + 1));
+    if (!fila || !color) {
+        // A component that is not an integer states nothing decodable.
         return evidence;
     }
+    fila_id = *fila;
+    color_id = *color;
     // The composite is the Box's own read, so the spool carries no UID-capable
     // tag rather than one not read yet, and the material/colour fields decide.
     evidence.tag_read_complete = true;

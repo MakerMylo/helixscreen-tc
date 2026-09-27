@@ -4,6 +4,7 @@
 #include "probe_preparation.h"
 
 #include "app_globals.h"
+#include "json_utils.h"
 #include "printer_discovery.h"
 #include "printer_state.h"
 
@@ -33,8 +34,8 @@ bool predicate_holds(const nlohmann::json& pred,
     if (!pred.is_object()) {
         return false;
     }
-    const std::string type = pred.value("type", "");
-    const std::string pattern = pred.value("pattern", "");
+    const std::string type = helix::json_util::safe_string(pred, "type");
+    const std::string pattern = helix::json_util::safe_string(pred, "pattern");
     if (pattern.empty()) {
         return false;
     }
@@ -134,7 +135,7 @@ Preparation resolve_from_rules(const nlohmann::json& rules,
         if (!rule.is_object()) {
             continue;
         }
-        if (!rule.value("enabled", true)) {
+        if (!helix::json_util::safe_bool(rule, "enabled", true)) {
             continue;
         }
         if (!lists_operation(rule, op)) {
@@ -145,7 +146,7 @@ Preparation resolve_from_rules(const nlohmann::json& rules,
         const auto when = rule.find("when");
         if (when == rule.end() || !when->is_array() || when->empty()) {
             spdlog::debug("[ProbePrep] Rule '{}' has no usable 'when' — skipping",
-                          rule.value("id", "?"));
+                          helix::json_util::safe_string(rule, "id", "?"));
             continue;
         }
         const bool all_hold = std::all_of(when->begin(), when->end(), [&](const nlohmann::json& p) {
@@ -157,7 +158,7 @@ Preparation resolve_from_rules(const nlohmann::json& rules,
 
         if (suppressed_by_resolved_macro(rule, resolved_macro)) {
             spdlog::debug("[ProbePrep] Rule '{}' stands down: '{}' prepares itself",
-                          rule.value("id", "?"), resolved_macro);
+                          helix::json_util::safe_string(rule, "id", "?"), resolved_macro);
             continue;
         }
 
@@ -165,11 +166,11 @@ Preparation resolve_from_rules(const nlohmann::json& rules,
         prep.gcode = read_gcode(rule);
         if (prep.gcode.empty()) {
             spdlog::warn("[ProbePrep] Rule '{}' matched but has no usable 'gcode' — skipping",
-                         rule.value("id", "?"));
+                         helix::json_util::safe_string(rule, "id", "?"));
             continue;
         }
-        prep.label = rule.value("label", "");
-        prep.rule_id = rule.value("id", "");
+        prep.label = helix::json_util::safe_string(rule, "label");
+        prep.rule_id = helix::json_util::safe_string(rule, "id");
         const auto timeout = rule.find("timeout_s");
         if (timeout != rule.end() && timeout->is_number()) {
             const double seconds = timeout->get<double>();

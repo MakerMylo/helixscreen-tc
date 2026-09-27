@@ -7,6 +7,7 @@
 
 #include "filament_catalog.h"
 #include "filament_database.h"
+#include "json_utils.h"
 #include "lvgl/src/others/translation/lv_translation.h"
 #include "text_io.h"
 
@@ -49,7 +50,7 @@ bool id_in_builtin(const std::string& id) {
 /// True if an authored overlay entry already exists for @p id.
 bool id_in_overlay(const std::string& id) {
     for (const auto& p : FilamentCatalog::load_user_products()) {
-        if (p.is_object() && p.value("id", "") == id)
+        if (p.is_object() && helix::json_util::safe_string(p, "id", "") == id)
             return true;
     }
     return false;
@@ -289,7 +290,7 @@ void FilamentProductEditModal::handle_save() {
     }
 
     const nlohmann::json sparse = build_product_json(v);
-    const std::string id = sparse.value("id", "");
+    const std::string id = helix::json_util::safe_string(sparse, "id", "");
 
     auto products = FilamentCatalog::load_user_products();
 
@@ -297,7 +298,7 @@ void FilamentProductEditModal::handle_save() {
     // merge-patching the sparse form values over the existing overlay entry.
     nlohmann::json to_write = sparse;
     for (const auto& p : products) {
-        if (p.is_object() && p.value("id", "") == id) {
+        if (p.is_object() && helix::json_util::safe_string(p, "id", "") == id) {
             to_write = p;                 // start from the existing authored entry
             to_write.merge_patch(sparse); // overlay the form's fields
             break;

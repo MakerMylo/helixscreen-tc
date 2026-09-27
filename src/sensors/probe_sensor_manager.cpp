@@ -6,8 +6,10 @@
 #include "ui_update_queue.h"
 
 #include "config.h"
+#include "json_utils.h"
 #include "spdlog/spdlog.h"
 #include "static_subject_registry.h"
+#include "text_io.h"
 
 #include <algorithm>
 #include <set>
@@ -204,13 +206,13 @@ void ProbeSensorManager::discover_from_config(const nlohmann::json& config_keys)
         float z_offset = 0.0f;
         const auto& val = section["z_offset"];
         if (val.is_string()) {
-            try {
-                z_offset = std::stof(val.get<std::string>());
-            } catch (const std::exception& e) {
-                spdlog::debug("[ProbeSensorManager] Invalid z_offset value for {}: {}",
-                              sensor.klipper_name, e.what());
+            const auto parsed = helix::text_io::parse_leading<float>(val.get<std::string>());
+            if (!parsed) {
+                spdlog::debug("[ProbeSensorManager] Invalid z_offset value for {}: not a number",
+                              sensor.klipper_name);
                 continue;
             }
+            z_offset = *parsed;
         } else if (val.is_number()) {
             z_offset = val.get<float>();
         } else {
@@ -292,15 +294,17 @@ void ProbeSensorManager::load_config(const nlohmann::json& config) {
             continue;
         }
 
-        std::string klipper_name = sensor_json["klipper_name"].get<std::string>();
+        std::string klipper_name = helix::json_util::as_string(sensor_json["klipper_name"]);
         auto* sensor = find_config(klipper_name);
 
         if (sensor) {
             if (sensor_json.contains("role")) {
-                sensor->role = probe_role_from_string(sensor_json["role"].get<std::string>());
+                sensor->role =
+                    probe_role_from_string(helix::json_util::as_string(sensor_json["role"]));
             }
             if (sensor_json.contains("enabled")) {
-                sensor->enabled = sensor_json["enabled"].get<bool>();
+                sensor->enabled =
+                    helix::json_util::as_bool(sensor_json["enabled"], sensor->enabled);
             }
             spdlog::debug("[ProbeSensorManager] Loaded config for {}: role={}, enabled={}",
                           klipper_name, probe_role_to_string(sensor->role), sensor->enabled);
@@ -347,33 +351,29 @@ void ProbeSensorManager::load_config_from_file() {
 
     std::string base_path = cfg->df() + "probe_sensors";
 
-    try {
-        const json* sensors_node = cfg->try_get_json(base_path + "/sensors");
-        if (sensors_node != nullptr && sensors_node->is_array()) {
-            for (const auto& sensor_json : *sensors_node) {
-                if (!sensor_json.contains("klipper_name")) {
-                    continue;
-                }
+    const json* sensors_node = cfg->try_get_json(base_path + "/sensors");
+    if (sensors_node != nullptr && sensors_node->is_array()) {
+        for (const auto& sensor_json : *sensors_node) {
+            if (!sensor_json.contains("klipper_name")) {
+                continue;
+            }
 
-                std::string klipper_name = sensor_json["klipper_name"].get<std::string>();
-                auto* sensor = find_config(klipper_name);
+            std::string klipper_name = helix::json_util::as_string(sensor_json["klipper_name"]);
+            auto* sensor = find_config(klipper_name);
 
-                if (sensor) {
-                    if (sensor_json.contains("role")) {
-                        sensor->role =
-                            probe_role_from_string(sensor_json["role"].get<std::string>());
-                    }
-                    if (sensor_json.contains("enabled")) {
-                        sensor->enabled = sensor_json["enabled"].get<bool>();
-                    }
-                    spdlog::debug("[ProbeSensorManager] Loaded config for {}: role={}, enabled={}",
-                                  klipper_name, probe_role_to_string(sensor->role),
-                                  sensor->enabled);
+            if (sensor) {
+                if (sensor_json.contains("role")) {
+                    sensor->role =
+                        probe_role_from_string(helix::json_util::as_string(sensor_json["role"]));
                 }
+                if (sensor_json.contains("enabled")) {
+                    sensor->enabled =
+                        helix::json_util::as_bool(sensor_json["enabled"], sensor->enabled);
+                }
+                spdlog::debug("[ProbeSensorManager] Loaded config for {}: role={}, enabled={}",
+                              klipper_name, probe_role_to_string(sensor->role), sensor->enabled);
             }
         }
-    } catch (const std::exception& e) {
-        spdlog::debug("[ProbeSensorManager] No sensor config found: {}", e.what());
     }
 
     // Auto-assign Z_PROBE role when exactly one probe exists and no role was
