@@ -198,6 +198,7 @@
             <ui_button name="z_up_large"
                        width="100%" flex_grow="1" icon_position="top" icon="arrow_up" bind_icon="motion_z_up_icon"
                        bind_text="motion_z_large_label">
+              <bind_state_if_eq subject="motion_z_up_blocked" state="disabled" ref_value="1"/>
               <event_cb trigger="clicked" callback="on_motion_z_button" user_data="z_up_large"/>
               <event_cb trigger="pressed" callback="on_motion_z_button_pressed" user_data="z_up_large"/>
               <event_cb trigger="released" callback="on_motion_z_button_released"/>
@@ -206,6 +207,7 @@
             <ui_button name="z_up_small"
                        width="100%" flex_grow="1" icon_position="top" icon="arrow_up" bind_icon="motion_z_up_icon"
                        bind_text="motion_z_small_label">
+              <bind_state_if_eq subject="motion_z_up_blocked" state="disabled" ref_value="1"/>
               <event_cb trigger="clicked" callback="on_motion_z_button" user_data="z_up_small"/>
               <event_cb trigger="pressed" callback="on_motion_z_button_pressed" user_data="z_up_small"/>
               <event_cb trigger="released" callback="on_motion_z_button_released"/>
@@ -217,6 +219,7 @@
             <ui_button name="z_down_small"
                        width="100%" flex_grow="1" icon_position="top" icon="arrow_down" bind_icon="motion_z_down_icon"
                        bind_text="motion_z_small_label">
+              <bind_state_if_eq subject="motion_z_down_blocked" state="disabled" ref_value="1"/>
               <event_cb trigger="clicked" callback="on_motion_z_button" user_data="z_down_small"/>
               <event_cb trigger="pressed" callback="on_motion_z_button_pressed" user_data="z_down_small"/>
               <event_cb trigger="released" callback="on_motion_z_button_released"/>
@@ -225,6 +228,7 @@
             <ui_button name="z_down_large"
                        width="100%" flex_grow="1" icon_position="top" icon="arrow_down" bind_icon="motion_z_down_icon"
                        bind_text="motion_z_large_label">
+              <bind_state_if_eq subject="motion_z_down_blocked" state="disabled" ref_value="1"/>
               <event_cb trigger="clicked" callback="on_motion_z_button" user_data="z_down_large"/>
               <event_cb trigger="pressed" callback="on_motion_z_button_pressed" user_data="z_down_large"/>
               <event_cb trigger="released" callback="on_motion_z_button_released"/>
@@ -334,6 +338,7 @@
             <ui_button name="z_up_large"
                        width="100%" flex_grow="1" style_max_height="#button_height_lg" icon="arrow_up"
                        bind_icon="motion_z_up_icon" bind_text="motion_z_large_label">
+              <bind_state_if_eq subject="motion_z_up_blocked" state="disabled" ref_value="1"/>
               <event_cb trigger="clicked" callback="on_motion_z_button" user_data="z_up_large"/>
               <event_cb trigger="pressed" callback="on_motion_z_button_pressed" user_data="z_up_large"/>
               <event_cb trigger="released" callback="on_motion_z_button_released"/>
@@ -342,6 +347,7 @@
             <ui_button name="z_up_small"
                        width="100%" flex_grow="1" style_max_height="#button_height_lg" icon="arrow_up"
                        bind_icon="motion_z_up_icon" bind_text="motion_z_small_label">
+              <bind_state_if_eq subject="motion_z_up_blocked" state="disabled" ref_value="1"/>
               <event_cb trigger="clicked" callback="on_motion_z_button" user_data="z_up_small"/>
               <event_cb trigger="pressed" callback="on_motion_z_button_pressed" user_data="z_up_small"/>
               <event_cb trigger="released" callback="on_motion_z_button_released"/>
@@ -352,6 +358,7 @@
             <ui_button name="z_down_small"
                        width="100%" flex_grow="1" style_max_height="#button_height_lg" icon="arrow_down"
                        bind_icon="motion_z_down_icon" bind_text="motion_z_small_label">
+              <bind_state_if_eq subject="motion_z_down_blocked" state="disabled" ref_value="1"/>
               <event_cb trigger="clicked" callback="on_motion_z_button" user_data="z_down_small"/>
               <event_cb trigger="pressed" callback="on_motion_z_button_pressed" user_data="z_down_small"/>
               <event_cb trigger="released" callback="on_motion_z_button_released"/>
@@ -360,6 +367,7 @@
             <ui_button name="z_down_large"
                        width="100%" flex_grow="1" style_max_height="#button_height_lg" icon="arrow_down"
                        bind_icon="motion_z_down_icon" bind_text="motion_z_large_label">
+              <bind_state_if_eq subject="motion_z_down_blocked" state="disabled" ref_value="1"/>
               <event_cb trigger="clicked" callback="on_motion_z_button" user_data="z_down_large"/>
               <event_cb trigger="pressed" callback="on_motion_z_button_pressed" user_data="z_down_large"/>
               <event_cb trigger="released" callback="on_motion_z_button_released"/>

@@ -40,6 +40,14 @@ struct AxisKeypadParams {
 std::optional<AxisKeypadParams> keypad_params_for_axis(const AxisBounds& bounds, Axis axis,
                                                        double commanded_mm);
 
+/// Whether a Z button driving G-code direction `direction_mm` (after the
+/// bed_moves inversion) can still move: true only when Z is homed with known
+/// bounds and `z` (predicted, including uncommitted coalesced travel) already
+/// sits at the bound that direction drives toward, within AxisMove::EPSILON_MM.
+/// A partial move is possible anywhere else, so the button stays enabled.
+bool z_direction_blocked(bool z_homed, bool bounds_known, double z, double z_min, double z_max,
+                         double direction_mm);
+
 enum class JogMode { Fine = 0, Coarse = 1, Turbo = 2 };
 constexpr int JOG_MODE_COUNT = 3;
 
@@ -107,12 +115,14 @@ class MotionPanel : public OverlayBase {
 
     /// Jog one zone. Returns false when nothing was dispatched (fully clamped
     /// at a limit, or the send was refused) - a hold-to-repeat reading false
-    /// stops repeating.
-    bool jog(helix::JogDirection direction, float distance_mm);
+    /// stops repeating. is_repeat is false for a tap and for the first jog of
+    /// a hold (a fresh press); a fresh press fully clamped at a limit warns.
+    bool jog(helix::JogDirection direction, float distance_mm, bool is_repeat = false);
     void home(char axis);
 
-    /// Jog one Z button. Same false-means-refused contract as jog().
-    bool handle_z_button(const char* name);
+    /// Jog one Z button. Same false-means-refused contract as jog(), and the
+    /// same is_repeat meaning (false = the initial jog of this press).
+    bool handle_z_button(const char* name, bool is_repeat = false);
     void set_jog_mode(helix::JogMode mode); // Switch between Fine/Coarse/Turbo jog mode
 
     /// The Z hold timer, for the XML pressed/released/press_lost callbacks.
@@ -138,10 +148,11 @@ class MotionPanel : public OverlayBase {
     /// target for that one axis.
     void request_axis_target(char axis, double mm);
 
-    /// Clamp one axis against its bounds, raising at most one warning per
-    /// approach. Returns the permitted delta, 0.0 when fully blocked.
-    double clamp_axis_and_warn(helix::Axis axis, double current, double uncommitted, double delta,
-                               float min, float max);
+    /// Clamp one axis against its bounds. Partial travel is silent; a fully
+    /// clamped FRESH press (anything but a hold repeat tick) warns every time
+    /// with the limit it hit. Returns the permitted delta, 0.0 when blocked.
+    double clamp_axis_delta(helix::Axis axis, double current, double uncommitted, double delta,
+                            float min, float max, bool fresh_press);
 
   private:
     // RAII subject manager - auto-deinits all registered subjects on destruction
@@ -163,6 +174,11 @@ class MotionPanel : public OverlayBase {
     lv_subject_t motion_x_homed_;
     lv_subject_t motion_y_homed_;
     lv_subject_t motion_z_homed_;
+    // Z button limit state (1=render disabled): a further move in that
+    // button's G-code direction is impossible. up/down are screen directions,
+    // the bed_moves inversion inside update_z_button_blocked() maps them.
+    lv_subject_t motion_z_up_blocked_;
+    lv_subject_t motion_z_down_blocked_;
     char pos_x_buf_[32];
     char pos_y_buf_[32];
     char pos_z_buf_[32];
@@ -189,10 +205,10 @@ class MotionPanel : public OverlayBase {
     /// captured at enqueue time. Feeds move_to's travel-before-descend
     /// ordering; delta moves ignore it.
     double target_start_z_ = 0.0;
-    /// Per-axis "blocked at limit" latch, indexed with helix::axis_index().
-    /// Repeated attempts against a limit must not each raise a toast, and
-    /// hold-to-repeat makes that a flood rather than a nuisance.
-    std::array<bool, 3> edge_warned_{};
+
+    /// Whether a repeat tick has fired for the current Z-button hold: the
+    /// first tick is that press's initial jog, later ones are repeats.
+    bool z_hold_repeated_ = false;
 
     /// Hold-to-repeat for the four Z buttons. The pad owns its own repeat
     /// (it is the only one that can see the press point move between zones);
@@ -239,6 +255,10 @@ class MotionPanel : public OverlayBase {
     /// Re-render all three readout subjects from the selected source.
     void refresh_position_display();
 
+    /// Recompute the Z-button disabled subjects from the predicted Z, homed
+    /// state, bounds and bed_moves inversion.
+    void update_z_button_blocked();
+
     /// ui_keypad_show() confirm callback.
     static void on_axis_keypad_value(float value, void* user_data);
 
@@ -250,7 +270,8 @@ class MotionPanel : public OverlayBase {
     // API layer; this makes the pad visibly unavailable to match.
     void update_jog_pad_enabled();
 
-    static bool jog_pad_jog_cb(helix::JogDirection direction, float distance_mm, void* user_data);
+    static bool jog_pad_jog_cb(helix::JogDirection direction, float distance_mm, bool is_repeat,
+                               void* user_data);
     static void jog_pad_home_cb(void* user_data);
     // Position observers use lambda-based observer factory (no static callbacks needed)
 

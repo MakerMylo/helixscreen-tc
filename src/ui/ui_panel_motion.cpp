@@ -93,6 +93,20 @@ helix::keypad_params_for_axis(const AxisBounds& bounds, Axis axis, double comman
     return AxisKeypadParams{min, max, static_cast<float>(commanded_mm), min < 0.0f};
 }
 
+bool helix::z_direction_blocked(bool z_homed, bool bounds_known, double z, double z_min,
+                                double z_max, double direction_mm) {
+    if (!z_homed || !bounds_known || direction_mm == 0.0) {
+        return false;
+    }
+    // Epsilon from the bound, not the move: a hair inside the envelope leaves
+    // a sub-micron residual that a fresh press could still "move", so the
+    // button must read enabled until the position is genuinely at the bound.
+    if (direction_mm > 0.0) {
+        return z >= z_max - AxisMove::EPSILON_MM;
+    }
+    return z <= z_min + AxisMove::EPSILON_MM;
+}
+
 // Strip Klipper error prefixes, parse JSON error objects, and truncate for toast display.
 // Some Klipper builds (e.g. K1C) send errors as JSON:
 //   {"code":"key585","msg":"Move out of range: ...","values":[...]}
@@ -245,6 +259,11 @@ void MotionPanel::init_subjects() {
     UI_MANAGED_SUBJECT_INT(motion_y_homed_, 0, "motion_y_homed", subjects_);
     UI_MANAGED_SUBJECT_INT(motion_z_homed_, 0, "motion_z_homed", subjects_);
 
+    // Z button limit state (0=enabled, 1=disabled); XML binds these with
+    // bind_state_if_eq state="disabled" on every Z button in both layouts.
+    UI_MANAGED_SUBJECT_INT(motion_z_up_blocked_, 0, "motion_z_up_blocked", subjects_);
+    UI_MANAGED_SUBJECT_INT(motion_z_down_blocked_, 0, "motion_z_down_blocked", subjects_);
+
     // Register PrinterState observers (RAII - auto-removed on destruction)
     register_position_observers();
 
@@ -271,6 +290,8 @@ void MotionPanel::init_subjects() {
 
     // Update Z axis label
     update_z_axis_label(bed_moves != 0);
+
+    update_z_button_blocked();
 
     spdlog::debug("[{}] Subjects initialized: X/Y/Z position + Z-axis label + observers ({} "
                   "subjects managed)",
@@ -389,9 +410,8 @@ void MotionPanel::on_deactivating(DeactivateReason reason) {
 
     // The base invalidates lifetime_ on the way out of this hook, dropping any
     // in-flight ack callback — fully reset the coalescer so it can't get stuck
-    // in_flight forever, and re-arm the edge warnings.
+    // in_flight forever.
     jog_coalescer_.reset();
-    edge_warned_.fill(false);
     stop_hold_repeat();
 }
 
@@ -414,12 +434,16 @@ void MotionPanel::begin_z_hold(const char* button_name) {
     if (!button_name)
         return;
     snprintf(z_hold_button_, sizeof(z_hold_button_), "%s", button_name);
+    z_hold_repeated_ = false;
     z_hold_timer_.begin(&MotionPanel::z_hold_fire, this);
 }
 
 bool MotionPanel::z_hold_fire(void* user_data) {
     auto* self = static_cast<MotionPanel*>(user_data);
-    return self->handle_z_button(self->z_hold_button_);
+    // The first tick is this press's initial jog; later ones are repeats.
+    const bool is_repeat = self->z_hold_repeated_;
+    self->z_hold_repeated_ = true;
+    return self->handle_z_button(self->z_hold_button_, is_repeat);
 }
 
 void MotionPanel::stop_hold_repeat() {
@@ -529,6 +553,7 @@ void MotionPanel::register_position_observers() {
             self->gcode_z_centimm_ = centimm;
             self->current_z_ = static_cast<float>(helix::units::from_centimm(centimm));
             self->refresh_position_display();
+            self->update_z_button_blocked();
         },
         get_printer_state().get_subjects_lifetime());
 
@@ -601,6 +626,7 @@ void MotionPanel::register_position_observers() {
                 lv_subject_set_int(&self->motion_y_homed_, y);
             if (lv_subject_get_int(&self->motion_z_homed_) != z)
                 lv_subject_set_int(&self->motion_z_homed_, z);
+            self->update_z_button_blocked();
             if (self->jog_pad_)
                 ui_jog_pad_set_homed(self->jog_pad_, x && y && z);
         },
@@ -615,6 +641,9 @@ void MotionPanel::register_position_observers() {
             if (!self->subjects_initialized_)
                 return;
             self->update_jog_pad_enabled();
+            // Bounds land with the connect/klippy-ready frames; recompute so a
+            // fresh envelope re-enables or disables the Z buttons.
+            self->update_z_button_blocked();
         },
         get_printer_state().get_subjects_lifetime());
 
@@ -627,6 +656,23 @@ void MotionPanel::update_jog_pad_enabled() {
         return;
     bool ready = lv_subject_get_int(get_printer_state().get_nav_buttons_enabled_subject()) != 0;
     ui_jog_pad_set_enabled(jog_pad_, ready);
+}
+
+void MotionPanel::update_z_button_blocked() {
+    if (!subjects_initialized_)
+        return;
+    const auto bounds = get_printer_state().get_axis_bounds();
+    const bool z_homed = helix::axis_is_homed(get_printer_state(), helix::Axis::Z);
+    const double z = jog_coalescer_.predicted_z(current_z_);
+    // The G-code direction the on-screen up buttons drive, after the bed_moves
+    // inversion: screen-up is +Z unless the bed moves.
+    const double up_dir = bed_moves_ ? -1.0 : 1.0;
+    lv_subject_set_int(
+        &motion_z_up_blocked_,
+        z_direction_blocked(z_homed, bounds.has_z, z, bounds.z_min, bounds.z_max, up_dir) ? 1 : 0);
+    lv_subject_set_int(
+        &motion_z_down_blocked_,
+        z_direction_blocked(z_homed, bounds.has_z, z, bounds.z_min, bounds.z_max, -up_dir) ? 1 : 0);
 }
 
 // Observer callbacks migrated to lambda-based observer factory pattern
@@ -648,6 +694,9 @@ void MotionPanel::update_z_axis_label(bool bed_moves) {
     std::strncpy(z_down_icon_buf_, down_icon, sizeof(z_down_icon_buf_) - 1);
     z_down_icon_buf_[sizeof(z_down_icon_buf_) - 1] = '\0';
     lv_subject_copy_string(&z_down_icon_subject_, z_down_icon_buf_);
+
+    // The inversion flips which bound each on-screen direction drives toward.
+    update_z_button_blocked();
 
     spdlog::debug("[{}] Z-axis updated: label={}, icons={}/{} (bed_moves={})", get_name(), label,
                   up_icon, down_icon, bed_moves);
@@ -671,7 +720,7 @@ void MotionPanel::refresh_position_display() {
 // Z Button Handler
 // ============================================================================
 
-bool MotionPanel::handle_z_button(const char* name) {
+bool MotionPanel::handle_z_button(const char* name, bool is_repeat) {
     spdlog::debug("[{}] Z button callback fired! Button name: '{}'", get_name(),
                   name ? name : "(null)");
 
@@ -710,9 +759,9 @@ bool MotionPanel::handle_z_button(const char* name) {
     // Bounds are in gcode space, so this must follow the inversion above.
     const auto bounds = get_printer_state().get_axis_bounds();
     if (bounds.has_z && helix::axis_is_homed(get_printer_state(), helix::Axis::Z)) {
-        distance = clamp_axis_and_warn(helix::Axis::Z, current_z_,
-                                       jog_coalescer_.predicted_z(current_z_) - current_z_,
-                                       distance, bounds.z_min, bounds.z_max);
+        distance = clamp_axis_delta(helix::Axis::Z, current_z_,
+                                    jog_coalescer_.predicted_z(current_z_) - current_z_, distance,
+                                    bounds.z_min, bounds.z_max, /*fresh_press=*/!is_repeat);
         if (distance == 0.0) {
             return false;
         }
@@ -727,12 +776,13 @@ bool MotionPanel::handle_z_button(const char* name) {
 // Jog Pad Callbacks
 // ============================================================================
 
-bool MotionPanel::jog_pad_jog_cb(JogDirection direction, float distance_mm, void* user_data) {
+bool MotionPanel::jog_pad_jog_cb(JogDirection direction, float distance_mm, bool is_repeat,
+                                 void* user_data) {
     auto* self = static_cast<MotionPanel*>(user_data);
     if (!self) {
         return false;
     }
-    return self->jog(direction, distance_mm);
+    return self->jog(direction, distance_mm, is_repeat);
 }
 
 void MotionPanel::jog_pad_home_cb(void* user_data) {
@@ -761,7 +811,7 @@ void MotionPanel::set_position(float x, float y, float z) {
     refresh_position_display();
 }
 
-bool MotionPanel::jog(JogDirection direction, float distance_mm) {
+bool MotionPanel::jog(JogDirection direction, float distance_mm, bool is_repeat) {
     const char* dir_names[] = {"N(+Y)",    "S(-Y)",    "E(+X)",    "W(-X)",
                                "NE(+X+Y)", "NW(-X+Y)", "SE(+X-Y)", "SW(-X-Y)"};
 
@@ -811,14 +861,14 @@ bool MotionPanel::jog(JogDirection direction, float distance_mm) {
     double ddy = static_cast<double>(dy);
 
     if (ddx != 0.0 && bounds.has_x && helix::axis_is_homed(get_printer_state(), helix::Axis::X)) {
-        ddx = clamp_axis_and_warn(helix::Axis::X, current_x_,
-                                  jog_coalescer_.predicted_x(current_x_) - current_x_, ddx,
-                                  bounds.x_min, bounds.x_max);
+        ddx = clamp_axis_delta(helix::Axis::X, current_x_,
+                               jog_coalescer_.predicted_x(current_x_) - current_x_, ddx,
+                               bounds.x_min, bounds.x_max, /*fresh_press=*/!is_repeat);
     }
     if (ddy != 0.0 && bounds.has_y && helix::axis_is_homed(get_printer_state(), helix::Axis::Y)) {
-        ddy = clamp_axis_and_warn(helix::Axis::Y, current_y_,
-                                  jog_coalescer_.predicted_y(current_y_) - current_y_, ddy,
-                                  bounds.y_min, bounds.y_max);
+        ddy = clamp_axis_delta(helix::Axis::Y, current_y_,
+                               jog_coalescer_.predicted_y(current_y_) - current_y_, ddy,
+                               bounds.y_min, bounds.y_max, /*fresh_press=*/!is_repeat);
     }
 
     if (ddx == 0.0 && ddy == 0.0) {
@@ -827,31 +877,34 @@ bool MotionPanel::jog(JogDirection direction, float distance_mm) {
     return dispatch_jog({ddx, ddy, 0.0});
 }
 
-double MotionPanel::clamp_axis_and_warn(helix::Axis axis, double current, double uncommitted,
-                                        double delta, float min, float max) {
-    // axis.h ships axis_index() for exactly this; do not hand-cast.
-    const int idx = helix::axis_index(axis);
-    const auto result =
-        helix::clamp_jog_with_warn(current, uncommitted, delta, static_cast<double>(min),
-                                   static_cast<double>(max), edge_warned_[idx]);
-    edge_warned_[idx] = result.latch;
-
-    if (result.warn) {
-        // Three literals rather than an assembled string: the translation
-        // extractor scans for lv_tr() literals and cannot see a runtime key.
+double MotionPanel::clamp_axis_delta(helix::Axis axis, double current, double uncommitted,
+                                     double delta, float min, float max, bool fresh_press) {
+    const double allowed = helix::clamp_jog_delta(
+        current, uncommitted, delta, static_cast<double>(min), static_cast<double>(max));
+    if (std::abs(allowed) > helix::AxisMove::EPSILON_MM) {
+        // Full or partial travel: silent either way.
+        return allowed;
+    }
+    if (fresh_press) {
+        // Repeat ticks into a limit stop silently; only the initial jog of a
+        // press warns. Three literals rather than an assembled string: the
+        // translation extractor scans for lv_tr() literals and cannot see a
+        // runtime key.
+        char limit_buf[16];
+        format_axis_value(limit_buf, sizeof(limit_buf), delta > 0.0f ? max : min);
         switch (axis) {
         case helix::Axis::X:
-            NOTIFY_WARNING(lv_tr("X jog blocked at bed edge"));
+            NOTIFY_WARNING(lv_tr("X is at its limit ({}mm)"), limit_buf);
             break;
         case helix::Axis::Y:
-            NOTIFY_WARNING(lv_tr("Y jog blocked at bed edge"));
+            NOTIFY_WARNING(lv_tr("Y is at its limit ({}mm)"), limit_buf);
             break;
         case helix::Axis::Z:
-            NOTIFY_WARNING(lv_tr("Z jog blocked at axis limit"));
+            NOTIFY_WARNING(lv_tr("Z is at its limit ({}mm)"), limit_buf);
             break;
         }
     }
-    return result.allowed;
+    return 0.0;
 }
 
 bool MotionPanel::dispatch_jog(const helix::AxisMove& delta) {
