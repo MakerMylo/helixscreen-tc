@@ -842,12 +842,11 @@ void PrinterImageWidget::update_callouts() {
     char fan_buf[8];
     snprintf(fan_buf, sizeof(fan_buf), "%d%%", fan);
     publish(&s_callout_fan_shown, fan > 0 ? 1 : 0, &s_callout_fan_text, fan > 0 ? fan_buf : "");
-    publish(&s_callout_light_shown,
-            read_int_or_zero(printer_has_led_subject()) &&
-                    read_int_or_zero(ps.get_led_state_subject())
-                ? 1
-                : 0,
-            nullptr, {});
+    const int light_shown =
+        read_int_or_zero(printer_has_led_subject()) && read_int_or_zero(ps.get_led_state_subject())
+            ? 1
+            : 0;
+    publish(&s_callout_light_shown, light_shown, nullptr, {});
     set_text(&s_callout_toolhead_text,
              std::string(lv_subject_get_string(&s_callout_nozzle_text)) + "  " + fan_buf);
 

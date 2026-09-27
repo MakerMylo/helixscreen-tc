@@ -146,9 +146,9 @@ which returns a `CalloutMode`, the image rect, and each chip's rect and leader l
   chip on the side nearer its point); one side (the image moves to the near edge and every
   chip stacks in the far band); pinned (tagged image, no band: chips sit on their points,
   nozzle + fan merge into one toolhead chip, and chips that would overlap slide apart);
-  docked (untagged image: chips in the
-  free band, else along the bottom edge, never a line). A tile taller than the image's
-  aspect runs the same ladder with bands above and below.
+  docked (untagged image: chips in the free band, else along the bottom edge, never a
+  line). A tile taller than the image's aspect runs the same ladder with bands above and
+  below.
 - **The budget decides the mode; the active chips get positions.** `CalloutLayoutInput`
   carries both: `budget` is every chip this printer can ever show at its widest text,
   `active` is what shows now. Fitting against the budget is what keeps the image still
@@ -173,10 +173,13 @@ which returns a `CalloutMode`, the image rect, and each chip's rect and leader l
   computed until the align changes and refuses a scale while CONTAIN is still set.
 - **Pinned chips slide apart.** After the pinned chips are placed on their points (and
   after the toolhead merge and docking), `callout_detail::slide_apart()`
-  (`src/ui/panel_widgets/callout_layout.h#slide_apart`) groups chips whose
-  x-ranges intersect into columns and spreads each column vertically with the same
-  `spread_1d()` the side bands use, within `[gap, area_h - gap]`. Chips that do not collide
-  keep their point-centred positions.
+  (`src/ui/panel_widgets/callout_layout.h#slide_apart`) groups pinned chips whose x-ranges
+  intersect into columns and spreads each column vertically with the same `spread_1d()`
+  the side bands use, between the top edge and the docked row. A chip moves only within
+  its column, only as far as `spread_1d()` needs, and never horizontally; a lone chip
+  moves only to clear the docked row. A column too tall to stack there gives up its
+  lowest-priority chip (light, fan, chamber, then bed; never the nozzle or toolhead) to
+  the docked row, and the layout runs again until every column fits.
 - **Leader lines are elbows.** Each line is three points: the tagged point, an elbow, and
   the middle of the chip's inner edge. From the point it runs at 45 degrees toward the
   chip's height, then straight into the chip: level into a side-band chip, vertical into a
