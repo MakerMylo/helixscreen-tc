@@ -12,13 +12,26 @@
 #include "../../include/moonraker_client_mock.h"
 #include "../../include/printer_state.h"
 #include "../../include/spool_latch_gate.h"
+#include "../../include/ui_probe_overlay.h"
 #include "../../src/api/moonraker_gcode_guards.h"
 #include "../lvgl_test_fixture.h"
 #include "../ui_test_utils.h"
+#include "app_globals.h"
 
 #include "../catch_amalgamated.hpp"
 
 using namespace helix;
+
+TEST_CASE("gcode_line_tokens splits lines and upper-cases each first token",
+          "[spool_latch][gcode]") {
+    using V = std::vector<std::string>;
+    CHECK(gcode_line_tokens("") == V{});
+    CHECK(gcode_line_tokens("g28") == V{"G28"});
+    CHECK(gcode_line_tokens("  \tM140 S60\r\n\n   g1 z10\n; note\nM400") ==
+          V{"M140", "G1", "M400"});
+    CHECK(gcode_line_tokens("M104 S0\n") == V{"M104"});
+    CHECK(gcode_line_tokens("\n\n  \n") == V{});
+}
 
 TEST_CASE("spool_latch_allows passes only commands that cannot move the toolhead",
           "[spool_latch][gcode]") {
@@ -37,6 +50,9 @@ TEST_CASE("spool_latch_allows passes only commands that cannot move the toolhead
     CHECK_FALSE(spool_latch_allows("M140 S60\nG28", none));
     CHECK_FALSE(spool_latch_allows("PRINT_START", none));
     CHECK_FALSE(spool_latch_allows("M84", none));
+    // A restart releases the steppers, which can let a gantry sink onto the spools.
+    CHECK_FALSE(spool_latch_allows("FIRMWARE_RESTART", none));
+    CHECK_FALSE(spool_latch_allows("RESTART", none));
 
     SECTION("a running dry cycle adds its own commands") {
         const std::vector<std::string> dryer = {"APPLIANCE_DRY_START", "APPLIANCE_DRY_STOP"};
@@ -168,4 +184,49 @@ TEST_CASE_METHOD(SpoolLatchFixture, "machine_motion_blocked is job_holds_machine
         helix::ui::UpdateQueue::instance().drain();
     }
     CHECK(lv_subject_get_int(blocked) == 0);
+}
+
+TEST_CASE_METHOD(SpoolLatchFixture, "probe calibration commands go through the latch",
+                 "[spool_latch][probe][1730]") {
+    IMoonrakerAPI* previous = get_moonraker_api();
+    IMoonrakerClient* previous_client = get_moonraker_client();
+    // Both globals set, as in the app: a probe command must still take the API.
+    set_moonraker_api(api.get());
+    set_moonraker_client(&mock_client);
+    state.set_spool_latch(true);
+
+    CHECK_FALSE(helix::ui::probe_send_gcode("CARTOGRAPHER_TOUCH_CALIBRATE",
+                                            "Cartographer Touch Calibrate"));
+    CHECK_FALSE(helix::ui::probe_send_gcode("BLTOUCH_DEBUG COMMAND=pin_down", "BLTouch Deploy"));
+    CHECK(mock_client.gcode_script_history().empty());
+
+    state.set_spool_latch(false);
+    CHECK(helix::ui::probe_send_gcode("BEACON_CALIBRATE", "Beacon Calibrate"));
+    CHECK_FALSE(mock_client.gcode_script_history().empty());
+
+    set_moonraker_api(previous);
+    set_moonraker_client(previous_client);
+    helix::ui::UpdateQueue::instance().drain();
+}
+
+TEST_CASE_METHOD(SpoolLatchFixture, "the restart paths refuse while spools are on the bed",
+                 "[spool_latch][mock][1730]") {
+    state.set_spool_latch(true);
+    SECTION("firmware restart") {
+        api->restart_firmware([] {}, on_error());
+        CHECK(error_called);
+        CHECK(captured_error.message.find("Spools are on the bed") != std::string::npos);
+    }
+    SECTION("Klipper restart") {
+        api->restart_klipper([] {}, on_error());
+        CHECK(error_called);
+    }
+    SECTION("the Klipper service") {
+        api->restart_service("klipper", [] {}, on_error());
+        CHECK(error_called);
+    }
+    SECTION("an emergency stop still goes out") {
+        api->execute_gcode("M112", nullptr, on_error());
+        CHECK_FALSE(error_called);
+    }
 }

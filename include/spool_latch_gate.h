@@ -6,26 +6,30 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
-#include <sstream>
 #include <string>
 #include <string_view>
 #include <vector>
 
 namespace helix {
 
-/// First whitespace-delimited token of each non-blank line, upper-cased.
-inline std::vector<std::string> gcode_line_tokens(const std::string& script) {
+/// What every refusal says while spools lie on the bed.
+inline constexpr const char* kSpoolLatchMessage =
+    "Spools are on the bed: remove them and confirm before moving the printer";
+
+/// First whitespace-delimited token of each non-blank, non-comment line, upper-cased.
+inline std::vector<std::string> gcode_line_tokens(std::string_view script) {
     std::vector<std::string> tokens;
-    std::istringstream lines(script);
-    std::string line;
-    while (std::getline(lines, line)) {
+    while (!script.empty()) {
+        const size_t eol = script.find('\n');
+        std::string_view line = script.substr(0, eol);
+        script = eol == std::string_view::npos ? std::string_view{} : script.substr(eol + 1);
         const size_t start = line.find_first_not_of(" \t\r");
-        if (start == std::string::npos || line[start] == ';') {
+        if (start == std::string_view::npos || line[start] == ';') {
             continue;
         }
         const size_t end = line.find_first_of(" \t\r", start);
-        std::string token =
-            line.substr(start, end == std::string::npos ? std::string::npos : end - start);
+        std::string token(line.substr(start, end == std::string_view::npos ? std::string_view::npos
+                                                                           : end - start));
         for (char& c : token) {
             c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
         }
@@ -44,14 +48,15 @@ inline std::vector<std::string> gcode_line_tokens(const std::string& script) {
  */
 inline bool spool_latch_allows(const std::string& script,
                                const std::vector<std::string>& extra_tokens) {
-    static constexpr std::array<std::string_view, 25> kAllowed = {
+    static constexpr std::array<std::string_view, 23> kAllowed = {
         // heaters
         "M104", "M109", "M140", "M190", "M141", "M191", "SET_HEATER_TEMPERATURE",
         "TURN_OFF_HEATERS", "SET_TEMPERATURE_FAN_TARGET", "SET_IDLE_TIMEOUT",
         // fans and lights
         "M106", "M107", "SET_FAN_SPEED", "SET_PIN", "SET_LED",
-        // an emergency stop must always get through; a restart moves nothing
-        "M112", "FIRMWARE_RESTART", "RESTART",
+        // an emergency stop must always get through. A restart is not here: it
+        // releases the steppers, and a gantry can sink onto the spools.
+        "M112",
         // read-only
         "M105", "M114", "M115", "M117", "M118", "RESPOND", "STATUS"};
     for (const std::string& token : gcode_line_tokens(script)) {

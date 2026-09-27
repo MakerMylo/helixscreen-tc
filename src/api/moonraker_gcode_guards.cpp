@@ -47,11 +47,6 @@ bool reject_homing_during_active_print(const std::string& gcode, helix::PrinterS
     return true;
 }
 
-namespace {
-constexpr const char* kSpoolLatchMessage =
-    "Spools are on the bed: remove them and confirm before moving the printer";
-}
-
 bool reject_motion_while_spools_on_bed(const std::string& gcode, helix::PrinterState& state,
                                        bool silent,
                                        const std::function<void(const MoonrakerError&)>& on_error,
@@ -65,7 +60,7 @@ bool reject_motion_while_spools_on_bed(const std::string& gcode, helix::PrinterS
                      gcode.substr(0, 60));
     }
     if (on_error) {
-        on_error(MoonrakerError::not_ready("printer.gcode.script", kSpoolLatchMessage));
+        on_error(MoonrakerError::not_ready("printer.gcode.script", helix::kSpoolLatchMessage));
     }
     return true;
 }
@@ -77,7 +72,7 @@ bool reject_job_while_spools_on_bed(const helix::PrinterState* state, const char
     }
     spdlog::warn("[Moonraker API] Refusing {} while spools are on the bed", method);
     if (on_error) {
-        on_error(MoonrakerError::not_ready(method, kSpoolLatchMessage));
+        on_error(MoonrakerError::not_ready(method, helix::kSpoolLatchMessage));
     }
     return true;
 }
