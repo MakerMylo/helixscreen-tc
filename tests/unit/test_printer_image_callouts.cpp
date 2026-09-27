@@ -20,6 +20,7 @@
 #include "printer_state.h"
 #include "src/ui/panel_widgets/printer_image_widget.h"
 #include "src/ui/panel_widgets/text_measure.h"
+#include "theme_manager.h"
 #include "tool_state.h"
 
 #include <chrono>
@@ -182,6 +183,32 @@ TEST_CASE_METHOD(LVGLUITestFixture, "callouts: heater off but hot keeps the chip
     lv_subject_set_int(state().get_bed_temp_subject(), 500);
     settle();
     CHECK_FALSE(shown(h, "callout_chip_bed"));
+}
+
+TEST_CASE_METHOD(LVGLUITestFixture, "callouts: a heater off but still hot greys its chip text",
+                 "[printer_image][callouts]") {
+    const auto regions = prepare_tagged_widget();
+    PanelWidgetHarness<PrinterImageWidget> h(test_screen());
+    h.resize(4, 4, 160, 160);
+    lv_subject_t* bed_shown = lv_xml_get_subject(nullptr, "callout_bed_shown");
+    lv_obj_t* label = lv_obj_find_by_name(h.child("callout_chip_bed"), "chip_text");
+    REQUIRE(label);
+    const lv_color_t inactive = theme_manager_get_color("text_subtle");
+    const auto text_color = [&] { return lv_obj_get_style_text_color(label, LV_PART_MAIN); };
+
+    lv_subject_set_int(state().get_bed_target_subject(), 0);
+    lv_subject_set_int(state().get_bed_temp_subject(), 640);
+    settle();
+    REQUIRE(shown(h, "callout_chip_bed"));
+    CHECK(lv_subject_get_int(bed_shown) == 2);
+    CHECK(lv_color_eq(text_color(), inactive));
+
+    lv_subject_set_int(state().get_bed_target_subject(), 2200);
+    lv_subject_set_int(state().get_bed_temp_subject(), 2200);
+    settle();
+    REQUIRE(shown(h, "callout_chip_bed"));
+    CHECK(lv_subject_get_int(bed_shown) == 1);
+    CHECK_FALSE(lv_color_eq(text_color(), inactive));
 }
 
 TEST_CASE_METHOD(LVGLUITestFixture,

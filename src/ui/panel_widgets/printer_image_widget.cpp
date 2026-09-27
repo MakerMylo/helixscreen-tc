@@ -109,7 +109,9 @@ static void printer_image_widget_init_subjects() {
 
     // Live callout subjects. Every int starts at 0 (CalloutMode::ImageOnly for
     // the mode subject, "not shown" for the rest) so the callout layer and
-    // every chip parse hidden, matching the widget's default idle state.
+    // every chip parse hidden, matching the widget's default idle state. A
+    // callout_<kind>_shown int is 0 hidden, 1 active, 2 residual (a heater off
+    // but still hot, its chip text greyed).
     static const struct {
         lv_subject_t* subject;
         const char* name;
@@ -803,21 +805,22 @@ void PrinterImageWidget::update_callouts() {
             changed = true;
         }
     };
-    const auto publish = [&](lv_subject_t* shown, bool on, lv_subject_t* text,
+    // A shown subject reads 0 hidden, 1 active, 2 residual (off but still hot).
+    const auto publish = [&](lv_subject_t* shown, int value, lv_subject_t* text,
                              const std::string& t) {
-        if (lv_subject_get_int(shown) != (on ? 1 : 0)) {
-            lv_subject_set_int(shown, on ? 1 : 0);
+        if (lv_subject_get_int(shown) != value) {
+            lv_subject_set_int(shown, value);
             changed = true;
         }
         if (text)
             set_text(text, t);
     };
-    // A heater shows while it has a target, and after that while it is still hot
-    // enough to burn. The chip reads exactly what the temperature widgets read.
+    // A heater shows while it has a target, and after that, greyed, while it is
+    // still hot enough to burn. The chip reads exactly what the temperature widgets read.
     const auto heater = [&](int cur, int tgt, bool capable, lv_subject_t* shown,
                             lv_subject_t* text) {
-        const bool on = capable && (tgt > 0 || is_residual_hot(cur));
-        publish(shown, on, text, on ? heater_display(cur, tgt).temp : std::string());
+        const int value = !capable ? 0 : tgt > 0 ? 1 : is_residual_hot(cur) ? 2 : 0;
+        publish(shown, value, text, value ? heater_display(cur, tgt).temp : std::string());
     };
 
     heater(read_int_or_zero(ps.get_active_extruder_temp_subject()),
@@ -837,10 +840,12 @@ void PrinterImageWidget::update_callouts() {
     const int fan = read_int_or_zero(ps.get_fan_speed_subject());
     char fan_buf[8];
     snprintf(fan_buf, sizeof(fan_buf), "%d%%", fan);
-    publish(&s_callout_fan_shown, fan > 0, &s_callout_fan_text, fan > 0 ? fan_buf : "");
+    publish(&s_callout_fan_shown, fan > 0 ? 1 : 0, &s_callout_fan_text, fan > 0 ? fan_buf : "");
     publish(&s_callout_light_shown,
             read_int_or_zero(printer_has_led_subject()) &&
-                read_int_or_zero(ps.get_led_state_subject()),
+                    read_int_or_zero(ps.get_led_state_subject())
+                ? 1
+                : 0,
             nullptr, {});
     set_text(&s_callout_toolhead_text,
              std::string(lv_subject_get_string(&s_callout_nozzle_text)) + "  " + fan_buf);

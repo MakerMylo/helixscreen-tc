@@ -28,7 +28,8 @@
       <!-- Live callouts: one chip per active heater/fan/light, positioned by
            C++ (compute_callout_layout in callout_layout.h). Hidden entirely
            in ImageOnly mode (printer_callout_mode == 0); each chip further
-           hides on its own shown subject, or when the toolhead-merged chip
+           hides on its own shown subject (0 hidden, 1 active, 2 residual:
+           shown, text greyed), or when the toolhead-merged chip
            replaces the nozzle/fan pair. Leader lines draw only in the
            line modes (BothSides = 3, OneSide = 4); the bed glow needs tagged
            bed points, so it skips Docked (2), which means untagged. -->
@@ -60,22 +61,24 @@
           <bind_flag_if cond="printer_callout_mode lt 3 or callout_light_shown eq 0" flag="hidden"/>
         </leader_line>
 
-        <activity_chip name="callout_chip_nozzle" text_subject="callout_nozzle_text">
+        <activity_chip name="callout_chip_nozzle"
+                       text_subject="callout_nozzle_text" shown_subject="callout_nozzle_shown">
           <bind_flag_if cond="callout_nozzle_shown eq 0 or callout_toolhead_merged eq 1" flag="hidden"/>
           <event_cb trigger="clicked" callback="printer_callout_nozzle_cb"/>
           <nozzle_icon size="xs"/>
         </activity_chip>
-        <activity_chip name="callout_chip_bed" text_subject="callout_bed_text">
+        <activity_chip name="callout_chip_bed" text_subject="callout_bed_text" shown_subject="callout_bed_shown">
           <bind_flag_if_eq subject="callout_bed_shown" flag="hidden" ref_value="0"/>
           <event_cb trigger="clicked" callback="printer_callout_bed_cb"/>
           <heater_icon src="radiator" glyph_name="bed_icon_glyph" size="xs"/>
         </activity_chip>
-        <activity_chip name="callout_chip_chamber" text_subject="callout_chamber_text">
+        <activity_chip name="callout_chip_chamber"
+                       text_subject="callout_chamber_text" shown_subject="callout_chamber_shown">
           <bind_flag_if_eq subject="callout_chamber_shown" flag="hidden" ref_value="0"/>
           <event_cb trigger="clicked" callback="printer_callout_chamber_cb"/>
           <heater_icon src="fridge_industrial" glyph_name="chamber_icon_glyph" size="xs"/>
         </activity_chip>
-        <activity_chip name="callout_chip_fan" text_subject="callout_fan_text">
+        <activity_chip name="callout_chip_fan" text_subject="callout_fan_text" shown_subject="callout_fan_shown">
           <bind_flag_if cond="callout_fan_shown eq 0 or callout_toolhead_merged eq 1" flag="hidden"/>
           <event_cb trigger="clicked" callback="printer_callout_fan_cb"/>
           <icon name="callout_fan_icon" src="fan" size="xs"/>
@@ -86,7 +89,8 @@
           <event_cb trigger="clicked" callback="printer_callout_light_cb"/>
           <icon src="lightbulb_on" size="xs" variant="warning"/>
         </lv_obj>
-        <activity_chip name="callout_chip_toolhead" text_subject="callout_toolhead_text">
+        <activity_chip name="callout_chip_toolhead"
+                       text_subject="callout_toolhead_text" shown_subject="callout_toolhead_merged">
           <bind_flag_if_eq subject="callout_toolhead_merged" flag="hidden" ref_value="0"/>
           <event_cb trigger="clicked" callback="printer_callout_nozzle_cb"/>
           <!-- row_reverse draws children last-first: nozzle, fan, text -->
