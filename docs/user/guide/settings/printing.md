@@ -51,6 +51,18 @@ This only changes the direction labels in the UI — the actual G-code sent is t
 
 ---
 
+## Enclosure
+
+Tells HelixScreen whether your printer is enclosed. It decides whether [Dry Filament on the bed](../temperature.md#drying-filament-on-the-bed) is offered, which needs an enclosure.
+
+| Mode | Behavior |
+|------|----------|
+| **Auto** (default) | Enclosed when your printer model is known to ship enclosed, or when a chamber heater is configured |
+| **Enclosed** | Treat the printer as enclosed. Use this if you enclosed it yourself |
+| **Open frame** | Treat the printer as open. Dry Filament stays hidden |
+
+---
+
 ## Machine Limits
 
 Tap to open the Machine Limits overlay. A banner at the top reminds you: **"Changes are temporary and reset on printer reboot."** These sliders override your Klipper config for the current session — useful for testing or troubleshooting motion issues. To make permanent changes, edit `printer.cfg` directly.
@@ -178,19 +190,22 @@ Tap to open the Macro Buttons overlay. Configure quick-action buttons and standa
 
 ### Quick Buttons
 
-These macros power the buttons you see on the Controls and Filament panels:
+The Controls panel's **Quick Actions** card has four quick buttons under the Home row. Each one runs one of the [standard actions](#standard-macros) below, or toggles the printer light:
 
-| Button | Where it appears | What it does by default |
-|--------|-----------------|------------------------|
-| **Cooldown** | Preheat widget (when heaters are on), Filament panel (always shown, dimmed while the nozzle isn't heating) | Turns off extruder and bed heaters |
-| **Load Filament** | Filament panel | Runs `LOAD_FILAMENT` |
-| **Unload Filament** | Filament panel | Runs `UNLOAD_FILAMENT` |
-| **Custom Macro 1** | Controls panel | Runs `HELIX_CLEAN_NOZZLE` (label: "Clean Nozzle") |
-| **Custom Macro 2** | Controls panel | Runs `HELIX_BED_LEVEL_IF_NEEDED` (label: "Bed Level") |
+| Setting | Default |
+|---------|---------|
+| **Quick Button 1** | Clean Nozzle |
+| **Quick Button 2** | Bed Level |
+| **Quick Button 3** | (Empty) |
+| **Quick Button 4** | (Empty) |
 
-**Cooldown behavior:** When you preheat a material using the Preheat widget on the home or controls panel, the button automatically switches to **Cool Down** while any heater target is above zero. Tapping it runs your configured cooldown macro. This is especially useful if your cooldown needs to do more than just turn off heaters — for example, turning off chamber heaters, bed fans, or recirculation fans.
+- **A standard action** runs whatever macro that action is assigned to under Standard Macros. If your printer has no macro for it, the button shows greyed out.
+- **Light** turns the button into an on/off switch for the printer lights, the same one as the home screen's LED Light widget. It hides while no light is controllable.
+- **(Empty)** hides the button.
 
-You can customize any of these. Each button has a **label** (what the button says) and **G-code** (what it runs when tapped). The cooldown macro can be a simple G-code string or a multi-line sequence:
+While a light is controllable and no Quick Button is set to **Light**, the first button you have never set that would otherwise be empty shows the light, and its dropdown reads **Light**. Picking **(Empty)** for that button turns the light off there and keeps it off.
+
+**Cool Down** (on the Preheat widget while a heater is on, and on the Filament panel) runs the `cooldown` G-code from `settings.json`. By default it turns off the extruder and bed heaters. Override it when cooling down should do more, such as turning off a chamber heater or bed fans:
 
 ```
 SET_HEATER_TEMPERATURE HEATER=extruder TARGET=0
@@ -198,7 +213,7 @@ SET_HEATER_TEMPERATURE HEATER=heater_bed TARGET=0
 SET_FAN_SPEED FAN=bed_fan SPEED=0
 ```
 
-For advanced configuration via `settings.json`, see the [default_macros reference](../../CONFIGURATION.md#default_macros).
+See the [default_macros reference](../../CONFIGURATION.md#default_macros) for the format.
 
 ### Standard Macros
 
