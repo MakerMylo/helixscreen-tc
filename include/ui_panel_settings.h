@@ -275,6 +275,8 @@ class SettingsPanel : public PanelBase {
     static void on_system_clicked(lv_event_t* e);
     static void on_help_clicked(lv_event_t* e);
     static void on_touch_input_clicked(lv_event_t* e);
+    static void on_connection_clicked(lv_event_t* e);
+    static void on_updates_clicked(lv_event_t* e);
 
   private:
     // Static callbacks for overlays

@@ -3143,6 +3143,7 @@
   <translation tag="Update from a Terminal" zh="通过终端更新"/>
   <translation tag="Update installed!" zh="更新已安装！"/>
   <translation tag="Update your security PIN" zh="更新您的安全 PIN"/>
+  <translation tag="Updates" zh="更新"/>
   <translation tag="Updating Configuration..." zh="正在更新配置..."/>
   <translation tag="Upgrade to AFC 1.2.0 or newer for multi-color spools. It also adds filament names, which otherwise need Spoolman." zh="升级到 AFC 1.2.0 或更高版本即可使用多色料盘。它还会添加耗材名称，否则需要 Spoolman 提供。"/>
   <translation tag="Upload" zh="上传"/>

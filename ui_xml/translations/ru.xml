@@ -3143,6 +3143,7 @@
   <translation tag="Update from a Terminal" ru="Обновление через терминал"/>
   <translation tag="Update installed!" ru="Обновление установлено!"/>
   <translation tag="Update your security PIN" ru="Обновите ваш PIN-код"/>
+  <translation tag="Updates" ru="Обновления"/>
   <translation tag="Updating Configuration..." ru="Обновление конфигурации..."/>
   <translation tag="Upgrade to AFC 1.2.0 or newer for multi-color spools. It also adds filament names, which otherwise need Spoolman." ru="Обновите AFC до 1.2.0 или новее для многоцветных катушек. Также добавляются названия филаментов, для которых иначе требуется Spoolman."/>
   <translation tag="Upload" ru="Отправить"/>

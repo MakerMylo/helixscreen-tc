@@ -3143,6 +3143,7 @@
   <translation tag="Update from a Terminal" ja="ターミナルから更新"/>
   <translation tag="Update installed!" ja="アップデートをインストールしました！"/>
   <translation tag="Update your security PIN" ja="セキュリティ PIN を更新"/>
+  <translation tag="Updates" ja="更新"/>
   <translation tag="Updating Configuration..." ja="設定を更新中..."/>
   <translation tag="Upgrade to AFC 1.2.0 or newer for multi-color spools. It also adds filament names, which otherwise need Spoolman." ja="マルチカラースプールにはAFC 1.2.0以降へのアップグレードが必要です。フィラメント名にも対応し、これまではSpoolmanが別途必要でした。"/>
   <translation tag="Upload" ja="アップロード"/>

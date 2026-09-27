@@ -82,6 +82,10 @@ TEST_CASE_METHOD(PageRowsFixture, "settings pages: every row lives on its page",
         {"settings_language_time_overlay", {"row_language", "row_timezone", "row_time_format"}},
         {"settings_touch_overlay",
          {"row_system_keyboard", "row_keep_navbar", "row_page_scroll_buttons"}},
+        {"settings_connection_overlay", {"row_network", "row_printer_host", "row_printers"}},
+        {"settings_updates_overlay",
+         {"row_update_channel", "row_update_channel_dev", "row_check_updates", "row_install_update",
+          "row_updates_unavailable"}},
     };
     for (const auto& p : placements) {
         build(p.view);
@@ -102,6 +106,19 @@ TEST_CASE_METHOD(PageRowsFixture, "settings pages: moved rows are gone from thei
     CHECK_FALSE(has("row_sounds"));
     CHECK_FALSE(has("row_dark_mode"));
     CHECK_FALSE(has("row_page_scroll_buttons"));
+}
+
+TEST_CASE_METHOD(PageRowsFixture, "settings pages: connection and update rows left their old pages",
+                 "[settings][settings_pages]") {
+    build("settings_system_overlay");
+    CHECK_FALSE(has("row_network"));
+    CHECK_FALSE(has("row_printer_host"));
+    CHECK_FALSE(has("row_touch_input"));
+    build("settings_hardware_overlay");
+    CHECK_FALSE(has("row_printers"));
+    build("about_settings_overlay");
+    CHECK_FALSE(has("row_check_updates"));
+    CHECK(has("row_version"));
 }
 
 TEST_CASE_METHOD(PageRowsFixture, "settings pages: the Display & Sound view no longer exists",

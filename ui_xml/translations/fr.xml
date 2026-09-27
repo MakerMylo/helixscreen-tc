@@ -3143,6 +3143,7 @@
   <translation tag="Update from a Terminal" fr="Mettre à jour depuis un terminal"/>
   <translation tag="Update installed!" fr="Mise à jour installée !"/>
   <translation tag="Update your security PIN" fr="Mettez à jour votre PIN de sécurité sur cette installation."/>
+  <translation tag="Updates" fr="Mises à jour"/>
   <translation tag="Updating Configuration..." fr="Mise à jour de la configuration..."/>
   <translation tag="Upgrade to AFC 1.2.0 or newer for multi-color spools. It also adds filament names, which otherwise need Spoolman." fr="Passez à AFC 1.2.0 ou plus récent pour les bobines multicolores. Cette version ajoute aussi les noms de filament, qui nécessitent sinon Spoolman."/>
   <translation tag="Upload" fr="Téléverser"/>

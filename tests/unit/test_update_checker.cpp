@@ -2456,7 +2456,7 @@ TEST_CASE_METHOD(GlobalPrintStateFixture,
 
     // Reproduce the reported trap. cancel_download() only sets a flag that the
     // worker reads after downloadFile() returns, and
-    // AboutSettingsOverlay::hide_update_download_modal() immediately resets the
+    // UpdatesSettingsOverlay::hide_update_download_modal() immediately resets the
     // status to Idle. The enum now says "nothing is happening" while the worker
     // is still inside an hour-long blocking call.
     checker.cancel_download();

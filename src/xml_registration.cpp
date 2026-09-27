@@ -764,6 +764,8 @@ void register_xml_components() {
     register_xml("settings_safety_overlay.xml");
     register_xml("settings_system_overlay.xml");
     register_xml("settings_touch_overlay.xml");
+    register_xml("settings_connection_overlay.xml");
+    register_xml("settings_updates_overlay.xml");
     register_xml("settings_help_overlay.xml");
     register_xml("tour_tooltip_card.xml");
     register_xml("security_settings_overlay.xml");

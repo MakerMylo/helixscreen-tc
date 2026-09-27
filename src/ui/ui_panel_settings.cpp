@@ -21,6 +21,7 @@
 #include "ui_printer_list_overlay.h"
 #include "ui_settings_about.h"
 #include "ui_settings_appearance.h"
+#include "ui_settings_connection.h"
 #include "ui_settings_display.h"
 #include "ui_settings_hardware.h"
 #include "ui_settings_hardware_health.h"
@@ -30,6 +31,7 @@
 #include "ui_settings_safety.h"
 #include "ui_settings_system.h"
 #include "ui_settings_touch.h"
+#include "ui_settings_updates.h"
 #if HELIX_HAS_LABEL_PRINTER
 #include "ui_settings_label_printer.h"
 #endif
@@ -416,6 +418,8 @@ void SettingsPanel::init_subjects() {
         {"on_system_clicked", on_system_clicked},
         {"on_help_clicked", on_help_clicked},
         {"on_touch_input_clicked", on_touch_input_clicked},
+        {"on_connection_clicked", on_connection_clicked},
+        {"on_updates_clicked", on_updates_clicked},
     });
 
     // Register sub-panel overlay callbacks (must happen before XML parsing)
@@ -429,6 +433,8 @@ void SettingsPanel::init_subjects() {
     helix::settings::get_system_settings_overlay().register_callbacks();
     helix::settings::get_help_settings_overlay().register_callbacks();
     helix::settings::get_touch_settings_overlay().register_callbacks();
+    helix::settings::get_connection_settings_overlay().register_callbacks();
+    helix::settings::get_updates_settings_overlay().register_callbacks();
 
     // Note: Sensors overlay callbacks are now handled by SensorSettingsOverlay
     // See ui_settings_sensors.h
@@ -739,7 +745,7 @@ void SettingsPanel::setup_action_handlers() {
 }
 
 void SettingsPanel::populate_info_rows() {
-    // Printer host description: bound declaratively in settings_system_overlay.xml
+    // Printer host description: bound declaratively in settings_connection_overlay.xml
     // via bind_description="printer_host_value". Seed the subject from config so the
     // first paint shows the current host:port (otherwise it's the em-dash default
     // until ChangeHostModal fires its completion callback).
@@ -1185,6 +1191,20 @@ void SettingsPanel::on_touch_input_clicked(lv_event_t* /*e*/) {
     LVGL_SAFE_EVENT_CB_END();
 }
 
+void SettingsPanel::on_connection_clicked(lv_event_t* /*e*/) {
+    LVGL_SAFE_EVENT_CB_BEGIN("[SettingsPanel] on_connection_clicked");
+    auto& overlay = helix::settings::get_connection_settings_overlay();
+    overlay.show(get_global_settings_panel().parent_screen_);
+    LVGL_SAFE_EVENT_CB_END();
+}
+
+void SettingsPanel::on_updates_clicked(lv_event_t* /*e*/) {
+    LVGL_SAFE_EVENT_CB_BEGIN("[SettingsPanel] on_updates_clicked");
+    auto& overlay = helix::settings::get_updates_settings_overlay();
+    overlay.show(get_global_settings_panel().parent_screen_);
+    LVGL_SAFE_EVENT_CB_END();
+}
+
 // ============================================================================
 // STATIC TRAMPOLINES (XML event_cb pattern - use global singleton)
 // ============================================================================
@@ -1495,5 +1515,7 @@ void register_settings_panel_callbacks() {
         {"on_system_clicked", SettingsPanel::on_system_clicked},
         {"on_help_clicked", SettingsPanel::on_help_clicked},
         {"on_touch_input_clicked", SettingsPanel::on_touch_input_clicked},
+        {"on_connection_clicked", SettingsPanel::on_connection_clicked},
+        {"on_updates_clicked", SettingsPanel::on_updates_clicked},
     });
 }

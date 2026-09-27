@@ -2,7 +2,7 @@
 <!-- Copyright (C) 2025-2026 356C LLC -->
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <!-- Hardware & Devices Settings Overlay -->
-<!-- Hardware issues, printer, AMS, fans, sensors, LEDs, power devices, spoolman -->
+<!-- Hardware issues, camera, AMS, fans, sensors, LEDs, power devices, spoolman -->
 <component>
   <view name="settings_hardware_overlay"
         extends="overlay_panel" title="Hardware &amp; Devices" title_tag="Hardware &amp; Devices" bg_color="#screen_bg">
@@ -23,13 +23,6 @@
                               description_tag="Review detected hardware validation issues"
                               callback="on_hardware_health_clicked"/>
         </lv_obj>
-        <!-- ================================================================== -->
-        <!-- PRINTERS -->
-        <!-- ================================================================== -->
-        <setting_action_row name="row_printers"
-                            label="Printers" label_tag="Printers" icon="printer_3d"
-                            description="Manage configured printers" description_tag="Manage configured printers"
-                            callback="on_printers_clicked"/>
         <!-- ================================================================== -->
         <!-- CAMERA (hidden when no enabled webcam configured in Moonraker) -->
         <!-- ================================================================== -->

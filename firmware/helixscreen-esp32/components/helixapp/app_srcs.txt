@@ -507,6 +507,7 @@ src/ui/ui_resume_dispatch.cpp
 src/ui/ui_runout_guidance_modal.cpp
 src/ui/ui_settings_about.cpp
 src/ui/ui_settings_appearance.cpp
+src/ui/ui_settings_connection.cpp
 src/ui/ui_settings_display.cpp
 src/ui/ui_settings_fans.cpp
 src/ui/ui_settings_hardware.cpp
@@ -526,6 +527,7 @@ src/ui/ui_settings_sound.cpp
 src/ui/ui_settings_system.cpp
 src/ui/ui_settings_telemetry_data.cpp
 src/ui/ui_settings_touch.cpp
+src/ui/ui_settings_updates.cpp
 src/ui/ui_severity_card.cpp
 src/ui/ui_snake_game.cpp
 src/ui/ui_sound_preview_overlay.cpp
