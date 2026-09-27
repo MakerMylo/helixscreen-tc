@@ -115,7 +115,12 @@ void BedDryingController::restore() {
         return;
     }
     spdlog::info("[BedDrying] Restoring a run: {} (spools on the bed)",
-                 record_.ended ? "ended" : "in progress");
+                 record_.placing ? "placing" : (record_.ended ? "ended" : "in progress"));
+    if (record_.placing && record_.material >= 0 &&
+        record_.material < static_cast<int>(kMaterials.size())) {
+        pending_material_ = kMaterials[static_cast<size_t>(record_.material)];
+        pending_appliance_ = record_.appliance;
+    }
     set_latch(true);
     bed_target_seen_ = false;
     removal_prompted_ = false;
@@ -210,6 +215,12 @@ bool BedDryingController::begin_placement() {
     RunRecord placing;
     placing.latched = true;
     placing.placing = true;
+    placing.appliance = pending_appliance_;
+    for (size_t i = 0; i < kMaterials.size(); ++i) {
+        if (kMaterials[i].name == pending_material_.name) {
+            placing.material = static_cast<int>(i);
+        }
+    }
     if (!SettingsManager::instance().set_bed_drying_record(placing)) {
         return false;
     }
@@ -234,7 +245,7 @@ bool BedDryingController::begin_placement() {
 }
 
 bool BedDryingController::confirm_placed() {
-    if (!record_.latched || !record_.placing || !api_) {
+    if (!record_.latched || !record_.placing || !api_ || pending_material_.hours <= 0) {
         return false;
     }
     const Material& m = pending_material_;
@@ -326,9 +337,9 @@ void BedDryingController::confirm_removed() {
     if (!record_.ended && !record_.placing) {
         end_run("spools removed");
     }
-    if (record_.idle_restore_s > 0) {
-        hold_idle(record_.idle_restore_s);
-    }
+    // A hold went out either way; an unread configured value falls back to
+    // Klipper's own default rather than leaving the long hold in place.
+    hold_idle(record_.idle_restore_s > 0 ? record_.idle_restore_s : kKlipperDefaultIdleS);
     spdlog::info("[BedDrying] Spools off the bed; latch cleared");
     record_ = RunRecord{};
     (void)SettingsManager::instance().clear_bed_drying_record();

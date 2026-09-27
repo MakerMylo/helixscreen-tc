@@ -61,6 +61,12 @@ the **Dry Filament** row in Advanced. Both carry `moves_machine="true"`.
    and the idle timeout re-held for 24 h (`kSpoolsOnBedHoldS`). The latch stays. With
    the heat off, the timeout's only effect would be its `M84`, which lets a gantry sink
    onto the spools, so the configured value comes back only at removal.
+
+   The hold is bounded at 24 h. If removal is never confirmed, Klipper's idle
+   timeout fires then: the heaters are already off, but its `M84` runs and releases
+   the steppers. The latch still refuses homing, moves and print starts from
+   HelixScreen. At removal the configured value comes back, or Klipper's default 600 s
+   when it was never read.
 9. **Cool-down**: the removal prompt waits for the bed to read below 40°C. Tapping the
    banner earlier offers the removal behind a hot-plate warning.
 10. **Remove**: only its confirm clears the latch and the persisted run, and restores the

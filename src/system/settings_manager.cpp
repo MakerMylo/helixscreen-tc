@@ -467,6 +467,7 @@ helix::bed_drying::RunRecord SettingsManager::get_bed_drying_record() const {
     r.ended = j.value("ended", false);
     r.flip_notified = j.value("flip_notified", false);
     r.placing = j.value("placing", false);
+    r.material = j.value("material", -1);
     return r;
 }
 
@@ -480,7 +481,8 @@ bool SettingsManager::set_bed_drying_record(const helix::bed_drying::RunRecord& 
                                                         {"appliance", r.appliance},
                                                         {"ended", r.ended},
                                                         {"flip_notified", r.flip_notified},
-                                                        {"placing", r.placing}});
+                                                        {"placing", r.placing},
+                                                        {"material", r.material}});
     if (!config->save()) {
         spdlog::error("[SettingsManager] Could not save the bed drying record");
         return false;

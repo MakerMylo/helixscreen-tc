@@ -330,3 +330,36 @@ TEST_CASE_METHOD(BedDryingFixture, "nothing latches or heats when the drying sta
     CHECK_FALSE(ctrl->confirm_placed());
     CHECK_FALSE(sent("heater_bed"));
 }
+
+TEST_CASE_METHOD(BedDryingFixture, "a restart while placing keeps the chosen material",
+                 "[bed_drying][1730]") {
+    ctrl->prepare(kMaterials[2], false, nullptr, nullptr); // PETG
+    drain();
+    REQUIRE(ctrl->state() == BedDryingController::State::Placing);
+    ctrl.reset();
+    state.set_spool_latch(false);
+
+    ctrl = make_controller();
+    ctrl->restore();
+    CHECK(state.spool_latch_active());
+    CHECK(ctrl->state() == BedDryingController::State::Placing);
+    REQUIRE(ctrl->confirm_placed());
+    drain();
+    const RunRecord r = SettingsManager::instance().get_bed_drying_record();
+    CHECK(r.bed_c == 85);
+    CHECK(r.end_s == kStart + kHours12);
+    CHECK(ctrl->state() == BedDryingController::State::Running);
+}
+
+TEST_CASE_METHOD(BedDryingFixture,
+                 "removal restores Klipper's default when the timeout was never read",
+                 "[bed_drying][1730]") {
+    client.fail_configfile = true;
+    start_pla();
+    REQUIRE(SettingsManager::instance().get_bed_drying_record().idle_restore_s == 0);
+    ctrl->stop();
+    client.clear_gcode_script_history();
+    ctrl->confirm_removed();
+    drain();
+    CHECK(sent("SET_IDLE_TIMEOUT TIMEOUT=600"));
+}

@@ -55,6 +55,8 @@ inline constexpr int kDeadManMarginS = 10 * 60;
 /// effect would be its M84, which lets a gantry sink onto the spools. 24 h
 /// covers a run that ends overnight and a removal the next day.
 inline constexpr int kSpoolsOnBedHoldS = 24 * 3600;
+/// Klipper's idle_timeout default, put back when the configured value was never read.
+inline constexpr int kKlipperDefaultIdleS = 600;
 
 /// Open printers never offer it; an owner marks a DIY enclosure through the
 /// enclosure override instead.
@@ -154,6 +156,7 @@ enum class Phase { Running, Ended };
 struct RunRecord {
     bool latched = false;
     bool placing = false;  ///< latched while the place prompt is up; nothing heats yet
+    int material = -1;     ///< index into kMaterials, so a restart mid-placement keeps the choice
     long long start_s = 0; ///< wall clock, seconds
     long long end_s = 0;   ///< planned end, wall clock, seconds
     int bed_c = 0;
