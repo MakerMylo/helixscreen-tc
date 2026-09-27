@@ -4,6 +4,10 @@
 <!-- MICRO OVERRIDE of ui_xml/controls_panel.xml for 480x272 displays -->
 <component>
   <styles>
+    <!-- Motion goes inline where the position row is too short to stack -->
+    <style name="motion_stacked" flex_flow="column" layout="flex" pad_row="#space_xs"/>
+    <style name="motion_inline" flex_flow="row" layout="flex" pad_column="#space_xs"/>
+    <style name="motion_label_inline" text_font="#font_small"/>
     <!-- Homing button styles -->
     <style name="home_btn_homed" bg_color="#success"/>
     <style name="home_btn_unhomed" bg_color="#card_bg"/>
@@ -99,9 +103,25 @@
         <lv_obj name="position_action_row"
                 width="100%" height="#button_height_sm" style_pad_all="0" flex_flow="row"
                 style_flex_cross_place="center" style_pad_gap="#space_xs" scrollable="false">
+          <!-- Icon over label like Motors Off beside it, so the icons share a line
+               and the labels the next; inline where Motors Off is icon-only. -->
           <ui_button name="btn_motion"
-                     width="0" height="100%" flex_grow="1" style_pad_hor="#space_xs" style_pad_ver="0"
-                     icon="cursor_move" text="Motion" translation_tag="Motion" style_text_font="#font_small">
+                     width="0" height="100%" flex_grow="1" variant="primary" style_pad_all="0" flex_flow="column"
+                     style_flex_main_place="center" style_flex_cross_place="center" style_flex_track_place="center">
+            <!-- The direction lives on this wrapper: a style cannot override the
+                 button's own local layout, but can set a plain container's. -->
+            <lv_obj width="content"
+                    height="content" style_pad_all="0" style_bg_opa="0" style_border_width="0"
+                    style_flex_main_place="center" style_flex_cross_place="center" style_flex_track_place="center"
+                    clickable="false" event_bubble="true" scrollable="false">
+              <bind_style_if_ge name="motion_stacked" subject="ui_breakpoint" ref_value="2"/>
+              <bind_style_if_le name="motion_inline" subject="ui_breakpoint" ref_value="1"/>
+              <icon name="btn_motion_icon"
+                    src="cursor_move" size="#controls_toggle_icon_size" clickable="false" event_bubble="true"/>
+              <text_tiny text="Motion" translation_tag="Motion" clickable="false" event_bubble="true">
+                <bind_style_if_le name="motion_label_inline" subject="ui_breakpoint" ref_value="1"/>
+              </text_tiny>
+            </lv_obj>
             <event_cb trigger="clicked" callback="on_controls_quick_actions"/>
           </ui_button>
           <home_action_tile name="btn_motors_tile"
@@ -426,7 +446,7 @@
                          width="100%" height="100%" variant="secondary" flex_flow="row" style_flex_main_place="center"
                          style_flex_cross_place="center" style_pad_gap="#space_xs" focusable="false">
                 <bind_state_if cond="printer_connection_state ne 2 or led_command_in_flight eq 1" state="disabled"/>
-                <!-- DUPLICATE_NAME_OK: found per cell by that cell\'s LedWidget -->
+                <!-- DUPLICATE_NAME_OK: found per cell by that cell's LedWidget -->
                 <icon name="light_icon"
                       src="lightbulb_outline" size="sm" variant="muted" clickable="false" event_bubble="true"/>
                 <text_small text="Light" translation_tag="Light" clickable="false" event_bubble="true"/>
@@ -455,7 +475,7 @@
                          width="100%" height="100%" variant="secondary" flex_flow="row" style_flex_main_place="center"
                          style_flex_cross_place="center" style_pad_gap="#space_xs" focusable="false">
                 <bind_state_if cond="printer_connection_state ne 2 or led_command_in_flight eq 1" state="disabled"/>
-                <!-- DUPLICATE_NAME_OK: found per cell by that cell\'s LedWidget -->
+                <!-- DUPLICATE_NAME_OK: found per cell by that cell's LedWidget -->
                 <icon name="light_icon"
                       src="lightbulb_outline" size="sm" variant="muted" clickable="false" event_bubble="true"/>
                 <text_small text="Light" translation_tag="Light" clickable="false" event_bubble="true"/>
@@ -480,7 +500,7 @@
                          width="100%" height="100%" variant="secondary" flex_flow="row" style_flex_main_place="center"
                          style_flex_cross_place="center" style_pad_gap="#space_xs" focusable="false">
                 <bind_state_if cond="printer_connection_state ne 2 or led_command_in_flight eq 1" state="disabled"/>
-                <!-- DUPLICATE_NAME_OK: found per cell by that cell\'s LedWidget -->
+                <!-- DUPLICATE_NAME_OK: found per cell by that cell's LedWidget -->
                 <icon name="light_icon"
                       src="lightbulb_outline" size="sm" variant="muted" clickable="false" event_bubble="true"/>
                 <text_small text="Light" translation_tag="Light" clickable="false" event_bubble="true"/>
@@ -505,7 +525,7 @@
                          width="100%" height="100%" variant="secondary" flex_flow="row" style_flex_main_place="center"
                          style_flex_cross_place="center" style_pad_gap="#space_xs" focusable="false">
                 <bind_state_if cond="printer_connection_state ne 2 or led_command_in_flight eq 1" state="disabled"/>
-                <!-- DUPLICATE_NAME_OK: found per cell by that cell\'s LedWidget -->
+                <!-- DUPLICATE_NAME_OK: found per cell by that cell's LedWidget -->
                 <icon name="light_icon"
                       src="lightbulb_outline" size="sm" variant="muted" clickable="false" event_bubble="true"/>
                 <text_small text="Light" translation_tag="Light" clickable="false" event_bubble="true"/>
