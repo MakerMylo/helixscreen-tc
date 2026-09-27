@@ -131,7 +131,9 @@ On the XML side, the rung styles `styles.tile_icon_xs` .. `styles.tile_icon_xl`,
 `#icon_font_*` TOKEN, never a literal face, because a literal face a platform did not
 link renders tofu. The seven single-icon action tiles share
 `ui_xml/components/home_action_tile.xml`, whose `tile_icon_subject` prop installs the
-per-instance rung binding (empty installs none).
+per-instance rung binding (empty installs none). The Controls panel's calibration cells and
+Motors Off use the same component; its props are listed in
+[LVGL9_XML_GUIDE.md](LVGL9_XML_GUIDE.md#home_action_tile).
 
 ### The printer image callouts instance
 

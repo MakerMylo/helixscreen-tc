@@ -4,6 +4,8 @@
 
 Access via the **More** icon in the navigation bar.
 
+The panel groups its rows into sections (Tools, Calibration, and so on). A row that does not apply to your printer is hidden, and a section with no rows left disappears along with its heading. Calibration rows, including **Pressure Advance** on printers that can measure it, are covered in [Calibration & Tuning](calibration.md); **Dry Filament** is covered in [Drying Filament on the Bed](temperature.md#drying-filament-on-the-bed).
+
 ---
 
 ## G-code Console

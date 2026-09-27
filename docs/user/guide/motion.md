@@ -147,12 +147,16 @@ A status message confirms when homing begins and when it completes, the same way
 
 ## Leveling on the Controls Panel
 
-The Controls panel's **Calibration & Tools** card includes the same leveling actions as the Motion screen, alongside Bed Mesh and Z Calibration:
+The Controls panel's **Calibration & Tools** card holds the calibration actions your printer supports, in a grid that keeps each label on one line:
 
+- **Bed Mesh** and **Z Calibration**
 - **QGL** - Quad Gantry Level (shown only when `quad_gantry_level` is configured)
 - **Z-Tilt** - Z-Tilt Adjust (shown only when `z_tilt_adjust` is configured)
+- **Tool Offsets** - tool changers with the offset calibration macro, while beta features are on
+- **Pressure Adv.** - printers that can measure pressure advance; see [Pressure Advance](calibration.md#pressure-advance)
+- **Bed Screws** - shown only when `screws_tilt_adjust` is configured
 
-Both are disabled during an active print and while another operation is running.
+QGL and Z-Tilt are disabled during an active print and while another operation is running. **Motors Off** sits beside **Motion** on the Position card, and the light switch is one of the Quick Actions choices (see [Quick Buttons](settings/printing.md#quick-buttons)).
 
 ---
 
