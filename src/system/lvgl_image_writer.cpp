@@ -3,17 +3,21 @@
 
 #include "lvgl_image_writer.h"
 
+#include "helix_fs.h"
 #include "lvgl/lvgl.h"
 #include "text_io.h"
 
 #include <spdlog/spdlog.h>
 
 #include <atomic>
-#include <filesystem>
+#include <cerrno>
+#include <cstring>
 #include <string_view>
 #include <unistd.h>
 
 namespace helix {
+
+namespace hfs = helix::fs;
 
 bool write_lvgl_bin(const std::string& path, int width, int height, uint8_t color_format,
                     const uint8_t* pixel_data, size_t data_size) {
@@ -85,17 +89,15 @@ bool write_lvgl_bin(const std::string& path, int width, int height, uint8_t colo
         write_ok;
     if (!helix::text_io::close(file) || !write_ok) {
         spdlog::warn("[LvglImageWriter] Write error for {}", temp_path);
-        std::error_code ec;
-        std::filesystem::remove(temp_path, ec); // Clean up partial file
+        hfs::remove(temp_path); // Clean up partial file
         return false;
     }
 
     // Atomic rename - if this fails, the temp file is left but no corrupted final file
-    try {
-        std::filesystem::rename(temp_path, path);
-    } catch (const std::filesystem::filesystem_error& e) {
-        spdlog::warn("[LvglImageWriter] Atomic rename failed: {}", e.what());
-        std::filesystem::remove(temp_path);
+    if (!hfs::rename(temp_path, path)) {
+        spdlog::warn("[LvglImageWriter] Atomic rename failed: {}: {}", temp_path,
+                     std::strerror(errno));
+        hfs::remove(temp_path);
         return false;
     }
 

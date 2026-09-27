@@ -5,6 +5,7 @@
 
 #include "border_radius_sizes.h"
 #include "data_root_resolver.h"
+#include "helix_fs.h"
 #include "json_utils.h"
 #include "text_io.h"
 
@@ -14,7 +15,6 @@
 #include <cerrno>
 #include <cstring>
 #include <dirent.h>
-#include <filesystem>
 #include <set>
 #include <stdexcept>
 #include <sys/stat.h>
@@ -23,6 +23,7 @@
 
 namespace helix {
 
+namespace hfs = fs;
 namespace tio = text_io;
 
 // ============================================================================
@@ -385,10 +386,9 @@ bool save_theme_to_file(const ThemeData& theme, const std::string& filepath) {
     // Ensure parent directory exists — writable config dir may not yet have
     // a themes/ subdir on a fresh HELIX_CONFIG_DIR baseline.
     {
-        std::error_code ec;
-        std::filesystem::path p(filepath);
-        if (p.has_parent_path()) {
-            std::filesystem::create_directories(p.parent_path(), ec);
+        std::string parent{hfs::parent_path(filepath)};
+        if (!parent.empty()) {
+            hfs::create_directories(parent);
         }
     }
 

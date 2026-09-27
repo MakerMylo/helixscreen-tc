@@ -2,13 +2,12 @@
 
 #include "system/helix_paths.h"
 
+#include "helix_fs.h"
 #include "text_io.h"
 
 #include <atomic>
 #include <cstdlib>
-#include <filesystem>
 #include <string>
-#include <system_error>
 #include <thread>
 
 #if !defined(HELIX_PLATFORM_ESP32)
@@ -20,6 +19,8 @@
 #include <unistd.h>
 
 namespace helix::paths {
+
+namespace hfs = helix::fs;
 
 bool is_writable_dir(const std::string& dir) {
     if (dir.empty()) {
@@ -102,8 +103,7 @@ bool probe_writable(const std::string& dir, std::uint64_t min_free_bytes) {
     // the file and fail the write, so the probe is removed either way.
     const bool wrote = helix::text_io::write_file(test_file, "x");
 
-    std::error_code ec;
-    std::filesystem::remove(test_file, ec);
+    hfs::remove(test_file);
 
     return wrote;
 }
@@ -119,34 +119,21 @@ std::string first_writable_dir(const std::vector<std::string>& candidates,
 }
 
 bool ensure_dir(const std::string& path) {
-    try {
-        std::error_code ec;
-        std::filesystem::create_directories(path, ec);
-        // create_directories returns false (with no error) when the directory
-        // already exists, so verify existence + type explicitly rather than
-        // trusting its return value.
-        return std::filesystem::is_directory(path, ec);
-    } catch (...) {
-        return false;
-    }
+    // True when `path` is a directory afterwards, including when it already was.
+    return hfs::create_directories(path);
 }
 
 std::string deepest_existing_dir(const std::string& path) {
     if (path.empty())
         return "";
-    try {
-        std::error_code ec;
-        std::filesystem::path p(path);
-        while (!p.empty()) {
-            if (std::filesystem::is_directory(p, ec))
-                return p.string();
-            std::filesystem::path parent = p.parent_path();
-            if (parent == p)
-                break;
-            p = parent;
-        }
-    } catch (...) {
-        return "";
+    std::string p = path;
+    while (!p.empty()) {
+        if (hfs::is_directory(p))
+            return p;
+        std::string parent{hfs::parent_path(p)};
+        if (parent == p)
+            break;
+        p = std::move(parent);
     }
     return "";
 }
@@ -223,11 +210,10 @@ std::string strip_trailing_slash(const std::string& path) {
 }
 
 std::string write_target(const std::string& path) {
-    std::error_code ec;
-    if (!std::filesystem::is_symlink(path, ec))
+    if (!hfs::is_symlink(path))
         return path;
-    auto real = std::filesystem::canonical(path, ec);
-    return ec ? path : real.string();
+    auto real = hfs::canonical(path);
+    return real ? *real : path;
 }
 
 } // namespace helix::paths

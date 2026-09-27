@@ -41,6 +41,7 @@
 #include "format_utils.h"
 #include "gcode_parser.h" // For extract_thumbnails_from_content (USB thumbnail fallback)
 #include "helix-xml/src/xml/lv_xml.h"
+#include "helix_fs.h"
 #include "i_moonraker_api.h"
 #include "job_queue_state.h"
 #include "json_utils.h"
@@ -71,6 +72,7 @@
 #include <unordered_set>
 #include <vector>
 
+namespace hfs = helix::fs;
 namespace tio = helix::text_io;
 
 using namespace helix;
@@ -1217,7 +1219,7 @@ void PrintSelectPanel::process_metadata_result(size_t i, const std::string& file
     std::string layer_height_str = format_layer_height(layer_height);
 
     // Check if thumbnail is a local file (background thread - filesystem OK)
-    bool thumb_is_local = !thumb_path.empty() && std::filesystem::exists(thumb_path);
+    bool thumb_is_local = !thumb_path.empty() && hfs::exists(thumb_path);
 
     // CRITICAL: Dispatch file_list_ modifications to main thread to avoid race
     // conditions with populate_card_view/populate_list_view reading file_list_
