@@ -3207,7 +3207,7 @@ translations:
   VM Peak: VM ピーク
   VM Size: VM サイズ
   Validating bed mesh...: ベッドメッシュを検証中...
-  Value must be between {:.0f} and {:.0f}: 値は {:.0f} から {:.0f} の間で入力してください
+  Value must be between {} and {}: 値は {} から {} の間で入力してください
   Values must not be negative: 値は負の数にできません
   Velocity and acceleration limits: 速度と加速度の制限
   Vendor: ベンダー
@@ -3315,7 +3315,6 @@ translations:
   X axis applied, but Y axis failed: X軸は適用されましたが、Y軸は失敗しました
   X axis done, starting Y...: 'X軸が完了しました。Y軸を開始します...'
   X is at its limit ({}mm): X軸は限界に達しています ({}mm)
-  X position: 'X位置'
   'X:': 'X:'
   XY: XY
   Y: Y
@@ -3323,7 +3322,6 @@ translations:
   Y Offset: Yオフセット
   Y axis limit reached: Y軸のリミットに達しました
   Y is at its limit ({}mm): Y軸は限界に達しています ({}mm)
-  Y position: 'Y位置'
   'Y:': 'Y:'
   ? "YOU WIN!\nScore: {}\nTap to play again"
   : "クリア！\nスコア: {}\nタップでもう一度"
@@ -3349,7 +3347,6 @@ translations:
   Z is at its limit ({}mm): Z軸は限界に達しています ({}mm)
   Z jog feedrate: Z軸のジョグ移動速度
   Z motor calibration failed: Z モーターの校正に失敗しました
-  Z position: 'Z位置'
   Z probes for bed leveling and mesh generation: ベッドレベリングとメッシュ生成用 Z プローブ
   'Z-Off:': 'Z-Off:'
   Z-Offset: Z-Offset

@@ -24,6 +24,43 @@ struct AxisBounds {
     bool has_z = false;
 };
 
+/// Shift machine-space bounds into G-code space. machine = gcode + homing_origin
+/// (SET_GCODE_OFFSET, saved Z offset, toolchanger tool offsets), so the valid
+/// G-code range per axis is [min - origin, max - origin]. Has-bits are untouched.
+/// Resolution of the stored gcode_position subjects: centimillimetres,
+/// truncated, so a reading sits up to this far below the real position.
+inline constexpr double POSITION_RESOLUTION_MM = 0.01;
+
+/// Clamps stop this far inside the G-code envelope. Klipper adds the offset to
+/// a target in doubles and range-checks the sum, so a target exactly at a
+/// shifted edge can land a hair past the machine limit and be refused (Z
+/// 274.94 + 0.06 on a Snapmaker U1); and a relative jog computed from a
+/// truncated reading can overshoot by up to POSITION_RESOLUTION_MM.
+inline constexpr double GCODE_EDGE_MARGIN_MM = 2 * POSITION_RESOLUTION_MM;
+
+/// Shrink each axis's range by `margin` from both ends. Has-bits are untouched.
+inline AxisBounds inset_bounds(const AxisBounds& b, double margin) {
+    AxisBounds r = b;
+    r.x_min = static_cast<float>(b.x_min + margin);
+    r.x_max = static_cast<float>(b.x_max - margin);
+    r.y_min = static_cast<float>(b.y_min + margin);
+    r.y_max = static_cast<float>(b.y_max - margin);
+    r.z_min = static_cast<float>(b.z_min + margin);
+    r.z_max = static_cast<float>(b.z_max - margin);
+    return r;
+}
+
+inline AxisBounds to_gcode_space(const AxisBounds& machine, double ox, double oy, double oz) {
+    AxisBounds g = machine;
+    g.x_min = static_cast<float>(machine.x_min - ox);
+    g.x_max = static_cast<float>(machine.x_max - ox);
+    g.y_min = static_cast<float>(machine.y_min - oy);
+    g.y_max = static_cast<float>(machine.y_max - oy);
+    g.z_min = static_cast<float>(machine.z_min - oz);
+    g.z_max = static_cast<float>(machine.z_max - oz);
+    return g;
+}
+
 /**
  * @brief Manages motion-related subjects for printer state
  *
@@ -148,6 +185,14 @@ class PrinterMotionState {
         return axis_bounds_;
     }
 
+    /// The envelope in G-code coordinates: the machine envelope shifted by
+    /// minus gcode_move.homing_origin. Everything the motion panel compares
+    /// against gcode_move.gcode_position (jog clamps, keypad limits, Z-button
+    /// blocking) must use these, not the machine bounds.
+    [[nodiscard]] AxisBounds get_gcode_axis_bounds() const {
+        return to_gcode_space(axis_bounds_, homing_origin_x_, homing_origin_y_, homing_origin_z_);
+    }
+
   private:
     friend class PrinterMotionStateTestAccess;
 
@@ -193,6 +238,11 @@ class PrinterMotionState {
 
     // Kinematic envelope (not subjects — read on demand by jog clamping etc.)
     AxisBounds axis_bounds_{};
+
+    // gcode_move.homing_origin per axis (mm): machine = gcode + origin
+    double homing_origin_x_ = 0.0;
+    double homing_origin_y_ = 0.0;
+    double homing_origin_z_ = 0.0;
 };
 
 } // namespace helix

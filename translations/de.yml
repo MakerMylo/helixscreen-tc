@@ -3466,7 +3466,7 @@ translations:
   VM Peak: VM-Spitze
   VM Size: VM-Größe
   Validating bed mesh...: Bettnetz validieren...
-  Value must be between {:.0f} and {:.0f}: Wert muss zwischen {:.0f} und {:.0f} liegen
+  Value must be between {} and {}: Wert muss zwischen {} und {} liegen
   Values must not be negative: Werte dürfen nicht negativ sein
   Velocity and acceleration limits: Geschwindigkeits- und Beschleunigungslimits
   Vendor: Hersteller
@@ -3581,7 +3581,6 @@ translations:
   X axis applied, but Y axis failed: X-Achse angewendet, aber Y-Achse fehlgeschlagen
   X axis done, starting Y...: 'X-Achse fertig, starte Y...'
   X is at its limit ({}mm): X ist an seinem Limit ({}mm)
-  X position: 'X-Position'
   'X:': 'X:'
   XY: XY
   Y: Y
@@ -3589,7 +3588,6 @@ translations:
   Y Offset: Y-Offset
   Y axis limit reached: Y-Achsen-Limit erreicht
   Y is at its limit ({}mm): Y ist an seinem Limit ({}mm)
-  Y position: 'Y-Position'
   'Y:': 'Y:'
   ? "YOU WIN!\nScore: {}\nTap to play again"
   : "GEWONNEN!\nPunkte: {}\nZum erneuten Spielen tippen"
@@ -3619,7 +3617,6 @@ translations:
   Z is at its limit ({}mm): Z ist an seinem Limit ({}mm)
   Z jog feedrate: Vorschub für die Z-Bewegung
   Z motor calibration failed: Kalibrierung des Z-Motors fehlgeschlagen
-  Z position: 'Z-Position'
   Z probes for bed leveling and mesh generation: Z-Sonden für Bettnivellierung und
     Netzerzeugung
   'Z-Off:': 'Z-Off:'

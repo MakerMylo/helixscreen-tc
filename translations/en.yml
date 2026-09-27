@@ -3383,7 +3383,7 @@ translations:
   VM Peak: VM Peak
   VM Size: VM Size
   'Validating bed mesh...': 'Validating bed mesh...'
-  Value must be between {:.0f} and {:.0f}: Value must be between {:.0f} and {:.0f}
+  Value must be between {} and {}: Value must be between {} and {}
   Values must not be negative: Values must not be negative
   Velocity and acceleration limits: Velocity and acceleration limits
   Vendor: Vendor
@@ -3498,7 +3498,6 @@ translations:
   X axis applied, but Y axis failed: X axis applied, but Y axis failed
   X axis done, starting Y...: X axis done, starting Y...
   X is at its limit ({}mm): X is at its limit ({}mm)
-  X position: X position
   'X:': 'X:'
   XY: XY
   Y: Y
@@ -3506,7 +3505,6 @@ translations:
   Y Offset: Y Offset
   Y axis limit reached: Y axis limit reached
   Y is at its limit ({}mm): Y is at its limit ({}mm)
-  Y position: Y position
   'Y:': 'Y:'
   ? "YOU WIN!\nScore: {}\nTap to play again"
   : "YOU WIN!\nScore: {}\nTap to play again"
@@ -3535,7 +3533,6 @@ translations:
   Z is at its limit ({}mm): Z is at its limit ({}mm)
   Z jog feedrate: Z jog feedrate
   Z motor calibration failed: Z motor calibration failed
-  Z position: Z position
   Z probes for bed leveling and mesh generation: Z probes for bed leveling and mesh
     generation
   'Z-Off:': 'Z-Off:'
