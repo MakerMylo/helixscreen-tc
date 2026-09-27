@@ -19,12 +19,13 @@
 #include "platform_capabilities.h"
 #include "platform_info.h"
 #include "system/update_checker.h"
+#include "text_io.h"
 #include "wizard_config_paths.h"
 
 #include <spdlog/spdlog.h>
 
-#include <fstream>
-#include <sstream>
+namespace tio = helix::text_io;
+
 #if !defined(HELIX_PLATFORM_ESP32)
 #include <sys/utsname.h>
 #endif
@@ -36,13 +37,11 @@ namespace {
 /// Whole small file as a string, or "" when it cannot be read. /proc files are
 /// a few KB and generated on read, so a plain slurp is the right shape.
 std::string slurp(const std::string& path) {
-    std::ifstream in(path);
-    if (!in.good()) {
+    auto body = tio::read_file(path);
+    if (!body) {
         return {};
     }
-    std::ostringstream body;
-    body << in.rdbuf();
-    return body.str();
+    return std::move(*body);
 }
 
 /// `value` unless it is empty, in which case the placeholder the struct carries.
@@ -72,17 +71,21 @@ Machine read_machine(const std::string& proc_root) {
 
     const std::string uptime = slurp(proc_root + "/uptime");
     if (!uptime.empty()) {
-        std::istringstream(uptime) >> m.uptime_seconds;
+        auto t = tio::split_ws(uptime);
+        if (!t.empty()) {
+            if (auto v = tio::parse_double(t[0])) {
+                m.uptime_seconds = *v;
+            }
+        }
     }
 
     // The three load figures only; the trailing running/total and last-pid
     // fields change every read and say nothing about the machine.
     const std::string loadavg = slurp(proc_root + "/loadavg");
     if (!loadavg.empty()) {
-        std::istringstream in(loadavg);
-        std::string one, five, fifteen;
-        if (in >> one >> five >> fifteen) {
-            m.loadavg = one + " " + five + " " + fifteen;
+        auto t = tio::split_ws(loadavg);
+        if (t.size() >= 3) {
+            m.loadavg = std::string(t[0]) + " " + std::string(t[1]) + " " + std::string(t[2]);
         }
     }
 

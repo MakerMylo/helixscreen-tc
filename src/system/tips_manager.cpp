@@ -8,10 +8,10 @@
 #include "data_root_resolver.h"
 #include "json_utils.h"
 #include "lvgl/src/others/translation/lv_translation.h"
+#include "text_io.h"
 
 #include <algorithm>
 #include <cctype>
-#include <fstream>
 #include <sys/stat.h>
 
 using namespace helix;
@@ -61,8 +61,7 @@ bool TipsManager::init(const std::string& tips_path) {
 
     try {
         spdlog::debug("[TipsManager] Loading tips from {}", tips_path);
-        std::ifstream file(tips_path);
-        data = json::parse(file);
+        data = json::parse(helix::text_io::read_file(tips_path).value_or(""));
 
         // Validate required fields
         if (!data.contains("categories") || !data["categories"].is_object()) {

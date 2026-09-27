@@ -54,6 +54,7 @@
 #include "queued_job_options.h"
 #include "runtime_config.h"
 #include "static_panel_registry.h"
+#include "text_io.h"
 #include "theme_manager.h"
 #include "thumbnail_cache.h"
 #include "usb_manager.h"
@@ -63,14 +64,14 @@
 #include <algorithm>
 #include <cmath>
 #include <ctime>
-#include <fstream>
 #include <memory>
 #include <optional>
-#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+
+namespace tio = helix::text_io;
 
 using namespace helix;
 using helix::gcode::strip_gcode_extension;
@@ -88,20 +89,11 @@ using helix::ui::format_print_time;
 // which takes PNG bytes rather than a path. Returns empty on any failure — every
 // caller treats that as "no thumbnail" rather than an error worth surfacing.
 static std::vector<uint8_t> read_file_bytes(const std::string& path) {
-    std::ifstream file(path, std::ios::binary | std::ios::ate);
-    if (!file) {
+    auto text = tio::read_file(path);
+    if (!text) {
         return {};
     }
-    std::streamsize size = file.tellg();
-    if (size <= 0) {
-        return {};
-    }
-    file.seekg(0, std::ios::beg);
-    std::vector<uint8_t> data(static_cast<size_t>(size));
-    if (!file.read(reinterpret_cast<char*>(data.data()), size)) {
-        return {};
-    }
-    return data;
+    return std::vector<uint8_t>(text->begin(), text->end());
 }
 
 static std::unique_ptr<PrintSelectPanel> g_print_select_panel;
@@ -1178,18 +1170,14 @@ void PrintSelectPanel::process_metadata_result(size_t i, const std::string& file
     // (e.g., "PLA;PLA;PETG" → ["PLA", "PLA", "PETG"])
     std::vector<std::string> filament_types;
     if (!filament_type_raw.empty()) {
-        std::istringstream type_stream(filament_type_raw);
-        std::string token;
-        while (std::getline(type_stream, token, ';')) {
-            filament_types.push_back(token);
+        for (std::string_view sv : tio::lines(filament_type_raw, ';')) {
+            filament_types.emplace_back(sv);
         }
     }
     std::vector<std::string> filament_names;
     if (!filament_name_raw.empty()) {
-        std::istringstream name_stream(filament_name_raw);
-        std::string token;
-        while (std::getline(name_stream, token, ';')) {
-            filament_names.push_back(token);
+        for (std::string_view sv : tio::lines(filament_name_raw, ';')) {
+            filament_names.emplace_back(sv);
         }
     }
 
