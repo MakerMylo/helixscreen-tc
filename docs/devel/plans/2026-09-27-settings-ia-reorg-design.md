@@ -63,13 +63,13 @@ Not a goal: making the root fit on one screen at every size. Today's 6-row root 
 
 | Row | Examples | Sources |
 |---|---|---|
-| Display | `80% · sleep 10 min`, `Sleep off`, `Sleep 10 min` (no dimming) | brightness, `display_sleep_sec`, `settings_has_dimming` |
+| Display | `80% · sleep 10 min`, `80% · never sleeps`, `Sleep 10 min` (no dimming) | brightness, `display_sleep_sec`, `settings_has_dimming` |
 | Appearance | `Dark · Ocean`, `Light · Ocean` | dark mode, active theme name |
 | Sound | `Volume 60%`, `Muted` | `settings_sounds_enabled`, volume |
-| Devices | `All healthy`, `1 warning`, `2 problems` | Hardware Health's existing status |
+| Devices | `All healthy`, `Needs attention`, `Problem found` | `hardware_status_level` (the level Hardware Health already tints its icon with) |
 | Connection | `Wi-Fi HomeNet`, `Ethernet`, `Not connected` | `connected_ssid`, network state |
 | Language & Time | `English · 24-hour` | `settings_language`, `settings_time_format` |
-| Updates | `Up to date`, `1.1.1 available` | `update_status`, `update_available` |
+| Updates | `Up to date`, `1.1.1 available`, `Checking…`, `Check failed`, `Version 1.1.0`, `Managed by firmware` | `update_status`, `update_new_version`, `updates_firmware_managed` |
 
 - One pure function per row maps raw values to a translated string (`lv_tr()`). No LVGL dependency, so every branch is unit-testable.
 - `SettingsPanel::on_activate()` recomputes all of them and sets the string subjects. Updates, Devices and Connection can go stale while the root stays on screen; accepted for now.
