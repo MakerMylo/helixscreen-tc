@@ -6,6 +6,7 @@
 #if LV_USE_GESTURE_RECOGNITION
 #include "lvgl/src/indev/lv_indev_gesture_private.h" // info->delta_x/y, center: no public getter
 #include "lvgl/src/indev/lv_indev_private.h" // gesture_data[]: lv_indev_get_gesture_recognizer is static in LVGL
+#include "touch_calibration_wrapper.h"
 #endif
 
 #include <cmath>
@@ -103,11 +104,22 @@ std::optional<TwoFingerSample> read_two_finger_sample(lv_event_t* e) {
 
     const bool pinch = type == LV_INDEV_GESTURE_PINCH;
     s.kind = pinch ? TwoFingerSample::Kind::Pinch : TwoFingerSample::Kind::Pan;
-    s.delta_x = r->info->delta_x;
-    s.delta_y = r->info->delta_y;
     s.scale = pinch ? r->scale : 1.0f;
-    s.start_x = r->info->center.x;
-    s.start_y = r->info->center.y;
+
+    // LVGL tracks the fingers in the driver's frame, ahead of the calibration and
+    // rotation the single pointer goes through. Map where the gesture started and
+    // where it is now, so pan and anchor land where the fingers are on screen.
+    auto* indev = static_cast<lv_indev_t*>(lv_event_get_param(e));
+    const lv_point_t start_driver = r->info->center;
+    const lv_point_t now_driver{
+        start_driver.x + static_cast<int32_t>(std::lround(r->info->delta_x)),
+        start_driver.y + static_cast<int32_t>(std::lround(r->info->delta_y))};
+    const lv_point_t start = helix::map_touch_point_to_screen(indev, start_driver);
+    const lv_point_t now = helix::map_touch_point_to_screen(indev, now_driver);
+    s.start_x = start.x;
+    s.start_y = start.y;
+    s.delta_x = static_cast<float>(now.x - start.x);
+    s.delta_y = static_cast<float>(now.y - start.y);
     return s;
 }
 #endif

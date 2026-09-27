@@ -165,6 +165,26 @@ class PointerFrameHook {
         panel_h_ = panel_h;
     }
 
+    /**
+     * @brief Turn a touch-panel point the way the active hook turns @p indev's samples
+     *
+     * For points a driver reports outside the read callback, such as the extra
+     * fingers of a multi-touch gesture. Only the plane turn applies: LVGL's own
+     * rotation leaves panel samples for its rotation step, which the caller runs.
+     * Unchanged when no hook fronts @p indev.
+     */
+    static PointerXY map_panel_point(const lv_indev_t* indev, PointerXY panel_point) {
+        if (s_active == nullptr) {
+            return panel_point;
+        }
+        const Device* device = s_active->find(indev);
+        if (device == nullptr || pointer_transform_for(device->kind, s_active->plane_degrees_, 0) !=
+                                     PointerTransform::Plane) {
+            return panel_point;
+        }
+        return s_active->turn_with_plane(panel_point);
+    }
+
     /// Whether the hook fronts @p indev. Compares the pointer only, so a deleted
     /// device can be asked about.
     bool fronts(const lv_indev_t* indev) const {
@@ -228,8 +248,7 @@ class PointerFrameHook {
                 return;
             }
             const PointerXY raw{data->point.x, data->point.y};
-            const PointerXY turned =
-                rotate_pointer_for_plane(raw, plane_degrees_, panel_w_, panel_h_);
+            const PointerXY turned = turn_with_plane(raw);
             data->point.x = turned.x;
             data->point.y = turned.y;
             if (is_touch_debug_enabled() && data->state == LV_INDEV_STATE_PRESSED) {
@@ -260,6 +279,14 @@ class PointerFrameHook {
             return;
         }
         }
+    }
+
+    /// A panel sample turned with the scanout plane; unchanged until the panel size is known.
+    PointerXY turn_with_plane(PointerXY panel_point) const {
+        if (panel_w_ <= 0 || panel_h_ <= 0) {
+            return panel_point;
+        }
+        return rotate_pointer_for_plane(panel_point, plane_degrees_, panel_w_, panel_h_);
     }
 
     const Device* find(const lv_indev_t* indev) const {

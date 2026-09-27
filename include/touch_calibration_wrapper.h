@@ -62,6 +62,13 @@ struct CalibrationContext {
 /// Chains to original_read_cb first, then transforms coordinates.
 void calibrated_read_cb(lv_indev_t* indev, lv_indev_data_t* data);
 
+/// Carry a touch point from @p indev's driver to the screen point LVGL hands widgets:
+/// the active calibration, then the pointer frame hook's plane turn, then LVGL's own
+/// display rotation. For points the driver reports outside the read callback, such
+/// as the fingers of a multi-touch gesture, which otherwise skip every step after
+/// the driver's own range scaling.
+lv_point_t map_touch_point_to_screen(lv_indev_t* indev, lv_point_t driver_point);
+
 /// Load stored touch calibration coefficients from Config.
 /// Returns TouchCalibration with valid=false if none stored or invalid.
 TouchCalibration load_touch_calibration();
