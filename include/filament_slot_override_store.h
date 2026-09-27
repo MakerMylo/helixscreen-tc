@@ -6,7 +6,6 @@
 #include "lane_source_store.h"
 
 #include <chrono>
-#include <filesystem>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -116,8 +115,8 @@ parse_namespace_document(const nlohmann::json& namespace_doc, LaneKeyStyle key_s
 /// the same reason AppConstants::Update::detail::state_dir_ref() is.
 /// Write it before threads exist; afterwards it is read-only.
 namespace detail {
-inline std::filesystem::path& slot_override_cache_dir_ref() {
-    static std::filesystem::path dir;
+inline std::string& slot_override_cache_dir_ref() {
+    static std::string dir;
     return dir;
 }
 } // namespace detail
@@ -233,7 +232,7 @@ class FilamentSlotOverrideStore {
     // NEVER authoritative — the Moonraker DB on the printer is the source of
     // truth. The cache exists only so the UI can show last-known metadata
     // when Moonraker is unreachable at backend init.
-    std::filesystem::path cache_dir_;
+    std::string cache_dir_;
     // Backing store for last_lane_data_records(). Cleared at the top of every
     // load_blocking_impl() and populated only on the lane_data parse path, so
     // a cache-fallback load leaves it empty rather than stale.
@@ -241,12 +240,12 @@ class FilamentSlotOverrideStore {
     // Absolute path to the cache JSON file. Computed from cache_dir_ (or
     // get_user_config_dir() if empty). One file serves all backends; each
     // backend's slots live under doc[backend_id]["slots"].
-    std::filesystem::path cache_path() const;
+    std::string cache_path() const;
     // Absolute path to the directory used for on-disk caches. Same resolution
     // as cache_path(): cache_dir_ if set, otherwise get_user_config_dir().
     // Migration uses this to locate legacy "{backend_id}_slot_overrides.json"
     // files that pre-date the unified filament_slot_overrides.json format.
-    std::filesystem::path cache_dir_effective() const;
+    std::string cache_dir_effective() const;
 };
 
 // =============================================================================

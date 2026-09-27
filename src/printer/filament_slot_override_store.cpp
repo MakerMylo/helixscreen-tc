@@ -6,6 +6,7 @@
 #include "filament_database.h"
 #include "filament_slot_override.h"
 #include "filament_variants.h"
+#include "helix_fs.h"
 #include "i_moonraker_api.h"
 #include "json_utils.h"
 #include "lane_source_store.h"
@@ -23,7 +24,6 @@
 #include <cstdio>
 #include <cstring>
 #include <ctime>
-#include <filesystem>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -178,12 +178,11 @@ std::chrono::system_clock::time_point parse_iso8601(const std::string& s) {
 // this cache file across two backends (e.g. IFS + ACE) can't interleave today.
 // If that threading model ever changes (per-request dispatch, multi-connection
 // fan-out), this read-modify-write becomes racy and needs a file lock.
-void write_cache_slot(const std::filesystem::path& cache_path, const std::string& backend_id,
-                      int slot_index, const FilamentSlotOverride* ovr) {
+void write_cache_slot(const std::string& cache_path, const std::string& backend_id, int slot_index,
+                      const FilamentSlotOverride* ovr) {
     nlohmann::json doc = nlohmann::json::object();
-    std::error_code ec;
-    if (std::filesystem::exists(cache_path, ec)) {
-        if (auto text = helix::text_io::read_file(cache_path.string())) {
+    if (helix::fs::exists(cache_path)) {
+        if (auto text = helix::text_io::read_file(cache_path)) {
             try {
                 doc = nlohmann::json::parse(*text);
                 if (!doc.is_object())
@@ -191,7 +190,7 @@ void write_cache_slot(const std::filesystem::path& cache_path, const std::string
             } catch (const std::exception& e) {
                 spdlog::warn("[FilamentSlotOverrideStore] cache parse failed "
                              "({}), starting fresh: {}",
-                             cache_path.string(), e.what());
+                             cache_path, e.what());
                 doc = nlohmann::json::object();
             }
         }
@@ -217,9 +216,8 @@ void write_cache_slot(const std::filesystem::path& cache_path, const std::string
     }
 
     // Atomic write: tmp file + rename. POSIX rename is atomic within a fs.
-    if (!helix::text_io::write_file_atomic(cache_path.string(),
-                                           helix::json_util::safe_dump(doc, 2))) {
-        spdlog::warn("[FilamentSlotOverrideStore] cache write failed ({}): {}", cache_path.string(),
+    if (!helix::text_io::write_file_atomic(cache_path, helix::json_util::safe_dump(doc, 2))) {
+        spdlog::warn("[FilamentSlotOverrideStore] cache write failed ({}): {}", cache_path,
                      std::strerror(errno));
     }
 }
@@ -252,14 +250,13 @@ void write_cache_slot(const std::filesystem::path& cache_path, const std::string
 // - Otherwise iterate slots: parse each key as int, skip if non-int or
 //   negative (symmetric with from_lane_data_record's rejection rule), call
 //   from_json on the value, insert into the result map.
-std::unordered_map<int, FilamentSlotOverride> read_cache(const std::filesystem::path& cache_path,
+std::unordered_map<int, FilamentSlotOverride> read_cache(const std::string& cache_path,
                                                          const std::string& backend_id) {
     std::unordered_map<int, FilamentSlotOverride> result;
-    std::error_code ec;
-    if (!std::filesystem::exists(cache_path, ec))
+    if (!helix::fs::exists(cache_path))
         return result;
 
-    auto text = helix::text_io::read_file(cache_path.string());
+    auto text = helix::text_io::read_file(cache_path);
     if (!text)
         return result;
 
@@ -267,13 +264,13 @@ std::unordered_map<int, FilamentSlotOverride> read_cache(const std::filesystem::
     try {
         doc = nlohmann::json::parse(*text);
     } catch (const std::exception& e) {
-        spdlog::warn("[FilamentSlotOverrideStore] cache parse failed ({}): {}", cache_path.string(),
+        spdlog::warn("[FilamentSlotOverrideStore] cache parse failed ({}): {}", cache_path,
                      e.what());
         return result;
     }
     if (!doc.is_object()) {
         spdlog::warn("[FilamentSlotOverrideStore] cache top-level is not an object ({})",
-                     cache_path.string());
+                     cache_path);
         return result;
     }
 
@@ -284,7 +281,7 @@ std::unordered_map<int, FilamentSlotOverride> read_cache(const std::filesystem::
     // are preserved).
     if (!doc.contains("version") || doc["version"] != 1) {
         spdlog::warn("[FilamentSlotOverrideStore] cache schema version mismatch ({}): {}",
-                     cache_path.string(),
+                     cache_path,
                      doc.contains("version") ? doc["version"].dump() : std::string("<missing>"));
         return result;
     }
@@ -813,22 +810,22 @@ FilamentSlotOverrideStore::FilamentSlotOverrideStore(IMoonrakerAPI* api, std::st
     : api_(api), backend_id_(std::move(backend_id)), key_style_(key_style),
       namespace_(std::move(ns)) {}
 
-std::filesystem::path FilamentSlotOverrideStore::cache_dir_effective() const {
+std::string FilamentSlotOverrideStore::cache_dir_effective() const {
     if (!cache_dir_.empty()) {
         return cache_dir_;
     }
     // Test-binary seam: the shared fixture points the process-wide fallback
     // at its sandbox before main() (helix_test_fixture.cpp). Empty in
     // production, where the user config dir below remains the answer.
-    const std::filesystem::path& process_default = detail::slot_override_cache_dir_ref();
+    const std::string& process_default = detail::slot_override_cache_dir_ref();
     if (!process_default.empty()) {
         return process_default;
     }
-    return std::filesystem::path(helix::get_user_config_dir());
+    return helix::get_user_config_dir();
 }
 
-std::filesystem::path FilamentSlotOverrideStore::cache_path() const {
-    return cache_dir_effective() / "filament_slot_overrides.json";
+std::string FilamentSlotOverrideStore::cache_path() const {
+    return helix::fs::join_path(cache_dir_effective(), "filament_slot_overrides.json");
 }
 
 namespace {
@@ -866,10 +863,11 @@ namespace {
 // - Any retry / exponential backoff. A transient network blip returns {}, the
 //   user sees no overrides until next app start, and the legacy data is still
 //   there for the next attempt. That's correct conservative behavior.
-std::unordered_map<int, FilamentSlotOverride>
-try_migrate_legacy(IMoonrakerAPI* api, const std::string& backend_id,
-                   std::chrono::milliseconds timeout, const std::filesystem::path& cache_dir,
-                   LaneKeyStyle key_style) {
+std::unordered_map<int, FilamentSlotOverride> try_migrate_legacy(IMoonrakerAPI* api,
+                                                                 const std::string& backend_id,
+                                                                 std::chrono::milliseconds timeout,
+                                                                 const std::string& cache_dir,
+                                                                 LaneKeyStyle key_style) {
     std::unordered_map<int, FilamentSlotOverride> empty_result;
     if (!api)
         return empty_result;
@@ -981,8 +979,8 @@ try_migrate_legacy(IMoonrakerAPI* api, const std::string& backend_id,
                                               backend_id, legacy_key, err.message);
                                       });
             if (!cache_dir.empty()) {
-                std::error_code rm_ec;
-                std::filesystem::remove(cache_dir / (backend_id + "_slot_overrides.json"), rm_ec);
+                helix::fs::remove(
+                    helix::fs::join_path(cache_dir, backend_id + "_slot_overrides.json"));
             }
         }
         return empty_result;
@@ -1048,8 +1046,7 @@ try_migrate_legacy(IMoonrakerAPI* api, const std::string& backend_id,
     // but leaving it behind is confusing when users inspect their config dir.
     // Best-effort: swallow IO errors (not fatal to the migration result).
     if (!cache_dir.empty()) {
-        std::error_code rm_ec;
-        std::filesystem::remove(cache_dir / (backend_id + "_slot_overrides.json"), rm_ec);
+        helix::fs::remove(helix::fs::join_path(cache_dir, backend_id + "_slot_overrides.json"));
     }
 
     spdlog::info("[FilamentSlotOverrideStore:{}] migrated {} slot(s) from "
@@ -1620,7 +1617,7 @@ void FilamentSlotOverrideStore::save_async(int slot_index, const FilamentSlotOve
     // cache_path_copy + stamped are captured into the success lambda so the
     // cache write (write_cache_slot, a free function) runs with no `this`.
     const std::string backend_id_copy = backend_id_;
-    const std::filesystem::path cache_path_copy = cache_path();
+    const std::string cache_path_copy = cache_path();
 
     api_->database_post_item(
         namespace_, key, record,
@@ -1666,7 +1663,7 @@ void FilamentSlotOverrideStore::clear_async(int slot_index, SaveCallback cb) {
     // cache_path_copy is captured into the success lambda so write_cache_slot
     // (a free function) runs with no `this`.
     const std::string backend_id_copy = backend_id_;
-    const std::filesystem::path cache_path_copy = cache_path();
+    const std::string cache_path_copy = cache_path();
 
     api_->database_delete_item(
         namespace_, key,

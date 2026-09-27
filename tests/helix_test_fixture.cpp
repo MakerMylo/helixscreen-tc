@@ -183,7 +183,7 @@ void reset_config_singleton() {
     // table; drop both so the next test sees only the shipped types.
     helix::printer::detail::user_overlay_dir_ref() = config_sandbox_dir();
     std::error_code overlay_ec;
-    if (fs::remove(config_sandbox_dir() + "/user_filaments.json", overlay_ec)) {
+    if (std::filesystem::remove(config_sandbox_dir() + "/user_filaments.json", overlay_ec)) {
         filament::reload_materials();
     }
 
@@ -199,7 +199,7 @@ void reset_config_singleton() {
     // Drop any file a previous test's save() left behind, so a test that
     // re-init()s the singleton at this path sees a fresh install.
     std::error_code ec;
-    fs::remove(helix::ConfigTestAccess::path(*cfg), ec);
+    std::filesystem::remove(helix::ConfigTestAccess::path(*cfg), ec);
 }
 
 } // namespace helix::test
