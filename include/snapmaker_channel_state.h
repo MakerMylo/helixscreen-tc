@@ -10,6 +10,7 @@
 
 #include "ams_types.h"
 
+#include <optional>
 #include <string>
 
 namespace helix::snapmaker {
@@ -34,9 +35,9 @@ namespace helix::snapmaker {
 //                       0=Home 1=Select 2=Heat 3=Retract
 //                   -1 = "no active step" (idle / *_finish / *_fail).
 //  - is_terminal:   a *_finish that ENDS the operation (resolves action -> IDLE).
-//                   preload_finish is terminal-for-latch but does NOT end the op
-//                   (the nozzle may still be heating on a re-unload); the parse
-//                   special-cases it.
+//                   preload_finish is not one: it is a resting state that also
+//                   shows up while the nozzle heats for an unload, so it clears
+//                   the latch but leaves the action alone.
 //  - is_fail:       a *_fail state, surfaced as ERROR.
 //  - sets_loaded:   SET the "loaded at toolhead" latch true (load_finish only).
 //  - clears_loaded: CLEAR the latch false (unload_finish/wait_insert/preload_finish).
@@ -55,5 +56,23 @@ struct ChannelStateInfo {
 
 /// True when a channel_state names a load or unload under way.
 [[nodiscard]] bool channel_state_in_progress(const std::string& state);
+
+/// The op outcome a resting channel reports only through channel_action_state.
+///
+/// The firmware sets an op's terminal and its resting state (wait_insert,
+/// preload_finish) in one reactor tick, and a status frame carries only the
+/// last channel_state. channel_action_state keeps the op's own last step at
+/// rest, so it stands in when the channel rests and it moved to a *_finish or
+/// *_fail since the previous frame. An unchanged value is the previous op's
+/// outcome and says nothing about the current one, and the first value a
+/// channel reports is an op that ended before anyone was watching.
+///
+/// @param channel_state          The channel's current (held) channel_state.
+/// @param prev_action_state      channel_action_state before this frame.
+/// @param action_state           channel_action_state after this frame.
+/// @return The state to drive the op lifecycle with, or nullopt to use channel_state.
+[[nodiscard]] std::optional<std::string> settled_op_outcome(const std::string& channel_state,
+                                                            const std::string& prev_action_state,
+                                                            const std::string& action_state);
 
 } // namespace helix::snapmaker

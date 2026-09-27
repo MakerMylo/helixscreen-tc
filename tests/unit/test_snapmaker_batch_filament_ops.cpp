@@ -514,6 +514,26 @@ TEST_CASE_METHOD(BatchFixture, "A finished batch leaves no progress line behind"
     }
 }
 
+TEST_CASE_METHOD(BatchFixture, "A batch head whose unload settles in one frame still verifies",
+                 "[snapmaker][batch][action_state]") {
+    helix::SnapmakerTestAccess::set_batch_plan(backend(), {2, 3}, /*load=*/false, "Unload", "of");
+
+    auto frame = [](const char* state, const char* action_state, bool detected) {
+        return nlohmann::json{{"filament_feed right",
+                               {{"extruder2",
+                                 {{"channel_state", state},
+                                  {"channel_action_state", action_state},
+                                  {"filament_detected", detected}}}}}}
+            .dump();
+    };
+    feed_status(frame("unload_doing", "unload_doing", true));
+    REQUIRE(backend().batch_plan().cursor == 0);
+
+    feed_status(frame("wait_insert", "unload_finish", false));
+    CHECK(backend().batch_plan().cursor == 1);
+    CHECK(backend().batch_plan().active);
+}
+
 // ============================================================================
 // slot_op_eligibility — the direction-dependent refusal, from channel state
 // ============================================================================
