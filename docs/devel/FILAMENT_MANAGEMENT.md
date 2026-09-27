@@ -286,6 +286,10 @@ struct BackendSlotSubjects {
     std::vector<lv_subject_t> colors;
     std::vector<lv_subject_t> statuses;
     std::vector<lv_subject_t> fills;  // int: fill percent 0-100, -1 = unknown
+    std::vector<lv_subject_t> lane_states; // int: helix::ui::LaneState
+    std::vector<lv_subject_t> has_errors;
+    std::vector<lv_subject_t> severities;  // int: SlotError::Severity
+    std::vector<lv_subject_t> materials;   // string: "PLA", "PETG", ... or ""
     int slot_count = 0;
     // Lifetime token shared by every subject in this struct: these subjects are
     // DYNAMIC (destroyed in deinit() on backend rediscovery), so any observer
