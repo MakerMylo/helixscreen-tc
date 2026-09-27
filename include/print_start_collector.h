@@ -4,6 +4,7 @@
 #pragma once
 
 #include "bed_mesh_probe_parser.h"
+#include "helix_regex.h"
 #include "i_moonraker_client.h"
 #include "preprint_predictor.h"
 #include "print_start_position_classifier.h"
@@ -17,7 +18,6 @@
 #include <map>
 #include <memory>
 #include <mutex>
-#include <regex>
 #include <set>
 #include <string>
 #include <vector>
@@ -436,7 +436,7 @@ class PrintStartCollector : public std::enable_shared_from_this<PrintStartCollec
     /// Whether a line is the temperature report Klipper emits once a second
     /// while M109, M190 or TEMPERATURE_WAIT blocks ("B:45.2 /100.0 T0:210.0 /210.0").
     [[nodiscard]] static bool is_heater_wait_report(const std::string& line) {
-        return std::regex_match(line, heater_wait_report_pattern_);
+        return helix::regex_match(line, heater_wait_report_pattern_);
     }
 
     /// Whether BED_MESH is showing and a probe line arrived within
@@ -470,7 +470,7 @@ class PrintStartCollector : public std::enable_shared_from_this<PrintStartCollec
 
     /** @brief Check if a G-code response is a RESPOND-based print start completion */
     [[nodiscard]] bool is_respond_completion(const std::string& line) const {
-        return std::regex_search(line, respond_completion_pattern_);
+        return helix::regex_search(line, respond_completion_pattern_);
     }
 
     // Dependencies
@@ -522,10 +522,10 @@ class PrintStartCollector : public std::enable_shared_from_this<PrintStartCollec
     std::shared_ptr<PrintStartProfile> profile_;
 
     // Universal patterns (not profile-specific)
-    static const std::regex print_start_pattern_;
-    static const std::regex completion_pattern_;
-    static const std::regex respond_completion_pattern_;
-    static const std::regex heater_wait_report_pattern_;
+    static const helix::Regex print_start_pattern_;
+    static const helix::Regex completion_pattern_;
+    static const helix::Regex respond_completion_pattern_;
+    static const helix::Regex heater_wait_report_pattern_;
 
     // Fallback detection constants.
     //

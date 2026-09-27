@@ -93,6 +93,7 @@ WATCHDOG_EXTRA_OBJS := $(BUILD_DIR)/watchdog/config.o \
                        $(BUILD_DIR)/watchdog/text_io.o \
                        $(BUILD_DIR)/watchdog/logging_init.o \
                        $(BUILD_DIR)/watchdog/platform_capabilities.o \
+                       $(BUILD_DIR)/watchdog/helix_regex.o \
                        $(BUILD_DIR)/watchdog/ui_notification_stub.o \
                        $(BUILD_DIR)/watchdog/drm_mode_matching.o \
                        $(BUILD_DIR)/watchdog/fbdev_size_helper.o \
@@ -146,6 +147,11 @@ $(BUILD_DIR)/watchdog/logging_init.o: src/system/logging_init.cpp $(LIBHV_LIB) $
 
 # logging_init sizes the debug ring from total RAM, so the watchdog links this too.
 $(BUILD_DIR)/watchdog/platform_capabilities.o: src/system/platform_capabilities.cpp $(ABI_STAMP) | $(BUILD_DIR)/watchdog
+	@echo "[CXX] $< (watchdog)"
+	$(Q)$(CXX) $(WATCHDOG_CXXFLAGS) $(DEPFLAGS) -c $< -o $@
+
+# Regex engine; platform_capabilities.cpp parses /proc/meminfo and /proc/cpuinfo with it.
+$(BUILD_DIR)/watchdog/helix_regex.o: src/system/helix_regex.cpp $(ABI_STAMP) | $(BUILD_DIR)/watchdog
 	@echo "[CXX] $< (watchdog)"
 	$(Q)$(CXX) $(WATCHDOG_CXXFLAGS) $(DEPFLAGS) -c $< -o $@
 

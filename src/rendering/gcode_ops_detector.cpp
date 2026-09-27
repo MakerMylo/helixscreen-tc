@@ -4,14 +4,12 @@
 #include "gcode_ops_detector.h"
 
 #include "operation_patterns.h"
+#include "text_io.h"
 
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <cctype>
-#include <fstream>
-#include <regex>
-#include <sstream>
 
 namespace helix {
 namespace gcode {
@@ -34,10 +32,9 @@ namespace {
 /// from a whitespace-separated KEY=VALUE token list. Returns 0 when absent or
 /// non-numeric.
 int temp_from_call_line(const std::string& line, const char* key) {
-    std::istringstream tokens(line);
-    std::string token;
     const std::string key_upper = helix::to_upper(key);
-    while (tokens >> token) {
+    for (std::string_view token_view : helix::text_io::split_ws(line)) {
+        const std::string token(token_view);
         const size_t eq = token.find('=');
         if (eq == std::string::npos)
             continue;
@@ -178,28 +175,36 @@ void GCodeOpsDetector::add_pattern(OperationPattern pattern) {
 }
 
 ScanResult GCodeOpsDetector::scan_file(const std::filesystem::path& filepath) const {
-    std::ifstream file(filepath);
-    if (!file.is_open()) {
+    helix::text_io::LineReader file(filepath.string());
+    if (!file) {
         spdlog::warn("[GCodeOpsDetector] Failed to open file: {}", filepath.string());
         return {};
     }
 
     spdlog::debug("[GCodeOpsDetector] Scanning file: {}", filepath.string());
-    return scan_stream(file);
+    return scan_lines([&file](std::string& line) { return file.next(line); });
 }
 
 ScanResult GCodeOpsDetector::scan_content(const std::string& content) const {
-    std::istringstream stream(content);
-    return scan_stream(stream);
+    auto records = helix::text_io::lines(content);
+    auto it = records.begin();
+    const auto end = records.end();
+    return scan_lines([&](std::string& line) {
+        if (it == end)
+            return false;
+        line.assign(it->data(), it->size());
+        ++it;
+        return true;
+    });
 }
 
-ScanResult GCodeOpsDetector::scan_stream(std::istream& stream) const {
+template <typename NextLine> ScanResult GCodeOpsDetector::scan_lines(NextLine next_line) const {
     ScanResult result;
     std::string line;
     size_t line_number = 0;
     size_t byte_offset = 0;
 
-    while (std::getline(stream, line)) {
+    while (next_line(line)) {
         line_number++;
 
         // Check limits

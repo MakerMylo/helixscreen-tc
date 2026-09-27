@@ -11,12 +11,12 @@
 
 #include "platform_capabilities.h"
 
+#include "helix_regex.h"
+#include "text_io.h"
+
 #include <spdlog/spdlog.h>
 
 #include <cctype>
-#include <fstream>
-#include <regex>
-#include <sstream>
 
 #ifdef __APPLE__
 #include <sys/sysctl.h>
@@ -37,13 +37,7 @@ namespace {
  * @return File content, or empty string on failure
  */
 std::string read_file_content(const std::string& path) {
-    std::ifstream file(path);
-    if (!file.is_open()) {
-        return "";
-    }
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    return buffer.str();
+    return helix::text_io::read_file(path).value_or("");
 }
 
 /**
@@ -138,10 +132,10 @@ uint64_t parse_meminfo_kb(const std::string& content, const std::string& key) {
     }
 
     // Format: "MemTotal:        3884136 kB"
-    std::regex field_regex(key + R"(:\s+(\d+)\s+kB)");
-    std::smatch match;
+    helix::Regex field_regex(key + R"(:\s+(\d+)\s+kB)");
+    helix::RegexMatch match;
 
-    if (std::regex_search(content, match, field_regex) && match.size() > 1) {
+    if (helix::regex_search(content, match, field_regex) && match.size() > 1) {
         try {
             return std::stoull(match[1].str());
         } catch (const std::exception& e) {
@@ -170,16 +164,16 @@ CpuInfo parse_cpuinfo(const std::string& content) {
 
     // Count processor entries
     // Each CPU core has a "processor : N" line
-    std::regex processor_regex(R"(processor\s*:\s*\d+)");
-    auto proc_begin = std::sregex_iterator(content.begin(), content.end(), processor_regex);
-    auto proc_end = std::sregex_iterator();
+    helix::Regex processor_regex(R"(processor\s*:\s*\d+)");
+    auto proc_begin = helix::RegexIterator(content, processor_regex);
+    auto proc_end = helix::RegexIterator();
     info.core_count = static_cast<int>(std::distance(proc_begin, proc_end));
 
     // Extract BogoMIPS (first occurrence)
     // Format: "BogoMIPS : 270.00" or "bogomips : 3999.93"
-    std::regex bogomips_regex(R"([Bb]ogo[Mm][Ii][Pp][Ss]\s*:\s*([0-9.]+))");
-    std::smatch match;
-    if (std::regex_search(content, match, bogomips_regex) && match.size() > 1) {
+    helix::Regex bogomips_regex(R"([Bb]ogo[Mm][Ii][Pp][Ss]\s*:\s*([0-9.]+))");
+    helix::RegexMatch match;
+    if (helix::regex_search(content, match, bogomips_regex) && match.size() > 1) {
         try {
             info.bogomips = std::stof(match[1].str());
         } catch (const std::exception&) {
@@ -189,8 +183,8 @@ CpuInfo parse_cpuinfo(const std::string& content) {
 
     // Extract CPU MHz if BogoMIPS not found or as supplement
     // Format: "cpu MHz : 2400.000"
-    std::regex mhz_regex(R"(cpu MHz\s*:\s*([0-9.]+))");
-    if (std::regex_search(content, match, mhz_regex) && match.size() > 1) {
+    helix::Regex mhz_regex(R"(cpu MHz\s*:\s*([0-9.]+))");
+    if (helix::regex_search(content, match, mhz_regex) && match.size() > 1) {
         try {
             info.cpu_mhz = static_cast<int>(std::stof(match[1].str()));
         } catch (const std::exception&) {
@@ -203,8 +197,8 @@ CpuInfo parse_cpuinfo(const std::string& content) {
     // only carry "Processor". First hit wins; a kernel with none of them leaves
     // the field empty for the caller to label.
     for (const char* key : {"model name", "Hardware", "cpu model", "Processor", "machine"}) {
-        std::regex model_regex(std::string(key) + R"(\s*:\s*([^\n]+))");
-        if (!std::regex_search(content, match, model_regex) || match.size() <= 1) {
+        helix::Regex model_regex(std::string(key) + R"(\s*:\s*([^\n]+))");
+        if (!helix::regex_search(content, match, model_regex) || match.size() <= 1) {
             continue;
         }
         std::string value = match[1].str();
