@@ -18,6 +18,7 @@
 #include "helix-xml/src/xml/parsers/lv_xml_obj_parser.h"
 #include "lvgl/lvgl.h"
 #include "theme_manager.h"
+#include "view_gestures.h"
 
 #include <spdlog/spdlog.h>
 
@@ -42,6 +43,11 @@ typedef struct {
     // Touch drag state
     bool is_dragging;         // Currently in drag gesture
     lv_point_t last_drag_pos; // Last touch position for delta calculation
+
+    // Two-finger pan/zoom (3D only). two_finger_occurred holds one-finger
+    // rotate off until every finger is up.
+    helix::ui::TwoFingerState two_finger;
+    bool two_finger_occurred = false;
 
     // Deferred redraw state (for panels created while hidden)
     bool had_valid_size;    // Has widget ever had non-zero dimensions
@@ -267,6 +273,8 @@ static void bed_mesh_press_cb(lv_event_t* e) {
     // 3D mode: start drag gesture
     data->is_dragging = true;
     data->last_drag_pos = point;
+    data->two_finger = {};
+    data->two_finger_occurred = false;
 
     // Update renderer dragging state for fast solid-color rendering.
     // In async mode, lock the render mutex to prevent concurrent access
@@ -338,6 +346,10 @@ static void bed_mesh_pressing_cb(lv_event_t* e) {
         return;
     }
 
+    if (data->two_finger_occurred) {
+        return;
+    }
+
     lv_point_t point;
     lv_indev_get_point(indev, &point);
 
@@ -347,11 +359,11 @@ static void bed_mesh_pressing_cb(lv_event_t* e) {
 
     if (dx != 0 || dy != 0) {
         // Convert pixel movement to rotation angles
-        // Scale factor: ~0.5 degrees per pixel (matching G-code viewer)
+        // Shared rotation sensitivity with the G-code preview
         // Horizontal drag (dx) = spin rotation (angle_z)
         // Vertical drag (dy) = tilt rotation (angle_x), inverted for intuitive control
-        const double delta_z = dx * 0.5;
-        const double delta_x = -dy * 0.5; // Flip Y for intuitive tilt
+        const double delta_z = dx * helix::ui::kRotateDegreesPerPixel;
+        const double delta_x = -dy * helix::ui::kRotateDegreesPerPixel; // Flip Y for intuitive tilt
 
         // Accumulate onto the renderer's own camera angles.  Clamping of the
         // tilt and 360° wrapping of the spin happen inside set_rotation().
@@ -412,6 +424,8 @@ static void bed_mesh_release_cb(lv_event_t* e) {
 
     // 3D mode: end drag gesture
     data->is_dragging = false;
+    data->two_finger = {};
+    data->two_finger_occurred = false;
 
     // Update renderer dragging state for high-quality gradient rendering.
     // In async mode, lock the render mutex to prevent concurrent access.
@@ -432,6 +446,51 @@ static void bed_mesh_release_cb(lv_event_t* e) {
     spdlog::trace("[bed_mesh] Release - final rotation({:.1f}, {:.1f}), switching to gradient",
                   view ? view->angle_x : 0.0, view ? view->angle_z : 0.0);
 }
+
+#if LV_USE_GESTURE_RECOGNITION
+// Two-finger pan and pinch zoom, 3D mode only.
+static void bed_mesh_gesture_cb(lv_event_t* e) {
+    lv_obj_t* obj = lv_event_get_target_obj(e);
+    bed_mesh_widget_data_t* data = (bed_mesh_widget_data_t*)lv_obj_get_user_data(obj);
+
+    if (!data || !data->renderer || bed_mesh_renderer_is_using_2d(data->renderer))
+        return;
+
+    const auto sample = helix::ui::read_two_finger_sample(e);
+    if (!sample)
+        return;
+
+    const helix::ui::TwoFingerStep step = helix::ui::two_finger_step(*sample, data->two_finger);
+    if (!step.active)
+        return;
+    data->two_finger_occurred = true;
+
+    if (step.pan_dx == 0.0f && step.pan_dy == 0.0f && step.zoom == 1.0f)
+        return;
+
+    lv_area_t coords;
+    lv_obj_get_coords(obj, &coords);
+    const int width = lv_area_get_width(&coords);
+    const int height = lv_area_get_height(&coords);
+    const double anchor_x = step.anchor_x - coords.x1;
+    const double anchor_y = step.anchor_y - coords.y1;
+    auto apply = [&]() {
+        bed_mesh_renderer_apply_two_finger(data->renderer, step.pan_dx, step.pan_dy, step.zoom,
+                                           anchor_x, anchor_y, width, height);
+    };
+
+    if (data->async_mode && data->render_thread) {
+        {
+            std::lock_guard<std::mutex> lock(data->render_thread->render_mutex());
+            apply();
+        }
+        data->render_thread->request_render();
+    } else {
+        apply();
+    }
+    lv_obj_invalidate(obj);
+}
+#endif
 
 /**
  * Size changed event handler - update widget on resize
@@ -573,6 +632,9 @@ static void* bed_mesh_xml_create(lv_xml_parser_state_t* state, const char** attr
     lv_obj_add_event_cb(obj, bed_mesh_release_cb, LV_EVENT_RELEASED, nullptr);
     lv_obj_add_event_cb(obj, bed_mesh_release_cb, LV_EVENT_PRESS_LOST,
                         nullptr); // Handle drag outside widget
+#if LV_USE_GESTURE_RECOGNITION
+    lv_obj_add_event_cb(obj, bed_mesh_gesture_cb, LV_EVENT_GESTURE, nullptr);
+#endif
 
     // Set default size (will be overridden by XML width/height attributes)
     lv_obj_set_size(obj, BED_MESH_CANVAS_WIDTH, BED_MESH_CANVAS_HEIGHT);
