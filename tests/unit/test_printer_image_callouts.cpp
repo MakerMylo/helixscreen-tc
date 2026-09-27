@@ -507,15 +507,19 @@ TEST_CASE_METHOD(LVGLUITestFixture, "callouts: the bed line runs from the bed po
     REQUIRE(mode_now() == static_cast<int>(CalloutMode::BothSides));
     lv_obj_t* line = h.child("callout_line_bed");
     lv_obj_t* chip = h.child("callout_chip_bed");
-    REQUIRE(lv_line_get_point_count(line) == 2);
+    // Point, elbow, chip edge: the last run is level into the chip.
+    REQUIRE(lv_line_get_point_count(line) == 3);
     const lv_point_precise_t* p = lv_line_get_points(line);
     const CalloutRect img = fitted_image(h);
     const float mx = (0.308f + 0.611f) / 2, my = (0.571f + 0.573f) / 2;
     CHECK(p[0].x == img.x + int(mx * float(img.w)));
     CHECK(p[0].y == img.y + int(my * float(img.h)));
     const int cx = lv_obj_get_x(chip), cw = lv_obj_get_width(chip);
-    CHECK((p[1].x == cx || p[1].x == cx + cw));
-    CHECK(p[1].y == lv_obj_get_y(chip) + lv_obj_get_height(chip) / 2);
+    CHECK((p[2].x == cx || p[2].x == cx + cw));
+    CHECK(p[2].y == lv_obj_get_y(chip) + lv_obj_get_height(chip) / 2);
+    CHECK(p[1].y == p[2].y);
+    CHECK(std::min(p[0].x, p[2].x) <= p[1].x);
+    CHECK(p[1].x <= std::max(p[0].x, p[2].x));
 }
 
 TEST_CASE_METHOD(LVGLUITestFixture,

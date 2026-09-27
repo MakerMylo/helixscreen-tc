@@ -333,3 +333,104 @@ TEST_CASE("an active chip with no tagged point falls through to pinned even when
     CHECK(inside(chamber->rect, in.area_w, in.area_h));
     CHECK(chamber->rect.y + chamber->rect.h == in.area_h - in.gap); // bottom dock row
 }
+
+// ---------------------------------------------------------------------------
+// Elbow leader lines: 45 degrees toward the chip, then straight into its edge
+// ---------------------------------------------------------------------------
+
+using callout_detail::leader_elbow;
+
+TEST_CASE("leader elbow: room for 45 degrees runs 45 degrees, then level into the chip",
+          "[printer_image][callout_layout]") {
+    const CalloutPoint a{100, 50}, c{200, 80};
+    const auto e = leader_elbow(a, c, 8, true);
+    CHECK(std::abs(e.x - a.x) == std::abs(e.y - a.y));
+    CHECK(e.y == c.y);
+    CHECK(e.x == 130);
+    // Upward too.
+    const auto up = leader_elbow(a, CalloutPoint{200, 20}, 8, true);
+    CHECK(up.x == 130);
+    CHECK(up.y == 20);
+}
+
+TEST_CASE("leader elbow: too steep for 45 degrees keeps a min_line level stub",
+          "[printer_image][callout_layout]") {
+    const CalloutPoint a{100, 50}, c{120, 100};
+    const auto e = leader_elbow(a, c, 8, true);
+    CHECK(e.x == c.x - 8);
+    CHECK(e.y == c.y);
+    // Exactly one pixel short of the 45-degree run plus its stub.
+    CHECK(leader_elbow(a, CalloutPoint{120, 63}, 8, true).x == 112);
+    CHECK(leader_elbow(a, CalloutPoint{120, 62}, 8, true).x == 112);
+    CHECK(leader_elbow(a, CalloutPoint{120, 61}, 8, true).x == 111);
+}
+
+TEST_CASE("leader elbow: a chip nearer than min_line never runs the line backwards",
+          "[printer_image][callout_layout]") {
+    const CalloutPoint a{100, 50}, c{105, 90};
+    const auto e = leader_elbow(a, c, 8, true);
+    CHECK(e.x == a.x);
+    CHECK(e.y == c.y);
+}
+
+TEST_CASE("leader elbow: a level chip puts the elbow on the straight line",
+          "[printer_image][callout_layout]") {
+    const CalloutPoint a{100, 50}, c{200, 50};
+    const auto e = leader_elbow(a, c, 8, true);
+    CHECK(e.y == 50);
+    CHECK(e.x >= a.x);
+    CHECK(e.x <= c.x);
+}
+
+TEST_CASE("leader elbow: a left-hand chip mirrors the run", "[printer_image][callout_layout]") {
+    const CalloutPoint a{100, 50};
+    const auto e = leader_elbow(a, CalloutPoint{0, 80}, 8, true);
+    CHECK(e.x == 70);
+    CHECK(e.y == 80);
+    const auto steep = leader_elbow(a, CalloutPoint{80, 100}, 8, true);
+    CHECK(steep.x == 80 + 8);
+    CHECK(steep.y == 100);
+}
+
+TEST_CASE("leader elbow: bands above and below run 45 degrees, then vertical into the chip",
+          "[printer_image][callout_layout]") {
+    const CalloutPoint a{100, 50};
+    const auto e = leader_elbow(a, CalloutPoint{130, 200}, 8, false);
+    CHECK(std::abs(e.x - a.x) == std::abs(e.y - a.y));
+    CHECK(e.x == 130);
+    CHECK(e.y == 80);
+    const auto steep = leader_elbow(a, CalloutPoint{160, 70}, 8, false);
+    CHECK(steep.x == 160);
+    CHECK(steep.y == 70 - 8);
+    const auto above = leader_elbow(a, CalloutPoint{70, 0}, 8, false);
+    CHECK(above.x == 70);
+    CHECK(above.y == 20);
+}
+
+TEST_CASE("leader lines from the layout end level into side chips, vertical into top chips",
+          "[printer_image][callout_layout]") {
+    auto in = wide();
+    in.area_w = 186 + 2 * (70 + in.gap + in.min_line);
+    auto l = compute_callout_layout(in);
+    REQUIRE(l.mode == CalloutMode::BothSides);
+    for (const auto& c : l.chips) {
+        INFO(int(c.kind));
+        const auto e =
+            leader_elbow({c.line_x0, c.line_y0}, {c.line_x1, c.line_y1}, in.min_line, true);
+        CHECK(c.line_xm == e.x);
+        CHECK(c.line_ym == e.y);
+        CHECK(c.line_ym == c.line_y1);
+    }
+    in.area_w = 240;
+    in.area_h = 480;
+    l = compute_callout_layout(in);
+    REQUIRE((l.mode == CalloutMode::BothSides || l.mode == CalloutMode::OneSide));
+    for (const auto& c : l.chips) {
+        INFO(int(c.kind));
+        const auto e =
+            leader_elbow({c.line_x0, c.line_y0}, {c.line_x1, c.line_y1}, in.min_line, false);
+        CHECK(c.line_xm == e.x);
+        CHECK(c.line_ym == e.y);
+        CHECK(c.line_xm == c.line_x1);
+    }
+}

@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <cstdlib>
 #include <optional>
 #include <vector>
 
@@ -37,7 +38,14 @@ struct CalloutChipOut {
     CalloutKind kind = CalloutKind::Nozzle;
     CalloutRect rect;
     bool has_line = false;
-    int line_x0 = 0, line_y0 = 0, line_x1 = 0, line_y1 = 0; ///< point -> chip edge
+    int line_x0 = 0, line_y0 = 0; ///< the tagged point
+    int line_xm = 0, line_ym = 0; ///< elbow: 45 degrees from the point, then straight on
+    int line_x1 = 0, line_y1 = 0; ///< the chip's inner edge, at its centre
+};
+
+struct CalloutPoint {
+    int x = 0;
+    int y = 0;
 };
 
 struct CalloutLayoutInput {
@@ -99,6 +107,20 @@ inline void spread_1d(std::vector<int>& start, const std::vector<int>& size, int
 }
 
 namespace callout_detail {
+
+/// Where a leader from point `a` to chip edge `c` bends: 45 degrees toward the
+/// chip, then straight into it. `horizontal` leaders (side bands) end in a level
+/// run, the others (bands above and below) in a vertical one. When 45 degrees
+/// leaves less than `min_line` of straight run, the diagonal steepens to keep
+/// that stub; it never runs back past the point.
+inline CalloutPoint leader_elbow(CalloutPoint a, CalloutPoint c, int min_line, bool horizontal) {
+    const int a_run = horizontal ? a.x : a.y, c_run = horizontal ? c.x : c.y;
+    const int run = std::abs(c_run - a_run);
+    const int cross = std::abs(horizontal ? c.y - a.y : c.x - a.x);
+    const int diag = cross <= run - min_line ? cross : std::max(0, run - min_line);
+    const int bend = a_run + (c_run >= a_run ? diag : -diag);
+    return horizontal ? CalloutPoint{bend, c.y} : CalloutPoint{c.x, bend};
+}
 
 inline int px(float n, int origin, int extent) {
     return origin + int(n * float(extent));
@@ -184,19 +206,23 @@ inline bool stack(const CalloutLayoutInput& in, const CalloutRect& img, bool hor
     for (size_t i = 0; i < chips.size(); ++i) {
         const auto& c = chips[i];
         const int ax = px(c.anchor->x, img.x, img.w), ay = px(c.anchor->y, img.y, img.h);
+        CalloutChipOut o;
         if (horizontal_band) {
             const int x = left_or_top ? band_pos : band_pos - c.w;
-            auto o = chip_at(c, x, start[i], in.chip_h, ax, ay);
+            o = chip_at(c, x, start[i], in.chip_h, ax, ay);
             o.line_x1 = left_or_top ? x + c.w : x;
             o.line_y1 = start[i] + in.chip_h / 2;
-            out.push_back(o);
         } else {
             const int y = left_or_top ? band_pos : band_pos - in.chip_h;
-            auto o = chip_at(c, start[i], y, in.chip_h, ax, ay);
+            o = chip_at(c, start[i], y, in.chip_h, ax, ay);
             o.line_x1 = start[i] + c.w / 2;
             o.line_y1 = left_or_top ? y + in.chip_h : y;
-            out.push_back(o);
         }
+        const CalloutPoint e =
+            leader_elbow({ax, ay}, {o.line_x1, o.line_y1}, in.min_line, horizontal_band);
+        o.line_xm = e.x;
+        o.line_ym = e.y;
+        out.push_back(o);
     }
     return true;
 }

@@ -38,6 +38,7 @@
 #include <lvgl/src/misc/cache/lv_cache.h>
 #include <spdlog/spdlog.h>
 
+#include <algorithm>
 #include <cstdio>
 #include <cstring>
 
@@ -1067,7 +1068,7 @@ void PrinterImageWidget::apply_callout_layout() {
         }
     }
     static_assert(std::size(kLineNames) == std::tuple_size_v<decltype(callout_line_pts_)>,
-                  "one leader line and one point pair per CalloutKind that draws a line");
+                  "one leader line and one point set per CalloutKind that draws a line");
     for (const CalloutChipOut& c : out.chips) {
         const char* name = "callout_chip_toolhead";
         int icons = toolhead_icons;
@@ -1083,14 +1084,18 @@ void PrinterImageWidget::apply_callout_layout() {
                              : nullptr;
         if (line) {
             auto& pts = callout_line_pts_[k];
-            const bool same = lv_line_get_points(line) == pts.data() && pts[0].x == c.line_x0 &&
-                              pts[0].y == c.line_y0 && pts[1].x == c.line_x1 &&
-                              pts[1].y == c.line_y1;
+            const auto v = [](int n) { return static_cast<lv_value_precise_t>(n); };
+            const std::array<lv_point_precise_t, 3> want = {{{v(c.line_x0), v(c.line_y0)},
+                                                             {v(c.line_xm), v(c.line_ym)},
+                                                             {v(c.line_x1), v(c.line_y1)}}};
+            const bool same =
+                lv_line_get_points(line) == pts.data() &&
+                std::equal(pts.begin(), pts.end(), want.begin(),
+                           [](const auto& p, const auto& q) { return p.x == q.x && p.y == q.y; });
             if (!same) {
-                const auto v = [](int n) { return static_cast<lv_value_precise_t>(n); };
-                pts = {{{v(c.line_x0), v(c.line_y0)}, {v(c.line_x1), v(c.line_y1)}}};
+                pts = want;
                 // DECLARATIVE_OK: measured callout layout
-                lv_line_set_points(line, pts.data(), 2);
+                lv_line_set_points(line, pts.data(), pts.size());
             }
         }
         lv_obj_t* obj = lv_obj_find_by_name(widget_obj_, name);

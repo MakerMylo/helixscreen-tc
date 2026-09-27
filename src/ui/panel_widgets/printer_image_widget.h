@@ -128,9 +128,9 @@ class PrinterImageWidget : public PanelWidget {
     int callout_rowspan_ = 0;
     int callout_spin_pct_ = -1; ///< speed the fan icons spin at; -1 = not yet applied
     bool callout_glow_pulsing_ = false;
-    /// lv_line keeps the pointer it is given, so each leader line's two points
-    /// live here, one pair per CalloutKind from Nozzle to Light.
-    std::array<std::array<lv_point_precise_t, 2>, 5> callout_line_pts_{};
+    /// lv_line keeps the pointer it is given, so each leader line's points
+    /// (point, elbow, chip edge) live here, one set per CalloutKind from Nozzle to Light.
+    std::array<std::array<lv_point_precise_t, 3>, 5> callout_line_pts_{};
     std::vector<ObserverGuard> callout_observers_;
     SubjectLifetime bed_temp_lt_, bed_target_lt_, chamber_temp_lt_, chamber_target_lt_;
     helix::ui::HeaterIconBinder nozzle_binder_, bed_binder_, chamber_binder_, toolhead_binder_;
