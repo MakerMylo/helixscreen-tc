@@ -4,6 +4,7 @@
 #include "moonraker_queue_api.h"
 
 #include "moonraker_client.h"
+#include "moonraker_gcode_guards.h"
 #include "spdlog/spdlog.h"
 
 // ============================================================================
@@ -31,7 +32,9 @@ JobQueueStatus parse_queue_status(const json& response) {
 
 } // namespace
 
-MoonrakerQueueAPI::MoonrakerQueueAPI(helix::IMoonrakerClient& client) : client_(client) {}
+MoonrakerQueueAPI::MoonrakerQueueAPI(helix::IMoonrakerClient& client,
+                                     const helix::PrinterState* state)
+    : client_(client), state_(state) {}
 
 // ============================================================================
 // Queue Operations
@@ -52,6 +55,9 @@ void MoonrakerQueueAPI::get_queue_status(StatusCallback on_success, ErrorCallbac
 }
 
 void MoonrakerQueueAPI::start_queue(SuccessCallback on_success, ErrorCallback on_error) {
+    if (helix::api::reject_job_while_spools_on_bed(state_, "server.job_queue.start", on_error)) {
+        return;
+    }
     spdlog::info("[Moonraker API] Starting job queue");
 
     client_.send_jsonrpc(

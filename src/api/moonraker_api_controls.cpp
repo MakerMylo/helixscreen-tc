@@ -252,6 +252,10 @@ void MoonrakerAPI::execute_gcode(const std::string& gcode, SuccessCallback on_su
                                                       "[Moonraker API]")) {
         return;
     }
+    if (helix::api::reject_motion_while_spools_on_bed(gcode, state_, silent, on_error,
+                                                      "[Moonraker API]")) {
+        return;
+    }
 
     // Gate discretionary gcode (fan, temp, non-homing moves, LED) while a blocking
     // non-print operation holds Klipper's single-threaded gcode lock (homing,

@@ -1,0 +1,136 @@
+// Copyright (C) 2025-2026 356C LLC
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+#pragma once
+
+#include "async_lifetime_guard.h"
+#include "bed_drying.h"
+#include "i_moonraker_api.h"
+#include "subject_managed_panel.h"
+
+#include <functional>
+#include <lvgl.h>
+#include <optional>
+#include <string>
+
+namespace helix {
+
+class PrinterState;
+class TemperatureController;
+
+/**
+ * @brief Runs filament drying on the heated bed (prestonbrown/helixscreen#1730)
+ *
+ * The sequence is prepare() (home while the bed is empty, move the plate as far
+ * from the nozzle as Z allows, park the toolhead at the back), then
+ * confirm_placed() once the spools are on the plate: that sets the
+ * spools-on-the-bed latch, persists the run, heats the bed (and a chamber
+ * appliance dryer when asked) and holds Klipper's idle timeout to the planned
+ * end plus a dead-man margin. HelixScreen owns the timer. At the end the
+ * heaters go off and the latch stays until confirm_removed(), which the UI
+ * offers once the bed reads below the cool-down threshold.
+ *
+ * The run lives in settings.json, so restore() picks it up after an app
+ * restart or a power loss: the latch comes back before anything can move.
+ *
+ * Main thread only.
+ */
+class BedDryingController {
+  public:
+    enum class State { Idle = 0, Running = 1, Cooling = 2, ReadyToRemove = 3 };
+
+    using Clock = std::function<long long()>;
+
+    BedDryingController(PrinterState& state, IMoonrakerAPI* api, TemperatureController* tc,
+                        Clock clock = {});
+    ~BedDryingController();
+    BedDryingController(const BedDryingController&) = delete;
+    BedDryingController& operator=(const BedDryingController&) = delete;
+
+    void init_subjects();
+
+    /// Pick up a persisted run: the latch, and the timer or the cool-down.
+    void restore();
+
+    /// What a sensor says about filament at the toolhead; nullopt when no
+    /// sensor can say for certain.
+    [[nodiscard]] std::optional<bool> toolhead_loaded() const;
+
+    /// Home if needed, then the clearance move and park. @p on_ready fires on
+    /// the main thread once the plate is in place; @p on_error with a message
+    /// when a move was refused or failed.
+    void prepare(const bed_drying::Material& material, bool with_appliance,
+                 std::function<void()> on_ready, std::function<void(const std::string&)> on_error);
+
+    /// The spools are on the plate: latch, persist, heat.
+    void confirm_placed();
+
+    /// End the run early. The latch stays.
+    void stop();
+
+    /// The spools are off the plate: clear the latch and the persisted run.
+    void confirm_removed();
+
+    /// Advance the run to @p now_s (wall clock seconds). Driven by a 1 s timer.
+    void tick(long long now_s);
+
+    [[nodiscard]] State state() const;
+    [[nodiscard]] const bed_drying::RunRecord& record() const {
+        return record_;
+    }
+
+    /// The bed temperature a run of @p material would use on this printer.
+    [[nodiscard]] int bed_temp_for(const bed_drying::Material& material) const;
+
+    /// Called once each time the bed has cooled enough to take the spools off.
+    void set_on_ready_to_remove(std::function<void()> cb) {
+        on_ready_to_remove_ = std::move(cb);
+    }
+
+    lv_subject_t* get_state_subject() {
+        return &bed_drying_state_;
+    }
+    lv_subject_t* get_text_subject() {
+        return &bed_drying_text_;
+    }
+    /// The start modal's "I understand" checkbox; Start enables on 1.
+    lv_subject_t* get_ack_subject() {
+        return &bed_drying_ack_;
+    }
+
+  private:
+    friend struct BedDryingControllerTestAccess;
+
+    long long now() const;
+    void end_run(const char* why);
+    void publish();
+    void set_latch(bool on);
+    void cancel_timer();
+
+    PrinterState& state_;
+    IMoonrakerAPI* api_;
+    TemperatureController* tc_;
+    Clock clock_;
+
+    bed_drying::RunRecord record_;
+    bed_drying::Material pending_material_{};
+    bool pending_appliance_ = false;
+    bool bed_target_seen_ = false;
+    bool removal_prompted_ = false;
+
+    SubjectManager subjects_;
+    bool subjects_initialized_ = false;
+    lv_subject_t bed_drying_state_{};
+    lv_subject_t bed_drying_text_{};
+    lv_subject_t bed_drying_ack_{};
+    char text_buf_[96]{};
+
+    lv_timer_t* timer_ = nullptr;
+    std::function<void()> on_ready_to_remove_;
+    AsyncLifetimeGuard lifetime_;
+};
+
+/// The app's controller; nullptr before SubjectInitializer creates it.
+BedDryingController* get_bed_drying_controller();
+
+} // namespace helix

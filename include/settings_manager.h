@@ -4,6 +4,7 @@
 #pragma once
 
 #include "ams_types.h"
+#include "bed_drying.h"
 #include "lvgl/lvgl.h"
 #include "subject_managed_panel.h"
 
@@ -134,6 +135,24 @@ class SettingsManager {
 
     /** @brief Set Z movement style override and apply to printer state */
     void set_z_movement_style(ZMovementStyle style);
+
+    // =========================================================================
+    // BED DRYING (prestonbrown/helixscreen#1730)
+    // =========================================================================
+
+    /// Enclosure override: Auto (printer database, else a chamber heater),
+    /// Enclosed (marks a DIY enclosure) or Open.
+    helix::bed_drying::EnclosureStyle get_enclosure_style() const;
+    void set_enclosure_style(helix::bed_drying::EnclosureStyle style);
+    lv_subject_t* subject_enclosure_style() {
+        return &enclosure_style_subject_;
+    }
+
+    /// The persisted bed-drying run; `latched` false when there is none.
+    helix::bed_drying::RunRecord get_bed_drying_record() const;
+    /// Written and saved at once: the latch must reach disk before any heat.
+    void set_bed_drying_record(const helix::bed_drying::RunRecord& record);
+    void clear_bed_drying_record();
 
     // =========================================================================
     // CHAMBER ASSIGNMENT (owned by SettingsManager — sensor/heater override)
@@ -671,6 +690,7 @@ class SettingsManager {
     // LVGL subjects — only those owned by SettingsManager
     lv_subject_t led_enabled_subject_{};
     lv_subject_t z_movement_style_subject_{};
+    lv_subject_t enclosure_style_subject_{};
     lv_subject_t extrude_speed_subject_{};
     lv_subject_t motion_show_actual_position_subject_{};
     lv_subject_t jog_speed_xy_subject_{};

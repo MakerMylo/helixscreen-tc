@@ -79,6 +79,15 @@
             <event_cb trigger="clicked" callback="on_advanced_spoolman"/>
           </setting_action_row>
         </lv_obj>
+        <!-- Dry filament on the heated bed (hidden on open printers) -->
+        <lv_obj name="container_bed_drying" width="100%" style_pad_all="0" scrollable="false">
+          <bind_flag_if_eq subject="printer_can_bed_dry" flag="hidden" ref_value="0"/>
+          <setting_action_row name="row_bed_drying"
+                              label="Dry Filament" label_tag="Dry Filament" icon="heat_wave"
+                              description="Dry spools on the heated bed" description_tag="Dry spools on the heated bed">
+            <event_cb trigger="clicked" callback="on_bed_drying_start_clicked"/>
+          </setting_action_row>
+        </lv_obj>
         <!-- Fallback message when Spoolman not available -->
         <lv_obj name="container_no_spoolman" width="100%" style_pad_all="0" scrollable="false">
           <bind_flag_if_eq subject="printer_has_spoolman" flag="hidden" ref_value="1"/>

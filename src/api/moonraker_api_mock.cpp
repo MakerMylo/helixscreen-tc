@@ -64,7 +64,7 @@ MoonrakerAPIMock::MoonrakerAPIMock(MoonrakerClient& client, PrinterState& state)
     file_transfer_api_ =
         std::make_unique<MoonrakerFileTransferAPIMock>(client, get_http_base_url());
     file_api_ = std::make_unique<MoonrakerFileAPIMock>(client);
-    job_api_ = std::make_unique<helix::MoonrakerJobAPIMock>(client);
+    job_api_ = std::make_unique<helix::MoonrakerJobAPIMock>(client, &state);
     rest_api_ = std::make_unique<MoonrakerRestAPIMock>(client, get_http_base_url());
     spoolman_api_ = std::make_unique<MoonrakerSpoolmanAPIMock>(client);
     timelapse_api_ = std::make_unique<MoonrakerTimelapseAPIMock>(client, get_http_base_url());
@@ -540,8 +540,9 @@ void MoonrakerFileAPIMock::delete_file(const std::string& filename, SuccessCallb
 // MoonrakerJobAPIMock
 // ============================================================================
 
-helix::MoonrakerJobAPIMock::MoonrakerJobAPIMock(helix::IMoonrakerClient& client)
-    : MoonrakerJobAPI(client) {}
+helix::MoonrakerJobAPIMock::MoonrakerJobAPIMock(helix::IMoonrakerClient& client,
+                                                const helix::PrinterState* state)
+    : MoonrakerJobAPI(client, state) {}
 
 void helix::MoonrakerJobAPIMock::start_print(const std::string& filename,
                                              SuccessCallback on_success, ErrorCallback on_error) {
@@ -554,6 +555,9 @@ void helix::MoonrakerJobAPIMock::start_modified_print(const std::string& origina
                                                       const std::vector<std::string>& modifications,
                                                       ModifiedPrintCallback on_success,
                                                       ErrorCallback on_error) {
+    if (refused_by_spool_latch("server.helix.print_modified", on_error)) {
+        return;
+    }
     modified_prints_.push_back({original_filename, temp_file_path, modifications});
 
     spdlog::info("[MoonrakerAPIMock] Mock start_modified_print: original='{}', temp='{}', "

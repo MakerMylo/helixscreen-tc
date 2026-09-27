@@ -990,6 +990,24 @@ class PrinterState {
         return print_domain_.get_job_holds_machine_subject();
     }
 
+    /// job_holds_machine || spools on the bed. See
+    /// PrinterPrintState::get_machine_motion_blocked_subject().
+    lv_subject_t* get_machine_motion_blocked_subject() {
+        return print_domain_.get_machine_motion_blocked_subject();
+    }
+    lv_subject_t* get_spool_latch_subject() {
+        return print_domain_.get_spool_latch_subject();
+    }
+    void set_spool_latch(bool on, std::vector<std::string> extra_tokens = {}) {
+        print_domain_.set_spool_latch(on, std::move(extra_tokens));
+    }
+    [[nodiscard]] bool spool_latch_active() const {
+        return print_domain_.spool_latch_active();
+    }
+    [[nodiscard]] std::vector<std::string> spool_latch_extra_tokens() const {
+        return print_domain_.spool_latch_extra_tokens();
+    }
+
     lv_subject_t* get_print_start_phase_subject() {
         return print_domain_.get_print_start_phase_subject();
     }
@@ -2087,6 +2105,16 @@ class PrinterState {
     void apply_effective_bed_moves();
 
     /**
+     * @brief Resolve printer_is_enclosed and printer_can_bed_dry
+     *        (prestonbrown/helixscreen#1730)
+     *
+     * Inputs: the printer database's enclosed flag, the enclosure override, a
+     * configured chamber heater, a heated bed and the Z travel. Called wherever
+     * one of those changes; writes only on change.
+     */
+    void refresh_bed_drying_capability();
+
+    /**
      * @brief Get has_individual_xyz_homing subject for XML binding
      *
      * Returns 1 if the printer's XYZ axes can be homed individually,
@@ -2106,6 +2134,12 @@ class PrinterState {
      */
     lv_subject_t* get_printer_bed_moves_subject() {
         return capabilities_state_.get_printer_bed_moves_subject();
+    }
+    lv_subject_t* get_printer_is_enclosed_subject() {
+        return capabilities_state_.get_printer_is_enclosed_subject();
+    }
+    lv_subject_t* get_printer_can_bed_dry_subject() {
+        return capabilities_state_.get_printer_can_bed_dry_subject();
     }
 
     /**
@@ -2623,6 +2657,8 @@ class PrinterState {
 
     /// Auto-detected bed_moves value from kinematics (before user override)
     bool auto_detected_bed_moves_ = false;
+    /// The printer database says this printer type is enclosed.
+    bool printer_db_enclosed_ = false;
 
     /// Klipper pause_resume.is_paused: true when the print is paused via PAUSE gcode
     bool is_paused_ = false;

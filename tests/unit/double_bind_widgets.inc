@@ -2,7 +2,7 @@
 //
 // Every widget in ui_xml/ carrying two or more bindings on one state or flag.
 // A moves_machine="true" attribute is one of them: the engine installs the
-// job_holds_machine -> disabled binding for the element itself, so a control
+// machine_motion_blocked -> disabled binding for the element itself, so a control
 // carrying the attribute and one hand-written state binding is a group of two.
 // Each row names the component to build, the widget in it, the property, the
 // subjects involved with a value that releases every binding on them, and one
@@ -19,20 +19,22 @@
 static const BindGroup kDoubleBindWidgets[] = {
     {"ams_current_tool", "ams_current_tool", BindKind::Flag, "hidden", {{"ams_slot_count", -1}, {"ams_current_tool", 0}}, 2, {{0, 0}, {1, -1}}, 2, true},
     {"ams_device_operations", "label_printer_retains_note", BindKind::Flag, "hidden", {{"ams_device_ops_printer_retains_spool_info", -1}, {"ams_device_ops_reports_spool_ids", -1}}, 2, {{0, 0}, {1, 0}}, 2, true},
+    {"components/filament_operations_group", "btn_load", BindKind::State, "disabled", {{"filament_safety_warning_visible", 0}, {"filament_operation_in_progress", 0}, {"filament_load_disabled", 0}}, 3, {{0, 1}, {1, 1}, {2, 1}}, 3, true},
+    {"components/filament_operations_group", "btn_unload", BindKind::State, "disabled", {{"filament_safety_warning_visible", 0}, {"filament_operation_in_progress", 0}, {"filament_unload_disabled", 0}}, 3, {{0, 1}, {1, 1}, {2, 1}}, 3, true},
+    {"components/filament_operations_group", "btn_purge", BindKind::State, "disabled", {{"filament_safety_warning_visible", 0}, {"filament_operation_in_progress", 0}, {"filament_unload_disabled", 0}}, 3, {{0, 1}, {1, 1}, {2, 1}}, 3, true},
+    {"components/filament_operations_group", "btn_extrude", BindKind::State, "disabled", {{"filament_safety_warning_visible", 0}, {"filament_operation_in_progress", 0}}, 2, {{0, 1}, {1, 1}}, 2, true},
+    {"components/filament_operations_group", "btn_retract", BindKind::State, "disabled", {{"filament_safety_warning_visible", 0}, {"filament_operation_in_progress", 0}}, 2, {{0, 1}, {1, 1}}, 2, true},
     {"controls_panel", "chamber_status", BindKind::Flag, "hidden", {{"ui_breakpoint", 0}, {"printer_has_chamber", -1}}, 2, {{0, 1}, {1, 0}}, 2, true},
-    {"controls_panel", "btn_qgl", BindKind::State, "disabled", {{"job_holds_machine", 0}, {"controls_operation_in_progress", 0}}, 2, {{0, 1}, {1, 1}}, 2, true},
-    {"controls_panel", "btn_z_tilt", BindKind::State, "disabled", {{"job_holds_machine", 0}, {"controls_operation_in_progress", 0}}, 2, {{0, 1}, {1, 1}}, 2, true},
+    {"controls_panel", "btn_qgl", BindKind::State, "disabled", {{"machine_motion_blocked", 0}, {"controls_operation_in_progress", 0}}, 2, {{0, 1}, {1, 1}}, 2, true},
+    {"controls_panel", "btn_z_tilt", BindKind::State, "disabled", {{"machine_motion_blocked", 0}, {"controls_operation_in_progress", 0}}, 2, {{0, 1}, {1, 1}}, 2, true},
     {"controls_panel", "light_button", BindKind::State, "disabled", {{"printer_connection_state", 2}, {"led_command_in_flight", 0}}, 2, {{0, 3}, {1, 1}}, 2, true},
-    {"filament_panel", "btn_load", BindKind::State, "disabled", {{"filament_safety_warning_visible", 0}, {"filament_operation_in_progress", 0}, {"filament_load_disabled", 0}}, 3, {{0, 1}, {1, 1}, {2, 1}}, 3, true},
-    {"filament_panel", "btn_unload", BindKind::State, "disabled", {{"filament_safety_warning_visible", 0}, {"filament_operation_in_progress", 0}, {"filament_unload_disabled", 0}}, 3, {{0, 1}, {1, 1}, {2, 1}}, 3, true},
-    {"filament_panel", "btn_purge", BindKind::State, "disabled", {{"filament_safety_warning_visible", 0}, {"filament_operation_in_progress", 0}, {"filament_unload_disabled", 0}}, 3, {{0, 1}, {1, 1}, {2, 1}}, 3, true},
-    {"filament_panel", "btn_extrude", BindKind::State, "disabled", {{"filament_safety_warning_visible", 0}, {"filament_operation_in_progress", 0}}, 2, {{0, 1}, {1, 1}}, 2, true},
-    {"filament_panel", "btn_retract", BindKind::State, "disabled", {{"filament_safety_warning_visible", 0}, {"filament_operation_in_progress", 0}}, 2, {{0, 1}, {1, 1}}, 2, true},
     {"micro/controls_panel", "light_button", BindKind::State, "disabled", {{"printer_connection_state", 2}, {"led_command_in_flight", 0}}, 2, {{0, 3}, {1, 1}}, 2, true},
-    {"micro/controls_panel", "btn_qgl", BindKind::State, "disabled", {{"job_holds_machine", 0}, {"controls_operation_in_progress", 0}}, 2, {{0, 1}, {1, 1}}, 2, true},
-    {"micro/controls_panel", "btn_z_tilt", BindKind::State, "disabled", {{"job_holds_machine", 0}, {"controls_operation_in_progress", 0}}, 2, {{0, 1}, {1, 1}}, 2, true},
-    {"motion_panel", "btn_qgl", BindKind::State, "disabled", {{"job_holds_machine", 0}, {"controls_operation_in_progress", 0}}, 2, {{0, 1}, {1, 1}}, 2, true},
-    {"motion_panel", "btn_z_tilt", BindKind::State, "disabled", {{"job_holds_machine", 0}, {"controls_operation_in_progress", 0}}, 2, {{0, 1}, {1, 1}}, 2, true},
+    {"micro/controls_panel", "btn_qgl", BindKind::State, "disabled", {{"machine_motion_blocked", 0}, {"controls_operation_in_progress", 0}}, 2, {{0, 1}, {1, 1}}, 2, true},
+    {"micro/controls_panel", "btn_z_tilt", BindKind::State, "disabled", {{"machine_motion_blocked", 0}, {"controls_operation_in_progress", 0}}, 2, {{0, 1}, {1, 1}}, 2, true},
+    {"motion_panel", "btn_qgl", BindKind::State, "disabled", {{"machine_motion_blocked", 0}, {"controls_operation_in_progress", 0}}, 2, {{0, 1}, {1, 1}}, 2, true},
+    {"motion_panel", "btn_z_tilt", BindKind::State, "disabled", {{"machine_motion_blocked", 0}, {"controls_operation_in_progress", 0}}, 2, {{0, 1}, {1, 1}}, 2, true},
+    {"motion_panel", "btn_qgl", BindKind::State, "disabled", {{"machine_motion_blocked", 0}, {"controls_operation_in_progress", 0}}, 2, {{0, 1}, {1, 1}}, 2, true},
+    {"motion_panel", "btn_z_tilt", BindKind::State, "disabled", {{"machine_motion_blocked", 0}, {"controls_operation_in_progress", 0}}, 2, {{0, 1}, {1, 1}}, 2, true},
     {"navigation_bar", "nav_btn_controls", BindKind::State, "disabled", {{"nav_buttons_enabled", 1}, {"home_edit_mode", 0}}, 2, {{0, 2}, {1, 1}}, 2, true},
     {"navigation_bar", "nav_btn_filament", BindKind::State, "disabled", {{"nav_buttons_enabled", 1}, {"home_edit_mode", 0}}, 2, {{0, 2}, {1, 1}}, 2, true},
     {"network_settings_overlay", "refresh_btn", BindKind::State, "disabled", {{"wifi_scanning", 0}, {"wifi_hardware_available", -1}}, 2, {{0, 1}, {1, 0}}, 2, true},
@@ -46,8 +48,8 @@ static const BindGroup kDoubleBindWidgets[] = {
 // clang-format on
 
 // Groups the scan found but that no test can drive; see the header comment.
-static constexpr int kUndrivableGroups = 19;
+static constexpr int kUndrivableGroups = 26;
 
 // Total groups in ui_xml/. A new double-bind widget moves this, which is the
 // point: it has to be regenerated and re-run rather than silently uncovered.
-static constexpr int kTotalGroups = 44;
+static constexpr int kTotalGroups = 53;

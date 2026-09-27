@@ -620,6 +620,10 @@ class PrinterDetector {
      */
     static std::string get_toolhead_style(const std::string& printer_name);
 
+    /// The database's `"enclosed": true` flag for @p printer_name
+    /// (prestonbrown/helixscreen#1730); false when absent or unknown.
+    static bool is_enclosed(const std::string& printer_name);
+
     /**
      * @brief Check if connected printer is a Creality K1 series
      * @return true if printer type contains both "creality" and "k1"

@@ -7,6 +7,7 @@
 #include "ui_ams_current_tool.h"
 #include "ui_ams_device_operations_overlay.h"
 #include "ui_ams_device_section_detail_overlay.h"
+#include "ui_bed_drying_modal.h"
 #if HELIX_HAS_CFS
 #include "ui_cfs_chute_calibration_overlay.h"
 #endif
@@ -441,6 +442,7 @@ void register_xml_components() {
     // load before temp_graph_overlay.xml, later here.
     register_xml("components/chamber_fault_banner.xml");
     register_xml("components/chamber_dryer_row.xml");
+    register_xml("components/bed_drying_banner.xml");
     // Shared progress arc widget — diameter-driven stroke thickness, see
     // include/ui_progress_arc.h for the C++ companion (attach_progress_arc).
     register_xml("components/helix_progress_arc.xml");
@@ -517,6 +519,8 @@ void register_xml_components() {
     register_xml("action_prompt_modal.xml");
     register_xml("info_qr_modal.xml");
     register_xml("chamber_dryer_modal.xml");
+    register_xml("bed_drying_modal.xml");
+    helix::ui::register_bed_drying_callbacks();
     register_xml("batch_filament_modal.xml");
     register_xml("color_picker.xml");
     register_color_picker_component_constants("color_picker");

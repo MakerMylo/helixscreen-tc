@@ -156,6 +156,10 @@ class PrinterCapabilitiesState {
      */
     void set_bed_moves(bool bed_moves);
 
+    /// Enclosed printer, and whether drying on the heated bed is offered
+    /// (prestonbrown/helixscreen#1730). Resolved by PrinterState.
+    void set_bed_drying(bool enclosed, bool can_bed_dry);
+
     /** @brief Override chamber sensor capability after manual assignment resolution */
     void set_has_chamber_sensor(bool available);
 
@@ -305,6 +309,14 @@ class PrinterCapabilitiesState {
     /// 1 if bed moves on Z axis, 0 if gantry moves
     lv_subject_t* get_printer_bed_moves_subject() const {
         return const_cast<lv_subject_t*>(&printer_bed_moves_);
+    }
+
+    lv_subject_t* get_printer_is_enclosed_subject() const {
+        return const_cast<lv_subject_t*>(&printer_is_enclosed_);
+    }
+    /// 1 when drying on the heated bed is offered: heated bed, enclosed, enough Z
+    lv_subject_t* get_printer_can_bed_dry_subject() const {
+        return const_cast<lv_subject_t*>(&printer_can_bed_dry_);
     }
 
     /// 1 if printer has chamber temperature sensor
@@ -489,6 +501,8 @@ class PrinterCapabilitiesState {
     lv_subject_t printer_has_purge_line_{};          // purge/priming capability
     lv_subject_t printer_has_firmware_retraction_{}; // firmware retraction (G10/G11)
     lv_subject_t printer_bed_moves_{};               // 0=gantry moves on Z, 1=bed moves on Z
+    lv_subject_t printer_is_enclosed_{};             // enclosure, after the user override
+    lv_subject_t printer_can_bed_dry_{};             // drying on the heated bed is offered
     lv_subject_t printer_has_chamber_sensor_{};      // chamber temperature sensor
     lv_subject_t printer_has_chamber_heater_{};      // active chamber heater (heater_generic)
     lv_subject_t printer_has_pa_cal_{};              // firmware measures pressure advance

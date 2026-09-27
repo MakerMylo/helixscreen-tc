@@ -343,6 +343,7 @@ src/ui/style_configs.cpp
 src/ui/temp_graph_controller.cpp
 src/ui/temp_graph_tooltip.cpp
 src/ui/temperature_controller.cpp
+src/ui/bed_drying_controller.cpp
 src/ui/temperature_service.cpp
 src/ui/theme_loader.cpp
 src/ui/theme_manager_new.cpp
@@ -381,6 +382,7 @@ src/ui/ui_bypass_toggle_controller.cpp
 src/ui/ui_card.cpp
 src/ui/ui_carousel.cpp
 src/ui/ui_chamber_dryer_modal.cpp
+src/ui/ui_bed_drying_modal.cpp
 src/ui/ui_change_host_modal.cpp
 src/ui/ui_clog_bar.cpp
 src/ui/ui_clog_meter.cpp

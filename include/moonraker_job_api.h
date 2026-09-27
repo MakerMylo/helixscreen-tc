@@ -22,6 +22,7 @@
 // Forward declarations
 namespace helix {
 class IMoonrakerClient;
+class PrinterState;
 } // namespace helix
 
 /**
@@ -66,8 +67,11 @@ class MoonrakerJobAPI : public IJobAPI {
      * @brief Constructor
      *
      * @param client MoonrakerClient instance (must remain valid during API lifetime)
+     * @param state Printer state the spools-on-the-bed latch is read from; null
+     *        refuses nothing
      */
-    explicit MoonrakerJobAPI(helix::IMoonrakerClient& client);
+    explicit MoonrakerJobAPI(helix::IMoonrakerClient& client,
+                             const helix::PrinterState* state = nullptr);
     virtual ~MoonrakerJobAPI() = default;
 
     // ========================================================================
@@ -145,5 +149,9 @@ class MoonrakerJobAPI : public IJobAPI {
     void cancel_print(SuccessCallback on_success, ErrorCallback on_error) override;
 
   protected:
+    /// True, with @p on_error called, while spools lie on the bed.
+    bool refused_by_spool_latch(const char* method, const ErrorCallback& on_error) const;
+
     helix::IMoonrakerClient& client_;
+    const helix::PrinterState* state_ = nullptr;
 };

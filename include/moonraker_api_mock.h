@@ -684,7 +684,8 @@ class MoonrakerJobAPIMock : public MoonrakerJobAPI {
     using ErrorCallback = MoonrakerJobAPI::ErrorCallback;
     using ModifiedPrintCallback = MoonrakerJobAPI::ModifiedPrintCallback;
 
-    explicit MoonrakerJobAPIMock(helix::IMoonrakerClient& client);
+    explicit MoonrakerJobAPIMock(helix::IMoonrakerClient& client,
+                                 const helix::PrinterState* state = nullptr);
     ~MoonrakerJobAPIMock() override = default;
 
     /// One recorded start_modified_print() call

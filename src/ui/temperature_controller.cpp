@@ -12,6 +12,7 @@
 #include "observer_factory.h"
 #include "printer_state.h"
 #include "spdlog/spdlog.h"
+#include "spool_latch_gate.h"
 
 #include <spdlog/fmt/fmt.h>
 
@@ -314,7 +315,8 @@ int TemperatureController::chamber_dryer_bed_assist_c() const {
     return bed_max > 0 ? std::min(kBedAssistC, bed_max) : kBedAssistC;
 }
 
-void TemperatureController::start_chamber_drying(float temp_c, int duration_min, bool heat_bed) {
+void TemperatureController::start_chamber_drying(float temp_c, int duration_min, bool heat_bed,
+                                                 bool hold_idle) {
     const DryerInfo dryer = chamber_dryer();
     if (!api_ || !dryer.supported) {
         return;
@@ -341,7 +343,9 @@ void TemperatureController::start_chamber_drying(float temp_c, int duration_min,
             }
         });
     });
-    hold_idle_timeout(run_id, dryer.clamp_duration(duration_min) * 60);
+    if (hold_idle) {
+        hold_idle_timeout(run_id, dryer.clamp_duration(duration_min) * 60);
+    }
 
     const int bed_c = chamber_dryer_bed_assist_c();
     if (!heat_bed || bed_c <= 0) {
@@ -362,10 +366,24 @@ void TemperatureController::start_chamber_drying(float temp_c, int duration_min,
 // nothing is held.
 void TemperatureController::hold_idle_timeout(uint32_t run_id, int run_s) {
     constexpr int kMarginS = 30 * 60;
+    read_configured_idle_timeout([this, run_id, run_s](int configured_s) {
+        if (!dry_run_.armed || dry_run_.id != run_id || !api_) {
+            return;
+        }
+        dry_run_.idle_restore_s = configured_s;
+        api_->execute_gcode(fmt::format("SET_IDLE_TIMEOUT TIMEOUT={}", run_s + kMarginS), nullptr,
+                            nullptr);
+    });
+}
+
+void TemperatureController::read_configured_idle_timeout(std::function<void(int)> on_main) {
+    if (!api_) {
+        return;
+    }
     constexpr int kKlipperDefaultS = 600;
     auto tok = lifetime_.token();
     api_->query_configfile(
-        [this, tok, run_id, run_s](const nlohmann::json& config) {
+        [tok, on_main = std::move(on_main)](const nlohmann::json& config) {
             // Background (WS) thread: parse only.
             int configured_s = kKlipperDefaultS;
             if (config.contains("idle_timeout") && config["idle_timeout"].contains("timeout")) {
@@ -380,17 +398,27 @@ void TemperatureController::hold_idle_timeout(uint32_t run_id, int run_s) {
             if (configured_s <= 0) {
                 return;
             }
-            tok.defer("TemperatureController::hold_idle_timeout", [this, run_id, run_s,
-                                                                   configured_s]() {
-                if (!dry_run_.armed || dry_run_.id != run_id || !api_) {
-                    return;
-                }
-                dry_run_.idle_restore_s = configured_s;
-                api_->execute_gcode(fmt::format("SET_IDLE_TIMEOUT TIMEOUT={}", run_s + kMarginS),
-                                    nullptr, nullptr);
-            });
+            tok.defer("TemperatureController::read_configured_idle_timeout",
+                      [on_main, configured_s]() { on_main(configured_s); });
         },
         [](const MoonrakerError&) {});
+}
+
+std::vector<std::string> TemperatureController::chamber_dryer_tokens() const {
+    std::vector<std::string> tokens;
+    if (!chamber_dryer_backend_ || !chamber_dryer().supported) {
+        return tokens;
+    }
+    const DryerInfo dryer = chamber_dryer();
+    for (const std::string& script :
+         {chamber_dryer_backend_->dryer_start_gcode(dryer.clamp_temp(dryer.min_temp_c),
+                                                    dryer.clamp_duration(60)),
+          std::string(chamber_dryer_backend_->dryer_stop_gcode())}) {
+        for (std::string& token : gcode_line_tokens(script)) {
+            tokens.push_back(std::move(token));
+        }
+    }
+    return tokens;
 }
 
 void TemperatureController::stop_chamber_drying() {

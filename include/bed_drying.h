@@ -1,0 +1,157 @@
+// Copyright (C) 2025-2026 356C LLC
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+#pragma once
+
+#include <algorithm>
+#include <array>
+#include <optional>
+#include <string_view>
+
+/**
+ * @file bed_drying.h
+ * @brief The decisions behind drying filament on the heated bed, as pure
+ *        functions (prestonbrown/helixscreen#1730)
+ *
+ * The flow follows Bambu Lab's heated-bed procedure: unload, clear the plate,
+ * move it as far from the nozzle as the printer allows, spools on the plate
+ * under a box, flip them midway, let the bed cool before removing them.
+ */
+
+namespace helix::bed_drying {
+
+/// Enclosure answer before the user override: the printer database's flag,
+/// else a configured chamber heater (an appliance heating a chamber implies a
+/// chamber). A chamber sensor alone proves nothing; open printers log room
+/// temperature too.
+enum class EnclosureStyle { AUTO = 0, ENCLOSED = 1, OPEN = 2 };
+
+[[nodiscard]] constexpr bool is_enclosed(EnclosureStyle style, bool db_enclosed,
+                                         bool has_chamber_heater) {
+    switch (style) {
+    case EnclosureStyle::ENCLOSED:
+        return true;
+    case EnclosureStyle::OPEN:
+        return false;
+    case EnclosureStyle::AUTO:
+    default:
+        return db_enclosed || has_chamber_heater;
+    }
+}
+
+/// A lying 1 kg spool is 65-75 mm tall; a cover box and margin need the rest.
+inline constexpr double kMinZTravelMm = 130.0;
+/// How far short of the end of Z travel the clearance move stops.
+inline constexpr double kClearanceMarginMm = 10.0;
+/// Bambu's firmware drying mode caps the bed here.
+inline constexpr int kMaxBedC = 90;
+/// The remove prompt waits for the bed to read below this.
+inline constexpr double kCoolDownC = 40.0;
+/// Klipper's idle timeout is held to the planned end plus this, so a run
+/// HelixScreen can no longer end is ended by Klipper's own TURN_OFF_HEATERS.
+inline constexpr int kDeadManMarginS = 10 * 60;
+
+/// Open printers never offer it; an owner marks a DIY enclosure through the
+/// enclosure override instead.
+[[nodiscard]] constexpr bool available(bool heated_bed, bool enclosed, bool has_z, double z_min,
+                                       double z_max) {
+    return heated_bed && enclosed && has_z && (z_max - z_min) >= kMinZTravelMm;
+}
+
+/// Absolute Z of the clearance move: the far end of travel minus a margin. On a
+/// printer whose bed moves this is the plate at the bottom; on one whose gantry
+/// moves it is the nozzle at the top. Either way the plate is as far from the
+/// nozzle as it gets, which a cover box needs.
+[[nodiscard]] constexpr double clearance_z(double z_max) {
+    return z_max - kClearanceMarginMm;
+}
+
+struct Material {
+    std::string_view name;
+    int bed_c; ///< upper end of Bambu's range
+    int hours;
+};
+
+/// Bambu's heated-bed drying table, upper value of each range, all 12 h.
+inline constexpr std::array<Material, 5> kMaterials = {{
+    {"PLA", 70, 12},
+    {"PLA Silk/CF", 75, 12},
+    {"PETG", 85, 12},
+    {"TPU", 90, 12},
+    {"ABS/ASA/PC/PA", 100, 12},
+}};
+
+/// The bed temperature a material dries at: its table value, capped at
+/// kMaxBedC and at the bed's own maximum (0 = unknown, no cap).
+[[nodiscard]] constexpr int bed_temp_c(const Material& m, int bed_max_c) {
+    int c = std::min(m.bed_c, kMaxBedC);
+    if (bed_max_c > 0) {
+        c = std::min(c, bed_max_c);
+    }
+    return c;
+}
+
+/// Whether to offer the unload before anything moves.
+enum class UnloadOffer {
+    None,        ///< a sensor says the toolhead is empty: go straight on
+    Recommended, ///< a sensor says it is loaded
+    Offered,     ///< the printer cannot tell: offer beside a "make sure" line
+};
+
+/// @param toolhead_loaded nullopt when no sensor can say for certain
+[[nodiscard]] constexpr UnloadOffer unload_offer(std::optional<bool> toolhead_loaded) {
+    if (!toolhead_loaded.has_value()) {
+        return UnloadOffer::Offered;
+    }
+    return *toolhead_loaded ? UnloadOffer::Recommended : UnloadOffer::None;
+}
+
+/// What the sensors say about filament at the toolhead; nullopt when none can
+/// say for certain. A toolhead sensor answers both ways. A filament system
+/// reporting a loaded lane, or a runout sensor seeing filament, says loaded;
+/// neither can promise an empty toolhead, since the tail of a run-out spool can
+/// still sit in the extruder past the runout sensor.
+[[nodiscard]] constexpr std::optional<bool>
+toolhead_loaded_from(std::optional<bool> toolhead_sensor, std::optional<bool> runout_sensor,
+                     bool ams_loaded) {
+    if (toolhead_sensor.has_value()) {
+        return toolhead_sensor;
+    }
+    if (ams_loaded || runout_sensor.value_or(false)) {
+        return true;
+    }
+    return std::nullopt;
+}
+
+/// Where the run stands at @p now, given its persisted start and planned end.
+enum class Phase { Running, Ended };
+
+[[nodiscard]] constexpr Phase phase_at(long long now_s, long long end_s) {
+    return now_s < end_s ? Phase::Running : Phase::Ended;
+}
+
+/// The flip reminder is due once the run is half done.
+[[nodiscard]] constexpr bool flip_due(long long now_s, long long start_s, long long end_s) {
+    return now_s >= start_s + (end_s - start_s) / 2;
+}
+
+[[nodiscard]] constexpr bool may_prompt_removal(double bed_temp_c) {
+    return bed_temp_c < kCoolDownC;
+}
+
+/// A run as persisted in settings.json. `latched` is the spools-on-the-bed
+/// latch: set before any heat is sent, cleared only when the user confirms the
+/// spools are out, so it survives an app restart, a Klipper restart and a
+/// power loss.
+struct RunRecord {
+    bool latched = false;
+    long long start_s = 0; ///< wall clock, seconds
+    long long end_s = 0;   ///< planned end, wall clock, seconds
+    int bed_c = 0;
+    int idle_restore_s = 0; ///< the configured idle timeout to put back; 0 = none held
+    bool appliance = false; ///< a chamber appliance dries alongside
+    bool ended = false;     ///< heaters are off; waiting for the spools to come out
+    bool flip_notified = false;
+};
+
+} // namespace helix::bed_drying

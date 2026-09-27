@@ -3,6 +3,7 @@
 
 #include "subject_initializer.h"
 
+#include "ui_bed_drying_modal.h"
 #include "ui_component_keypad.h"
 #include "ui_emergency_stop.h"
 #include "ui_error_reporting.h"
@@ -46,6 +47,7 @@
 #include "active_print_media_manager.h"
 #include "ams_state.h"
 #include "app_globals.h"
+#include "bed_drying_controller.h"
 #include "color_sensor_manager.h"
 #include "filament_catalog.h"
 #include "filament_op_router.h"
@@ -64,6 +66,7 @@
 #include "print_start_navigation.h"
 #include "printer_state.h"
 #include "probe_sensor_manager.h"
+#include "runtime_config.h"
 #include "settings_manager.h"
 #include "spoolman_manager.h"
 #include "standard_macros.h"
@@ -488,6 +491,32 @@ void SubjectInitializer::init_panel_subjects(IMoonrakerAPI* api) {
     m_temp_controller = std::make_unique<helix::TemperatureController>(get_printer_state(), api);
     helix::PanelWidgetManager::instance().register_shared_resource<helix::TemperatureController>(
         m_temp_controller.get());
+
+    // Drying on the heated bed (prestonbrown/helixscreen#1730). restore() brings
+    // back a persisted spools-on-the-bed latch before any panel can move the
+    // printer.
+    // Under --test the run's clock follows --sim-speed, so a 12 h run plays out
+    // against the mock in minutes.
+    helix::BedDryingController::Clock bed_drying_clock;
+    if (auto* rc = get_runtime_config(); rc && rc->is_test_mode() && rc->sim_speedup > 1.0) {
+        const double speedup = rc->sim_speedup;
+        const auto t0 = std::chrono::steady_clock::now();
+        const long long wall0 = std::chrono::duration_cast<std::chrono::seconds>(
+                                    std::chrono::system_clock::now().time_since_epoch())
+                                    .count();
+        bed_drying_clock = [speedup, t0, wall0] {
+            const double elapsed =
+                std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
+            return wall0 + static_cast<long long>(elapsed * speedup);
+        };
+    }
+    m_bed_drying = std::make_unique<helix::BedDryingController>(
+        get_printer_state(), api, m_temp_controller.get(), std::move(bed_drying_clock));
+    m_bed_drying->init_subjects();
+    m_bed_drying->set_on_ready_to_remove(helix::ui::show_bed_drying_remove_prompt);
+    helix::PanelWidgetManager::instance().register_shared_resource<helix::BedDryingController>(
+        m_bed_drying.get());
+    m_bed_drying->restore();
 
     // TemperatureService (owned by SubjectInitializer - destructor handles deinit_subjects)
     m_temp_control_panel = std::make_unique<TemperatureService>(get_printer_state(), api);

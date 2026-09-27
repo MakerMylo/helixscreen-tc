@@ -349,6 +349,7 @@
     },
     {
       "id": "flashforge_ad5m_pro",
+      "enclosed": true,
       "name": "FlashForge Adventurer 5M Pro",
       "aliases": [
         "FlashForge AD5M Pro"
@@ -473,6 +474,7 @@
     },
     {
       "id": "flashforge_ad5m_pro_forgex",
+      "enclosed": true,
       "name": "FlashForge Adventurer 5M Pro (ForgeX)",
       "manufacturer": "FlashForge",
       "image": "flashforge-adventurer-5m-pro.png",
@@ -704,6 +706,7 @@
     },
     {
       "id": "flashforge_creator_5",
+      "enclosed": true,
       "name": "FlashForge Creator 5",
       "manufacturer": "FlashForge",
       "image": "flashforge-creator-5.png",
@@ -765,6 +768,7 @@
     },
     {
       "id": "flashforge_creator_5_pro",
+      "enclosed": true,
       "name": "FlashForge Creator 5 Pro",
       "manufacturer": "FlashForge",
       "image": "flashforge-creator-5-pro.png",
@@ -826,6 +830,7 @@
     },
     {
       "id": "voron_2_4",
+      "enclosed": true,
       "name": "Voron 2.4",
       "manufacturer": "Voron",
       "image": "voron-v2.png",
@@ -918,6 +923,7 @@
     },
     {
       "id": "voron_0_1",
+      "enclosed": true,
       "name": "Voron 0.2",
       "aliases": [
         "Voron 0.1"
@@ -1075,6 +1081,7 @@
     },
     {
       "id": "voron_trident",
+      "enclosed": true,
       "name": "Voron Trident",
       "manufacturer": "Voron",
       "image": "voron-trident.png",
@@ -1190,6 +1197,7 @@
     },
     {
       "id": "creality_k1",
+      "enclosed": true,
       "name": "Creality K1",
       "manufacturer": "Creality",
       "toolhead_style": "creality_k1",
@@ -1319,6 +1327,7 @@
     },
     {
       "id": "creality_k1_cfs",
+      "enclosed": true,
       "name": "Creality K1 (with CFS)",
       "manufacturer": "Creality",
       "toolhead_style": "creality_k1",
@@ -1461,6 +1470,7 @@
     },
     {
       "id": "creality_k1_max",
+      "enclosed": true,
       "name": "Creality K1 Max",
       "manufacturer": "Creality",
       "toolhead_style": "creality_k1",
@@ -1560,6 +1570,7 @@
     },
     {
       "id": "creality_k1_max_cfs",
+      "enclosed": true,
       "name": "Creality K1 Max (with CFS)",
       "manufacturer": "Creality",
       "toolhead_style": "creality_k1",
@@ -1674,6 +1685,7 @@
     },
     {
       "id": "creality_k2_plus",
+      "enclosed": true,
       "name": "Creality K2 Plus",
       "manufacturer": "Creality",
       "toolhead_style": "creality_k2",
@@ -1820,6 +1832,7 @@
     },
     {
       "id": "creality_k2_plus_k2improvements",
+      "enclosed": true,
       "name": "Creality K2 Plus (k2-improvements)",
       "manufacturer": "Creality",
       "toolhead_style": "creality_k2",
@@ -1959,6 +1972,7 @@
     },
     {
       "id": "creality_k2_pro",
+      "enclosed": true,
       "name": "Creality K2 Pro",
       "manufacturer": "Creality",
       "toolhead_style": "creality_k2",
@@ -2105,6 +2119,7 @@
     },
     {
       "id": "creality_k2",
+      "enclosed": true,
       "name": "Creality K2",
       "manufacturer": "Creality",
       "toolhead_style": "creality_k2",
@@ -2241,6 +2256,7 @@
     },
     {
       "id": "creality_k1c",
+      "enclosed": true,
       "name": "Creality K1C",
       "manufacturer": "Creality",
       "toolhead_style": "creality_k1",
@@ -2321,6 +2337,7 @@
     },
     {
       "id": "creality_k1c_cfs",
+      "enclosed": true,
       "name": "Creality K1C (with CFS)",
       "manufacturer": "Creality",
       "toolhead_style": "creality_k1",
@@ -2956,6 +2973,7 @@
     },
     {
       "id": "elegoo_centauri_carbon",
+      "enclosed": true,
       "name": "Elegoo Centauri Carbon",
       "manufacturer": "Elegoo",
       "image": "elegoo-centauri-carbon.png",
@@ -3449,6 +3467,7 @@
     },
     {
       "id": "qidi_x_max_3",
+      "enclosed": true,
       "name": "Qidi X-Max 3",
       "manufacturer": "Qidi",
       "image": "qidi-x-max-3.png",
@@ -3543,6 +3562,7 @@
     },
     {
       "id": "qidi_plus_4",
+      "enclosed": true,
       "name": "Qidi Plus 4",
       "manufacturer": "Qidi",
       "image": "qidi-plus-4.png",
@@ -3642,6 +3662,7 @@
     },
     {
       "id": "qidi_x_plus_3",
+      "enclosed": true,
       "name": "Qidi X-Plus 3",
       "manufacturer": "Qidi",
       "image": "qidi-x-plus-3.png",
@@ -3736,6 +3757,7 @@
     },
     {
       "id": "qidi_q1_pro",
+      "enclosed": true,
       "name": "Qidi Q1 Pro",
       "manufacturer": "Qidi",
       "image": "qidi-q1-pro.png",
@@ -3813,6 +3835,7 @@
     },
     {
       "id": "qidi_x_smart_3",
+      "enclosed": true,
       "name": "Qidi X-Smart 3",
       "manufacturer": "Qidi",
       "image": "qidi-x-smart-3.png",
@@ -3876,6 +3899,7 @@
     },
     {
       "id": "qidi_max_4",
+      "enclosed": true,
       "name": "Qidi Max 4",
       "manufacturer": "Qidi",
       "image": "qidi-max-4.png",
@@ -3990,6 +4014,7 @@
     },
     {
       "id": "qidi_q2",
+      "enclosed": true,
       "name": "Qidi Q2",
       "manufacturer": "Qidi",
       "image": "qidi-q2.png",
@@ -5850,6 +5875,7 @@
     },
     {
       "id": "anycubic_kobra_s1",
+      "enclosed": true,
       "name": "Anycubic Kobra S1",
       "manufacturer": "Anycubic",
       "image": "anycubic-kobra-s1.png",
@@ -5919,6 +5945,7 @@
     },
     {
       "id": "anycubic_kobra_s1_max",
+      "enclosed": true,
       "name": "Anycubic Kobra S1 Max",
       "manufacturer": "Anycubic",
       "image": "anycubic-kobra-s1-max.png",
@@ -6486,6 +6513,7 @@
     },
     {
       "id": "snapmaker_u1",
+      "enclosed": true,
       "name": "Snapmaker U1",
       "manufacturer": "Snapmaker",
       "image": "snapmaker-u1.png",

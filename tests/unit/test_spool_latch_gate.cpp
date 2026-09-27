@@ -1,0 +1,171 @@
+// Copyright (C) 2025-2026 356C LLC
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+/**
+ * @file test_spool_latch_gate.cpp
+ * @brief The "spools are on the bed" latch: the allowlist, the five send-layer
+ *        choke points it gates, and the derived machine_motion_blocked subject
+ *        (prestonbrown/helixscreen#1730).
+ */
+
+#include "../../include/moonraker_api.h"
+#include "../../include/moonraker_client_mock.h"
+#include "../../include/printer_state.h"
+#include "../../include/spool_latch_gate.h"
+#include "../../src/api/moonraker_gcode_guards.h"
+#include "../lvgl_test_fixture.h"
+#include "../ui_test_utils.h"
+
+#include "../catch_amalgamated.hpp"
+
+using namespace helix;
+
+TEST_CASE("spool_latch_allows passes only commands that cannot move the toolhead",
+          "[spool_latch][gcode]") {
+    const std::vector<std::string> none;
+
+    CHECK(spool_latch_allows("M140 S70", none));
+    CHECK(spool_latch_allows("SET_IDLE_TIMEOUT TIMEOUT=9000\nM140 S0", none));
+    CHECK(spool_latch_allows("set_heater_temperature HEATER=heater_bed TARGET=60", none));
+    CHECK(spool_latch_allows("M112", none));
+    CHECK(spool_latch_allows("TURN_OFF_HEATERS", none));
+    CHECK(spool_latch_allows("; a comment only", none));
+    CHECK(spool_latch_allows("", none));
+
+    CHECK_FALSE(spool_latch_allows("G28", none));
+    CHECK_FALSE(spool_latch_allows("G1 Z10", none));
+    CHECK_FALSE(spool_latch_allows("M140 S60\nG28", none));
+    CHECK_FALSE(spool_latch_allows("PRINT_START", none));
+    CHECK_FALSE(spool_latch_allows("M84", none));
+
+    SECTION("a running dry cycle adds its own commands") {
+        const std::vector<std::string> dryer = {"APPLIANCE_DRY_START", "APPLIANCE_DRY_STOP"};
+        CHECK(spool_latch_allows("APPLIANCE_DRY_START TEMP=55 HOURS=4", dryer));
+        CHECK_FALSE(spool_latch_allows("APPLIANCE_DRY_START TEMP=55 HOURS=4", none));
+    }
+}
+
+namespace {
+
+class SpoolLatchFixture : public LVGLTestFixture {
+  public:
+    SpoolLatchFixture() : mock_client(MoonrakerClientMock::PrinterType::VORON_24) {
+        state.init_subjects(false);
+        state.set_klippy_state_sync(KlippyState::READY);
+        mock_client.connect("ws://mock/websocket", []() {}, []() {});
+        api = std::make_unique<MoonrakerAPI>(mock_client, state);
+    }
+
+    ~SpoolLatchFixture() override {
+        mock_client.stop_temperature_simulation();
+        mock_client.disconnect();
+        api.reset();
+    }
+
+    std::function<void(const MoonrakerError&)> on_error() {
+        return [this](const MoonrakerError& err) {
+            error_called = true;
+            captured_error = err;
+        };
+    }
+
+    MoonrakerClientMock mock_client;
+    PrinterState state;
+    std::unique_ptr<MoonrakerAPI> api;
+    bool error_called = false;
+    MoonrakerError captured_error;
+};
+
+} // namespace
+
+TEST_CASE_METHOD(SpoolLatchFixture, "the latch refuses motion at both gcode choke points",
+                 "[spool_latch][mock]") {
+    state.set_spool_latch(true);
+
+    SECTION("MoonrakerAPI::execute_gcode refuses a macro that may move") {
+        api->execute_gcode("PRINT_START", nullptr, on_error());
+        CHECK(error_called);
+        CHECK(captured_error.type == MoonrakerErrorType::NOT_READY);
+        CHECK(mock_client.gcode_script_history().empty());
+    }
+
+    SECTION("MoonrakerAPI::execute_gcode still sends a heater command") {
+        api->execute_gcode("M140 S70", nullptr, on_error());
+        CHECK_FALSE(error_called);
+        CHECK_FALSE(mock_client.gcode_script_history().empty());
+    }
+
+    SECTION("the motion API refuses homing and a Z move") {
+        api->motion().home_axes("", nullptr, on_error());
+        CHECK(error_called);
+        error_called = false;
+        api->motion().move_axis('Z', -5.0, 600.0, nullptr, on_error());
+        CHECK(error_called);
+        CHECK(mock_client.gcode_script_history().empty());
+    }
+
+    SECTION("a dry cycle's own commands pass once registered") {
+        state.set_spool_latch(true, {"APPLIANCE_DRY_STOP"});
+        api->execute_gcode("APPLIANCE_DRY_STOP", nullptr, on_error());
+        CHECK_FALSE(error_called);
+    }
+}
+
+TEST_CASE_METHOD(SpoolLatchFixture, "the latch refuses every print start and resume",
+                 "[spool_latch][mock]") {
+    state.set_spool_latch(true);
+
+    SECTION("start_print") {
+        api->job().start_print("benchy.gcode", nullptr, on_error());
+        CHECK(error_called);
+        CHECK(mock_client.last_send_method() != "printer.print.start");
+    }
+    SECTION("start_modified_print") {
+        api->job().start_modified_print("benchy.gcode", "/tmp/x.gcode", {}, nullptr, on_error());
+        CHECK(error_called);
+    }
+    SECTION("resume_print") {
+        api->job().resume_print(nullptr, on_error());
+        CHECK(error_called);
+        CHECK(mock_client.last_send_method() != "printer.print.resume");
+    }
+    SECTION("start_queue") {
+        api->queue().start_queue(nullptr, on_error());
+        CHECK(error_called);
+        CHECK(mock_client.last_send_method() != "server.job_queue.start");
+    }
+}
+
+TEST_CASE_METHOD(SpoolLatchFixture, "with the latch clear, motion and print starts go out",
+                 "[spool_latch][mock]") {
+    state.set_spool_latch(false);
+    api->motion().home_axes("", nullptr, on_error());
+    CHECK_FALSE(error_called);
+    api->job().start_print("benchy.gcode", [] {}, on_error());
+    CHECK_FALSE(error_called);
+    CHECK(mock_client.last_send_method() == "printer.print.start");
+}
+
+TEST_CASE_METHOD(SpoolLatchFixture, "machine_motion_blocked is job_holds_machine or the latch",
+                 "[spool_latch][job_holds_machine]") {
+    lv_subject_t* blocked = state.get_machine_motion_blocked_subject();
+    REQUIRE(lv_subject_get_int(blocked) == 0);
+
+    state.set_spool_latch(true);
+    CHECK(lv_subject_get_int(blocked) == 1);
+    CHECK(lv_subject_get_int(state.get_job_holds_machine_subject()) == 0);
+
+    state.set_spool_latch(false);
+    CHECK(lv_subject_get_int(blocked) == 0);
+
+    state.set_print_start_state(PrintStartPhase::BED_MESH, "", 0);
+    for (int pass = 0; pass < 8; ++pass) {
+        helix::ui::UpdateQueue::instance().drain();
+    }
+    CHECK(lv_subject_get_int(blocked) == 1);
+    state.set_print_start_state(PrintStartPhase::IDLE, "", 0);
+    for (int pass = 0; pass < 8; ++pass) {
+        helix::ui::UpdateQueue::instance().drain();
+    }
+    CHECK(lv_subject_get_int(blocked) == 0);
+}

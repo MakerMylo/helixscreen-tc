@@ -27,6 +27,9 @@
     <!-- Passing "true" installs the toolhead guard on the primary, for rows
          whose primary runs a filament op. -->
     <prop name="primary_moves_machine" type="string" default="false"/>
+    <!-- A subject that carries 1 to enable the primary button; 0 disables it.
+         For dialogs whose confirm waits on an acknowledgement. -->
+    <prop name="primary_enable_subject" type="string" default=""/>
     <!-- Optional leading (tertiary) action, e.g. "Reset to defaults". Hidden by default
          so the many existing two-button callers are unaffected (a hidden flex child drops
          out of layout entirely). Pass hide_tertiary="false" to reveal it; it renders to the
@@ -83,6 +86,7 @@
                  focusable="false" bind_text="$primary_subject" moves_machine="$primary_moves_machine"
                  icon="$primary_icon" text="$primary_text" translation_tag="$primary_tag">
         <event_cb trigger="clicked" callback="$primary_callback"/>
+        <bind_state_if_eq subject="$primary_enable_subject" state="disabled" ref_value="0"/>
       </ui_button>
     </lv_obj>
   </view>
