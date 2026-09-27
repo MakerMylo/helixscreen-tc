@@ -331,6 +331,8 @@ $(OBJ_DIR)/rendering/gcode_data_source.o: override CXXFLAGS += -D_FILE_OFFSET_BI
 # text_io opens, stats and seeks every file the ESP32-cut code reads, G-code
 # included; its API carries int64_t offsets, never off_t.
 $(OBJ_DIR)/system/text_io.o: override CXXFLAGS += -D_FILE_OFFSET_BITS=64
+# helix_fs stats and lists the same files; a 32-bit stat fails a >2GB file with EOVERFLOW.
+$(OBJ_DIR)/system/helix_fs.o: override CXXFLAGS += -D_FILE_OFFSET_BITS=64
 
 # Compile app Objective-C++ sources (macOS .mm files)
 # Uses DEPFLAGS to generate .d files for header dependency tracking
