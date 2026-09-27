@@ -62,7 +62,6 @@ class PrinterImageWidget : public PanelWidget {
     /// at that size, leaving the caller to fall back to the tier image.
     bool try_set_exact_size_source(lv_obj_t* img);
 
-  public:
   protected:
     void on_hooked_root_deleted() override;
 
@@ -81,6 +80,11 @@ class PrinterImageWidget : public PanelWidget {
     /// What lv_image_set_src was last given, so a repeat resolve to the same file
     /// does not invalidate the widget for an identical image.
     std::string current_displayed_path_;
+    /// Natural size of an untagged source, read once per path: every relayout
+    /// needs its aspect, and a decoder info call opens the file.
+    std::string natural_size_path_;
+    int natural_w_ = 0;
+    int natural_h_ = 0;
 
     /// Guards the cache-generation continuation, which runs from a worker thread
     /// and touches this widget's LVGL tree.

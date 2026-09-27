@@ -921,14 +921,19 @@ void PrinterImageWidget::apply_callout_layout() {
         in.image_w = r->src_w;
         in.image_h = r->src_h;
     } else {
-        lv_image_header_t hdr;
-        if (current_source_path_.empty() ||
-            lv_image_decoder_get_info(current_source_path_.c_str(), &hdr) != LV_RESULT_OK) {
-            image_only();
-            return;
+        if (natural_size_path_ != current_source_path_) {
+            lv_image_header_t hdr;
+            if (current_source_path_.empty() ||
+                lv_image_decoder_get_info(current_source_path_.c_str(), &hdr) != LV_RESULT_OK) {
+                image_only();
+                return;
+            }
+            natural_size_path_ = current_source_path_;
+            natural_w_ = static_cast<int>(hdr.w);
+            natural_h_ = static_cast<int>(hdr.h);
         }
-        in.image_w = static_cast<int>(hdr.w);
-        in.image_h = static_cast<int>(hdr.h);
+        in.image_w = natural_w_;
+        in.image_h = natural_h_;
     }
 
     // Measure in the fonts the chips render: chip_text is a text_small
@@ -1061,6 +1066,8 @@ void PrinterImageWidget::apply_callout_layout() {
             lv_obj_set_size(glow, w, h);
         }
     }
+    static_assert(std::size(kLineNames) == std::tuple_size_v<decltype(callout_line_pts_)>,
+                  "one leader line and one point pair per CalloutKind that draws a line");
     for (const CalloutChipOut& c : out.chips) {
         const char* name = "callout_chip_toolhead";
         int icons = toolhead_icons;

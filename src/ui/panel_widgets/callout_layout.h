@@ -154,7 +154,8 @@ inline CalloutChipOut chip_at(const CalloutChipIn& c, int x, int y, int h, int a
 }
 
 /// Stack `chips` (sorted by the point's position along the stacking axis) in a
-/// column at x = col_x (horizontal bands) or a row at y = row_y (vertical bands).
+/// column at x = band_pos (horizontal bands) or a row at y = band_pos (vertical
+/// bands). `band_pos` is the chips' near edge when `left_or_top`, else their far edge.
 /// Returns false if they do not fit the axis.
 inline bool stack(const CalloutLayoutInput& in, const CalloutRect& img, bool horizontal_band,
                   bool left_or_top, int band_pos, std::vector<CalloutChipIn> chips,
