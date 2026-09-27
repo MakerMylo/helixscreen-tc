@@ -874,7 +874,7 @@ TEST_CASE_METHOD(SnapmakerFixture, "Snapmaker load_finish latches loaded + offer
 
 TEST_CASE_METHOD(
     SnapmakerFixture,
-    "Snapmaker unload_finish clears the loaded latch even while motion sensor stays true",
+    "Snapmaker unload_finish clears the loaded latch even while the toolhead switch stays true",
     "[ams][snapmaker][channel_state]") {
     // The live-captured condition (U1 firmware 20260608, lanes 3&4 just
     // unloaded): channel_state=unload_finish while the toolhead switch still
@@ -1058,6 +1058,33 @@ TEST_CASE_METHOD(SnapmakerFixture, "Snapmaker loaded answers do not depend on fr
         CHECK(fed({t3_picked(), loaded, t3_switch(false)}) == runout);
         CHECK(fed({t3_switch(false), loaded, t3_picked()}) == runout);
     }
+}
+
+TEST_CASE_METHOD(SnapmakerFixture, "Snapmaker parked head draws its per-slot path to the nozzle",
+                 "[ams][snapmaker][channel_state][parked]") {
+    helix::test::RegisteredBackend<AmsBackendSnapmaker> backend_reg(nullptr, nullptr);
+    AmsBackendSnapmaker& backend = *backend_reg;
+    SnapmakerTestAccess::handle_status(backend, merged({t3_picked(), t3_feed(), t3_switch(true)}));
+    REQUIRE(backend.get_system_info().filament_loaded);
+    CHECK(backend.get_filament_segment() == PathSegment::NOZZLE);
+    CHECK(backend.get_slot_filament_segment(3) == PathSegment::NOZZLE);
+
+    SnapmakerTestAccess::handle_status(backend, t3_switch(false));
+    CHECK(backend.get_slot_filament_segment(3) == PathSegment::OUTPUT);
+}
+
+TEST_CASE_METHOD(SnapmakerFixture, "Snapmaker active pin alone does not mark a tool loaded",
+                 "[ams][snapmaker][channel_state][parked]") {
+    // The frame's active_pin names tool 1 while toolhead.extruder names tool 3,
+    // and tool 1's latch is clear: tool 1 is not loaded.
+    helix::test::RegisteredBackend<AmsBackendSnapmaker> backend_reg(nullptr, nullptr);
+    AmsBackendSnapmaker& backend = *backend_reg;
+    SnapmakerTestAccess::handle_status(
+        backend, merged({json{{"extruder1", json{{"active_pin", true}, {"park_pin", false}}}},
+                         t3_picked(), make_feed_status(1, "preload_finish", true), t3_feed()}));
+    REQUIRE(backend.get_system_info().current_tool == 3);
+    CHECK(backend.get_slot_info(1).status != SlotStatus::LOADED);
+    CHECK_FALSE(backend.slot_is_actively_loaded(1));
 }
 
 TEST_CASE_METHOD(SnapmakerFixture, "Snapmaker unloaded head with a clear switch offers only Load",

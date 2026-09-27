@@ -308,16 +308,13 @@ PathSegment AmsBackendSnapmaker::get_slot_filament_segment(int slot_index) const
     if (slot_index < 0 || slot_index >= NUM_TOOLS)
         return PathSegment::NONE;
 
-    // Filament is threaded all the way into THIS tool's nozzle only when the
-    // channel_state latch says load_finish. The per-tool motion sensor
-    // (sensor_filament_present_) is NOT a reliable "at toolhead" signal on
-    // current firmware — after an unload it lingers present (the tip parks at
-    // the toolhead sensor while retracting out of the melt zone), so keying
-    // NOZZLE off it left unloaded lanes rendering as fully loaded (the whole
-    // point of the channel_state fix). PARALLEL multi-toolhead machine: each
-    // tool feeds its own dedicated nozzle, so a loaded tool always has filament
-    // at its own nozzle — render NOZZLE.
-    if (loaded_at_toolhead_[slot_index]) {
+    // Filament in THIS tool's toolhead draws to its own nozzle (PARALLEL: each
+    // tool feeds a dedicated nozzle): loaded per the channel_state latch, or
+    // parked short of the nozzle per the toolhead switch. The same answer as
+    // filament_loaded for the picked tool, so the aggregate and per-slot paths
+    // agree. The switch alone cannot say "loaded" (it still reads filament
+    // after an unload), which is why parked stays distinct from the latch.
+    if (loaded_at_toolhead_[slot_index] || parked_in_toolhead_locked(slot_index)) {
         return PathSegment::NOZZLE;
     }
 
@@ -1338,17 +1335,14 @@ void AmsBackendSnapmaker::handle_status_update(const nlohmann::json& notificatio
             if (status.contains(key) && status[key].is_object()) {
                 auto new_state = parse_extruder_state(status[key]);
 
-                // Update slot status based on extruder state (only if pin state changed)
+                // A parked tool is not the loaded one. LOADED itself is written
+                // only by the per-frame recompute after the sensor parse: an
+                // active pin says the tool is on the carriage, not that it has
+                // filament at the nozzle.
                 auto* slot = system_info_.units[0].get_slot(i);
-                if (slot) {
-                    SlotStatus prev = slot->status;
-                    if (new_state.active_pin) {
-                        slot->status = SlotStatus::LOADED;
-                    } else if (new_state.park_pin) {
-                        slot->status = SlotStatus::AVAILABLE;
-                    }
-                    if (slot->status != prev)
-                        changed = true;
+                if (slot && new_state.park_pin && slot->status != SlotStatus::AVAILABLE) {
+                    slot->status = SlotStatus::AVAILABLE;
+                    changed = true;
                 }
 
                 extruder_states_[i] = std::move(new_state);
@@ -2130,13 +2124,13 @@ void AmsBackendSnapmaker::handle_status_update(const nlohmann::json& notificatio
             }
         }
 
-        // Parse filament_motion_sensor / filament_switch_sensor for per-slot
-        // runout state. Snapmaker U1's config has [filament_motion_sensor e{N}_filament]
-        // with pause_on_runout=True; when filament stops moving past the encoder,
-        // Klipper publishes filament_detected:false and triggers PAUSE. The slot
-        // status / extruder pin state don't reflect this — the tool is still
-        // "active" but no filament reaches the nozzle. Mirror the sensor flag so
-        // the path canvas can break the spool→toolhead line at runout.
+        // Parse filament_motion_sensor / filament_switch_sensor per tool. The U1's
+        // [filament_motion_sensor e{N}_filament] is a motion runout during a
+        // print (filament_detected:false when extrusion outruns the encoder,
+        // then PAUSE via pause_on_runout) and a presence switch otherwise (it
+        // copies the toolhead pin). Mirror the flag: the path canvas breaks the
+        // spool→toolhead line on runout, and outside a print it answers whether
+        // filament sits in the toolhead.
         //
         // Match both prefixes (motion is the Snapmaker default; switch is the
         // generic fallback) and any "e{N}_filament" / "e{N}" sensor name suffix.
