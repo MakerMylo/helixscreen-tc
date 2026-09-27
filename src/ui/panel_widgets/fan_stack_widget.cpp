@@ -11,7 +11,6 @@
 #include "ui_fonts.h"
 #include "ui_icon.h"
 #include "ui_icon_codepoints.h"
-#include "ui_nav_manager.h"
 #include "ui_update_queue.h"
 #include "ui_utils.h"
 
@@ -942,33 +941,7 @@ void FanStackWidget::send_carousel_fan_speed(const std::string& object_name, int
 
 void FanStackWidget::handle_clicked() {
     spdlog::debug("[FanStackWidget] Clicked - opening fan control overlay");
-
-    if (!fan_control_panel_ && parent_screen_) {
-        auto& overlay = get_fan_control_overlay();
-
-        if (!overlay.are_subjects_initialized()) {
-            overlay.init_subjects();
-        }
-        overlay.register_callbacks();
-        overlay.set_api(get_moonraker_api());
-
-        fan_control_panel_ = overlay.create(parent_screen_);
-        if (!fan_control_panel_) {
-            spdlog::error("[FanStackWidget] Failed to create fan control overlay");
-            return;
-        }
-        NavigationManager::instance().register_overlay_instance(fan_control_panel_, &overlay);
-    }
-
-    if (fan_control_panel_) {
-        auto& overlay = get_fan_control_overlay();
-        overlay.set_api(get_moonraker_api());
-        // Re-register before every push: navbar switches clear overlay_instances_,
-        // so a cached panel loses its registration after the user leaves and returns.
-        // register_overlay_instance is idempotent, so this is safe on first open too.
-        NavigationManager::instance().register_overlay_instance(fan_control_panel_, &overlay);
-        NavigationManager::instance().push_overlay(fan_control_panel_);
-    }
+    fan_control_panel_ = helix::open_fan_control_overlay(parent_screen_, fan_control_panel_);
 }
 
 void FanStackWidget::on_fan_stack_clicked(lv_event_t* e) {
