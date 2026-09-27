@@ -3576,6 +3576,7 @@ translations:
   X axis applied, but Y axis failed: Eixo X aplicado, mas eixo Y falhou
   X axis done, starting Y...: 'Eixo X concluído, iniciando Y...'
   X jog blocked at bed edge: Movimento X bloqueado na borda da mesa
+  X position: 'Posição X'
   'X:': 'X:'
   XY: XY
   Y: Y
@@ -3583,6 +3584,7 @@ translations:
   Y Offset: Offset Y
   Y axis limit reached: Limite do eixo Y alcançado
   Y jog blocked at bed edge: Movimento Y bloqueado na borda da mesa
+  Y position: 'Posição Y'
   'Y:': 'Y:'
   ? "YOU WIN!\nScore: {}\nTap to play again"
   : "VOCÊ VENCEU!\nPontuação: {}\nToque para jogar de novo"
@@ -3611,6 +3613,7 @@ translations:
   Z jog blocked at axis limit: Movimento Z bloqueado no limite do eixo
   Z jog feedrate: Velocidade de movimento do eixo Z
   Z motor calibration failed: Falha na calibração do motor Z
+  Z position: 'Posição Z'
   Z probes for bed leveling and mesh generation: Sondas Z para nivelamento da mesa
     e geração de malha
   'Z-Off:': 'Z-Offset:'

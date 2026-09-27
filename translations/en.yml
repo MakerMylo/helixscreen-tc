@@ -3494,6 +3494,7 @@ translations:
   X axis applied, but Y axis failed: X axis applied, but Y axis failed
   X axis done, starting Y...: X axis done, starting Y...
   X jog blocked at bed edge: X jog blocked at bed edge
+  X position: X position
   'X:': 'X:'
   XY: XY
   Y: Y
@@ -3501,6 +3502,7 @@ translations:
   Y Offset: Y Offset
   Y axis limit reached: Y axis limit reached
   Y jog blocked at bed edge: Y jog blocked at bed edge
+  Y position: Y position
   'Y:': 'Y:'
   ? "YOU WIN!\nScore: {}\nTap to play again"
   : "YOU WIN!\nScore: {}\nTap to play again"
@@ -3529,6 +3531,7 @@ translations:
   Z jog blocked at axis limit: Z jog blocked at axis limit
   Z jog feedrate: Z jog feedrate
   Z motor calibration failed: Z motor calibration failed
+  Z position: Z position
   Z probes for bed leveling and mesh generation: Z probes for bed leveling and mesh
     generation
   'Z-Off:': 'Z-Off:'

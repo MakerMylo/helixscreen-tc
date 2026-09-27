@@ -3311,6 +3311,7 @@ translations:
   X axis applied, but Y axis failed: X軸は適用されましたが、Y軸は失敗しました
   X axis done, starting Y...: 'X軸が完了しました。Y軸を開始します...'
   X jog blocked at bed edge: X軸移動はベッド端でブロックされました
+  X position: 'X位置'
   'X:': 'X:'
   XY: XY
   Y: Y
@@ -3318,6 +3319,7 @@ translations:
   Y Offset: Yオフセット
   Y axis limit reached: Y軸のリミットに達しました
   Y jog blocked at bed edge: Y軸移動はベッド端でブロックされました
+  Y position: 'Y位置'
   'Y:': 'Y:'
   ? "YOU WIN!\nScore: {}\nTap to play again"
   : "クリア！\nスコア: {}\nタップでもう一度"
@@ -3343,6 +3345,7 @@ translations:
   Z jog blocked at axis limit: Z軸移動は軸の限界でブロックされました
   Z jog feedrate: Z軸のジョグ移動速度
   Z motor calibration failed: Z モーターの校正に失敗しました
+  Z position: 'Z位置'
   Z probes for bed leveling and mesh generation: ベッドレベリングとメッシュ生成用 Z プローブ
   'Z-Off:': 'Z-Off:'
   Z-Offset: Z-Offset

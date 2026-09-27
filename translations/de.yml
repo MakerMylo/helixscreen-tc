@@ -3577,6 +3577,7 @@ translations:
   X axis applied, but Y axis failed: X-Achse angewendet, aber Y-Achse fehlgeschlagen
   X axis done, starting Y...: 'X-Achse fertig, starte Y...'
   X jog blocked at bed edge: X-Bewegung an Bettkante blockiert
+  X position: 'X-Position'
   'X:': 'X:'
   XY: XY
   Y: Y
@@ -3584,6 +3585,7 @@ translations:
   Y Offset: Y-Offset
   Y axis limit reached: Y-Achsen-Limit erreicht
   Y jog blocked at bed edge: Y-Bewegung an Bettkante blockiert
+  Y position: 'Y-Position'
   'Y:': 'Y:'
   ? "YOU WIN!\nScore: {}\nTap to play again"
   : "GEWONNEN!\nPunkte: {}\nZum erneuten Spielen tippen"
@@ -3613,6 +3615,7 @@ translations:
   Z jog blocked at axis limit: Z-Bewegung an Achsgrenze blockiert
   Z jog feedrate: Vorschub für die Z-Bewegung
   Z motor calibration failed: Kalibrierung des Z-Motors fehlgeschlagen
+  Z position: 'Z-Position'
   Z probes for bed leveling and mesh generation: Z-Sonden für Bettnivellierung und
     Netzerzeugung
   'Z-Off:': 'Z-Off:'

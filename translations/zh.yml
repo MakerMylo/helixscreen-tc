@@ -3301,6 +3301,7 @@ translations:
   X axis applied, but Y axis failed: X 轴已应用，但 Y 轴失败
   X axis done, starting Y...: 'X 轴完成，开始 Y 轴...'
   X jog blocked at bed edge: X 轴移动已限制在热床边缘
+  X position: 'X位置'
   'X:': X：
   XY: XY
   Y: Y
@@ -3308,6 +3309,7 @@ translations:
   Y Offset: Y 偏移
   Y axis limit reached: 已到达 Y 轴限位
   Y jog blocked at bed edge: Y 轴移动已限制在热床边缘
+  Y position: 'Y位置'
   'Y:': Y：
   ? "YOU WIN!\nScore: {}\nTap to play again"
   : "你赢了！\n得分：{}\n点按再玩一次"
@@ -3333,6 +3335,7 @@ translations:
   Z jog blocked at axis limit: Z 轴移动已限制在轴极限
   Z jog feedrate: Z 轴移动速度
   Z motor calibration failed: Z 电机校准失败
+  Z position: 'Z位置'
   Z probes for bed leveling and mesh generation: 用于热床调平和网格生成的 Z 探针
   'Z-Off:': Z 偏移：
   Z-Offset: Z 偏移

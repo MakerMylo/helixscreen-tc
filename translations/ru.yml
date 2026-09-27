@@ -3527,6 +3527,7 @@ translations:
   X axis applied, but Y axis failed: Ось X применена, но ось Y не удалась
   X axis done, starting Y...: 'Ось X готова, запуск Y...'
   X jog blocked at bed edge: Перемещение по X заблокировано на краю стола
+  X position: 'Позиция X'
   'X:': 'X:'
   XY: XY
   Y: Y
@@ -3534,6 +3535,7 @@ translations:
   Y Offset: Смещение Y
   Y axis limit reached: Достигнут предел оси Y
   Y jog blocked at bed edge: Перемещение по Y заблокировано на краю стола
+  Y position: 'Позиция Y'
   'Y:': 'Y:'
   ? "YOU WIN!\nScore: {}\nTap to play again"
   : "ПОБЕДА!\nСчёт: {}\nНажмите, чтобы сыграть снова"
@@ -3562,6 +3564,7 @@ translations:
   Z jog blocked at axis limit: Перемещение по Z заблокировано на пределе оси
   Z jog feedrate: Скорость перемещения по оси Z
   Z motor calibration failed: Не удалась калибровка двигателя Z
+  Z position: 'Позиция Z'
   Z probes for bed leveling and mesh generation: Z-зонды для выравнивания стола и
     создания сетки
   'Z-Off:': 'Z-Off:'
