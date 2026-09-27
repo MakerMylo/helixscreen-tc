@@ -5,14 +5,15 @@
 #include "filament_database.h"
 #include "json_utils.h"
 #include "system/helix_paths.h"
+#include "text_io.h"
 
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <atomic>
+#include <cerrno>
+#include <cstring>
 #include <filesystem>
-#include <fstream>
-#include <iterator>
 #include <memory>
 #include <mutex>
 #include <set>
@@ -22,6 +23,8 @@
 #include "hv/json.hpp"
 
 namespace helix::printer {
+
+namespace tio = helix::text_io;
 
 namespace detail {
 std::string& user_overlay_dir_ref() {
@@ -119,13 +122,12 @@ enum class FileRead { Absent, Parsed, Corrupt };
 FileRead read_json_file(const std::string& path, nlohmann::json& doc) {
     if (path.empty())
         return FileRead::Absent;
-    std::ifstream f(path);
-    if (!f.is_open())
+    auto text = tio::read_file(path);
+    if (!text)
         return FileRead::Absent;
-    const std::string text((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
-    if (text.find_first_not_of(" \t\r\n") == std::string::npos)
+    if (text->find_first_not_of(" \t\r\n") == std::string::npos)
         return FileRead::Absent;
-    doc = nlohmann::json::parse(text, nullptr, /*allow_exceptions=*/false);
+    doc = nlohmann::json::parse(*text, nullptr, /*allow_exceptions=*/false);
     if (doc.is_discarded()) {
         spdlog::warn("[filament] {} does not parse as JSON", path);
         return FileRead::Corrupt;
@@ -262,8 +264,7 @@ namespace {
 /// First path in the list that exists on disk, or "" if none do.
 std::string first_existing(const std::vector<std::string>& paths) {
     for (const auto& path : paths) {
-        std::ifstream f(path);
-        if (f.is_open())
+        if (tio::open_file(path, "rb"))
             return path;
     }
     return "";
@@ -439,8 +440,6 @@ bool FilamentCatalog::save_user_section_to(const char* key, nlohmann::json value
     // filesystem. The tmp file lives next to the target so the rename never
     // crosses a mount boundary.
     std::filesystem::path target(helix::paths::write_target(path));
-    std::filesystem::path tmp = target;
-    tmp += ".tmp";
 
     // Ensure parent dir exists (the on-device runtime config dir is created
     // elsewhere, but tests / fresh installs may hit this path first).
@@ -457,27 +456,9 @@ bool FilamentCatalog::save_user_section_to(const char* key, nlohmann::json value
 
     doc[key] = std::move(value);
 
-    {
-        std::ofstream out(tmp, std::ios::trunc);
-        if (!out) {
-            spdlog::warn("[filament] save {}: cannot open {} for writing", key, tmp.string());
-            return false;
-        }
-        out << helix::json_util::safe_dump(doc, 2);
-        if (!out) {
-            spdlog::warn("[filament] save {}: error writing to {}", key, tmp.string());
-            std::error_code rm_ec;
-            std::filesystem::remove(tmp, rm_ec);
-            return false;
-        }
-    } // ofstream closed here, buffers flushed, before rename
-
-    std::filesystem::rename(tmp, target, ec);
-    if (ec) {
-        spdlog::warn("[filament] save {}: rename failed ({} -> {}): {}", key, tmp.string(),
-                     target.string(), ec.message());
-        std::error_code rm_ec;
-        std::filesystem::remove(tmp, rm_ec);
+    if (!tio::write_file_atomic(target.string(), helix::json_util::safe_dump(doc, 2))) {
+        spdlog::warn("[filament] save {}: cannot write {}: {}", key, target.string(),
+                     std::strerror(errno));
         return false;
     }
 

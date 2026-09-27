@@ -2,11 +2,11 @@
 
 #include "system/helix_paths.h"
 
+#include "text_io.h"
+
 #include <atomic>
 #include <cstdlib>
 #include <filesystem>
-#include <fstream>
-#include <sstream>
 #include <string>
 #include <system_error>
 #include <thread>
@@ -91,22 +91,16 @@ bool probe_writable(const std::string& dir, std::uint64_t min_free_bytes) {
     // would collide. Appending the thread id plus a monotonic counter makes each
     // probe file distinct even under concurrent same-process, same-dir probes.
     static std::atomic<std::uint64_t> probe_counter{0};
-    std::ostringstream name;
-    name << strip_trailing_slash(dir) << "/.helix_write_test." << ::getpid() << '.'
-         << std::this_thread::get_id() << '.' << probe_counter.fetch_add(1);
-    const std::string test_file = name.str();
+    // Built with += rather than fmt: std::thread::id's only fmt formatter goes
+    // through an ostream that imbues std::locale.
+    const std::string test_file =
+        strip_trailing_slash(dir) + "/.helix_write_test." + std::to_string(::getpid()) + '.' +
+        std::to_string(std::hash<std::thread::id>{}(std::this_thread::get_id())) + '.' +
+        std::to_string(probe_counter.fetch_add(1));
 
-    bool wrote = false;
-    {
-        std::ofstream ofs(test_file, std::ios::binary | std::ios::trunc);
-        if (!ofs.good()) {
-            // Cannot create the file — dir is missing, read-only, or full.
-            return false;
-        }
-        ofs.put('x');
-        ofs.flush();
-        wrote = ofs.good();
-    }
+    // False when the dir is missing, read-only, or full. A full disk can create
+    // the file and fail the write, so the probe is removed either way.
+    const bool wrote = helix::text_io::write_file(test_file, "x");
 
     std::error_code ec;
     std::filesystem::remove(test_file, ec);

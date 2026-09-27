@@ -60,6 +60,7 @@
 #include "static_panel_registry.h"
 #include "system/crash_handler.h"
 #include "temp_graph_controller.h"
+#include "text_io.h"
 #include "theme_manager.h"
 #include "tool_state.h"
 #include "tune_controller.h"
@@ -73,13 +74,13 @@
 using namespace helix;
 using helix::gcode::resolve_gcode_filename;
 
+namespace tio = helix::text_io;
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <fstream>
 #include <memory>
 #include <set>
-#include <sstream>
 #include <vector>
 
 // The shared thumbnail path subject never carries the empty string: a file with
@@ -1161,9 +1162,9 @@ lv_obj_t* PrintStatusPanel::create(lv_obj_t* parent) {
     if (config->gcode_test_file && gcode_viewer_) {
         // Check file size and memory safety before loading
         // Use 2D streaming check since that's the mode used on memory-constrained devices
-        std::ifstream file(config->gcode_test_file, std::ios::binary | std::ios::ate);
-        if (file) {
-            size_t file_size = static_cast<size_t>(file.tellg());
+        if (tio::open_file(config->gcode_test_file, "rb")) {
+            size_t file_size =
+                static_cast<size_t>(tio::file_size(config->gcode_test_file).value_or(0));
             if (helix::is_gcode_2d_streaming_safe(file_size)) {
                 spdlog::info("[{}] Loading G-code file from command line: {}", get_name(),
                              config->gcode_test_file);
@@ -3894,11 +3895,8 @@ void PrintStatusPanel::load_gcode_for_viewing(const std::string& filename) {
         cache_dir + "/print_view_" + std::to_string(std::hash<std::string>{}(filename)) + ".gcode";
 
     // Check if file already exists and is non-empty (cached from previous session)
-    std::ifstream cached_file(temp_path, std::ios::binary | std::ios::ate);
-    if (cached_file && cached_file.tellg() > 0) {
-        size_t cached_size = static_cast<size_t>(cached_file.tellg());
-        cached_file.close();
-
+    size_t cached_size = static_cast<size_t>(tio::file_size(temp_path).value_or(0));
+    if (cached_size > 0) {
         // Check if cached file is safe to render
         if (helix::is_gcode_2d_streaming_safe(cached_size)) {
             spdlog::info("[{}] Using cached G-code file ({} bytes): {}", get_name(), cached_size,

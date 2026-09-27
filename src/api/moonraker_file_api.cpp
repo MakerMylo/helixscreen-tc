@@ -9,8 +9,7 @@
 #include "moonraker_api_internal.h"
 #include "moonraker_client.h"
 #include "spdlog/spdlog.h"
-
-#include <sstream>
+#include "text_io.h"
 
 using namespace moonraker_internal;
 
@@ -506,9 +505,8 @@ FileMetadata MoonrakerFileAPI::parse_file_metadata(const json& response) {
     if (metadata.filament_colors.empty()) {
         std::string colour_str = get_string("filament_colour");
         if (!colour_str.empty()) {
-            std::istringstream ss(colour_str);
-            std::string token;
-            while (std::getline(ss, token, ';')) {
+            for (std::string_view token_sv : helix::text_io::lines(colour_str, ';')) {
+                std::string token(token_sv);
                 // Trim leading/trailing whitespace
                 size_t start = token.find_first_not_of(" \t");
                 size_t end = token.find_last_not_of(" \t");
