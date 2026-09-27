@@ -1737,7 +1737,9 @@ void AmsState::BackendSlotSubjects::write(int i, const SlotInfo& slot) {
     lv_subject_set_int(&statuses[i], static_cast<int>(slot.status));
     lv_subject_set_int(&fills[i], slot.display_fill_pct());
     lv_subject_set_int(&lane_states[i], static_cast<int>(helix::ui::classify_lane(slot)));
-    lv_subject_copy_string(&materials[i], slot.material.c_str());
+    // No prev buffer, so LVGL notifies on every copy; compare here instead.
+    if (strcmp(lv_subject_get_string(&materials[i]), slot.material.c_str()) != 0)
+        lv_subject_copy_string(&materials[i], slot.material.c_str());
     bool has_error = false;
     int severity = 0;
     slot_error_state(slot, has_error, severity);
