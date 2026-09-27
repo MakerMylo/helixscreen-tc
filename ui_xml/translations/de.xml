@@ -155,6 +155,7 @@
   <translation tag="Actions" de="Aktionen"/>
   <translation tag="Active" de="Aktiv"/>
   <translation tag="Active Spool" de="Aktive Spule"/>
+  <translation tag="Actual" de="Aktuell"/>
   <translation tag="Adaptive Bed Mesh" de="Adaptives Bettnetz"/>
   <translation tag="Add" de="Hinzufügen"/>
   <translation tag="Add Filament" de="Filament hinzufügen"/>
@@ -506,6 +507,7 @@
   <translation tag="Check the PTFE tube along the drag chain for kinks, and the bend where it enters the extruder sensor" de="PTFE-Schlauch entlang der Schleppkette auf Knicke prüfen, ebenso die Biegung am Eingang des Extruder-Sensors"/>
   <translation tag="Check the RS-485 cable between printer and CFS" de="RS-485-Kabel zwischen Drucker und CFS prüfen"/>
   <translation tag="Check the buffer unit on the back of the printer" de="Puffereinheit an der Rückseite des Druckers prüfen"/>
+  <translation tag="Check the chips, then save" de="Markierungen prüfen, dann speichern"/>
   <translation tag="Check the filament path and try again." de="Prüfen Sie den Filamentpfad und versuchen Sie es erneut."/>
   <translation tag="Check the path from the slot to the hub for a tangle or drag. If the slot feeds freely, the hub sensor or the feeder motor may have failed" de="Weg vom Slot zum Hub auf Verheddern oder Widerstand prüfen. Fördert der Slot frei, sind womöglich der Hub-Sensor oder der Fördermotor defekt"/>
   <translation tag="Check the provided value and try again" de="Prüfen Sie den angegebenen Wert und versuchen Sie es erneut"/>
@@ -686,11 +688,13 @@
   <translation tag="Could not reach Spoolman at" de="Spoolman nicht erreichbar unter:"/>
   <translation tag="Could not read the screw adjustments from the printer" de="Schraubeneinstellungen konnten nicht vom Drucker gelesen werden"/>
   <translation tag="Could not remove the job from the queue" de="Der Auftrag konnte nicht aus der Warteschlange entfernt werden"/>
+  <translation tag="Could not reset the printer image tags" de="Bildmarkierungen konnten nicht zurückgesetzt werden"/>
   <translation tag="Could not resolve printer RFCOMM channel" de="RFCOMM-Kanal des Druckers konnte nicht ermittelt werden"/>
   <translation tag="Could not save filament" de="Filament konnte nicht gespeichert werden"/>
   <translation tag="Could not save the drying state" de="Trocknungsstatus konnte nicht gespeichert werden"/>
   <translation tag="Could not save the drying state: nothing was heated" de="Trocknungsstatus konnte nicht gespeichert werden: Es wurde nichts geheizt"/>
   <translation tag="Could not save the mesh as &apos;{}&apos;: {}" de="Netz konnte nicht als &apos;{}&apos; gespeichert werden: {}"/>
+  <translation tag="Could not save the printer image tags" de="Bildmarkierungen konnten nicht gespeichert werden"/>
   <translation tag="Could not start Bluetooth discovery" de="Bluetooth-Erkennung konnte nicht gestartet werden"/>
   <translation tag="Could not update filaments" de="Filamente konnten nicht aktualisiert werden"/>
   <translation tag="Could not verify Spoolman status. Moonraker may still be restarting." de="Spoolman-Status konnte nicht überprüft werden. Moonraker startet möglicherweise noch neu."/>
@@ -1685,6 +1689,7 @@
   <translation tag="Measure and compare belt path frequencies" de="Riemenpfad-Frequenzen messen und vergleichen"/>
   <translation tag="Measure belt path frequencies" de="Riemenpfad-Frequenzen messen"/>
   <translation tag="Measure every tool&apos;s XYZ offset automatically" de="Misst den XYZ-Offset jedes Werkzeugs automatisch"/>
+  <translation tag="Measure pressure advance automatically" de="Misst Pressure Advance automatisch"/>
   <translation tag="Measured (shaper off)" de="Gemessen (Shaper aus)"/>
   <translation tag="Measured filament diameter" de="Gemessener Filamentdurchmesser"/>
   <translation tag="Measured pressure advance" de="Gemessener Pressure Advance"/>
@@ -2329,6 +2334,8 @@
   <translation tag="Remove the spools" de="Spulen entnehmen"/>
   <translation tag="Remove the spools from the bed" de="Spulen vom Heizbett nehmen"/>
   <translation tag="Remove the spools now?" de="Spulen jetzt entnehmen?"/>
+  <translation tag="Remove your tags for this image?" de="Deine Markierungen für dieses Bild entfernen?"/>
+  <translation tag="Remove your tags for this image? Its chips go back to the shipped positions." de="Deine Markierungen für dieses Bild entfernen? Die Anzeigen kehren an ihre ursprünglichen Positionen zurück."/>
   <translation tag="Rename" de="Umbenennen"/>
   <translation tag="Rename Fan" de="Lüfter umbenennen"/>
   <translation tag="Rename Mesh Profile" de="Netzprofil umbenennen"/>
@@ -2368,6 +2375,7 @@
   <translation tag="Reset endless spool failed" de="Zurücksetzen der Endlosspule fehlgeschlagen"/>
   <translation tag="Reset failed" de="Zurücksetzen fehlgeschlagen"/>
   <translation tag="Reset motor run-time counter" de="Den Betriebsstundenzähler des Motors zurücksetzen"/>
+  <translation tag="Reset tags" de="Markierungen zurücksetzen"/>
   <translation tag="Reset to Default" de="Auf Standard zurücksetzen"/>
   <translation tag="Reset to defaults" de="Auf Standardwerte zurücksetzen"/>
   <translation tag="Reset to original values" de="Auf Originalwerte zurücksetzen"/>
@@ -2808,17 +2816,25 @@
   <translation tag="TOGGLE: {}" de="UMSCHALTEN: {}"/>
   <translation tag="TOOLS" de="WERKZEUGE"/>
   <translation tag="TPU" de="TPU"/>
+  <translation tag="Tag Parts" de="Bauteile markieren"/>
+  <translation tag="Tag parts" de="Bauteile markieren"/>
   <translation tag="Takes 3-5 min. Do not interrupt." de="Dauert 3-5 Min. Nicht unterbrechen."/>
   <translation tag="Tangle sensitivity" de="Verwicklungsempfindlichkeit"/>
   <translation tag="Tap + to add" de="Zum Hinzufügen + tippen"/>
   <translation tag="Tap Firmware Restart to recover — on K2 this also bounces the rpi MCU bridge" de="Zum Wiederherstellen auf Firmware-Neustart tippen. Beim K2 wird dabei auch die rpi-MCU-Bridge neu gestartet"/>
   <translation tag="Tap again to confirm this orientation" de="Erneut tippen, um diese Ausrichtung zu bestätigen"/>
+  <translation tag="Tap an empty spot inside the enclosure" de="Auf eine freie Stelle im Gehäuse tippen"/>
   <translation tag="Tap an object to exclude it | {} objects ({} excluded)" de="Objekt antippen, um es auszuschließen | {} Objekte ({} ausgeschlossen)"/>
   <translation tag="Tap any tile to open its full controls or toggle its state." de="Tippen Sie auf eine Kachel, um die vollständige Steuerung zu öffnen oder ihren Zustand umzuschalten."/>
   <translation tag="Tap anywhere if this text is right-side up" de="Tippen Sie irgendwo, wenn dieser Text richtig herum ist"/>
   <translation tag="Tap anywhere to begin" de="Tippen Sie irgendwo, um zu beginnen"/>
   <translation tag="Tap anywhere to begin calibration" de="Tippen Sie irgendwo, um die Kalibrierung zu starten"/>
+  <translation tag="Tap the bed&apos;s front-left corner" de="Auf die vordere linke Ecke des Heizbetts tippen"/>
+  <translation tag="Tap the bed&apos;s front-right corner" de="Auf die vordere rechte Ecke des Heizbetts tippen"/>
   <translation tag="Tap the crosshair (point %1$d of 3) — touch %2$d of %3$d" de="Fadenkreuz antippen (Punkt %1$d von 3) — Berührung %2$d von %3$d"/>
+  <translation tag="Tap the light" de="Auf die Beleuchtung tippen"/>
+  <translation tag="Tap the nozzle tip" de="Auf die Düsenspitze tippen"/>
+  <translation tag="Tap the part cooling fan" de="Auf den Teile-Kühllüfter tippen"/>
   <translation tag="Tap to assign" de="Zum Zuweisen tippen"/>
   <translation tag="Target" de="Ziel"/>
   <translation tag="Target Frequency" de="Zielfrequenz"/>
@@ -3079,6 +3095,7 @@
   <translation tag="Unavailable" de="Nicht verfügbar"/>
   <translation tag="Unavailable on this printer" de="Auf diesem Drucker nicht verfügbar"/>
   <translation tag="Understanding Results" de="Ergebnisse verstehen"/>
+  <translation tag="Undo" de="Rückgängig"/>
   <translation tag="Uneven belt tension causes print artifacts like layer shifts, VFAs (vertical fine artifacts), and ringing.&#10;&#10;Pluck each belt by hand and this tool listens through the accelerometer to measure the belt&apos;s frequency. Matched frequencies mean balanced tension.&#10;&#10;On CoreXY, belts A and B should be within a few Hz of each other." de="Ungleichmäßige Riemenspannung verursacht Druckartefakte wie Schichtverschiebungen, VFAs (vertikale feine Artefakte) und Ringing.&#10;&#10;Zupfen Sie jeden Riemen von Hand an, und dieses Werkzeug misst über den Beschleunigungssensor die Frequenz des Riemens. Übereinstimmende Frequenzen bedeuten ausgewogene Spannung.&#10;&#10;Bei CoreXY sollten die Riemen A und B nur wenige Hz voneinander entfernt sein."/>
   <translation tag="Uninstall" de="Deinstallieren"/>
   <translation tag="Uninstall HelixPrint Plugin" de="HelixPrint-Plugin deinstallieren"/>

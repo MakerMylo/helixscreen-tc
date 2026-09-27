@@ -676,7 +676,8 @@ Located in the `motion` section. These back the jog pad; set them from the scree
     "coarse_inner": 1.0,
     "coarse_outer": 10.0,
     "turbo_inner": 10.0,
-    "turbo_outer": 50.0
+    "turbo_outer": 50.0,
+    "show_actual_position": false
   }
 }
 ```
@@ -697,6 +698,11 @@ Located in the `motion` section. These back the jog pad; set them from the scree
 **Type:** number
 **Range:** `0.01` - `200`
 **Description:** Distance in mm moved per tap, for each jog mode's inner and outer ring. Defaults: Fine 0.1/1, Coarse 1/10, Turbo 10/50. The ring labels on the jog pad show whatever you set.
+
+### `show_actual_position`
+**Type:** boolean
+**Default:** `false`
+**Description:** What the X/Y/Z coordinates on the Motion screen show when it opens: the commanded position (`false`) or the actual measured position (`true`). Tapping the Target / Actual chip next to the coordinates flips it, so this is normally set from the screen rather than by hand. Remembered per printer.
 
 ---
 
@@ -836,6 +842,12 @@ Located in the `printer` section:
 **Values:** `"auto"`, `"none"`, or a Klipper object name
 **Description:** Which temperature sensor reports the enclosure/chamber temperature. `"auto"` detects it by name heuristics, `"none"` disables chamber-temperature display, or name the Klipper object explicitly (e.g., `"temperature_sensor enclosure_bme"`). Set this if your chamber temperature reads from the wrong sensor or isn't detected.
 
+### `enclosure_style`
+**Type:** integer
+**Default:** `0`
+**Values:** `0` = Auto, `1` = Enclosed, `2` = Open frame
+**Description:** Whether the printer counts as enclosed, which decides whether drying filament on the heated bed is offered. Auto treats a printer as enclosed when its model is known to ship enclosed or a chamber heater is configured. Set it from **Settings > Printing > Enclosure**.
+
 ### `z_offset.step_index`
 **Type:** integer
 **Default:** `2`
@@ -948,7 +960,7 @@ Configured via **Settings > LED Settings > Macro Devices**.
 
 ### `default_macros`
 **Type:** object
-**Description:** G-code macros for quick-action buttons throughout the UI. Each macro can be a plain G-code string or an object with `label` and `gcode` fields.
+**Description:** G-code HelixScreen runs for built-in buttons. Each entry can be a plain G-code string or an object with `label` and `gcode` fields. Only `cooldown` is read today: the Filament panel's Load and Unload follow the [standard macros](#standard-macros-quick-action-buttons), and the Controls panel's quick buttons follow `quick_button_1` … `quick_button_4`. The other keys are still written with their defaults and are ignored.
 
 **Default values:**
 
@@ -967,10 +979,7 @@ Configured via **Settings > LED Settings > Macro Devices**.
 | Key | Format | Where it's used |
 |-----|--------|-----------------|
 | `cooldown` | G-code string | Preheat widget (auto-shows "Cool Down" when heaters are on), Filament panel cooldown button |
-| `load_filament` | `{ "label", "gcode" }` | Filament panel Load button |
-| `unload_filament` | `{ "label", "gcode" }` | Filament panel Unload button |
-| `macro_1` | `{ "label", "gcode" }` | Controls panel custom button 1 |
-| `macro_2` | `{ "label", "gcode" }` | Controls panel custom button 2 |
+| `load_filament`, `unload_filament`, `macro_1`, `macro_2` | `{ "label", "gcode" }` | Not read |
 
 **Customizing cooldown for enclosed printers:**
 
@@ -1073,8 +1082,10 @@ Located in the `standard_macros` section. These pick which built-in actions appe
 ### `quick_button_1` … `quick_button_4`
 **Type:** string
 **Default:** `"clean_nozzle"` (button 1), `"bed_level"` (button 2), `""` (buttons 3 and 4)
-**Values:** `"clean_nozzle"`, `"bed_level"`, `"heat_soak"`, `"purge"`, `"bed_mesh"`, or `""` (empty = hide the button)
-**Description:** Assigns a built-in action to each of the four Controls-panel quick buttons. An empty string hides that button. The action runs the matching macro on your printer (auto-detected from your Klipper config). Configured most easily via **Settings > Printing > Macro Buttons** rather than by editing JSON.
+**Values:** any standard action name (`"load_filament"`, `"unload_filament"`, `"purge"`, `"pause"`, `"resume"`, `"cancel"`, `"bed_mesh"`, `"bed_level"`, `"screws_tilt"`, `"clean_nozzle"`, `"heat_soak"`, `"park_toolhead"`), `"builtin:light"` (the printer light toggle), or `""` (empty = hide the button)
+**Description:** Assigns an action to each of the four Controls-panel quick buttons. A standard action runs the macro assigned to it (auto-detected from your Klipper config unless you override it below). `"builtin:light"` makes the button a light switch, hidden while no light is controllable. An empty string hides the button.
+
+A key that is **absent** is different from one set to `""`. While a light is controllable and no button is set to `"builtin:light"`, the first button whose key is absent and that would otherwise show nothing becomes the light switch. A button set to `""` is never filled that way. Configured most easily via **Settings > Printing > Macro Buttons** rather than by editing JSON.
 
 ### `load_filament`, `unload_filament`, `purge`, `pause`, `resume`, `cancel`, `bed_mesh`, `bed_level`, `clean_nozzle`, `heat_soak`
 **Type:** string

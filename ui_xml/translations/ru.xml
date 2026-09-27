@@ -155,6 +155,7 @@
   <translation tag="Actions" ru="Действия"/>
   <translation tag="Active" ru="Активно"/>
   <translation tag="Active Spool" ru="Активная катушка"/>
+  <translation tag="Actual" ru="Текущая"/>
   <translation tag="Adaptive Bed Mesh" ru="Адаптивная сетка стола"/>
   <translation tag="Add" ru="Добавить"/>
   <translation tag="Add Filament" ru="Добавить филамент"/>
@@ -506,6 +507,7 @@
   <translation tag="Check the PTFE tube along the drag chain for kinks, and the bend where it enters the extruder sensor" ru="Проверьте трубку PTFE вдоль кабель-канала на перегибы, а также изгиб на входе в датчик экструдера"/>
   <translation tag="Check the RS-485 cable between printer and CFS" ru="Проверьте кабель RS-485 между принтером и CFS"/>
   <translation tag="Check the buffer unit on the back of the printer" ru="Проверьте буферный блок на задней панели принтера"/>
+  <translation tag="Check the chips, then save" ru="Проверьте метки и сохраните"/>
   <translation tag="Check the filament path and try again." ru="Проверьте путь филамента и попробуйте снова."/>
   <translation tag="Check the path from the slot to the hub for a tangle or drag. If the slot feeds freely, the hub sensor or the feeder motor may have failed" ru="Проверьте путь от слота до хаба на запутывание или трение. Если слот подаёт свободно, возможно, неисправен датчик хаба или подающий двигатель"/>
   <translation tag="Check the provided value and try again" ru="Проверьте указанное значение и повторите попытку"/>
@@ -686,11 +688,13 @@
   <translation tag="Could not reach Spoolman at" ru="Не удалось связаться со Spoolman по адресу"/>
   <translation tag="Could not read the screw adjustments from the printer" ru="Не удалось получить данные регулировки винтов от принтера"/>
   <translation tag="Could not remove the job from the queue" ru="Не удалось удалить задание из очереди"/>
+  <translation tag="Could not reset the printer image tags" ru="Не удалось сбросить отметки изображения"/>
   <translation tag="Could not resolve printer RFCOMM channel" ru="Не удалось определить RFCOMM-канал принтера"/>
   <translation tag="Could not save filament" ru="Не удалось сохранить филамент"/>
   <translation tag="Could not save the drying state" ru="Не удалось сохранить состояние сушки"/>
   <translation tag="Could not save the drying state: nothing was heated" ru="Не удалось сохранить состояние сушки: ничего не нагревалось"/>
   <translation tag="Could not save the mesh as &apos;{}&apos;: {}" ru="Не удалось сохранить сетку как &apos;{}&apos;: {}"/>
+  <translation tag="Could not save the printer image tags" ru="Не удалось сохранить отметки изображения"/>
   <translation tag="Could not start Bluetooth discovery" ru="Не удалось запустить поиск Bluetooth"/>
   <translation tag="Could not update filaments" ru="Не удалось обновить филаменты"/>
   <translation tag="Could not verify Spoolman status. Moonraker may still be restarting." ru="Не удалось проверить статус Spoolman. Moonraker может ещё перезапускаться."/>
@@ -1685,6 +1689,7 @@
   <translation tag="Measure and compare belt path frequencies" ru="Измерить и сравнить частоты путей ремня"/>
   <translation tag="Measure belt path frequencies" ru="Измерить частоты путей ремня"/>
   <translation tag="Measure every tool&apos;s XYZ offset automatically" ru="Автоматически измеряет смещение XYZ каждого инструмента"/>
+  <translation tag="Measure pressure advance automatically" ru="Автоматически измеряет Pressure Advance"/>
   <translation tag="Measured (shaper off)" ru="Измерено (шейпер выключен)"/>
   <translation tag="Measured filament diameter" ru="Измеренный диаметр филамента"/>
   <translation tag="Measured pressure advance" ru="Измеренный Pressure Advance"/>
@@ -2329,6 +2334,8 @@
   <translation tag="Remove the spools" ru="Снимите катушки"/>
   <translation tag="Remove the spools from the bed" ru="Снимите катушки со стола"/>
   <translation tag="Remove the spools now?" ru="Снять катушки сейчас?"/>
+  <translation tag="Remove your tags for this image?" ru="Удалить ваши отметки для этого изображения?"/>
+  <translation tag="Remove your tags for this image? Its chips go back to the shipped positions." ru="Удалить ваши отметки для этого изображения? Метки вернутся на исходные места."/>
   <translation tag="Rename" ru="Переименовать"/>
   <translation tag="Rename Fan" ru="Переименовать вентилятор"/>
   <translation tag="Rename Mesh Profile" ru="Переименовать профиль сетки"/>
@@ -2368,6 +2375,7 @@
   <translation tag="Reset endless spool failed" ru="Не удалось сбросить бесконечную катушку"/>
   <translation tag="Reset failed" ru="Ошибка сброса"/>
   <translation tag="Reset motor run-time counter" ru="Сбросить счётчик наработки мотора"/>
+  <translation tag="Reset tags" ru="Сбросить отметки"/>
   <translation tag="Reset to Default" ru="Сбросить до умолчания"/>
   <translation tag="Reset to defaults" ru="Сбросить по умолчанию"/>
   <translation tag="Reset to original values" ru="Сбросить к исходным значениям"/>
@@ -2808,17 +2816,25 @@
   <translation tag="TOGGLE: {}" ru="ПЕРЕКЛЮЧИТЬ: {}"/>
   <translation tag="TOOLS" ru="ИНСТРУМЕНТЫ"/>
   <translation tag="TPU" ru="TPU"/>
+  <translation tag="Tag Parts" ru="Отметить узлы"/>
+  <translation tag="Tag parts" ru="Отметить узлы"/>
   <translation tag="Takes 3-5 min. Do not interrupt." ru="Занимает 3-5 мин. Не прерывайте."/>
   <translation tag="Tangle sensitivity" ru="Чувствительность к спутыванию"/>
   <translation tag="Tap + to add" ru="Нажмите +, чтобы добавить"/>
   <translation tag="Tap Firmware Restart to recover — on K2 this also bounces the rpi MCU bridge" ru="Нажмите «Перезапуск прошивки» для восстановления. На K2 это также перезапускает мост MCU rpi"/>
   <translation tag="Tap again to confirm this orientation" ru="Нажмите ещё раз для подтверждения ориентации"/>
+  <translation tag="Tap an empty spot inside the enclosure" ru="Нажмите на пустое место внутри корпуса"/>
   <translation tag="Tap an object to exclude it | {} objects ({} excluded)" ru="Коснитесь объекта, чтобы исключить его | {} объектов ({} исключено)"/>
   <translation tag="Tap any tile to open its full controls or toggle its state." ru="Нажмите на любую плитку, чтобы открыть её полные элементы управления или переключить состояние."/>
   <translation tag="Tap anywhere if this text is right-side up" ru="Нажмите в любом месте, если текст расположен правильно"/>
   <translation tag="Tap anywhere to begin" ru="Нажмите в любом месте для начала"/>
   <translation tag="Tap anywhere to begin calibration" ru="Нажмите в любом месте для начала калибровки"/>
+  <translation tag="Tap the bed&apos;s front-left corner" ru="Нажмите на передний левый угол стола"/>
+  <translation tag="Tap the bed&apos;s front-right corner" ru="Нажмите на передний правый угол стола"/>
   <translation tag="Tap the crosshair (point %1$d of 3) — touch %2$d of %3$d" ru="Нажмите на перекрестие (точка %1$d из 3) — касание %2$d из %3$d"/>
+  <translation tag="Tap the light" ru="Нажмите на подсветку"/>
+  <translation tag="Tap the nozzle tip" ru="Нажмите на кончик сопла"/>
+  <translation tag="Tap the part cooling fan" ru="Нажмите на вентилятор охлаждения детали"/>
   <translation tag="Tap to assign" ru="Нажмите для назначения"/>
   <translation tag="Target" ru="Цель"/>
   <translation tag="Target Frequency" ru="Целевая частота"/>
@@ -3079,6 +3095,7 @@
   <translation tag="Unavailable" ru="Недоступно"/>
   <translation tag="Unavailable on this printer" ru="Недоступно на этом принтере"/>
   <translation tag="Understanding Results" ru="Понимание результатов"/>
+  <translation tag="Undo" ru="Шаг назад"/>
   <translation tag="Uneven belt tension causes print artifacts like layer shifts, VFAs (vertical fine artifacts), and ringing.&#10;&#10;Pluck each belt by hand and this tool listens through the accelerometer to measure the belt&apos;s frequency. Matched frequencies mean balanced tension.&#10;&#10;On CoreXY, belts A and B should be within a few Hz of each other." ru="Неравномерное натяжение ремня вызывает дефекты печати, такие как смещения слоёв, VFA (вертикальные мелкие артефакты) и ringing.&#10;&#10;Дёрните каждый ремень рукой, и этот инструмент измерит частоту ремня с помощью акселерометра. Совпадающие частоты означают сбалансированное натяжение.&#10;&#10;Для CoreXY ремни A и B должны отличаться на несколько Гц."/>
   <translation tag="Uninstall" ru="Удалить"/>
   <translation tag="Uninstall HelixPrint Plugin" ru="Удалить плагин HelixPrint"/>

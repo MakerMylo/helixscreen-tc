@@ -528,6 +528,7 @@ constexpr const char* kNoMachineControlFiles[] = {
     "ui_xml/print_tune_panel.xml",
     "ui_xml/printer_image_list_item.xml",
     "ui_xml/printer_image_overlay.xml",
+    "ui_xml/printer_image_tagger_overlay.xml",
     "ui_xml/printer_list_item.xml",
     "ui_xml/printer_list_overlay.xml",
     "ui_xml/printer_manager_overlay.xml",

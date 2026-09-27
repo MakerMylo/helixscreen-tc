@@ -155,6 +155,7 @@
   <translation tag="Actions" it="Azioni"/>
   <translation tag="Active" it="Attivo"/>
   <translation tag="Active Spool" it="Bobina attiva"/>
+  <translation tag="Actual" it="Attuale"/>
   <translation tag="Adaptive Bed Mesh" it="Mesh piano adattiva"/>
   <translation tag="Add" it="Aggiungi"/>
   <translation tag="Add Filament" it="Aggiungi filamento"/>
@@ -506,6 +507,7 @@
   <translation tag="Check the PTFE tube along the drag chain for kinks, and the bend where it enters the extruder sensor" it="Controllare che il tubo PTFE lungo la catena portacavi non sia piegato, e la curva all&apos;ingresso del sensore dell&apos;estrusore"/>
   <translation tag="Check the RS-485 cable between printer and CFS" it="Controllare il cavo RS-485 tra stampante e CFS"/>
   <translation tag="Check the buffer unit on the back of the printer" it="Controllare l&apos;unità buffer sul retro della stampante"/>
+  <translation tag="Check the chips, then save" it="Controlla le etichette, poi salva"/>
   <translation tag="Check the filament path and try again." it="Controllare il percorso del filamento e riprovare."/>
   <translation tag="Check the path from the slot to the hub for a tangle or drag. If the slot feeds freely, the hub sensor or the feeder motor may have failed" it="Controllare il percorso dallo slot all&apos;hub per aggrovigliamenti o attrito. Se lo slot alimenta liberamente, il sensore dell&apos;hub o il motore di alimentazione potrebbero essere guasti"/>
   <translation tag="Check the provided value and try again" it="Controlla il valore fornito e riprova"/>
@@ -686,11 +688,13 @@
   <translation tag="Could not reach Spoolman at" it="Impossibile raggiungere Spoolman a"/>
   <translation tag="Could not read the screw adjustments from the printer" it="Impossibile leggere le regolazioni delle viti dalla stampante"/>
   <translation tag="Could not remove the job from the queue" it="Impossibile rimuovere il lavoro dalla coda"/>
+  <translation tag="Could not reset the printer image tags" it="Impossibile ripristinare i contrassegni dell&apos;immagine"/>
   <translation tag="Could not resolve printer RFCOMM channel" it="Impossibile risolvere il canale RFCOMM della stampante"/>
   <translation tag="Could not save filament" it="Impossibile salvare il filamento"/>
   <translation tag="Could not save the drying state" it="Impossibile salvare lo stato dell&apos;essiccazione"/>
   <translation tag="Could not save the drying state: nothing was heated" it="Impossibile salvare lo stato dell&apos;essiccazione: non è stato riscaldato nulla"/>
   <translation tag="Could not save the mesh as &apos;{}&apos;: {}" it="Impossibile salvare la mesh come &apos;{}&apos;: {}"/>
+  <translation tag="Could not save the printer image tags" it="Impossibile salvare i contrassegni dell&apos;immagine"/>
   <translation tag="Could not start Bluetooth discovery" it="Impossibile avviare la ricerca Bluetooth"/>
   <translation tag="Could not update filaments" it="Impossibile aggiornare i filamenti"/>
   <translation tag="Could not verify Spoolman status. Moonraker may still be restarting." it="Impossibile verificare lo stato di Spoolman. Moonraker potrebbe essere ancora in riavvio."/>
@@ -1685,6 +1689,7 @@
   <translation tag="Measure and compare belt path frequencies" it="Misura e confronta le frequenze dei percorsi cinghia"/>
   <translation tag="Measure belt path frequencies" it="Misura le frequenze dei percorsi cinghia"/>
   <translation tag="Measure every tool&apos;s XYZ offset automatically" it="Misura automaticamente l&apos;offset XYZ di ogni strumento"/>
+  <translation tag="Measure pressure advance automatically" it="Misura automaticamente il Pressure Advance"/>
   <translation tag="Measured (shaper off)" it="Misurato (shaper disattivato)"/>
   <translation tag="Measured filament diameter" it="Diametro filamento misurato"/>
   <translation tag="Measured pressure advance" it="Pressure Advance misurato"/>
@@ -2329,6 +2334,8 @@
   <translation tag="Remove the spools" it="Togli le bobine"/>
   <translation tag="Remove the spools from the bed" it="Togli le bobine dal piano"/>
   <translation tag="Remove the spools now?" it="Togliere le bobine adesso?"/>
+  <translation tag="Remove your tags for this image?" it="Rimuovere i tuoi contrassegni per questa immagine?"/>
+  <translation tag="Remove your tags for this image? Its chips go back to the shipped positions." it="Rimuovere i tuoi contrassegni per questa immagine? Le etichette tornano alle posizioni predefinite."/>
   <translation tag="Rename" it="Rinomina"/>
   <translation tag="Rename Fan" it="Rinomina ventola"/>
   <translation tag="Rename Mesh Profile" it="Rinomina profilo mesh"/>
@@ -2368,6 +2375,7 @@
   <translation tag="Reset endless spool failed" it="Ripristino della bobina infinita non riuscito"/>
   <translation tag="Reset failed" it="Reset fallito"/>
   <translation tag="Reset motor run-time counter" it="Ripristina il contatore delle ore di funzionamento del motore"/>
+  <translation tag="Reset tags" it="Ripristina contrassegni"/>
   <translation tag="Reset to Default" it="Ripristina predefinito"/>
   <translation tag="Reset to defaults" it="Ripristina predefiniti"/>
   <translation tag="Reset to original values" it="Ripristina valori originali"/>
@@ -2808,17 +2816,25 @@
   <translation tag="TOGGLE: {}" it="COMMUTA: {}"/>
   <translation tag="TOOLS" it="STRUMENTI"/>
   <translation tag="TPU" it="TPU"/>
+  <translation tag="Tag Parts" it="Contrassegna componenti"/>
+  <translation tag="Tag parts" it="Contrassegna componenti"/>
   <translation tag="Takes 3-5 min. Do not interrupt." it="Richiede 3-5 min. Non interrompere."/>
   <translation tag="Tangle sensitivity" it="Sensibilità ai grovigli"/>
   <translation tag="Tap + to add" it="Tocca + per aggiungere"/>
   <translation tag="Tap Firmware Restart to recover — on K2 this also bounces the rpi MCU bridge" it="Toccare Riavvia firmware per ripristinare. Sulla K2 questo riavvia anche il bridge MCU rpi"/>
   <translation tag="Tap again to confirm this orientation" it="Tocca di nuovo per confermare questo orientamento"/>
+  <translation tag="Tap an empty spot inside the enclosure" it="Tocca un punto vuoto dentro la chiusura"/>
   <translation tag="Tap an object to exclude it | {} objects ({} excluded)" it="Tocca un oggetto per escluderlo | {} oggetti ({} esclusi)"/>
   <translation tag="Tap any tile to open its full controls or toggle its state." it="Tocca un riquadro per aprirne i controlli completi o per cambiarne lo stato."/>
   <translation tag="Tap anywhere if this text is right-side up" it="Tocca ovunque se questo testo è dritto"/>
   <translation tag="Tap anywhere to begin" it="Tocca ovunque per iniziare"/>
   <translation tag="Tap anywhere to begin calibration" it="Tocca ovunque per avviare la calibrazione"/>
+  <translation tag="Tap the bed&apos;s front-left corner" it="Tocca l&apos;angolo anteriore sinistro del piano"/>
+  <translation tag="Tap the bed&apos;s front-right corner" it="Tocca l&apos;angolo anteriore destro del piano"/>
   <translation tag="Tap the crosshair (point %1$d of 3) — touch %2$d of %3$d" it="Tocca il mirino (punto %1$d di 3) — tocco %2$d di %3$d"/>
+  <translation tag="Tap the light" it="Tocca la luce"/>
+  <translation tag="Tap the nozzle tip" it="Tocca la punta dell&apos;ugello"/>
+  <translation tag="Tap the part cooling fan" it="Tocca la ventola raffreddamento pezzo"/>
   <translation tag="Tap to assign" it="Tocca per assegnare"/>
   <translation tag="Target" it="Target"/>
   <translation tag="Target Frequency" it="Frequenza obiettivo"/>
@@ -3079,6 +3095,7 @@
   <translation tag="Unavailable" it="Non disponibile"/>
   <translation tag="Unavailable on this printer" it="Non disponibile su questa stampante"/>
   <translation tag="Understanding Results" it="Capire i risultati"/>
+  <translation tag="Undo" it="Indietro"/>
   <translation tag="Uneven belt tension causes print artifacts like layer shifts, VFAs (vertical fine artifacts), and ringing.&#10;&#10;Pluck each belt by hand and this tool listens through the accelerometer to measure the belt&apos;s frequency. Matched frequencies mean balanced tension.&#10;&#10;On CoreXY, belts A and B should be within a few Hz of each other." it="Una tensione non uniforme della cinghia causa artefatti di stampa come spostamenti di strato, VFA (artefatti verticali fini) e ringing.&#10;&#10;Pizzica ogni cinghia a mano e questo strumento ascolta tramite l&apos;accelerometro per misurare la frequenza della cinghia. Frequenze corrispondenti indicano una tensione bilanciata.&#10;&#10;Per CoreXY, le cinghie A e B dovrebbero differire di pochi Hz."/>
   <translation tag="Uninstall" it="Disinstalla"/>
   <translation tag="Uninstall HelixPrint Plugin" it="Disinstalla plugin HelixPrint"/>

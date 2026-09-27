@@ -5,6 +5,7 @@
 #include "ui_temperature_utils.h"
 
 #include "../lvgl_ui_test_fixture.h"
+#include "../test_helpers/config_dir_guard.h"
 #include "../test_helpers/panel_widget_size_harness.h"
 #include "../test_helpers/printer_image_regions_test_access.h"
 #include "../test_helpers/process_async_timers.h"
@@ -30,6 +31,7 @@
 
 #include <chrono>
 #include <filesystem>
+#include <fstream>
 #include <thread>
 
 #include "../catch_amalgamated.hpp"
@@ -876,4 +878,77 @@ TEST_CASE_METHOD(LVGLUITestFixture,
     CHECK(lv_obj_get_y(chip) + lv_obj_get_height(chip) ==
           area_h - theme_manager_get_spacing("space_xs"));
     h.widget().detach();
+}
+
+namespace {
+
+/// The bed chip's centre, relative to its parent.
+CalloutPoint bed_chip_centre(PanelWidgetHarness<PrinterImageWidget>& h) {
+    lv_obj_t* chip = h.child("callout_chip_bed");
+    return {lv_obj_get_x(chip) + lv_obj_get_width(chip) / 2,
+            lv_obj_get_y(chip) + lv_obj_get_height(chip) / 2};
+}
+
+/// Where the bed chip centres over `img` for a bed edge from x0 to x1 at y.
+CalloutPoint bed_point(const CalloutRect& img, float x0, float x1, float y) {
+    return {img.x + int((x0 + x1) / 2 * float(img.w)), img.y + int(y * float(img.h))};
+}
+
+} // namespace
+
+TEST_CASE_METHOD(LVGLUITestFixture,
+                 "callouts: a user entry at the image's natural size pins chips at the user's "
+                 "points; one pixel off falls back to the shipped entry",
+                 "[printer_image][callouts][image_tagger]") {
+    const ConfigDirGuard cfg("callouts_user_entry");
+    const auto regions = prepare_tagged_widget();
+    const std::string shown = PrinterImageManager::instance().get_displayed_image_path(
+        PrinterImages::current_screen_width());
+    REQUIRE(printer_image_region_key(shown) == "generic-corexy");
+    lv_image_header_t hdr;
+    REQUIRE(lv_image_decoder_get_info(shown.c_str(), &hdr) == LV_RESULT_OK);
+    const int nat_w = int(hdr.w), nat_h = int(hdr.h);
+    const auto write_user_tags = [&](int size_w) {
+        std::ofstream(cfg.dir / "printer_image_regions.json")
+            << R"({"generic-corexy": {"size": [)" << size_w << ", " << nat_h
+            << R"(], "nozzle": [0.5, 0.2], "bed": [[0.6, 0.75], [0.8, 0.75]]}})";
+        reload_user_image_regions();
+    };
+
+    write_user_tags(nat_w);
+    PanelWidgetHarness<PrinterImageWidget> h(test_screen());
+    h.resize(4, 4, 160, 160);
+    lv_subject_set_int(state().get_bed_target_subject(), 600);
+    settle();
+    lv_obj_update_layout(h.root());
+    REQUIRE(mode_now() == static_cast<int>(CalloutMode::Pinned));
+    lv_obj_t* c = h.child("printer_container");
+    const CalloutRect user_img =
+        fit_image(lv_obj_get_content_width(c), lv_obj_get_content_height(c), nat_w, nat_h);
+    const CalloutPoint want_user = bed_point(user_img, 0.6f, 0.8f, 0.75f);
+    CHECK(std::abs(bed_chip_centre(h).x - want_user.x) <= 1);
+    CHECK(std::abs(bed_chip_centre(h).y - want_user.y) <= 1);
+
+    // A save that cannot reach the disk changes nothing the widget draws.
+    const auto file = cfg.dir / "printer_image_regions.json";
+    std::filesystem::remove(file);
+    std::filesystem::create_directories(file / "keep");
+    ImageRegions moved = *lookup_user_image_regions("generic-corexy", nat_w, nat_h);
+    moved.bed_left = {0.1f, 0.3f};
+    moved.bed_right = {0.2f, 0.3f};
+    REQUIRE_FALSE(save_user_image_regions("generic-corexy", moved));
+    h.widget().refresh_printer_image();
+    settle();
+    lv_obj_update_layout(h.root());
+    CHECK(std::abs(bed_chip_centre(h).x - want_user.x) <= 1);
+    CHECK(std::abs(bed_chip_centre(h).y - want_user.y) <= 1);
+    std::filesystem::remove_all(file);
+
+    write_user_tags(nat_w + 1);
+    h.widget().refresh_printer_image();
+    settle();
+    lv_obj_update_layout(h.root());
+    const CalloutPoint want_shipped = bed_point(fitted_image(h), 0.308f, 0.611f, 0.572f);
+    CHECK(std::abs(bed_chip_centre(h).x - want_shipped.x) <= 1);
+    CHECK(std::abs(bed_chip_centre(h).y - want_shipped.y) <= 1);
 }

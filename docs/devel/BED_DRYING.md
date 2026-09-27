@@ -92,7 +92,7 @@ latch gates all five:
 
 The gcode gates are an **allowlist**, not a denylist: a macro can home without saying
 `G28`, so while latched a script passes only if every line's first token is a heater,
-fan, light, read-only, `SET_IDLE_TIMEOUT`, `M112` or restart command, or one of the
+fan, light, read-only, `SET_IDLE_TIMEOUT` or `M112` command, or one of the
 dryer's own tokens (`TemperatureController::chamber_dryer_tokens`). `M84`,
 `FIRMWARE_RESTART` and `RESTART` are refused: each releases the steppers. The
 `printer.restart` / `printer.firmware_restart` RPCs, a `klipper` service restart and the

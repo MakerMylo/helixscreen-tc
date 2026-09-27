@@ -156,6 +156,7 @@ translations:
   Actions: アクション
   Active: アクティブ
   Active Spool: アクティブスプール
+  Actual: 現在
   Adaptive Bed Mesh: 適応ベッドメッシュ
   Add: 追加
   Add Filament: フィラメントを追加
@@ -514,6 +515,7 @@ translations:
   Check the PTFE tube along the drag chain for kinks, and the bend where it enters the extruder sensor: ドラッグチェーンに沿った PTFE チューブの折れと、エクストルーダーセンサー入口の曲がりを確認してください
   Check the RS-485 cable between printer and CFS: プリンターと CFS 間の RS-485 ケーブルを確認してください
   Check the buffer unit on the back of the printer: プリンター背面のバッファーユニットを確認してください
+  Check the chips, then save: チップを確認して保存
   Check the filament path and try again.: フィラメント経路を確認して、もう一度お試しください。
   ? Check the path from the slot to the hub for a tangle or drag. If the slot feeds freely, the hub sensor or the feeder motor may have failed
   : スロットからハブまでの経路に絡まりや抵抗がないか確認してください。スロットが問題なく送り出せる場合は、ハブセンサーまたは送り出しモーターの故障が考えられます
@@ -705,6 +707,7 @@ translations:
   Could not reach Spoolman at: 'Spoolman に接続できません:'
   Could not read the screw adjustments from the printer: プリンターからネジ調整を読み取れませんでした
   Could not remove the job from the queue: キューからジョブを削除できませんでした
+  Could not reset the printer image tags: プリンター画像のタグのリセットに失敗しました
   Could not resolve printer RFCOMM channel: プリンターの RFCOMM チャンネルを解決できませんでした
   Could not save filament: フィラメントを保存できませんでした
   Could not save the drying state: 乾燥の状態を保存できませんでした
@@ -712,6 +715,7 @@ translations:
   'Could not save the drying state: nothing was heated': '乾燥の状態を保存できませんでした: 何も加熱していません'
 
   "Could not save the mesh as '{}': {}": "メッシュを '{}' として保存できませんでした: {}"
+  Could not save the printer image tags: プリンター画像のタグの保存に失敗しました
   Could not start Bluetooth discovery: Bluetooth の検出を開始できませんでした
   Could not update filaments: フィラメントを更新できませんでした
   Could not verify Spoolman status. Moonraker may still be restarting.: Spoolman のステータスを確認できませんでした。Moonraker
@@ -1752,6 +1756,7 @@ translations:
   Measure and compare belt path frequencies: ベルトパスの周波数を測定・比較
   Measure belt path frequencies: ベルトパスの周波数を測定
   Measure every tool's XYZ offset automatically: 各ツールの XYZ オフセットを自動で測定します
+  Measure pressure advance automatically: 'Pressure Advance を自動で測定します'
   Measured (shaper off): 測定値（シェーパーオフ時）
   Measured filament diameter: 測定したフィラメント直径
   Measured pressure advance: '測定された Pressure Advance'
@@ -2426,6 +2431,8 @@ translations:
 
   Remove the spools now?: 今スプールを取り出しますか?
 
+  Remove your tags for this image?: この画像のタグを削除しますか？
+  Remove your tags for this image? Its chips go back to the shipped positions.: この画像のタグを削除しますか？チップは出荷時の位置に戻ります。
   Rename: 名前を変更
   Rename Fan: ファン名を変更
   Rename Mesh Profile: メッシュプロファイルの名前を変更
@@ -2465,6 +2472,7 @@ translations:
   Reset endless spool failed: 'エンドレススプールのリセットに失敗しました'
   Reset failed: リセットに失敗しました
   Reset motor run-time counter: 'モーターの稼働時間カウンターをリセット'
+  Reset tags: タグをリセット
   Reset to Default: デフォルトにリセット
   Reset to defaults: デフォルトに戻す
   Reset to original values: 元の値にリセット
@@ -2925,18 +2933,26 @@ translations:
   'TOGGLE: {}': '切り替え: {}'
   TOOLS: ツール
   TPU: TPU
+  Tag Parts: 部位をタグ付け
+  Tag parts: 部位をタグ付け
   Takes 3-5 min. Do not interrupt.: 3〜5分かかります。中断しないでください。
   'Tangle sensitivity': '絡み検出の感度'
   Tap + to add: + をタップして追加
   Tap Firmware Restart to recover — on K2 this also bounces the rpi MCU bridge: 「ファームウェア再起動」をタップして復旧してください。K2 では rpi MCU ブリッジも再起動されます
   Tap again to confirm this orientation: もう一度タップしてこの向きを確定
+  Tap an empty spot inside the enclosure: 筐体内の空いている場所をタップ
   Tap an object to exclude it | {} objects ({} excluded): 'オブジェクトをタップして除外 | {} 個 ({} 個除外済み)'
   Tap any tile to open its full controls or toggle its state.: タイルをタップすると、全機能のコントロールを開いたり、状態を切り替えたりできます。
   Tap anywhere if this text is right-side up: この文字が正しい向きならどこかをタップ
   Tap anywhere to begin: どこかをタップして開始
   Tap anywhere to begin calibration: どこかをタップしてキャリブレーション開始
+  Tap the bed's front-left corner: ベッドの手前左の角をタップ
+  Tap the bed's front-right corner: ベッドの手前右の角をタップ
   Tap the crosshair (point %1$d of 3) — touch %2$d of %3$d: 十字をタップ（ポイント
     %1$d / 3）— タッチ %2$d / %3$d
+  Tap the light: ライトをタップ
+  Tap the nozzle tip: ノズルの先端をタップ
+  Tap the part cooling fan: パーツ冷却ファンをタップ
   Tap to assign: タップして割当
   Target: '目標'
   Target Frequency: 目標周波数
@@ -3236,6 +3252,7 @@ translations:
   Unavailable: 利用不可
   Unavailable on this printer: このプリンターでは利用できません
   Understanding Results: 結果の理解
+  Undo: 元に戻す
   ? "Uneven belt tension causes print artifacts like layer shifts, VFAs (vertical fine artifacts), and ringing.\n\nPluck each belt by hand and this tool listens through the accelerometer to measure the belt's frequency. Matched frequencies mean balanced tension.\n\nOn CoreXY, belts A and B should be within a few Hz of each other."
   : "ベルト張力が不均一だと、レイヤーシフトや VFA(垂直微細アーティファクト)、リンギングなどの印刷不良が発生します。\n\n各ベルトを手ではじくと、このツールが加速度センサーでベルトの周波数を測定します。周波数が一致していれば張力が均等であることを意味します。\n\nCoreXY では、ベルト A と B は数 Hz 以内に収まっている必要があります。"
   Uninstall: アンインストール

@@ -81,43 +81,42 @@ HelixScreen uses a backend abstraction layer to support multiple multi-filament 
 
 ### SlotRegistry (Per-Slot State)
 
-Each backend owns a `helix::printer::SlotRegistry` instance (`slots_`) that serves as the single source of truth for all per-slot indexed state. Before SlotRegistry, backends maintained parallel vectors (`lane_names_`, `lane_sensors_`, `gate_sensors_`, etc.) that had to be kept in sync manually -- a frequent source of index mismatch bugs.
+`helix::printer::SlotRegistry` (`include/slot_registry.h`) holds a backend's per-slot state in one indexed container. Four backends own one as `slots_`: Mock, AFC, AD5X IFS and Happy Hare. ACE, CFS, Qidi, Snapmaker, ToolChanger and OpenAMS keep their slots in `system_info_.units` and reach them through `AmsSystemInfo::get_slot()` / `get_slot_global()`; the backends built on `AmsSubscriptionBackend` validate a slot index through its `validate_slot_index_locked()` either way.
 
 **What SlotRegistry manages:**
-- Slot names and bidirectional name-to-index lookup
-- Per-slot sensor states (prep, load, loaded_to_hub, tool_loaded)
-- Per-slot error and buffer health
-- Per-slot filament weight tracking
-- Tool-to-slot mapping
-- Multi-unit reorganization (preserving slot data when unit topology changes)
+- Slot names and bidirectional name-to-index lookup (`index_of`, `name_of`, `find_by_name`)
+- Each slot's `SlotInfo` and endless-spool backup
+- Units and each unit's slot range
+- The tool-to-slot map, in both directions, with `firmware_mapping_generation()` advancing only on firmware-sourced writes
+- Multi-unit reorganization that keeps slot data when the unit topology changes
+
+It does not hold sensor readings: a backend parses its own sensors and keys them the way it addresses slots (AFC's `AfcLaneSensors` by lane name, Happy Hare's `HappyHareGateSensor` by gate index).
 
 **How backends use it:**
 
 ```cpp
-// Initialize (once, during startup or first data arrival)
-slots_.initialize("AFC Box Turtle", lane_names);   // AFC
-slots_.initialize("Happy Hare MMU", gate_count);    // Happy Hare
+// Initialize (once, when the slot list is known)
+slots_.initialize("IFS", slot_names);          // one unit
+slots_.initialize_units(unit_slot_names);      // several units
 
-// Read state
-int idx = slots_.index_of("lane3");         // Name -> index
-std::string name = slots_.name_of(2);       // Index -> name
-const auto* entry = slots_.get(idx);        // Read-only access
-auto info = slots_.build_slot_info(idx);    // Build SlotInfo for API
-
-// Write state (under backend mutex)
+// Read and write under the backend's mutex
+int idx = slots_.index_of("lane3");
 auto* entry = slots_.get_mut(idx);
-entry->sensors.prep = true;
 entry->info.color_rgb = 0xFF0000;
 
-// Multi-unit reorganization (AFC multi-unit topology changes)
-slots_.reorganize(unit_lane_map);           // Preserves slot data across layout changes
+// Multi-unit reorganization (AFC topology changes)
+slots_.reorganize(unit_lane_map);
+
+// Snapshot for get_system_info()
+AmsSystemInfo info = slots_.build_system_info(system_info_);
 ```
 
+**The snapshot rule.** `build_system_info(base)` starts from the backend's own `system_info_` and replaces only what the registry owns: `total_slots`, `tool_to_slot_map`, and each unit's index, slot range and slots. Every other field, unit metadata included, passes through, so a field a backend writes reaches the UI without being copied by name. A backend then applies only what it genuinely computes on top (AD5X IFS's 16-entry tool map, Happy Hare's per-unit environment, the mock's environment data). A base unit past the registry's count is dropped; a registry unit the base lacks takes the registry's name.
+
 **Key design decisions:**
-- SlotRegistry does NOT hold a mutex -- the owning backend's mutex protects all access
-- `build_slot_info()` constructs a `SlotInfo` snapshot, avoiding shared mutable state
-- `reorganize()` takes an ordered vector of unit/lane pairs — caller controls unit ordering
-- Slot names remain backend-specific ("lane1" for AFC, "Gate 0" for Happy Hare) -- SlotRegistry is agnostic
+- SlotRegistry holds no mutex; the owning backend's mutex protects every access
+- `reorganize()` takes an ordered list of units and their slot names, so the caller controls unit order
+- Slot names stay backend-specific ("lane1" for AFC, "0" for a Happy Hare gate); the registry does not interpret them
 
 ### Per-Slot Load Authority
 
@@ -286,6 +285,10 @@ struct BackendSlotSubjects {
     std::vector<lv_subject_t> colors;
     std::vector<lv_subject_t> statuses;
     std::vector<lv_subject_t> fills;  // int: fill percent 0-100, -1 = unknown
+    std::vector<lv_subject_t> lane_states; // int: helix::ui::LaneState
+    std::vector<lv_subject_t> has_errors;
+    std::vector<lv_subject_t> severities;  // int: SlotError::Severity
+    std::vector<lv_subject_t> materials;   // string: "PLA", "PETG", ... or ""
     int slot_count = 0;
     // Lifetime token shared by every subject in this struct: these subjects are
     // DYNAMIC (destroyed in deinit() on backend rediscovery), so any observer

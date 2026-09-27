@@ -570,13 +570,20 @@ void kick_moonraker_connect_once() {
 }
 
 // R4: bounded wait for the FIRST post-boot association, replacing the old
-// portMAX_DELAY park (which held this thread's 32KB stack forever against a
+// portMAX_DELAY park (which held this thread's stack forever against a
 // never-associating network — the Task 9 backlog item now due). 20s covers
 // the historical successful-assoc case with margin; the backend's own
 // assoc-timeout + bounded backoff retry (wifi_backend_esp.cpp) keep trying
 // underneath regardless of whether this wait succeeds.
 constexpr int BOOT_BOUNDED_WAIT_MS = 20000;
 constexpr int BOOT_POLL_INTERVAL_MS = 200;
+
+// The connect thread's stack, one contiguous internal-RAM block claimed after
+// the UI stack and the RGB bounce buffers. What is left of the heap's largest
+// block at that point varies by about 1KB with static DRAM, and has measured
+// 31,744 bytes, so the request must stay below that. The thread logs its
+// high-water mark on exit.
+constexpr unsigned APP_NET_STACK_BYTES = 24 * 1024;
 
 void* app_net_thread_main(void*) {
     // Opens the esp_wifi hardware bring-up gate — see wifi_backend_esp.h for
@@ -637,19 +644,21 @@ void* app_net_thread_main(void*) {
                  BOOT_BOUNDED_WAIT_MS);
     }
     // Handoff is either done above or deferred to the state observer — exit
-    // either way, freeing this thread's 32KB stack (R4: no permanent park).
+    // either way, freeing this thread's stack (R4: no permanent park).
+    ESP_LOGI(TAG, "app_net: exiting, stack never used below %u of %u bytes free",
+             (unsigned)uxTaskGetStackHighWaterMark(nullptr), (unsigned)APP_NET_STACK_BYTES);
     return nullptr;
 }
 
 // Spawn the connect thread. Called at the END of app_boot_ui() (home panel up),
-// so the pthread stack — the only >=32KB internal allocation on this path — is
+// so the pthread stack — the largest internal allocation on this path — is
 // claimed AFTER the boot's internal-DRAM gates and BEFORE esp_wifi_start()
 // (which runs inside the thread). pthread-created + detached, mirroring net_hil
 // (which documented an ENOMEM near-miss when a net thread spawned after WiFi).
 void app_net_start() {
     pthread_attr_t attr;
     pthread_attr_init(&attr);
-    pthread_attr_setstacksize(&attr, 32 * 1024);
+    pthread_attr_setstacksize(&attr, APP_NET_STACK_BYTES);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
     pthread_t thread;
@@ -953,7 +962,7 @@ extern "C" void app_boot_ui(void) {
 
 #if !CONFIG_HELIX_MOCK_PRINTER && !CONFIG_HELIX_NET_HIL
     // Bring up WiFi + connect to Moonraker, LAST — the shell is already up, so
-    // the connect thread's stack (the only >=32KB internal alloc on this path)
+    // the connect thread's stack (the largest internal alloc on this path)
     // is claimed after every boot internal-DRAM gate, and the not-ready UI is
     // already on screen while the network converges. Gated off for the NET_HIL
     // test build (net_hil.cpp owns WiFi + its own client there) and for mock
