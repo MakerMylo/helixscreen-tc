@@ -867,9 +867,9 @@ TEST_CASE_METHOD(LVGLUITestFixture,
     REQUIRE(lv_obj_get_x(chip) >= tall.x + tall.w); // in the band beside the image
 
     // Re-imported wide: no band left, so the chip docks along the bottom edge.
+    // Nothing else changes, so the refresh alone has to relayout.
     write_image(160, 40);
     h.widget().refresh_printer_image();
-    lv_subject_set_int(state().get_bed_temp_subject(), 410);
     settle();
     lv_obj_update_layout(h.root());
     REQUIRE(mode_now() == static_cast<int>(CalloutMode::Docked));

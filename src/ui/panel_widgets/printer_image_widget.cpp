@@ -410,12 +410,12 @@ void PrinterImageWidget::refresh_printer_image() {
         lv_image_cache_drop(current_source_path_.c_str());
     }
     natural_size_path_.clear();
+    // A new source, or new pixels under the same path, can have other tagged
+    // points and another aspect.
+    schedule_callout_layout();
 
-    if (current_source_path_ != source_path) {
+    if (current_source_path_ != source_path)
         current_displayed_path_.clear();
-        // Another image has other tagged points and another aspect.
-        schedule_callout_layout();
-    }
     current_source_path_ = source_path;
 
     // Set source with CONTAIN alignment — displays immediately (with runtime scaling)
@@ -1146,7 +1146,8 @@ void PrinterImageWidget::place_printer_image(const CalloutRect* moved) {
     // DECLARATIVE_OK: measured callout layout
     lv_obj_set_size(img, w, h);
     // The exact-size copy on screen was cut for the old rect. The refresh
-    // relayouts callouts only on a new source, so this cannot loop.
+    // relayouts, and that relayout finds the rect unchanged and returns above,
+    // so this cannot loop.
     schedule_image_refresh();
 }
 
