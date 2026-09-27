@@ -606,8 +606,6 @@ class ControlsPanel : public PanelBase {
     //
 
     void handle_motors_clicked();
-    void handle_motors_confirm();
-    void handle_motors_cancel();
     void handle_calibration_bed_mesh();
     void handle_calibration_zoffset();
     void handle_calibration_pa();
