@@ -1207,7 +1207,7 @@ void MotionPanel::sync_motion_tab_subjects() {
 bool MotionPanel::moves_allowed() const {
     auto& ps = get_printer_state();
     return lv_subject_get_int(ps.get_nav_buttons_enabled_subject()) != 0 &&
-           lv_subject_get_int(ps.get_print_active_subject()) == 0;
+           lv_subject_get_int(ps.get_machine_motion_blocked_subject()) == 0;
 }
 
 /// Run `then` on a homed machine: X and Y homed runs it directly, anything

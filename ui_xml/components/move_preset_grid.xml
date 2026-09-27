@@ -29,14 +29,12 @@
                    moves_machine="true">
           <style name="preset_rim"/>
           <bind_state_if_eq subject="nav_buttons_enabled" state="disabled" ref_value="0"/>
-          <bind_state_if_eq subject="print_active" state="disabled" ref_value="1"/>
           <event_cb trigger="clicked" callback="on_motion_preset_clicked" user_data="back_left"/>
         </ui_button>
         <ui_button name="preset_back"
                    width="0" height="100%" text="Back" translation_tag="Back" flex_grow="1" moves_machine="true">
           <style name="preset_rim"/>
           <bind_state_if_eq subject="nav_buttons_enabled" state="disabled" ref_value="0"/>
-          <bind_state_if_eq subject="print_active" state="disabled" ref_value="1"/>
           <event_cb trigger="clicked" callback="on_motion_preset_clicked" user_data="back"/>
         </ui_button>
         <ui_button name="preset_back_right"
@@ -44,7 +42,6 @@
                    moves_machine="true">
           <style name="preset_rim"/>
           <bind_state_if_eq subject="nav_buttons_enabled" state="disabled" ref_value="0"/>
-          <bind_state_if_eq subject="print_active" state="disabled" ref_value="1"/>
           <event_cb trigger="clicked" callback="on_motion_preset_clicked" user_data="back_right"/>
         </ui_button>
       </lv_obj>
@@ -56,21 +53,18 @@
                    width="0" height="100%" text="Left" translation_tag="Left" flex_grow="1" moves_machine="true">
           <style name="preset_rim"/>
           <bind_state_if_eq subject="nav_buttons_enabled" state="disabled" ref_value="0"/>
-          <bind_state_if_eq subject="print_active" state="disabled" ref_value="1"/>
           <event_cb trigger="clicked" callback="on_motion_preset_clicked" user_data="left"/>
         </ui_button>
         <ui_button name="preset_center"
                    width="0" height="100%" text="Center" translation_tag="Center" flex_grow="1" moves_machine="true">
           <style name="preset_center"/>
           <bind_state_if_eq subject="nav_buttons_enabled" state="disabled" ref_value="0"/>
-          <bind_state_if_eq subject="print_active" state="disabled" ref_value="1"/>
           <event_cb trigger="clicked" callback="on_motion_preset_clicked" user_data="center"/>
         </ui_button>
         <ui_button name="preset_right"
                    width="0" height="100%" text="Right" translation_tag="Right" flex_grow="1" moves_machine="true">
           <style name="preset_rim"/>
           <bind_state_if_eq subject="nav_buttons_enabled" state="disabled" ref_value="0"/>
-          <bind_state_if_eq subject="print_active" state="disabled" ref_value="1"/>
           <event_cb trigger="clicked" callback="on_motion_preset_clicked" user_data="right"/>
         </ui_button>
       </lv_obj>
@@ -83,14 +77,12 @@
                    moves_machine="true">
           <style name="preset_rim"/>
           <bind_state_if_eq subject="nav_buttons_enabled" state="disabled" ref_value="0"/>
-          <bind_state_if_eq subject="print_active" state="disabled" ref_value="1"/>
           <event_cb trigger="clicked" callback="on_motion_preset_clicked" user_data="front_left"/>
         </ui_button>
         <ui_button name="preset_front"
                    width="0" height="100%" text="Front" translation_tag="Front" flex_grow="1" moves_machine="true">
           <style name="preset_rim"/>
           <bind_state_if_eq subject="nav_buttons_enabled" state="disabled" ref_value="0"/>
-          <bind_state_if_eq subject="print_active" state="disabled" ref_value="1"/>
           <event_cb trigger="clicked" callback="on_motion_preset_clicked" user_data="front"/>
         </ui_button>
         <ui_button name="preset_front_right"
@@ -98,7 +90,6 @@
                    moves_machine="true">
           <style name="preset_rim"/>
           <bind_state_if_eq subject="nav_buttons_enabled" state="disabled" ref_value="0"/>
-          <bind_state_if_eq subject="print_active" state="disabled" ref_value="1"/>
           <event_cb trigger="clicked" callback="on_motion_preset_clicked" user_data="front_right"/>
         </ui_button>
       </lv_obj>
@@ -112,14 +103,12 @@
                  width="0" height="#button_height" text="Park" translation_tag="Park" variant="secondary" flex_grow="1"
                  moves_machine="true">
         <bind_state_if_eq subject="nav_buttons_enabled" state="disabled" ref_value="0"/>
-        <bind_state_if_eq subject="print_active" state="disabled" ref_value="1"/>
         <event_cb trigger="clicked" callback="on_motion_park_clicked"/>
       </ui_button>
       <ui_button name="move_motors_off"
                  width="0" height="#button_height" text="Motors Off" translation_tag="Motors Off" icon="power"
                  variant="secondary" flex_grow="1" moves_machine="true">
         <bind_state_if_eq subject="nav_buttons_enabled" state="disabled" ref_value="0"/>
-        <bind_state_if_eq subject="print_active" state="disabled" ref_value="1"/>
         <event_cb trigger="clicked" callback="on_motion_motors_off_clicked"/>
       </ui_button>
     </lv_obj>

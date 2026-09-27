@@ -244,12 +244,16 @@ TEST_CASE_METHOD(MoveTabFixture, "a print or disabled nav gates the move grid",
     lv_obj_t* park = panel_widget("move_park");
     CHECK_FALSE(lv_obj_has_state(preset, LV_STATE_DISABLED));
 
-    lv_subject_set_int(ps.get_print_active_subject(), 1);
+    // The print gate rides the lifecycle pipeline (job_holds_machine ->
+    // machine_motion_blocked), never the raw print_active subject: that reads 0
+    // while a host-side pre-print block is already homing the toolhead.
+    ps.update_from_status({{"print_stats", {{"state", "printing"}}}});
     drain();
+    CHECK(lv_subject_get_int(ps.get_machine_motion_blocked_subject()) == 1);
     CHECK(lv_obj_has_state(preset, LV_STATE_DISABLED));
     CHECK(lv_obj_has_state(park, LV_STATE_DISABLED));
 
-    lv_subject_set_int(ps.get_print_active_subject(), 0);
+    ps.update_from_status({{"print_stats", {{"state", "standby"}}}});
     lv_subject_set_int(ps.get_nav_buttons_enabled_subject(), 0);
     drain();
     CHECK(lv_obj_has_state(preset, LV_STATE_DISABLED));
@@ -260,7 +264,7 @@ TEST_CASE_METHOD(MoveTabFixture, "a print or disabled nav gates the move grid",
 
     // The backstop: with the gate shut, a synthesized click on an enabled
     // widget still moves nothing.
-    lv_subject_set_int(ps.get_print_active_subject(), 1);
+    ps.update_from_status({{"print_stats", {{"state", "printing"}}}});
     drain();
     lv_obj_clear_state(preset, LV_STATE_DISABLED);
     click(preset);
