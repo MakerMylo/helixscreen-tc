@@ -3,17 +3,17 @@
 
 #include "print_start_analyzer.h"
 
+#include "helix_regex.h"
 #include "i_moonraker_api.h"
 #include "klipper_config_includes.h"
 #include "moonraker_types.h"
 #include "operation_patterns.h"
+#include "text_io.h"
 
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
-#include <regex>
 #include <set>
-#include <sstream>
 
 namespace helix {
 
@@ -59,28 +59,27 @@ std::string PrintStartAnalysis::summary() const {
         return "No print start macro found";
     }
 
-    std::ostringstream ss;
-    ss << macro_name << ": " << total_ops_count << " operations detected";
+    std::string ss = fmt::format("{}: {} operations detected", macro_name, total_ops_count);
     if (controllable_count > 0) {
-        ss << " (" << controllable_count << " controllable)";
+        ss += fmt::format(" ({} controllable)", controllable_count);
     }
 
     if (!operations.empty()) {
-        ss << " [";
+        ss += " [";
         bool first = true;
         for (const auto& op : operations) {
             if (!first)
-                ss << ", ";
+                ss += ", ";
             first = false;
-            ss << op.name;
+            ss += op.name;
             if (op.has_skip_param) {
-                ss << "(skip:" << op.skip_param_name << ")";
+                ss += "(skip:" + op.skip_param_name + ")";
             }
         }
-        ss << "]";
+        ss += "]";
     }
 
-    return ss.str();
+    return ss;
 }
 
 // ============================================================================
@@ -287,11 +286,10 @@ std::vector<PrintStartOperation> PrintStartAnalyzer::detect_operations(const std
     std::vector<PrintStartOperation> operations;
 
     // Split into lines and process each
-    std::istringstream stream(gcode);
-    std::string line;
     size_t line_num = 0;
 
-    while (std::getline(stream, line)) {
+    for (std::string_view line_view : helix::text_io::lines(gcode)) {
+        std::string line(line_view);
         ++line_num;
 
         // Skip empty lines and comments
@@ -373,17 +371,17 @@ bool PrintStartAnalyzer::detect_skip_conditional(const std::string& gcode,
 
         // Verify it's in an if statement context
         // Look for patterns like: {% if ... param ...
-        std::regex if_pattern(R"(\{%\s*if\s+.*)" + param_lower + R"(.*%\})", std::regex::icase);
-        if (std::regex_search(context, if_pattern)) {
+        helix::Regex if_pattern(R"(\{%\s*if\s+.*)" + param_lower + R"(.*%\})", helix::Regex::ICase);
+        if (helix::regex_search(context, if_pattern)) {
             out_param_name = param;
             spdlog::trace("[PrintStartAnalyzer] {} is controlled by {}", op_name, param);
             return true;
         }
 
         // Also check for variable assignment: {% set X = params.PARAM_...
-        std::regex set_pattern(R"(\{%\s*set\s+\w+\s*=\s*params\.)" + param_lower,
-                               std::regex::icase);
-        if (std::regex_search(context, set_pattern)) {
+        helix::Regex set_pattern(R"(\{%\s*set\s+\w+\s*=\s*params\.)" + param_lower,
+                                 helix::Regex::ICase);
+        if (helix::regex_search(context, set_pattern)) {
             out_param_name = param;
             spdlog::trace("[PrintStartAnalyzer] {} is controlled by params.{}", op_name, param);
             return true;
@@ -423,20 +421,15 @@ std::vector<std::string> PrintStartAnalyzer::extract_parameters(const std::strin
     //   params.EXTRUDER|default(...)
     //   {% set BED = params.BED|default(60) %}
 
-    std::regex params_pattern(R"(params\.([A-Z_][A-Z0-9_]*))", std::regex::icase);
+    helix::Regex params_pattern(R"(params\.([A-Z_][A-Z0-9_]*))", helix::Regex::ICase);
 
-    std::smatch match;
-    std::string::const_iterator search_start = gcode.cbegin();
-
-    while (std::regex_search(search_start, gcode.cend(), match, params_pattern)) {
-        std::string param = to_upper(match[1].str());
+    for (helix::RegexIterator it(gcode, params_pattern), end; it != end; ++it) {
+        std::string param = to_upper((*it)[1].str());
 
         // Avoid duplicates
         if (std::find(params.begin(), params.end(), param) == params.end()) {
             params.push_back(param);
         }
-
-        search_start = match.suffix().first;
     }
 
     return params;

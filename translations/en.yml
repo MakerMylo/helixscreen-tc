@@ -273,6 +273,7 @@ translations:
   Available Networks: Available Networks
   Available networks: Available networks
   Average: Average
+  Axis limits unknown: Axis limits unknown
   B: B
   BEACON: BEACON
   BETA: BETA
@@ -1659,6 +1660,7 @@ translations:
   Load the required filaments or start anyway?: Load the required filaments or start
     anyway?
   'Load, unload, and swap spools. View your multi-filament system at a glance, map colors to slots, and monitor runout sensors.': 'Load, unload, and swap spools. View your multi-filament system at a glance, map colors to slots, and monitor runout sensors.'
+  Load...: Load...
   Loaded: Loaded
   Loading: Loading
   Loading Bed Mesh...: Loading Bed Mesh...
@@ -3337,6 +3339,7 @@ translations:
   Unload from toolhead first: Unload from toolhead first
   Unload macro not configured: Unload macro not configured
   Unload the CFS filament before enabling bypass: Unload the CFS filament before enabling bypass
+  Unload...: Unload...
   Unloading: Unloading
   Unloading Start Speed: Unloading Start Speed
   Unloading before bypass...: Unloading before bypass...
@@ -3380,7 +3383,7 @@ translations:
   VM Peak: VM Peak
   VM Size: VM Size
   'Validating bed mesh...': 'Validating bed mesh...'
-  Value must be between {:.0f} and {:.0f}: Value must be between {:.0f} and {:.0f}
+  Value must be between {} and {}: Value must be between {} and {}
   Values must not be negative: Values must not be negative
   Velocity and acceleration limits: Velocity and acceleration limits
   Vendor: Vendor
@@ -3494,14 +3497,14 @@ translations:
   X and Y jog feedrate: X and Y jog feedrate
   X axis applied, but Y axis failed: X axis applied, but Y axis failed
   X axis done, starting Y...: X axis done, starting Y...
-  X jog blocked at bed edge: X jog blocked at bed edge
+  X is at its limit ({}mm): X is at its limit ({}mm)
   'X:': 'X:'
   XY: XY
   Y: Y
   Y Axis: Y Axis
   Y Offset: Y Offset
   Y axis limit reached: Y axis limit reached
-  Y jog blocked at bed edge: Y jog blocked at bed edge
+  Y is at its limit ({}mm): Y is at its limit ({}mm)
   'Y:': 'Y:'
   ? "YOU WIN!\nScore: {}\nTap to play again"
   : "YOU WIN!\nScore: {}\nTap to play again"
@@ -3527,7 +3530,7 @@ translations:
   Z Offset: Z Offset
   Z Range: Z Range
   Z Tilt Adjust...: Z Tilt Adjust...
-  Z jog blocked at axis limit: Z jog blocked at axis limit
+  Z is at its limit ({}mm): Z is at its limit ({}mm)
   Z jog feedrate: Z jog feedrate
   Z motor calibration failed: Z motor calibration failed
   Z probes for bed leveling and mesh generation: Z probes for bed leveling and mesh

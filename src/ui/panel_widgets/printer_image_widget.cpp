@@ -16,6 +16,7 @@
 #include "config.h"
 #include "display_settings_manager.h"
 #include "grid_layout.h"
+#include "helix_fs.h"
 #include "http_executor.h"
 #include "led/ui_led_control_overlay.h"
 #include "observer_factory.h"
@@ -39,7 +40,6 @@
 
 #include <cstdio>
 #include <cstring>
-#include <filesystem>
 
 // Subjects owned by PrinterImageWidget module — created before XML bindings resolve
 static lv_subject_t s_printer_type_subject;
@@ -491,10 +491,9 @@ bool PrinterImageWidget::try_set_exact_size_source(lv_obj_t* img) {
 
     const std::string cache_path = helix::get_cached_printer_image_path(current_source_path_, w, h);
 
-    // error_code overload: the ESP32 VFS reports missing paths as ENODATA,
-    // which the throwing exists(p) treats as an error, not "not found".
-    std::error_code cache_ec;
-    if (!std::filesystem::exists(cache_path, cache_ec))
+    // Any stat failure reads as "not found": the ESP32 VFS reports missing
+    // paths as ENODATA, which must not surface as an error.
+    if (!helix::fs::exists(cache_path))
         return false;
 
     const std::string lvgl_path = "A:" + cache_path;

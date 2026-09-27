@@ -5,7 +5,9 @@
 
 #include "border_radius_sizes.h"
 #include "data_root_resolver.h"
+#include "helix_fs.h"
 #include "json_utils.h"
+#include "text_io.h"
 
 #include <spdlog/spdlog.h>
 
@@ -13,16 +15,16 @@
 #include <cerrno>
 #include <cstring>
 #include <dirent.h>
-#include <filesystem>
-#include <fstream>
 #include <set>
-#include <sstream>
 #include <stdexcept>
 #include <sys/stat.h>
 
 #include "hv/json.hpp"
 
 namespace helix {
+
+namespace hfs = fs;
+namespace tio = text_io;
 
 // ============================================================================
 // ModePalette implementation (new dual-palette system)
@@ -330,14 +332,11 @@ ThemeData load_theme_from_file(const std::string& filepath_or_name) {
         }
     }
 
-    std::ifstream file(filepath);
-    if (!file.is_open()) {
+    auto buffer = tio::read_file(filepath);
+    if (!buffer) {
         spdlog::error("[ThemeLoader] Failed to open {}", filepath);
         return {};
     }
-
-    std::stringstream buffer;
-    buffer << file.rdbuf();
 
     // Extract filename from path
     filename = filepath;
@@ -346,7 +345,7 @@ ThemeData load_theme_from_file(const std::string& filepath_or_name) {
         filename = filepath.substr(slash + 1);
     }
 
-    return parse_theme_json(buffer.str(), filename);
+    return parse_theme_json(*buffer, filename);
 }
 
 /**
@@ -387,21 +386,18 @@ bool save_theme_to_file(const ThemeData& theme, const std::string& filepath) {
     // Ensure parent directory exists — writable config dir may not yet have
     // a themes/ subdir on a fresh HELIX_CONFIG_DIR baseline.
     {
-        std::error_code ec;
-        std::filesystem::path p(filepath);
-        if (p.has_parent_path()) {
-            std::filesystem::create_directories(p.parent_path(), ec);
+        std::string parent{hfs::parent_path(filepath)};
+        if (!parent.empty()) {
+            hfs::create_directories(parent);
         }
     }
 
     // Write with pretty formatting
-    std::ofstream file(filepath);
-    if (!file.is_open()) {
+    if (!tio::write_file(filepath, helix::json_util::safe_dump(json, 2))) {
         spdlog::error("[ThemeLoader] Failed to write {}", filepath);
         return false;
     }
 
-    file << helix::json_util::safe_dump(json, 2);
     return true;
 }
 

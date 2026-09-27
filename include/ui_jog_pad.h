@@ -10,7 +10,10 @@
 // Jog pad event callbacks
 // The jog callback returns whether a hold-to-repeat under way may keep
 // repeating this zone (false = the jog was refused or fully clamped).
-typedef bool (*jog_pad_jog_cb_t)(helix::JogDirection direction, float distance_mm, void* user_data);
+// is_repeat is false for the tap click and for the first jog of a hold
+// (a fresh press), true for every later hold tick.
+typedef bool (*jog_pad_jog_cb_t)(helix::JogDirection direction, float distance_mm, bool is_repeat,
+                                 void* user_data);
 typedef void (*jog_pad_home_cb_t)(void* user_data);
 
 /**
@@ -32,8 +35,8 @@ lv_obj_t* ui_jog_pad_create(lv_obj_t* parent);
  * Set jog callback (called when directional zone is clicked)
  *
  * @param obj Jog pad object
- * @param cb Callback function (direction, distance_mm, user_data); returns
- *           false to stop a hold-to-repeat in progress
+ * @param cb Callback function (direction, distance_mm, is_repeat, user_data);
+ *           returns false to stop a hold-to-repeat in progress
  * @param user_data Optional user data passed to callback
  */
 void ui_jog_pad_set_jog_callback(lv_obj_t* obj, jog_pad_jog_cb_t cb, void* user_data);

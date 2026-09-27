@@ -24,7 +24,6 @@
 #include <algorithm>
 #include <cstdlib>
 #include <memory>
-#include <numeric>
 #include <vector>
 
 namespace helix::settings {
@@ -83,6 +82,8 @@ void MaterialTempsOverlay::init_subjects() {
                               "material_edit_defaults", subjects_);
 
     UI_MANAGED_SUBJECT_INT(has_macro_subject_, 0, "material_has_macro", subjects_);
+
+    UI_MANAGED_SUBJECT_INT(shipped_subject_, 1, "material_edit_is_shipped", subjects_);
 
     subjects_initialized_ = true;
     spdlog::debug("[{}] Subjects initialized", get_name());
@@ -203,23 +204,25 @@ void MaterialTempsOverlay::populate_material_list() {
     helix::ui::safe_clean_children(list_view_);
 
     // Sort materials alphabetically by name
-    std::vector<size_t> indices(filament::MATERIAL_COUNT);
-    std::iota(indices.begin(), indices.end(), 0);
-    std::sort(indices.begin(), indices.end(), [](size_t a, size_t b) {
-        return strcasecmp(filament::MATERIALS[a].name, filament::MATERIALS[b].name) < 0;
-    });
+    const auto table = filament::materials();
+    std::vector<const filament::MaterialInfo*> sorted;
+    sorted.reserve(table->size());
+    for (const auto& mat : *table) {
+        sorted.push_back(&mat);
+    }
+    std::sort(sorted.begin(), sorted.end(),
+              [](const auto* a, const auto* b) { return strcasecmp(a->name, b->name) < 0; });
 
     auto& mgr = MaterialSettingsManager::instance();
 
-    for (size_t idx : indices) {
-        const auto& mat = filament::MATERIALS[idx];
+    for (const auto* entry : sorted) {
+        const auto& mat = *entry;
 
-        // Look up effective values (with overrides applied)
-        auto effective = filament::find_material(mat.name);
-        int nozzle_min = effective ? effective->nozzle_min : mat.nozzle_min;
-        int nozzle_max = effective ? effective->nozzle_max : mat.nozzle_max;
-        int bed_temp = effective ? effective->bed_temp : mat.bed_temp;
-        bool has_override = mgr.has_override(mat.name);
+        // The table rows already carry the user's overrides
+        int nozzle_min = mat.nozzle_min;
+        int nozzle_max = mat.nozzle_max;
+        int bed_temp = mat.bed_temp;
+        bool has_override = mgr.has_override(mat.name) && !mat.user_defined;
 
         // Material row
         auto* row = lv_obj_create(list_view_);
@@ -268,7 +271,7 @@ void MaterialTempsOverlay::populate_material_list() {
         lv_obj_remove_flag(temp_label, LV_OBJ_FLAG_CLICKABLE);
     }
 
-    spdlog::debug("[{}] Populated {} materials", get_name(), filament::MATERIAL_COUNT);
+    spdlog::debug("[{}] Populated {} materials", get_name(), sorted.size());
 }
 
 // ============================================================================
@@ -278,17 +281,15 @@ void MaterialTempsOverlay::populate_material_list() {
 void MaterialTempsOverlay::show_edit_view(const std::string& material_name) {
     editing_material_ = material_name;
 
-    // Get database defaults (from static array, NOT find_material which has overrides)
-    int default_nozzle_min = 0, default_nozzle_max = 0, default_bed = 0, default_chamber = 0;
-    for (const auto& mat : filament::MATERIALS) {
-        if (std::string_view(mat.name) == material_name) {
-            default_nozzle_min = mat.nozzle_min;
-            default_nozzle_max = mat.nozzle_max;
-            default_bed = mat.bed_temp;
-            default_chamber = mat.chamber_temp_c;
-            break;
-        }
-    }
+    // The shipped row is the default. A user-defined type has none, so its own
+    // values stand in and there is nothing to reset to.
+    auto shipped = filament::find_shipped_material(material_name);
+    auto base = shipped ? shipped : filament::find_material(material_name);
+    int default_nozzle_min = base ? base->nozzle_min : 0;
+    int default_nozzle_max = base ? base->nozzle_max : 0;
+    int default_bed = base ? base->bed_temp : 0;
+    int default_chamber = base ? base->chamber_temp_c : 0;
+    lv_subject_set_int(&shipped_subject_, shipped ? 1 : 0);
 
     // Get current effective values (with overrides if any)
     auto& mgr = MaterialSettingsManager::instance();
@@ -454,21 +455,18 @@ void MaterialTempsOverlay::handle_save() {
         return;
     }
 
-    // Get database defaults to compute sparse override
+    // Sparse against the shipped row. A user-defined type has no shipped row,
+    // so every value is written: they are its definition.
     filament::MaterialOverride ovr;
-    for (const auto& mat : filament::MATERIALS) {
-        if (std::string_view(mat.name) == editing_material_) {
-            if (nozzle_min != mat.nozzle_min)
-                ovr.nozzle_min = nozzle_min;
-            if (nozzle_max != mat.nozzle_max)
-                ovr.nozzle_max = nozzle_max;
-            if (bed_temp != mat.bed_temp)
-                ovr.bed_temp = bed_temp;
-            if (chamber_temp != mat.chamber_temp_c)
-                ovr.chamber_temp = chamber_temp;
-            break;
-        }
-    }
+    const auto shipped = filament::find_shipped_material(editing_material_);
+    if (!shipped || nozzle_min != shipped->nozzle_min)
+        ovr.nozzle_min = nozzle_min;
+    if (!shipped || nozzle_max != shipped->nozzle_max)
+        ovr.nozzle_max = nozzle_max;
+    if (!shipped || bed_temp != shipped->bed_temp)
+        ovr.bed_temp = bed_temp;
+    if (!shipped || chamber_temp != shipped->chamber_temp_c)
+        ovr.chamber_temp = chamber_temp;
 
     // Add macro override from dropdown selection
     if (macro_dropdown_) {

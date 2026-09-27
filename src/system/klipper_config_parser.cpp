@@ -2,10 +2,11 @@
 
 #include "klipper_config_parser.h"
 
+#include "text_io.h"
+
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
-#include <sstream>
 #include <stdexcept>
 
 std::string KlipperConfigParser::trim(const std::string& s) {
@@ -27,11 +28,9 @@ bool KlipperConfigParser::parse(const std::string& content) {
     }
 
     // Split content into lines
-    std::istringstream stream(content);
-    std::string line_str;
     std::vector<std::string> raw_lines;
-    while (std::getline(stream, line_str)) {
-        raw_lines.push_back(line_str);
+    for (std::string_view sv : helix::text_io::lines(content)) {
+        raw_lines.emplace_back(sv);
     }
 
     // If content ends with newline, getline won't produce a trailing empty entry,

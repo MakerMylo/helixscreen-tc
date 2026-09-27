@@ -11,7 +11,6 @@
 
 #include <chrono>
 #include <cmath>
-#include <sstream>
 #include <thread>
 
 using namespace helix;

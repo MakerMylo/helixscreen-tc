@@ -22,7 +22,6 @@
 #include <algorithm>
 #include <cctype>
 #include <cmath>
-#include <sstream>
 
 using namespace moonraker_internal;
 
@@ -454,8 +453,7 @@ void MoonrakerAPI::exclude_object(const std::string& object_name, SuccessCallbac
         return;
     }
 
-    std::ostringstream gcode;
-    gcode << "EXCLUDE_OBJECT NAME=" << object_name;
+    std::string gcode = "EXCLUDE_OBJECT NAME=" + object_name;
 
     spdlog::info("[Moonraker API] Excluding object: {}", object_name);
 
@@ -467,7 +465,7 @@ void MoonrakerAPI::exclude_object(const std::string& object_name, SuccessCallbac
     // truth comes from the `exclude_object.excluded_objects` status subscription. A 15-minute
     // ceiling still catches genuinely stuck requests without aborting legitimate pre-prints.
     constexpr uint32_t EXCLUDE_OBJECT_TIMEOUT_MS = 15 * 60 * 1000;
-    execute_gcode(gcode.str(), on_success, on_error, EXCLUDE_OBJECT_TIMEOUT_MS, /*silent=*/true);
+    execute_gcode(gcode, on_success, on_error, EXCLUDE_OBJECT_TIMEOUT_MS, /*silent=*/true);
 }
 
 void MoonrakerAPI::emergency_stop(SuccessCallback on_success, ErrorCallback on_error) {

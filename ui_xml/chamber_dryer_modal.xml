@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <component>
   <api>
-    <!-- "Heat the bed to 80°C", composed by ChamberDryerModal from the
+    <!-- "Heat the bed to 70°C", composed by ChamberDryerModal from the
          controller's bed-assist target. -->
     <prop name="bed_label" type="string" default=""/>
   </api>

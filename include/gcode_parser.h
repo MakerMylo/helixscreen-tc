@@ -421,9 +421,9 @@ struct ParsedGCodeFile {
  * Usage pattern:
  * @code
  *   GCodeParser parser;
- *   std::ifstream file("model.gcode");
+ *   helix::text_io::LineReader file("model.gcode");
  *   std::string line;
- *   while (std::getline(file, line)) {
+ *   while (file.next(line)) {
  *       parser.parse_line(line);
  *   }
  *   ParsedGCodeFile result = parser.finalize();

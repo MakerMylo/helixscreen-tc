@@ -239,6 +239,18 @@ class SettingsManager {
     /** @brief Set Z jog feedrate in mm/min (clamped 60-60000, persisted) */
     void set_jog_speed_z(int mm_per_min);
 
+    /** @brief Get whether the motion readout shows actual (live) position
+     *  (default false: commanded position) */
+    bool get_motion_show_actual_position() const;
+
+    /** @brief Set whether the motion readout shows actual (live) position (persisted) */
+    void set_motion_show_actual_position(bool show);
+
+    /** @brief Motion coordinate source subject (integer: 0=commanded, 1=actual) */
+    lv_subject_t* subject_motion_show_actual_position() {
+        return &motion_show_actual_position_subject_;
+    }
+
     // =========================================================================
     // JOG STEP DISTANCES (owned by SettingsManager — persisted per-printer)
     // =========================================================================
@@ -660,6 +672,7 @@ class SettingsManager {
     lv_subject_t led_enabled_subject_{};
     lv_subject_t z_movement_style_subject_{};
     lv_subject_t extrude_speed_subject_{};
+    lv_subject_t motion_show_actual_position_subject_{};
     lv_subject_t jog_speed_xy_subject_{};
     lv_subject_t jog_speed_z_subject_{};
     // Jog step distances in mm, [static_cast<int>(JogMode)][outer]. Cached

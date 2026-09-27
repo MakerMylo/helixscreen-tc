@@ -22,6 +22,7 @@
 #include "lvgl_ui_test_fixture.h" #include "lvgl/src/others/translation/lv_translation.h"
 #include "moonraker_api_mock.h"
 #include "moonraker_client_mock.h"
+#include "post_op_cooldown_manager.h"
 #include "printer_discovery.h"
 #include "printer_state.h"
 #include "spoolman_types.h" // SpoolInfo + apply_spool_to_slot (the picker-side writer)
@@ -799,6 +800,222 @@ TEST_CASE_METHOD(SnapmakerFixture,
     SnapmakerTestAccess::handle_status(backend, preload);
     // preload_finish leaves the in-progress action alone (does NOT become LOADING
     // and does NOT resolve to IDLE — only unload_finish/load_finish/idle do).
+    CHECK(backend.get_system_info().action == AmsAction::UNLOADING);
+}
+
+// The firmware sets an op's terminal and then, in the same reactor tick, the
+// channel's resting state (wait_insert with the spool out, preload_finish with
+// it in). Moonraker publishes only the last channel_state, so the terminal
+// survives only in channel_action_state, which resting states leave alone.
+namespace {
+json feed_with_action(int extruder_idx, const std::string& channel_state,
+                      const std::string& action_state, bool filament_detected = true) {
+    json frame = make_feed_status(extruder_idx, channel_state, filament_detected);
+    frame.begin().value().begin().value()["channel_action_state"] = action_state;
+    return frame;
+}
+} // namespace
+
+TEST_CASE_METHOD(SnapmakerFixture,
+                 "Snapmaker unload that settles in one frame ends on channel_action_state",
+                 "[ams][snapmaker][unload][action_state]") {
+    helix::test::RegisteredBackend<AmsBackendSnapmaker> backend_reg(nullptr, nullptr);
+    AmsBackendSnapmaker& backend = *backend_reg;
+
+    SnapmakerTestAccess::handle_status(backend,
+                                       feed_with_action(3, "unload_doing", "unload_doing"));
+    REQUIRE(backend.get_system_info().action == AmsAction::UNLOADING);
+    REQUIRE_FALSE(AmsState::instance().was_slot_recently_unloaded(3));
+
+    SECTION("spool out: wait_insert") {
+        SnapmakerTestAccess::handle_status(
+            backend, feed_with_action(3, "wait_insert", "unload_finish", /*detected=*/false));
+    }
+    SECTION("spool in: preload_finish") {
+        SnapmakerTestAccess::handle_status(backend,
+                                           feed_with_action(3, "preload_finish", "unload_finish"));
+    }
+
+    CHECK(backend.get_system_info().action == AmsAction::IDLE);
+    CHECK(backend.get_system_info().operation_detail.empty());
+    CHECK(AmsState::instance().was_slot_recently_unloaded(3));
+}
+
+TEST_CASE_METHOD(SnapmakerFixture,
+                 "Snapmaker a failed unload that settles in one frame raises the error",
+                 "[ams][snapmaker][unload][action_state]") {
+    helix::test::RegisteredBackend<AmsBackendSnapmaker> backend_reg(nullptr, nullptr);
+    AmsBackendSnapmaker& backend = *backend_reg;
+    SnapmakerTestAccess::set_current_slot(backend, 3);
+    SnapmakerTestAccess::set_current_tool(backend, 3);
+
+    SnapmakerTestAccess::handle_status(backend,
+                                       feed_with_action(3, "unload_doing", "unload_doing"));
+    REQUIRE(backend.get_system_info().action == AmsAction::UNLOADING);
+
+    SnapmakerTestAccess::handle_status(backend,
+                                       feed_with_action(3, "preload_finish", "unload_fail"));
+    CHECK(backend.get_system_info().action == AmsAction::ERROR);
+}
+
+TEST_CASE_METHOD(SnapmakerFixture,
+                 "Snapmaker an unload mid-heat at preload_finish keeps UNLOADING until it ends",
+                 "[ams][snapmaker][unload][action_state]") {
+    helix::test::RegisteredBackend<AmsBackendSnapmaker> backend_reg(nullptr, nullptr);
+    AmsBackendSnapmaker& backend = *backend_reg;
+
+    SnapmakerTestAccess::handle_status(backend,
+                                       feed_with_action(3, "unload_prepare", "unload_prepare"));
+    REQUIRE(backend.get_system_info().action == AmsAction::UNLOADING);
+
+    for (const char* step : {"unload_heating", "unload_heat_finish", "unload_doing"}) {
+        SnapmakerTestAccess::handle_status(backend, feed_with_action(3, "preload_finish", step));
+        INFO("channel_action_state=" << step);
+        CHECK(backend.get_system_info().action == AmsAction::UNLOADING);
+    }
+
+    SnapmakerTestAccess::handle_status(backend,
+                                       feed_with_action(3, "preload_finish", "unload_finish"));
+    CHECK(backend.get_system_info().action == AmsAction::IDLE);
+}
+
+TEST_CASE_METHOD(SnapmakerFixture,
+                 "Snapmaker a failed op from before startup raises nothing on the first frame",
+                 "[ams][snapmaker][action_state]") {
+    helix::test::RegisteredBackend<AmsBackendSnapmaker> backend_reg(nullptr, nullptr);
+    AmsBackendSnapmaker& backend = *backend_reg;
+    SnapmakerTestAccess::set_current_slot(backend, 3);
+    SnapmakerTestAccess::set_current_tool(backend, 3);
+
+    SnapmakerTestAccess::handle_status(backend, feed_with_action(3, "preload_finish", "load_fail"));
+    CHECK(backend.get_system_info().action != AmsAction::ERROR);
+}
+
+TEST_CASE_METHOD(SnapmakerFixture,
+                 "Snapmaker a terminal channel_state on the first frame fires no unload event",
+                 "[ams][snapmaker][unload][action_state]") {
+    helix::test::RegisteredBackend<AmsBackendSnapmaker> backend_reg(nullptr, nullptr);
+    AmsBackendSnapmaker& backend = *backend_reg;
+
+    SECTION("unload_finish left over from before startup") {
+        SnapmakerTestAccess::handle_status(backend,
+                                           feed_with_action(3, "unload_finish", "unload_finish"));
+        CHECK(backend.get_system_info().action == AmsAction::IDLE);
+        CHECK_FALSE(AmsState::instance().was_slot_recently_unloaded(3));
+
+        SECTION("a full frame repeating it is still not an unload") {
+            SnapmakerTestAccess::handle_status(
+                backend, feed_with_action(3, "unload_finish", "unload_finish"));
+            CHECK_FALSE(AmsState::instance().was_slot_recently_unloaded(3));
+        }
+        SECTION("a real unload afterwards still marks the slot") {
+            SnapmakerTestAccess::handle_status(backend,
+                                               feed_with_action(3, "unload_doing", "unload_doing"));
+            REQUIRE(backend.get_system_info().action == AmsAction::UNLOADING);
+            SnapmakerTestAccess::handle_status(
+                backend, feed_with_action(3, "unload_finish", "unload_finish"));
+            CHECK(backend.get_system_info().action == AmsAction::IDLE);
+            CHECK(AmsState::instance().was_slot_recently_unloaded(3));
+        }
+    }
+    SECTION("load_finish left over from before startup") {
+        SnapmakerTestAccess::handle_status(backend,
+                                           feed_with_action(3, "load_finish", "load_finish"));
+        CHECK(backend.get_system_info().action == AmsAction::IDLE);
+        CHECK_FALSE(AmsState::instance().was_slot_recently_unloaded(3));
+    }
+}
+
+TEST_CASE_METHOD(LVGLUITestFixture,
+                 "Snapmaker a stale terminal on another lane does not end the op",
+                 "[ams][snapmaker][action_state]") {
+    helix::test::RegisteredBackend<AmsBackendSnapmaker> backend_reg(nullptr, nullptr);
+    AmsBackendSnapmaker& backend = *backend_reg;
+    auto& cooldown = PostOpCooldownManager::instance();
+    cooldown.init();
+    cooldown.cancel();
+    helix::ui::UpdateQueue::instance().drain();
+    process_lvgl(10);
+    REQUIRE_FALSE(cooldown.has_pending_timer());
+
+    // One frame, two lanes: lane 1 mid-load, lane 4 resting at a terminal it
+    // reached before this backend started watching.
+    json frame = feed_with_action(0, "load_feeding", "load_feeding");
+    frame.merge_patch(feed_with_action(3, "unload_finish", "unload_finish"));
+    SnapmakerTestAccess::handle_status(backend, frame);
+    helix::ui::UpdateQueue::instance().drain();
+    process_lvgl(10);
+    CHECK(backend.get_system_info().action == AmsAction::LOADING);
+    CHECK_FALSE(cooldown.has_pending_timer());
+
+    SECTION("the load's own terminal still ends it and arms the cooldown") {
+        SnapmakerTestAccess::handle_status(backend,
+                                           feed_with_action(0, "load_finish", "load_finish"));
+        helix::ui::UpdateQueue::instance().drain();
+        process_lvgl(10);
+        CHECK(backend.get_system_info().action == AmsAction::IDLE);
+        CHECK(cooldown.has_pending_timer());
+    }
+    SECTION("a real unload on lane 4 still ends and arms the cooldown") {
+        SnapmakerTestAccess::handle_status(backend,
+                                           feed_with_action(0, "load_finish", "load_finish"));
+        cooldown.cancel();
+        SnapmakerTestAccess::handle_status(backend,
+                                           feed_with_action(3, "unload_doing", "unload_doing"));
+        REQUIRE(backend.get_system_info().action == AmsAction::UNLOADING);
+        SnapmakerTestAccess::handle_status(backend,
+                                           feed_with_action(3, "unload_finish", "unload_finish"));
+        helix::ui::UpdateQueue::instance().drain();
+        process_lvgl(10);
+        CHECK(backend.get_system_info().action == AmsAction::IDLE);
+        CHECK(cooldown.has_pending_timer());
+    }
+    cooldown.cancel();
+    helix::ui::UpdateQueue::instance().drain();
+}
+
+TEST_CASE_METHOD(SnapmakerFixture, "Snapmaker a spool-insert preload ends at preload_finish",
+                 "[ams][snapmaker][action_state]") {
+    helix::test::RegisteredBackend<AmsBackendSnapmaker> backend_reg(nullptr, nullptr);
+    AmsBackendSnapmaker& backend = *backend_reg;
+
+    SnapmakerTestAccess::handle_status(backend, make_feed_status(1, "preload_prepare"));
+    REQUIRE(backend.get_system_info().action == AmsAction::LOADING);
+
+    SECTION("every step reported") {
+        SnapmakerTestAccess::handle_status(backend, make_feed_status(1, "preload_feeding"));
+        REQUIRE(backend.get_system_info().action == AmsAction::LOADING);
+    }
+    SECTION("preload_finish arrives straight from preload_prepare") {}
+
+    SnapmakerTestAccess::handle_status(backend, make_feed_status(1, "preload_finish"));
+    CHECK(backend.get_system_info().action == AmsAction::IDLE);
+}
+
+TEST_CASE_METHOD(SnapmakerFixture,
+                 "Snapmaker a previous op's channel_action_state never ends a new one",
+                 "[ams][snapmaker][unload][action_state]") {
+    helix::test::RegisteredBackend<AmsBackendSnapmaker> backend_reg(nullptr, nullptr);
+    AmsBackendSnapmaker& backend = *backend_reg;
+
+    // At rest after an earlier unload: the firmware still reports its terminal.
+    SnapmakerTestAccess::handle_status(backend,
+                                       feed_with_action(3, "preload_finish", "unload_finish"));
+    REQUIRE(backend.get_system_info().action == AmsAction::IDLE);
+    CHECK_FALSE(AmsState::instance().was_slot_recently_unloaded(3));
+
+    // A new unload starts; this frame omits the unchanged channel_action_state.
+    SnapmakerTestAccess::handle_status(backend, make_feed_status(3, "unload_heating"));
+    REQUIRE(backend.get_system_info().action == AmsAction::UNLOADING);
+
+    SECTION("a delta omitting channel_action_state") {
+        SnapmakerTestAccess::handle_status(backend, make_feed_status(3, "preload_finish"));
+    }
+    SECTION("a full frame repeating the held channel_action_state") {
+        SnapmakerTestAccess::handle_status(backend,
+                                           feed_with_action(3, "preload_finish", "unload_finish"));
+    }
+
     CHECK(backend.get_system_info().action == AmsAction::UNLOADING);
 }
 

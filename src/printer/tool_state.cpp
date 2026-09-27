@@ -16,6 +16,7 @@
 #include "ams_state.h"
 #include "data_root_resolver.h"
 #include "display_numbering.h"
+#include "helix_fs.h"
 #include "i_moonraker_api.h"
 #include "i_moonraker_client.h"
 #include "json_utils.h"
@@ -24,6 +25,8 @@
 #include "printer_discovery.h"
 #include "state/subject_macros.h"
 #include "static_subject_registry.h"
+#include "system/helix_paths.h"
+#include "text_io.h"
 #include "tool_offsets.h"
 
 #include <spdlog/fmt/fmt.h>
@@ -35,10 +38,10 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
-#include <filesystem>
-#include <fstream>
 
 namespace helix {
+
+namespace hfs = helix::fs;
 
 namespace {
 
@@ -980,88 +983,47 @@ void ToolState::apply_spool_assignments(const nlohmann::json& data) {
 }
 
 void ToolState::save_spool_json() const {
-    namespace fs = std::filesystem;
-
     auto json_data = spool_assignments_to_json();
-    auto path = fs::path(config_dir_) / SPOOL_JSON_FILENAME;
+    std::string path = hfs::join_path(config_dir_, SPOOL_JSON_FILENAME);
 
     try {
         // Ensure directory exists
-        fs::create_directories(config_dir_);
+        hfs::create_directories(config_dir_);
 
-        // Resolve symlinks so the atomic rename below targets the real file rather
-        // than replacing the link. The installer symlinks this file out to
-        // printer_data (HELIX_USER_CONFIG_FILES), and that link is the only thing
-        // keeping it alive through Moonraker's update, which rmtree()s the install
-        // dir. rename(2) onto a symlink replaces the symlink itself, so without
-        // this the first save silently strands the file in the doomed directory.
-        // Mirrors Config::save().
-        {
-            std::error_code ec;
-            if (fs::is_symlink(path, ec)) {
-                auto real = fs::canonical(path, ec);
-                if (!ec) {
-                    spdlog::debug("[ToolState] Resolved symlink {} -> {}", path.string(),
-                                  real.string());
-                    path = real;
-                }
-            }
-        }
+        // The installer links this file out to printer_data; rename onto the target.
+        path = helix::paths::write_target(path);
 
         // Atomic save: write to temp file, then rename to avoid partial writes on crash/power loss
-        auto tmp_path = path;
-        tmp_path += ".tmp";
-        {
-            std::ofstream ofs(tmp_path);
-            if (!ofs.is_open()) {
-                spdlog::error("[ToolState] Failed to open {} for writing: {}", tmp_path.string(),
-                              strerror(errno));
-                std::remove(tmp_path.c_str());
-                return;
-            }
-            ofs << helix::json_util::safe_dump(json_data, 2);
-            ofs.flush();
-            if (!ofs.good()) {
-                spdlog::error("[ToolState] Failed to write spool JSON to {}: {}", tmp_path.string(),
-                              strerror(errno));
-                std::remove(tmp_path.c_str());
-                return;
-            }
-        }
-
-        if (std::rename(tmp_path.c_str(), path.c_str()) != 0) {
-            spdlog::error("[ToolState] Failed to rename '{}' to '{}': {}", tmp_path.string(),
-                          path.string(), strerror(errno));
-            std::remove(tmp_path.c_str());
+        if (!helix::text_io::write_file_atomic(path, helix::json_util::safe_dump(json_data, 2))) {
+            spdlog::error("[ToolState] Failed to write spool JSON to {}: {}", path,
+                          strerror(errno));
             return;
         }
 
-        spdlog::debug("[ToolState] Saved spool assignments to {}", path.string());
+        spdlog::debug("[ToolState] Saved spool assignments to {}", path);
     } catch (const std::exception& e) {
         spdlog::warn("[ToolState] Error saving spool JSON: {}", e.what());
     }
 }
 
 bool ToolState::load_spool_json() {
-    namespace fs = std::filesystem;
+    std::string path = hfs::join_path(config_dir_, SPOOL_JSON_FILENAME);
 
-    auto path = fs::path(config_dir_) / SPOOL_JSON_FILENAME;
-
-    if (!fs::exists(path)) {
-        spdlog::debug("[ToolState] No spool JSON file at {}", path.string());
+    if (!hfs::exists(path)) {
+        spdlog::debug("[ToolState] No spool JSON file at {}", path);
         return false;
     }
 
     try {
-        std::ifstream ifs(path);
-        if (!ifs.is_open()) {
-            spdlog::warn("[ToolState] Failed to open {}", path.string());
+        auto text = helix::text_io::read_file(path);
+        if (!text) {
+            spdlog::warn("[ToolState] Failed to open {}", path);
             return false;
         }
 
-        auto data = nlohmann::json::parse(ifs);
+        auto data = nlohmann::json::parse(*text);
         apply_spool_assignments(data);
-        spdlog::info("[ToolState] Loaded spool assignments from {}", path.string());
+        spdlog::info("[ToolState] Loaded spool assignments from {}", path);
         return true;
     } catch (const std::exception& e) {
         spdlog::warn("[ToolState] Error loading spool JSON: {}", e.what());

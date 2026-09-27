@@ -5,10 +5,12 @@
 
 #include "gcode_color_metadata.h"
 #include "operation_patterns.h"
+#include "text_io.h"
 
 #include <algorithm>
+#include <cstdint>
+#include <cstdio>
 #include <cstdlib>
-#include <fstream>
 
 namespace helix::gcode {
 
@@ -163,11 +165,12 @@ std::string read_file_tail(const std::string& path, size_t window) {
         return {};
     }
 
-    std::ifstream f(path, std::ios::binary | std::ios::ate);
-    if (!f) {
+    namespace tio = helix::text_io;
+    tio::File f = tio::open_file(path, "rb");
+    if (!f || !tio::seek(f.get(), 0, SEEK_END)) {
         return {};
     }
-    const std::streampos end_pos = f.tellg();
+    const std::int64_t end_pos = tio::tell(f.get()).value_or(0);
     if (end_pos <= 0) {
         return {};
     }
@@ -176,17 +179,15 @@ std::string read_file_tail(const std::string& path, size_t window) {
     const auto want = static_cast<uint64_t>(window);
     const uint64_t take = std::min(want, size);
 
-    f.seekg(static_cast<std::streamoff>(size - take), std::ios::beg);
-    if (!f) {
+    if (!tio::seek(f.get(), static_cast<std::int64_t>(size - take), SEEK_SET)) {
         return {};
     }
 
     std::string tail;
     tail.resize(static_cast<size_t>(take));
-    f.read(tail.data(), static_cast<std::streamsize>(take));
     // A short read is still usable — the footer parser scans whatever lines it
     // is given — but a read that produced nothing is a failure, not an answer.
-    tail.resize(static_cast<size_t>(f.gcount()));
+    tail.resize(std::fread(tail.data(), 1, tail.size(), f.get()));
     return tail;
 }
 

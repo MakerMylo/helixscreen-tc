@@ -8,6 +8,7 @@
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
+#include <array>
 #include <lvgl.h>
 
 // Module-level subject storage — kept out of the header so lock_manager.h
@@ -94,7 +95,17 @@ void LockManager::set_auto_lock(bool enabled) {
 }
 
 std::string LockManager::hash_pin(const std::string& pin) const {
-    return picosha2::hash256_hex_string(pin);
+    // picosha2's hex helpers format through an ostringstream, which links std::locale.
+    std::array<unsigned char, picosha2::k_digest_size> digest{};
+    picosha2::hash256(pin.begin(), pin.end(), digest.begin(), digest.end());
+    static constexpr char kHex[] = "0123456789abcdef";
+    std::string hex;
+    hex.reserve(digest.size() * 2);
+    for (unsigned char b : digest) {
+        hex += kHex[b >> 4];
+        hex += kHex[b & 0xF];
+    }
+    return hex;
 }
 
 void LockManager::load_from_config() {

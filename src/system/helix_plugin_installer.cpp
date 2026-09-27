@@ -4,6 +4,7 @@
 #include "helix_plugin_installer.h"
 
 #include "config.h"
+#include "helix_fs.h"
 #include "host_identity.h"
 #include "i_moonraker_api.h"
 #include "lvgl/src/others/translation/lv_translation.h"
@@ -15,7 +16,7 @@
 #include <chrono>
 #include <csignal>
 #include <cstdlib>
-#include <filesystem>
+#include <cstring>
 #include <sys/wait.h>
 #include <thread>
 #include <unistd.h>
@@ -23,6 +24,8 @@
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
 #endif
+
+namespace hfs = helix::fs;
 
 namespace helix {
 
@@ -309,8 +312,7 @@ std::string HelixPluginInstaller::get_install_script_path() const {
     char path[1024];
     uint32_t size = sizeof(path);
     if (_NSGetExecutablePath(path, &size) == 0) {
-        std::filesystem::path exe_path(path);
-        exe_dir = exe_path.parent_path().string();
+        exe_dir = std::string(hfs::parent_path(path));
     }
 #else
     // Linux: read /proc/self/exe
@@ -318,8 +320,7 @@ std::string HelixPluginInstaller::get_install_script_path() const {
     ssize_t len = readlink("/proc/self/exe", path, sizeof(path) - 1);
     if (len != -1) {
         path[len] = '\0';
-        std::filesystem::path exe_path(path);
-        exe_dir = exe_path.parent_path().string();
+        exe_dir = std::string(hfs::parent_path(path));
     }
 #endif
 
@@ -336,36 +337,33 @@ std::string HelixPluginInstaller::get_install_script_path() const {
         "/usr/share/helix/moonraker-plugin/install.sh"};
 
     for (const auto& candidate : search_paths) {
-        try {
-            std::filesystem::path p(candidate);
-            if (std::filesystem::exists(p)) {
-                // canonical() resolves symlinks and normalizes the path
-                // It can throw filesystem_error if the path doesn't exist or is inaccessible
-                auto canonical_path = std::filesystem::canonical(p);
-
-                // Security check: ensure the resolved path still points to install.sh
-                // This prevents symlink attacks where a malicious symlink points elsewhere
-                if (canonical_path.filename() != "install.sh") {
-                    spdlog::warn("[PluginInstaller] Skipping {} - resolved to unexpected file: {}",
-                                 candidate, canonical_path.string());
-                    continue;
-                }
-
-                // Check if script is executable
-                auto status = std::filesystem::status(canonical_path);
-                auto perms = status.permissions();
-                if ((perms & std::filesystem::perms::owner_exec) == std::filesystem::perms::none) {
-                    spdlog::warn("[PluginInstaller] Script not executable: {}",
-                                 canonical_path.string());
-                    continue;
-                }
-
-                return canonical_path.string();
-            }
-        } catch (const std::filesystem::filesystem_error& e) {
-            spdlog::warn("[PluginInstaller] Failed to resolve {}: {}", candidate, e.what());
+        if (!hfs::exists(candidate)) {
             continue;
         }
+        // canonical() resolves symlinks and normalizes the path; nullopt when
+        // the path is inaccessible
+        auto canonical_path = hfs::canonical(candidate);
+        if (!canonical_path) {
+            spdlog::warn("[PluginInstaller] Failed to resolve {}: {}", candidate,
+                         std::strerror(errno));
+            continue;
+        }
+
+        // Security check: ensure the resolved path still points to install.sh
+        // This prevents symlink attacks where a malicious symlink points elsewhere
+        if (hfs::filename(*canonical_path) != "install.sh") {
+            spdlog::warn("[PluginInstaller] Skipping {} - resolved to unexpected file: {}",
+                         candidate, *canonical_path);
+            continue;
+        }
+
+        // Check if script is executable
+        if (!hfs::is_owner_executable(*canonical_path)) {
+            spdlog::warn("[PluginInstaller] Script not executable: {}", *canonical_path);
+            continue;
+        }
+
+        return *canonical_path;
     }
 
     return "";

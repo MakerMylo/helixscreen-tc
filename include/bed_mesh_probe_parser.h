@@ -2,10 +2,11 @@
 
 #pragma once
 
+#include "helix_regex.h"
+
 #include <algorithm>
 #include <cmath>
 #include <optional>
-#include <regex>
 #include <string>
 #include <vector>
 
@@ -40,11 +41,11 @@ struct ProbeProgress {
 inline std::optional<ProbeProgress> parse_probe_progress(const std::string& line) {
     // Static regex — handles "Probing point 5/25", "Probe point 5 of 25",
     // "Probing mesh point 5/25"
-    static const std::regex probe_regex(
+    static const helix::Regex probe_regex(
         R"(Prob(?:ing (?:mesh )?point|e point) (\d+)[/\s]+(?:of\s+)?(\d+))");
 
-    std::smatch match;
-    if (std::regex_search(line, match, probe_regex) && match.size() == 3) {
+    helix::RegexMatch match;
+    if (helix::regex_search(line, match, probe_regex) && match.size() == 3) {
         try {
             return ProbeProgress{std::stoi(match[1].str()), std::stoi(match[2].str())};
         } catch (...) {
@@ -112,9 +113,9 @@ struct ProbePosition {
  * @return Total probe count (N * M) or std::nullopt
  */
 inline std::optional<int> parse_adapted_probe_count(const std::string& line) {
-    static const std::regex adapt_regex(R"(Adapted probe count:\s*(\d+)\s*,\s*(\d+))");
-    std::smatch match;
-    if (std::regex_search(line, match, adapt_regex) && match.size() == 3) {
+    static const helix::Regex adapt_regex(R"(Adapted probe count:\s*(\d+)\s*,\s*(\d+))");
+    helix::RegexMatch match;
+    if (helix::regex_search(line, match, adapt_regex) && match.size() == 3) {
         try {
             int x = std::stoi(match[1].str());
             int y = std::stoi(match[2].str());
@@ -130,10 +131,10 @@ inline std::optional<int> parse_adapted_probe_count(const std::string& line) {
 
 inline std::optional<ProbePosition> parse_probe_position(const std::string& line) {
     // Matches "probe at x: 181.474, y: 55.048 is z=..." and "probe at 150.0,150.0 is z=..."
-    static const std::regex pos_regex(
+    static const helix::Regex pos_regex(
         R"(probe at (?:x:\s*)?(-?\d+(?:\.\d+)?)[,\s]+(?:y:\s*)?(-?\d+(?:\.\d+)?)\s+is z=)");
-    std::smatch match;
-    if (std::regex_search(line, match, pos_regex) && match.size() == 3) {
+    helix::RegexMatch match;
+    if (helix::regex_search(line, match, pos_regex) && match.size() == 3) {
         try {
             return ProbePosition{std::stod(match[1].str()), std::stod(match[2].str())};
         } catch (...) {

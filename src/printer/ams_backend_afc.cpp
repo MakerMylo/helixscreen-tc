@@ -33,7 +33,6 @@
 #include <cmath>
 #include <cstring>
 #include <optional>
-#include <sstream>
 #include <vector>
 
 namespace helix {
@@ -4877,11 +4876,10 @@ AmsError AmsBackendAfc::do_load_filament(int slot_index) {
     // unit: CHANGE_TOOL resolves the lane's own extruder object
     // (cur_lane.extruder_obj) and loads through it, so naming the LANE is
     // sufficient and needs no per-tool selection verb.
-    std::ostringstream cmd;
-    cmd << "CHANGE_TOOL LANE=" << lane_name;
+    std::string cmd = "CHANGE_TOOL LANE=" + lane_name;
 
     spdlog::info("[AMS AFC] Loading from lane {} (slot {})", lane_name, slot_index);
-    return dispatch_operation(cmd.str(), AmsAction::LOADING);
+    return dispatch_operation(cmd, AmsAction::LOADING);
 }
 
 AmsError AmsBackendAfc::do_unload_filament(int slot_index) {
@@ -5797,11 +5795,10 @@ AmsError AmsBackendAfc::set_tool_mapping_impl(int tool_number, int slot_index) {
     // AFC may use a G-code command to set tool mapping
     // This varies by AFC version/configuration
     if (!lane_name.empty()) {
-        std::ostringstream cmd;
-        cmd << "SET_MAP LANE=" << lane_name << " MAP=T" << tool_number;
+        std::string cmd = fmt::format("SET_MAP LANE={} MAP=T{}", lane_name, tool_number);
         spdlog::info("[AMS AFC] Mapping T{} to lane {} (slot {})", tool_number, lane_name,
                      slot_index);
-        return execute_gcode(cmd.str());
+        return execute_gcode(cmd);
     }
 
     return AmsErrorHelper::success();

@@ -514,6 +514,26 @@ TEST_CASE_METHOD(BatchFixture, "A finished batch leaves no progress line behind"
     }
 }
 
+TEST_CASE_METHOD(BatchFixture, "A batch head whose unload settles in one frame still verifies",
+                 "[snapmaker][batch][action_state]") {
+    helix::SnapmakerTestAccess::set_batch_plan(backend(), {2, 3}, /*load=*/false, "Unload", "of");
+
+    auto frame = [](const char* state, const char* action_state, bool detected) {
+        return nlohmann::json{{"filament_feed right",
+                               {{"extruder2",
+                                 {{"channel_state", state},
+                                  {"channel_action_state", action_state},
+                                  {"filament_detected", detected}}}}}}
+            .dump();
+    };
+    feed_status(frame("unload_doing", "unload_doing", true));
+    REQUIRE(backend().batch_plan().cursor == 0);
+
+    feed_status(frame("wait_insert", "unload_finish", false));
+    CHECK(backend().batch_plan().cursor == 1);
+    CHECK(backend().batch_plan().active);
+}
+
 // ============================================================================
 // slot_op_eligibility — the direction-dependent refusal, from channel state
 // ============================================================================
@@ -888,8 +908,15 @@ TEST_CASE_METHOD(BatchModalFixture,
         }
     };
 
-    lv_obj_t* unload_btn = lv_obj_find_by_name(sidebar_root, "btn_unload");
+    // A batch backend's Unload is the picker button; the active-head one hides.
+    lv_obj_t* active_unload_btn = lv_obj_find_by_name(sidebar_root, "btn_unload");
+    REQUIRE(active_unload_btn != nullptr);
+    CHECK(lv_subject_get_int(lv_xml_get_subject(nullptr, "ams_is_filament_system")) == 1);
+    CHECK(lv_obj_has_flag(active_unload_btn, LV_OBJ_FLAG_HIDDEN));
+
+    lv_obj_t* unload_btn = lv_obj_find_by_name(sidebar_root, "btn_batch_unload");
     REQUIRE(unload_btn != nullptr);
+    CHECK_FALSE(lv_obj_has_flag(unload_btn, LV_OBJ_FLAG_HIDDEN));
     tap_expects_no_picker(unload_btn);
 
     lv_obj_t* load_btn = lv_obj_find_by_name(sidebar_root, "btn_batch_load");

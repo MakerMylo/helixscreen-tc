@@ -9,9 +9,8 @@
 #include "prerendered_images.h"
 #include "printer_detector.h"
 
-#include <filesystem>
 #include <string>
-#include <system_error>
+#include <sys/stat.h>
 
 /**
  * @file printer_images.h
@@ -92,11 +91,12 @@ inline bool image_file_exists(const std::string& lvgl_path) {
     if (fs_path.empty())
         return false;
     // Resolved against the asset root so the /assets mount is applied on
-    // firmware; identity on desktop. error_code overload, never the throwing
-    // one: the ESP32 VFS reports a missing path as ENODATA, which the throwing
-    // exists() turns into an exception rather than a false.
-    std::error_code ec;
-    return std::filesystem::exists(helix::asset_path(fs_path), ec);
+    // firmware; identity on desktop. A plain stat, not helix::fs: this header
+    // is included too widely to bring that namespace into files that alias
+    // std::filesystem as `fs`. Any stat failure is "absent" (the ESP32 VFS
+    // reports a missing path as ENODATA).
+    struct stat st {};
+    return ::stat(helix::asset_path(fs_path).c_str(), &st) == 0;
 }
 
 /**

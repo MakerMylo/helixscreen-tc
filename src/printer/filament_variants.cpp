@@ -3,14 +3,13 @@
 #include "filament_variants.h"
 
 #include "filament_database.h"
+#include "text_io.h"
 
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <cctype>
-#include <fstream>
 #include <mutex>
-#include <sstream>
 
 #include "hv/json.hpp"
 
@@ -38,7 +37,7 @@ struct VariantAffix {
 /// Known variant affixes, matched case-insensitively and ONLY when delimited by
 /// a '-', '_' or ' ' separator. Derived from the type strings actually present
 /// in assets/filaments.json (CF, GF, AERO), the variant rows in
-/// filament_database.h MATERIALS[] (Silk/Matte/Wood/Marble/Metal/Glow), and the
+/// the material-type table (Silk/Matte/Wood/Marble/Metal/Glow), and the
 /// prefixed product names the catalog carries (HT-PLA-GF, PLA-HS, PETG+HS,
 /// PLA-LW, Bambu PETG HF).
 ///
@@ -345,7 +344,7 @@ class OrcaTableSax : public nlohmann::json_sax<nlohmann::json> {
 };
 
 /**
- * @brief Read both Orca tables out of a JSON stream
+ * @brief Read both Orca tables out of JSON text
  *
  * @param[out] error Set only when the document is malformed; a well-formed
  *                   document whose root is not an object returns false with
@@ -353,10 +352,10 @@ class OrcaTableSax : public nlohmann::json_sax<nlohmann::json> {
  *                   apart from "wrong shape" (skip quietly).
  * @return true when the tables were extracted from an object root
  */
-bool read_orca_tables(std::istream& in, std::set<std::string>& types,
+bool read_orca_tables(const std::string& text, std::set<std::string>& types,
                       std::map<std::string, std::string>& overrides, std::string& error) {
     OrcaTableSax sax;
-    if (!nlohmann::json::sax_parse(in, &sax)) {
+    if (!nlohmann::json::sax_parse(text, &sax)) {
         error = sax.error;
         return false;
     }
@@ -374,13 +373,13 @@ void load_orca_tables_locked() {
         return;
     g_orca_loaded = true; // one attempt; a missing asset must not retry per call
     for (const char* path : ORCA_TABLE_PATHS) {
-        std::ifstream f(path);
-        if (!f.is_open())
+        const auto text = helix::text_io::read_file(path);
+        if (!text)
             continue;
         std::set<std::string> types;
         std::map<std::string, std::string> overrides;
         std::string error;
-        if (!read_orca_tables(f, types, overrides, error)) {
+        if (!read_orca_tables(*text, types, overrides, error)) {
             if (!error.empty()) {
                 spdlog::warn("[filament] Orca table parse failed {}: {}", path, error);
             }
@@ -485,8 +484,7 @@ bool FilamentVariantsTestAccess::parse_orca_tables(const std::string& json_text,
                                                    std::set<std::string>& library_types,
                                                    std::map<std::string, std::string>& overrides,
                                                    std::string& error) {
-    std::istringstream in(json_text);
-    return read_orca_tables(in, library_types, overrides, error);
+    return read_orca_tables(json_text, library_types, overrides, error);
 }
 
 void FilamentVariantsTestAccess::set_orca_tables(std::set<std::string> library_types,

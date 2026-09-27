@@ -16,8 +16,6 @@
 #include <spdlog/spdlog.h>
 
 #include <chrono>
-#include <iomanip>
-#include <sstream>
 
 #ifdef __GLIBC__
 #include <malloc.h> // malloc_trim() after dropping the history DOM

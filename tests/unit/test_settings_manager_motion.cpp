@@ -154,3 +154,23 @@ TEST_CASE_METHOD(LoadClampFixture, "Out-of-range motion values load clamped", "[
     CHECK(sm.get_jog_speed_xy() == 60);
     CHECK(sm.get_jog_speed_z() == 60000);
 }
+
+TEST_CASE_METHOD(HelixTestFixture, "Coordinate source defaults to commanded and round-trips",
+                 "[settings_motion]") {
+    auto& s = helix::SettingsManager::instance();
+    s.init_subjects();
+    REQUIRE(s.get_motion_show_actual_position() == false);
+
+    s.set_motion_show_actual_position(true);
+    REQUIRE(s.get_motion_show_actual_position() == true);
+    REQUIRE(lv_subject_get_int(s.subject_motion_show_actual_position()) == 1);
+
+    // Persisted beside the jog settings in the per-printer motion section.
+    auto* cfg = helix::Config::get_instance();
+    REQUIRE(cfg != nullptr);
+    REQUIRE(cfg->get<bool>(cfg->df() + "motion/show_actual_position", false) == true);
+
+    s.set_motion_show_actual_position(false);
+    REQUIRE(s.get_motion_show_actual_position() == false);
+    REQUIRE(cfg->get<bool>(cfg->df() + "motion/show_actual_position", true) == false);
+}

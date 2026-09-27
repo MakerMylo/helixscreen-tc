@@ -101,7 +101,7 @@ A Panda Breath on its **stock firmware** can also dry filament, and HelixScreen 
 
 While a run is going the card shows the chamber temperature next to the drying target, and the time left, with a **Stop** button. On its own the heater often cannot bring a whole enclosure up to the target, especially with the bed off, so a chamber that levels off below the target is expected. The run still ends on the heater's own timer.
 
-**Heat the bed too** (on by default when your printer has a heated bed) heats the bed to 80°C for the length of the run, which helps the chamber get warmer. HelixScreen turns the bed back off when the run ends, whether it finishes, you tap **Stop**, or the heater stops it itself. If you have set a different bed temperature in the meantime, or a print has started, the bed is left alone.
+**Heat the bed too** (on by default when your printer has a heated bed) heats the bed to 70°C for the length of the run, which helps the chamber get warmer. Do not leave plastic spools sitting on a hot bed. HelixScreen turns the bed back off when the run ends, whether it finishes, you tap **Stop**, or the heater stops it itself. If you have set a different bed temperature in the meantime, or a print has started, the bed is left alone.
 
 You cannot start a drying run while a print is running: drying takes over the chamber heater. DragonBreath firmware has no drying control in Klipper, so on DragonBreath you start drying from the unit itself.
 

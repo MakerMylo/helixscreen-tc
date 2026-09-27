@@ -284,6 +284,7 @@ translations:
   Available Networks: Redes Disponíveis
   Available networks: Redes disponíveis
   Average: Média
+  Axis limits unknown: Limites do eixo desconhecidos
   B: B
   BEACON: BEACON
   BETA: BETA
@@ -1704,6 +1705,7 @@ translations:
   Load the required filaments or start anyway?: Carregar os filamentos necessários
     ou iniciar mesmo assim?
   'Load, unload, and swap spools. View your multi-filament system at a glance, map colors to slots, and monitor runout sensors.': 'Carregue, descarregue e troque carretéis. Visualize seu sistema de múltiplos filamentos rapidamente, mapeie cores para slots e monitore sensores de fim de filamento.'
+  Load...: Carregar...
   Loaded: Carregado
   Loading: Carregando
   Loading Bed Mesh...: Carregando malha da mesa...
@@ -3417,6 +3419,7 @@ translations:
   Unload from toolhead first: 'Descarregue primeiro do cabeçote'
   Unload macro not configured: Macro de descarga não configurado
   Unload the CFS filament before enabling bypass: 'Descarregue o filamento do CFS antes de ativar o bypass'
+  Unload...: Descarregar...
   Unloading: Descarregando
   Unloading Start Speed: 'Velocidade inicial de descarregamento'
   Unloading before bypass...: Descarregando antes do bypass...
@@ -3461,7 +3464,7 @@ translations:
   VM Peak: Pico de VM
   VM Size: Tamanho de VM
   Validating bed mesh...: Validando malha da mesa...
-  Value must be between {:.0f} and {:.0f}: O valor deve estar entre {:.0f} e {:.0f}
+  Value must be between {} and {}: O valor deve estar entre {} e {}
   Values must not be negative: Os valores não podem ser negativos
   Velocity and acceleration limits: Limites de velocidade e aceleração
   Vendor: Fabricante
@@ -3576,14 +3579,14 @@ translations:
   X and Y jog feedrate: Velocidade de movimento dos eixos X e Y
   X axis applied, but Y axis failed: Eixo X aplicado, mas eixo Y falhou
   X axis done, starting Y...: 'Eixo X concluído, iniciando Y...'
-  X jog blocked at bed edge: Movimento X bloqueado na borda da mesa
+  X is at its limit ({}mm): X está no seu limite ({}mm)
   'X:': 'X:'
   XY: XY
   Y: Y
   Y Axis: Eixo Y
   Y Offset: Offset Y
   Y axis limit reached: Limite do eixo Y alcançado
-  Y jog blocked at bed edge: Movimento Y bloqueado na borda da mesa
+  Y is at its limit ({}mm): Y está no seu limite ({}mm)
   'Y:': 'Y:'
   ? "YOU WIN!\nScore: {}\nTap to play again"
   : "VOCÊ VENCEU!\nPontuação: {}\nToque para jogar de novo"
@@ -3609,7 +3612,7 @@ translations:
   Z Offset: Z Offset
   Z Range: Alcance Z
   Z Tilt Adjust...: Ajuste de inclinação Z...
-  Z jog blocked at axis limit: Movimento Z bloqueado no limite do eixo
+  Z is at its limit ({}mm): Z está no seu limite ({}mm)
   Z jog feedrate: Velocidade de movimento do eixo Z
   Z motor calibration failed: Falha na calibração do motor Z
   Z probes for bed leveling and mesh generation: Sondas Z para nivelamento da mesa
