@@ -357,8 +357,8 @@
                 width="0" height="100%" flex_grow="3" style_pad_all="0" scrollable="false" style_border_opa="0"
                 flex_flow="row" style_pad_gap="#space_sm">
           <lv_obj name="motion_tab_rail"
-                  width="52" height="100%" style_pad_all="0" style_border_opa="0" scrollable="false" flex_flow="column"
-                  style_pad_gap="#space_xs" style_flex_cross_place="center">
+                  width="content" height="100%" style_min_width="52" style_pad_all="0" style_border_opa="0"
+                  scrollable="false" flex_flow="column" style_pad_gap="#space_xs" style_flex_cross_place="center">
             <zone_tab label_subject="motion_tab_label_0"
                       active_subject="motion_tab_active_0" tab_index="0" icon="cursor_move" layout="column"
                       cross_place="center" callback="on_motion_tab_clicked" selected_style="zone_tab_pill_selected"
