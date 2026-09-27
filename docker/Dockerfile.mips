@@ -127,6 +127,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libtool \
     flex \
     bison \
+    ccache \
     && rm -rf /var/lib/apt/lists/*
 
 # Hardened download wrapper. A bare `wget -q` gives up on a DNS failure in ~24 ms
