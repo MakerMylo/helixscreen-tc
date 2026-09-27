@@ -690,7 +690,7 @@ AmsError AmsBackendMock::load_filament(int slot_index) {
     return AmsErrorHelper::success();
 }
 
-AmsError AmsBackendMock::unload_filament(int /*slot_index*/) {
+AmsError AmsBackendMock::unload_filament(int slot_index) {
     {
         std::lock_guard<std::mutex> lock(mutex_);
 
@@ -707,6 +707,7 @@ AmsError AmsBackendMock::unload_filament(int /*slot_index*/) {
         }
 
         // Start unloading
+        last_unload_slot_ = slot_index;
         system_info_.action = AmsAction::UNLOADING;
         system_info_.operation_detail = lv_tr("Unloading filament");
         filament_segment_ = PathSegment::NOZZLE; // Start at nozzle (working backwards)
@@ -3918,6 +3919,11 @@ void AmsBackendMock::set_device_actions(std::vector<helix::printer::DeviceAction
 std::pair<std::string, std::any> AmsBackendMock::get_last_executed_action() const {
     std::lock_guard<std::mutex> lock(mutex_);
     return {last_action_id_, last_action_value_};
+}
+
+std::optional<int> AmsBackendMock::last_unload_slot() const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return last_unload_slot_;
 }
 
 void AmsBackendMock::clear_last_executed_action() {

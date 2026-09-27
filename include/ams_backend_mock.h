@@ -143,6 +143,11 @@ class AmsBackendMock : public AmsBackend {
     AmsError select_slot(int slot_index) override;
     AmsError change_tool(int tool_number) override;
 
+    /// Slot index the last accepted unload_filament() ran with, or nullopt when
+    /// none has run. The unload itself ignores the slot, so tests asserting
+    /// which target a dispatch surface chose read it here.
+    [[nodiscard]] std::optional<int> last_unload_slot() const;
+
     // Batch filament ops: advertised in Snapmaker mode so the picker UI is
     // drivable in --test. Rehearses the real script (see the .cpp) and then
     // runs the single-op simulation.
@@ -1082,6 +1087,7 @@ class AmsBackendMock : public AmsBackend {
     std::thread scenario_thread_; ///< Thread for deferred loading/bypass scenario
     std::atomic<bool> scenario_thread_running_{false}; ///< Guards against double-join
     bool mock_toolhead_unaccounted_ = false; ///< "unaccounted" scenario staged (gate input)
+    std::optional<int> last_unload_slot_;    ///< slot unload_filament() last accepted
 
     // Test override for native-tracking capability. False in production; tests
     // flip this to exercise the FilamentConsumptionTracker gating path.

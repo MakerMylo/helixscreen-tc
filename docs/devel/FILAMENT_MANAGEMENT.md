@@ -1446,7 +1446,7 @@ carry a comment saying so. Read `include/filament_op_dispatch.h` before "fixing"
 | Which tier does this operation take? | `plan_load()` / `plan_unload()` |
 | Is this a fresh load or a swap? | `plan_load()` via `needs_unload_before_load()` -> `AmsCall::ChangeTool` |
 | Is the requested tool already mounted? | `plan_load()` -> `FilamentRefusal::AlreadyMounted` |
-| Is there anything at this slot to unload? | `unload_target_is_loaded()` — actively loaded, **or** filament at the toolhead, **or** it is the current slot (the runout-recovery case, #995 / #1199) |
+| Is there anything at this slot to unload? | `unload_target_is_loaded()` — actively loaded, **or** filament at the toolhead, **or** it is the current slot (the runout-recovery case, #995 / #1199). The `ACTIVE_HEAD_SLOT` sentinel (-1) counts only while the backend reports the toolhead unaccounted (#1324) |
 | Which slot do this tool's buttons act on? | `resolve_op_button_slot()` |
 | Are Load / Unload enabled right now? | `compute_op_button_gating()` — load state *and* print state |
 | How does a plan actually run? | `filament_op_execute.h` - `execute_filament_load()` / `execute_filament_unload()` / `execute_filament_purge()`, shared by `PrintStatusWidget`, `FilamentRunoutHandler`, and `FilamentSensorWidget` |

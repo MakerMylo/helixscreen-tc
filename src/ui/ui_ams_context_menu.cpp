@@ -318,7 +318,8 @@ void AmsContextMenu::on_created(lv_obj_t* menu_obj) {
     }
 
     const SlotOpDecision ops =
-        decide_slot_ops(backend_, slot_index, pending_is_loaded_, system_busy, print_blocks_op);
+        decide_slot_ops(backend_, slot_index, pending_is_loaded_, system_busy, print_blocks_op,
+                        backend_ && backend_->toolhead_filament_unaccounted().value_or(false));
     // The dispatched action, not just the label: handle_unload() reads this.
     unload_mode_ = ops.unload_mode;
     lv_subject_set_int(&slot_is_loaded_subject_, ops.unload_enabled ? 1 : 0);
@@ -579,7 +580,7 @@ AmsContextMenu::decide_unload_mode(bool toolhead_unload, bool can_recover, bool 
 
 AmsContextMenu::SlotOpDecision
 AmsContextMenu::decide_slot_ops(const AmsBackend* backend, int slot_index, bool pending_is_loaded,
-                                bool system_busy, bool print_blocks_op) {
+                                bool system_busy, bool print_blocks_op, bool toolhead_unaccounted) {
     SlotOpDecision d;
 
     if (backend) {
@@ -623,6 +624,15 @@ AmsContextMenu::decide_slot_ops(const AmsBackend* backend, int slot_index, bool 
     d.unload_enabled =
         decide_unload_enabled(system_busy, d.unload_mode, print_blocks_op,
                               backend && backend->cold_lane_ops_refused_during_print());
+
+    // Filament at the toolhead that no lane claims: the lane this menu names
+    // may not be the seated one, so its Unload is a guess and a cold Eject of
+    // the lane that IS seated grinds un-cut filament. Withdraw the button
+    // without touching the mode - the sidebar's active-head Unload covers the
+    // state, letting the firmware resolve the real channel.
+    if (toolhead_unaccounted) {
+        d.unload_enabled = false;
+    }
 
     // Load gates on the NARROWED signal (toolhead_unload), never the broadened
     // is_loaded: is_loaded folds in the open-time snapshot, which reads true for
