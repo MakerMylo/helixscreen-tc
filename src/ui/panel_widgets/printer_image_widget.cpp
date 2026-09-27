@@ -16,9 +16,6 @@
 #include "config.h"
 #include "display_settings_manager.h"
 #include "grid_layout.h"
-#include "helix-xml/src/xml/lv_xml_parser.h"
-#include "helix-xml/src/xml/lv_xml_widget.h"
-#include "helix-xml/src/xml/parsers/lv_xml_obj_parser.h"
 #include "http_executor.h"
 #include "led/ui_led_control_overlay.h"
 #include "observer_factory.h"
@@ -78,12 +75,6 @@ namespace {
 constexpr const char* kLineNames[] = {"callout_line_nozzle", "callout_line_bed",
                                       "callout_line_chamber", "callout_line_fan",
                                       "callout_line_light"};
-
-/// `<leader_line>`: a bare lv_line for the callout layer; apply_callout_layout()
-/// gives it its two points.
-void* leader_line_create(lv_xml_parser_state_t* state, const char** /*attrs*/) {
-    return lv_line_create(static_cast<lv_obj_t*>(lv_xml_state_get_parent(state)));
-}
 
 constexpr lv_opa_t GLOW_OPA_LOW = 30;
 constexpr lv_opa_t GLOW_OPA_HIGH = 70;
@@ -212,7 +203,6 @@ void register_printer_image_widget() {
                              PrinterImageWidget::printer_callout_fan_cb);
     lv_xml_register_event_cb(nullptr, "printer_callout_light_cb",
                              PrinterImageWidget::printer_callout_light_cb);
-    lv_xml_register_widget("leader_line", leader_line_create, lv_xml_obj_apply);
 
     // Prune old cached printer images on startup
     prune_printer_image_cache();
@@ -590,6 +580,12 @@ void PrinterImageWidget::check_or_generate_cache() {
             // replaces the tree under a recycled widget instance.
             lv_obj_t* cached_img = lv_obj_find_by_name(widget_obj_, "printer_image");
             if (!cached_img) {
+                return;
+            }
+            // The image was resized while the worker ran (a callout layout
+            // moved it); this copy is cut for the old rect.
+            if (lv_obj_get_width(cached_img) != gen_w || lv_obj_get_height(cached_img) != gen_h) {
+                schedule_cache_check();
                 return;
             }
             std::string lvgl_path = "A:" + cache_path;

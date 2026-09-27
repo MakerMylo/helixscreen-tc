@@ -13,11 +13,17 @@
 #include "helix-xml/src/xml/lv_xml.h"
 #include "panel_widget_manager.h"
 #include "panel_widget_registry.h"
+#include "prerendered_images.h"
 #include "printer_image_regions.h"
+#include "printer_images.h"
 #include "printer_state.h"
 #include "src/ui/panel_widgets/printer_image_widget.h"
 #include "src/ui/panel_widgets/text_measure.h"
 #include "tool_state.h"
+
+#include <chrono>
+#include <filesystem>
+#include <thread>
 
 #include "../catch_amalgamated.hpp"
 
@@ -566,6 +572,68 @@ TEST_CASE_METHOD(LVGLUITestFixture,
     REQUIRE(mode_now() == static_cast<int>(CalloutMode::OneSide));
     CHECK(src_now() != full_cache);
     h.widget().detach();
+    set_image_regions_for_testing({});
+}
+
+// First display on a cold cache: the image moves while the full-size copy is
+// still generating. That copy must not land on the moved image.
+TEST_CASE_METHOD(LVGLUITestFixture,
+                 "callouts: a copy generated for the old rect does not land on a moved image",
+                 "[printer_image][callouts]") {
+    prepare_tagged_widget();
+    const std::string source = PrinterImages::get_best_printer_image("");
+    const std::string cache_dir = helix::get_printer_image_cache_dir();
+    const auto forget = [&](const std::string& path) {
+        // Only cache entries: never anything the widget displays from the tree.
+        REQUIRE(path.rfind(cache_dir + "/", 0) == 0);
+        REQUIRE(path.size() > 4);
+        REQUIRE(path.compare(path.size() - 4, 4, ".bin") == 0);
+        std::error_code ec;
+        std::filesystem::remove(path, ec);
+    };
+
+    PanelWidgetHarness<PrinterImageWidget> h(test_screen());
+    h.resize(8, 4, 480, 160);
+    lv_obj_t* img = h.child("printer_image");
+    lv_obj_t* container = h.child("printer_container");
+    const int area_h = lv_obj_get_content_height(container);
+    const std::string full =
+        helix::get_cached_printer_image_path(source, lv_obj_get_content_width(container), area_h);
+    const CalloutRect side = fit_image(400, area_h, 1601, 1204);
+    const std::string moved = helix::get_cached_printer_image_path(source, side.w, side.h);
+    forget(full);
+    forget(moved);
+    const auto src_now = [&] {
+        const auto* p = static_cast<const char*>(lv_image_get_src(img));
+        return std::string(p ? p : "");
+    };
+
+    // Timers only: the refresh shows the source and the cache check hands the
+    // full-size generation to a worker. Its result waits in the UpdateQueue.
+    helix::ui::UpdateQueueTestAccess::drain_all(helix::ui::UpdateQueue::instance());
+    process_async_timers();
+    REQUIRE(src_now() == source);
+    auto& q = helix::ui::UpdateQueue::instance();
+    for (int i = 0; i < 2000 && !(std::filesystem::exists(full) &&
+                                  !helix::ui::UpdateQueueTestAccess::queue_empty(q));
+         ++i)
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    if (!std::filesystem::exists(full))
+        SKIP("no cacheable printer image in this tree (source '" + source + "')");
+
+    // The image moves before that result is applied.
+    h.resize(8, 4, 400, 160);
+    process_async_timers();
+    lv_obj_update_layout(h.root());
+    REQUIRE(mode_now() == static_cast<int>(CalloutMode::OneSide));
+    REQUIRE(lv_obj_get_width(img) == side.w);
+
+    const bool landed = wait_until([&] { return src_now() == "A:" + moved; }, 3000);
+    CHECK(src_now() != "A:" + full);
+    CHECK(landed);
+    h.widget().detach();
+    forget(full);
+    forget(moved);
     set_image_regions_for_testing({});
 }
 

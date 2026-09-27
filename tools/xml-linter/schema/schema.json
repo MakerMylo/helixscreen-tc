@@ -1886,10 +1886,6 @@
       },
       "inherits": "lv_obj"
     },
-    "leader_line": {
-      "attributes": {},
-      "inherits": "lv_obj"
-    },
     "setting_group": {
       "attributes": {},
       "inherits": "lv_obj"
@@ -1925,6 +1921,10 @@
           "type": "string"
         }
       },
+      "inherits": "lv_obj"
+    },
+    "leader_line": {
+      "attributes": {},
       "inherits": "lv_obj"
     },
     "pluck_animation": {
@@ -2872,11 +2872,11 @@
     "ui_split_button",
     "z_offset_indicator",
     "helix_sparkline",
-    "leader_line",
     "setting_group",
     "ams_lane_bar",
     "ams_lane_spool",
     "belt_trace",
+    "leader_line",
     "pluck_animation"
   ],
   "runtime_constants": [

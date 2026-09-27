@@ -22,6 +22,7 @@
 #include "ui_gcode_viewer.h"
 #include "ui_hsv_picker.h"
 #include "ui_icon_codepoints.h"
+#include "ui_leader_line.h"
 #include "ui_lock_screen.h"
 #include "ui_markdown.h"
 #include "ui_notification_badge.h"
@@ -328,15 +329,16 @@ void register_xml_components() {
 
     // Register semantic text widgets (AFTER theme init, BEFORE components that use them)
     ui_text_init();
-    ui_text_input_init();         // <text_input> with bind_text support
-    ui_spinner_init();            // <spinner> with responsive sizing
-    ui_button_init();             // <ui_button> with variant styles and auto-contrast
-    ui_split_button_init();       // <ui_split_button> with primary action + dropdown
-    ui_markdown_init();           // <ui_markdown> with theme-aware markdown rendering
-    ui_notification_badge_init(); // <notification_badge> with auto-contrast text
-    ui_carousel_init();           // <ui_carousel> horizontal scroll-snap carousel
-    register_xml("carousel.xml"); // <carousel> XML component wrapping ui_carousel
-    ui_confetti_init();           // <ui_confetti> celebration animation canvas
+    ui_text_input_init();                     // <text_input> with bind_text support
+    ui_spinner_init();                        // <spinner> with responsive sizing
+    ui_button_init();                         // <ui_button> with variant styles and auto-contrast
+    ui_split_button_init();                   // <ui_split_button> with primary action + dropdown
+    ui_markdown_init();                       // <ui_markdown> with theme-aware markdown rendering
+    ui_notification_badge_init();             // <notification_badge> with auto-contrast text
+    helix::ui::register_leader_line_widget(); // <leader_line>, a bare lv_line for callouts
+    ui_carousel_init();                       // <ui_carousel> horizontal scroll-snap carousel
+    register_xml("carousel.xml");             // <carousel> XML component wrapping ui_carousel
+    ui_confetti_init();                       // <ui_confetti> celebration animation canvas
 #if HELIX_HAS_BELT_TUNER
     helix::ui::register_belt_trace_widget();      // <belt_trace> waveform/spectrum strip, must
                                                   // precede register_xml("panel_belt_tension.xml")
