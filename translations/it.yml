@@ -321,6 +321,8 @@ translations:
   Bed Screws: Viti piano
   Bed Temp: Temp. piatto
   Bed Temperature: Temperatura del piano
+  'Bed cooling, spools still on the bed:': 'Il piano si sta raffreddando, le bobine sono ancora sopra:'
+
   Bed is Level!: Piano livellato!
   Bed mesh operation timed out: Mesh piano — tempo scaduto
   Bed mesh...: Mesh piano...
@@ -607,6 +609,10 @@ translations:
   Clear Spool: Rimuovi bobina
   Clear all spool failover assignments: 'Cancella tutte le assegnazioni di bobina di riserva'
   Clear failed: Cancellazione fallita
+  ? Clear the area above and below the plate. Lay the spools on the plate, cover them with a box (a printed lid or the filament's packaging) and close the door.
+
+  : Libera lo spazio sopra e sotto il piano. Appoggia le bobine sul piano, coprile con una scatola (un coperchio stampato o la confezione del filamento) e chiudi lo sportello.
+
   Cleared from settings — system unpair failed, may need OS Bluetooth: Rimosso dalle
     impostazioni; disaccoppiamento di sistema fallito, potrebbe servire il Bluetooth
     del sistema operativo
@@ -756,6 +762,8 @@ translations:
   Could not confirm cancel: Impossibile confermare l'annullamento
   Could not forget device: Impossibile dimenticare il dispositivo
   Could not load printer database: Impossibile caricare il database della stampante
+  Could not move the plate: Impossibile spostare il piano
+
   Could not open Klipper's accelerometer stream. Check that Klipper is running, then retry.: Impossibile aprire lo stream dell'accelerometro di Klipper. Verifica che Klipper sia in esecuzione, poi riprova.
   Could not parse tips database: Impossibile analizzare il database dei suggerimenti
   Could not reach Spoolman at: Impossibile raggiungere Spoolman a
@@ -917,7 +925,17 @@ translations:
     — aiuta a diagnosticare gli scostamenti
   Drive Cal: Cal. drive
   Drop shadow strength (0 = disabled): Intensità ombra (0 = disabilitata)
+  Dry Filament: Essicca filamento
+
+  Dry Filament on the Bed: Essicca il filamento sul piano
+
+  Dry spools on the heated bed: Essicca le bobine sul piano riscaldato
+
   Drying: Essiccazione
+  Drying is already running: Un'essiccazione è già in corso
+
+  Drying on the bed: Essiccazione sul piano
+
   Drying started: Essiccazione avviata
   Drying stopped: Essiccazione interrotta
   Duplicate: Duplica
@@ -979,6 +997,10 @@ translations:
   Enable/disable automatic backup spool switching: 'Abilita/disabilita il passaggio automatico alla bobina di riserva'
   Enable/disable quiet operation mode: 'Abilita/disabilita la modalità di funzionamento silenziosa'
   Enabled: Abilitato
+  Enclosed: Chiusa
+
+  Enclosure: Chiusura
+
   Encoder: Encoder
   Encoder Error: 'Errore dell''encoder'
   Ended: Terminato
@@ -1241,6 +1263,8 @@ translations:
   Filament is clear of the toolhead. Pull it out the rest of the way.: Il filamento non è più nella testina. Estrailo del tutto.
   Filament is dragging: Il filamento oppone resistenza
   Filament is loaded at the toolhead. Unload it before enabling bypass.: 'Il filamento è caricato nella testina. Scaricalo prima di attivare il bypass.'
+  Filament is loaded at the toolhead. Unload it first, so it does not soften in the extruder while the bed heats.: C'è filamento caricato nella testina. Scaricalo prima, così non si ammorbidisce nell'estrusore mentre il piano si scalda.
+
   Filament is loose: Il filamento è allentato
   Filament is pulling tight: Il filamento è in tensione
   ? Filament is still at the nozzle after unloading. The cut or retract may not have completed. Clear the toolhead before loading another spool.
@@ -1300,6 +1324,8 @@ translations:
   FlashForge Adventurer 5X: FlashForge Adventurer 5X
   FlashForge IFS: FlashForge IFS
   Flip: Capovolgi
+  Flip the spools: Gira le bobine
+
   Flow: Flusso
   Flow Compensation: 'Compensazione di flusso'
   Flow Rate: Flusso
@@ -1353,6 +1379,8 @@ translations:
   HTTP Code: Codice HTTP
   'HTTP error: {} {}': 'Errore HTTP: {} {}'
   HUMIDITY SENSORS: SENSORI DI UMIDITÀ
+  'Halfway through drying: flip the spools over. Use gloves, the plate is hot.': 'Metà essiccazione: gira le bobine. Usa i guanti, il piano è caldo.'
+
   Hang on, we'll be right back!: Aspetta, torniamo subito!
   Happy Hare MMU: Happy Hare MMU
   Hardware: Hardware
@@ -1482,6 +1510,8 @@ translations:
   Hyperlapse: Hyperlapse
   Hyperlapse captures frames at fixed time intervals. Good for very long prints.: Hyperlapse
     cattura i fotogrammi a intervalli di tempo fissi. Ideale per stampe molto lunghe.
+  I understand: Ho capito
+
   ID (optional): ID (opzionale)
   IMPORT FROM USB: IMPORTA DA USB
   IP Address / Hostname: Indirizzo IP / Hostname
@@ -1790,6 +1820,8 @@ translations:
   Make Optional: Rendi opzionale
   Make bed mesh and QGL skippable: Rendi mesh piano e QGL saltabili
   Make sure every nozzle is clean.: Assicurati che tutti gli ugelli siano puliti.
+  'Make sure no filament is loaded at the toolhead: it can soften in the extruder while the bed heats.': "Assicurati che nella testina non sia caricato filamento: può ammorbidirsi nell'estrusore mentre il piano si scalda."
+
   MakeID (Bluetooth): MakeID (Bluetooth)
   Manage: Gestisci
   Manage Printers: Gestisci stampanti
@@ -1806,6 +1838,8 @@ translations:
     compatibile
   Mapping Error: 'Errore di mappatura'
   Marginal: Marginale
+  Mark a printer you enclosed yourself: Indica una stampante che hai chiuso tu
+
   Master volume level: Livello volume principale
   Match: Corrispondenza
   Match to belt A: Corrispondenza con la cinghia A
@@ -1884,6 +1918,8 @@ translations:
     2-3 minuti. La stampante farà rumore — è normale.
   Moving gantry: Spostamento gantry
   Moving lane: Spostamento corsia
+  Moving the plate...: Spostamento del piano...
+
   Multi-Filament: Multi-filamento
   Multi-Filament Overview: Panoramica multi-filamento
   Multi-Filament System: Sistema multi-filamento
@@ -2013,6 +2049,8 @@ translations:
   No temperature sensors detected: 'Nessun sensore di temperatura rilevato'
   No timelapse videos found: Nessun video timelapse trovato
   No tools to calibrate: Nessuno strumento da calibrare
+  'No unload macro found: unload by hand, then start again': 'Nessuna macro di scarico trovata: scarica a mano, poi ricomincia'
+
   No vendors found: Nessun fornitore trovato
   No verified bypass command for this CFS firmware: 'Nessun comando bypass verificato per questo firmware CFS'
   No video player installed - showing the timelapse library: 'Nessun lettore video installato – viene mostrata la libreria timelapse'
@@ -2100,6 +2138,8 @@ translations:
   Open color and brightness controls: Apri controlli colore e luminosità
   Open feeder macro: Macro di apertura alimentatore
   Open feeder: Apri alimentatore
+  Open frame: Telaio aperto
+
   Open motion controls for jogging: Apri i controlli di movimento
   Open the CFS unit and remove the broken filament from the slot: Aprire l'unità CFS e rimuovere il filamento spezzato dallo slot
   Operation already in progress: Operazione già in corso
@@ -2193,6 +2233,8 @@ translations:
   'Place image files (PNG, JPEG, BMP, GIF) in config/custom_images/. Max size: 2048×2048 pixels.': 'Posiziona
     file immagine (PNG, JPEG, BMP, GIF) in config/custom_images/. Dimensione max:
     2048×2048 pixel.'
+  Place the spools: Appoggia le bobine
+
   Placed: Inserito
   Platform: Piattaforma
   'Platform: ': 'Piattaforma: '
@@ -2512,6 +2554,12 @@ translations:
   Remove plugin from printer: Rimuovi plugin dalla stampante
   'Remove the PEI sheet from the bed, then start again: probing through the sheet gives wrong results': 'Rimuovi il foglio PEI dal piatto, poi riprova: sondare attraverso il foglio dà risultati errati'
   Remove the bypass spool from the toolhead first: 'Rimuovi prima la bobina di bypass dalla testina'
+  Remove the spools: Togli le bobine
+
+  Remove the spools from the bed: Togli le bobine dal piano
+
+  Remove the spools now?: Togliere le bobine adesso?
+
   Rename: Rinomina
   Rename Fan: Rinomina ventola
   Rename Mesh Profile: Rinomina profilo mesh
@@ -2641,6 +2689,8 @@ translations:
   Run stopped: 'Esecuzione fermata'
   Run test sequence on all lanes: 'Esegui la sequenza di test su tutte le corsie'
   Run the HelixScreen installer with --update from a terminal on this printer. Scan for the command for your platform.: Esegui l'installer di HelixScreen con --update da un terminale su questa stampante. Scansiona per il comando della tua piattaforma.
+  Run the chamber dryer too: Usa anche l'essiccatore della camera
+
   Run {}?: Eseguire {}?
   Running {}...: Esecuzione {}...
   Runout: 'Esaurimento'
@@ -2948,6 +2998,8 @@ translations:
   Spoolman was not configured.: Spoolman non era configurato.
   'Spoolman: %zu Spool%s': 'Spoolman: %zu bobina%s'
   'Spoolman: %zu/%zu Spool%s': 'Spoolman: %zu/%zu bobina%s'
+  Spools removed: Bobine tolte
+
   Square Corner Velocity: Velocità angoli retti
   Stable: Stabile
   Stall detection setup failed for the Z motor — power-cycle to retry: Impostazione del rilevamento di stallo per il motore Z non riuscita. Spegnere e riaccendere per riprovare
@@ -2965,6 +3017,8 @@ translations:
   Start Probing: Avvia sondaggio
   Start anyway?: 'Avviare comunque?'
   Start at: Inizia da
+  Start drying: Avvia essiccazione
+
   Start failed: Avvio fallito
   'Start next: {}': 'Avvia il prossimo: {}'
   Start over: Ricomincia
@@ -2990,6 +3044,8 @@ translations:
   Stop: Ferma
   Stop Drying: Ferma essiccazione
   Stop Print?: Fermare stampa?
+  Stop drying?: Fermare l'essiccazione?
+
   Stop failed: Arresto fallito
   ? "Stop printing \"{}\"?\n\nThis cannot be undone after 5 seconds."
   : "Interrompere la stampa di \"{}\"?\n\nNon sarà possibile annullare dopo 5 secondi."
@@ -3118,6 +3174,10 @@ translations:
     interfering with prints. You can re-enable it in Settings > Display.
   : Il salvaschermo animato è stato disattivato su questo dispositivo per evitare
     che interferisca con le stampe. Puoi riattivarlo in Impostazioni > Schermo.
+  The bed has cooled. Take the spools off the plate, then confirm.: Il piano si è raffreddato. Togli le bobine dal piano, poi conferma.
+
+  The bed turns off. The spools stay latched on the bed until you confirm they are off.: Il piano si spegne. Le bobine restano registrate sul piano finché non confermi di averle tolte.
+
   The bed was reported dirty, so this print cannot resume.: 'Il piano è stato segnalato come sporco, quindi questa stampa non può riprendere.'
   The buffer may be disconnected, stuck, or faulty. Check it before retrying: Il buffer potrebbe essere scollegato, bloccato o guasto. Controllarlo prima di riprovare
   The buffer saw no movement for 16 seconds. Check for a blockage between the CFS and the extruder, or a stuck buffer: Il buffer non ha rilevato movimento per 16 secondi. Verificare un'ostruzione tra CFS ed estrusore, o un buffer bloccato
@@ -3135,6 +3195,8 @@ translations:
   ? The loaded spool is {}, but this file was sliced for {}. Filled filament runs at a lower flow rate and needs a hardened nozzle.
   : La bobina caricata è {}, ma questo file è stato sezionato per {}. Il filamento con cariche richiede un flusso più basso e un ugello indurito.
   The nozzle extrudes a few short test moves in a corner, away from the print area, and repeats until it agrees with itself.: 'L''ugello fa alcuni brevi movimenti di prova in un angolo, lontano dall''area di stampa, e ripete finché i valori convergono.'
+  The plate and the spools are still hot. Use gloves.: Il piano e le bobine sono ancora caldi. Usa i guanti.
+
   ? The print is paused. Changing tools now moves the toolhead and swaps the filament at the nozzle. Resume the print once the change finishes.
   : La stampa è in pausa. Cambiare utensile ora muove la testina e sostituisce il
     filamento all'ugello. Riprendi la stampa al termine del cambio.
@@ -3146,6 +3208,10 @@ translations:
   ? The printer heats the nozzle, extrudes a few short test moves in a corner of the plate, and measures them itself. It repeats until the readings agree, then reports one number.
   : 'La stampante riscalda l''ugello, fa alcuni brevi movimenti di prova in un angolo del piano e li misura da sola. Ripete finché le letture concordano, poi riporta un unico numero.'
   The printer homes and sweeps the cutter (about 1 minute). Keep the filament path clear.: La stampante si azzera e fa scorrevolare la taglierina (circa 1 minuto). Mantenere libero il percorso del filamento.
+  ? The printer homes, then moves the plate as far from the nozzle as it goes. Some spools are not heat-resistant enough and can deform. Nothing moves from this screen until you confirm the spools are off the bed; Mainsail, macros and prints sent from a slicer are not blocked.
+
+  : La stampante esegue l'homing, poi allontana il piano dall'ugello il più possibile. Alcune bobine non resistono abbastanza al calore e possono deformarsi. Da questa schermata non si muove nulla finché non confermi che le bobine non sono più sul piano; Mainsail, le macro e le stampe inviate da uno slicer non vengono bloccati.
+
   The printer is not homed. Continuing will home all axes, moving the toolhead. Make sure the bed is clear.: La stampante non ha eseguito l'homing. Continuando verrà eseguito l'homing di tutti gli assi, muovendo la testina. Assicurarsi che il piano sia libero.
   The printer lost power during a print. It can resume where it left off.: La stampante
     ha perso l'alimentazione durante una stampa. Può riprendere da dove si è interrotta.
@@ -3410,6 +3476,8 @@ translations:
   'Unload at end': 'Scarica alla fine'
   Unload failed: Scarico non riuscito
   Unload filament: 'Scarica il filamento'
+  Unload filament?: Scaricare il filamento?
+
   Unload from toolhead first: 'Scarica prima dalla testina'
   Unload macro not configured: Macro scaricamento non configurata
   Unload the CFS filament before enabling bypass: 'Scarica il filamento del CFS prima di attivare il bypass'

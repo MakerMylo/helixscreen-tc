@@ -309,6 +309,7 @@ translations:
   Bed Screws: Bed Screws
   Bed Temp: Bed Temp
   Bed Temperature: Bed Temperature
+  'Bed cooling, spools still on the bed:': 'Bed cooling, spools still on the bed:'
   Bed is Level!: Bed is Level!
   Bed mesh operation timed out: Bed mesh operation timed out
   'Bed mesh...': 'Bed mesh...'
@@ -590,6 +591,8 @@ translations:
   Clear Spool: Clear Spool
   Clear all spool failover assignments: Clear all spool failover assignments
   Clear failed: Clear failed
+  ? Clear the area above and below the plate. Lay the spools on the plate, cover them with a box (a printed lid or the filament's packaging) and close the door.
+  : Clear the area above and below the plate. Lay the spools on the plate, cover them with a box (a printed lid or the filament's packaging) and close the door.
   Cleared from settings — system unpair failed, may need OS Bluetooth: Cleared from
     settings — system unpair failed, may need OS Bluetooth
   Clipboard unavailable - use SSH: Clipboard unavailable - use SSH
@@ -735,6 +738,7 @@ translations:
   Could not confirm cancel: Could not confirm cancel
   Could not forget device: Could not forget device
   Could not load printer database: Could not load printer database
+  Could not move the plate: Could not move the plate
   Could not open Klipper's accelerometer stream. Check that Klipper is running, then retry.: Could not open Klipper's accelerometer stream. Check that Klipper is running, then retry.
   Could not parse tips database: Could not parse tips database
   Could not reach Spoolman at: Could not reach Spoolman at
@@ -893,7 +897,12 @@ translations:
     — helps diagnose offsets
   Drive Cal: Drive Cal
   Drop shadow strength (0 = disabled): Drop shadow strength (0 = disabled)
+  Dry Filament: Dry Filament
+  Dry Filament on the Bed: Dry Filament on the Bed
+  Dry spools on the heated bed: Dry spools on the heated bed
   Drying: Drying
+  Drying is already running: Drying is already running
+  Drying on the bed: Drying on the bed
   Drying started: Drying started
   Drying stopped: Drying stopped
   Duplicate: Duplicate
@@ -954,6 +963,8 @@ translations:
   Enable/disable automatic backup spool switching: Enable/disable automatic backup spool switching
   Enable/disable quiet operation mode: Enable/disable quiet operation mode
   Enabled: Enabled
+  Enclosed: Enclosed
+  Enclosure: Enclosure
   Encoder: Encoder
   Encoder Error: Encoder Error
   Ended: Ended
@@ -1210,6 +1221,7 @@ translations:
   Filament is clear of the toolhead. Pull it out the rest of the way.: Filament is clear of the toolhead. Pull it out the rest of the way.
   Filament is dragging: Filament is dragging
   Filament is loaded at the toolhead. Unload it before enabling bypass.: Filament is loaded at the toolhead. Unload it before enabling bypass.
+  Filament is loaded at the toolhead. Unload it first, so it does not soften in the extruder while the bed heats.: Filament is loaded at the toolhead. Unload it first, so it does not soften in the extruder while the bed heats.
   Filament is loose: Filament is loose
   Filament is pulling tight: Filament is pulling tight
   ? Filament is still at the nozzle after unloading. The cut or retract may not have completed. Clear the toolhead before loading another spool.
@@ -1269,6 +1281,7 @@ translations:
   FlashForge Adventurer 5X: FlashForge Adventurer 5X
   FlashForge IFS: FlashForge IFS
   Flip: Flip
+  Flip the spools: Flip the spools
   Flow: Flow
   Flow Compensation: Flow Compensation
   Flow Rate: Flow Rate
@@ -1322,6 +1335,7 @@ translations:
   HTTP Code: HTTP Code
   'HTTP error: {} {}': 'HTTP error: {} {}'
   HUMIDITY SENSORS: HUMIDITY SENSORS
+  'Halfway through drying: flip the spools over. Use gloves, the plate is hot.': 'Halfway through drying: flip the spools over. Use gloves, the plate is hot.'
   Hang on, we'll be right back!: Hang on, we'll be right back!
   Happy Hare MMU: Happy Hare MMU
   Hardware: Hardware
@@ -1448,6 +1462,7 @@ translations:
   Hyperlapse: Hyperlapse
   Hyperlapse captures frames at fixed time intervals. Good for very long prints.: Hyperlapse
     captures frames at fixed time intervals. Good for very long prints.
+  I understand: I understand
   ID (optional): ID (optional)
   IMPORT FROM USB: IMPORT FROM USB
   IP Address / Hostname: IP Address / Hostname
@@ -1746,6 +1761,7 @@ translations:
   Make Optional: Make Optional
   Make bed mesh and QGL skippable: Make bed mesh and QGL skippable
   Make sure every nozzle is clean.: Make sure every nozzle is clean.
+  'Make sure no filament is loaded at the toolhead: it can soften in the extruder while the bed heats.': 'Make sure no filament is loaded at the toolhead: it can soften in the extruder while the bed heats.'
   MakeID (Bluetooth): MakeID (Bluetooth)
   Manage: Manage
   Manage Printers: Manage Printers
@@ -1762,6 +1778,7 @@ translations:
     material
   Mapping Error: Mapping Error
   Marginal: Marginal
+  Mark a printer you enclosed yourself: Mark a printer you enclosed yourself
   Master volume level: Master volume level
   Match: Match
   Match to belt A: Match to belt A
@@ -1842,6 +1859,7 @@ translations:
     minutes. The printer will make noise — this is normal.
   Moving gantry: Moving gantry
   Moving lane: Moving lane
+  Moving the plate...: Moving the plate...
   Multi-Filament: Multi-Filament
   Multi-Filament Overview: Multi-Filament Overview
   Multi-Filament System: Multi-Filament System
@@ -1968,6 +1986,7 @@ translations:
   No temperature sensors detected: No temperature sensors detected
   No timelapse videos found: No timelapse videos found
   No tools to calibrate: No tools to calibrate
+  'No unload macro found: unload by hand, then start again': 'No unload macro found: unload by hand, then start again'
   No vendors found: No vendors found
   No verified bypass command for this CFS firmware: No verified bypass command for this CFS firmware
   No video player installed - showing the timelapse library: No video player installed - showing the timelapse library
@@ -2055,6 +2074,7 @@ translations:
   Open color and brightness controls: Open color and brightness controls
   Open feeder: Open feeder
   Open feeder macro: Open feeder macro
+  Open frame: Open frame
   Open motion controls for jogging: Open motion controls for jogging
   Open the CFS unit and remove the broken filament from the slot: Open the CFS unit and remove the broken filament from the slot
   Operation already in progress: Operation already in progress
@@ -2147,6 +2167,7 @@ translations:
   'Place image files (PNG, JPEG, BMP, GIF) in config/custom_images/. Max size: 2048×2048 pixels.': 'Place
     image files (PNG, JPEG, BMP, GIF) in config/custom_images/. Max size: 2048×2048
     pixels.'
+  Place the spools: Place the spools
   Placed: Placed
   Platform: Platform
   'Platform: ': 'Platform: '
@@ -2461,6 +2482,9 @@ translations:
   Remove plugin from printer: Remove plugin from printer
   'Remove the PEI sheet from the bed, then start again: probing through the sheet gives wrong results': 'Remove the PEI sheet from the bed, then start again: probing through the sheet gives wrong results'
   Remove the bypass spool from the toolhead first: Remove the bypass spool from the toolhead first
+  Remove the spools: Remove the spools
+  Remove the spools from the bed: Remove the spools from the bed
+  Remove the spools now?: Remove the spools now?
   Rename: Rename
   Rename Fan: Rename Fan
   Rename Mesh Profile: Rename Mesh Profile
@@ -2589,6 +2613,7 @@ translations:
   Run stopped: Run stopped
   Run test sequence on all lanes: Run test sequence on all lanes
   Run the HelixScreen installer with --update from a terminal on this printer. Scan for the command for your platform.: Run the HelixScreen installer with --update from a terminal on this printer. Scan for the command for your platform.
+  Run the chamber dryer too: Run the chamber dryer too
   Run {}?: Run {}?
   Running {}...: Running {}...
   Runout: Runout
@@ -2886,6 +2911,7 @@ translations:
   Spoolman was not configured.: Spoolman was not configured.
   'Spoolman: %zu Spool%s': 'Spoolman: %zu Spool%s'
   'Spoolman: %zu/%zu Spool%s': 'Spoolman: %zu/%zu Spool%s'
+  Spools removed: Spools removed
   Square Corner Velocity: Square Corner Velocity
   Stable: Stable
   Stall detection setup failed for the Z motor — power-cycle to retry: Stall detection setup failed for the Z motor — power-cycle to retry
@@ -2903,6 +2929,7 @@ translations:
   Start Probing: Start Probing
   Start anyway?: Start anyway?
   Start at: Start at
+  Start drying: Start drying
   Start failed: Start failed
   'Start next: {}': 'Start next: {}'
   Start over: Start over
@@ -2926,6 +2953,7 @@ translations:
   Stop: Stop
   Stop Drying: Stop Drying
   Stop Print?: Stop Print?
+  Stop drying?: Stop drying?
   Stop failed: Stop failed
   ? "Stop printing \"{}\"?\n\nThis cannot be undone after 5 seconds."
   : "Stop printing \"{}\"?\n\nThis cannot be undone after 5 seconds."
@@ -3055,6 +3083,8 @@ translations:
     interfering with prints. You can re-enable it in Settings > Display.
   : The animated screensaver has been turned off on this device to prevent it from
     interfering with prints. You can re-enable it in Settings > Display.
+  The bed has cooled. Take the spools off the plate, then confirm.: The bed has cooled. Take the spools off the plate, then confirm.
+  The bed turns off. The spools stay latched on the bed until you confirm they are off.: The bed turns off. The spools stay latched on the bed until you confirm they are off.
   The bed was reported dirty, so this print cannot resume.: The bed was reported dirty, so this print cannot resume.
   The buffer may be disconnected, stuck, or faulty. Check it before retrying: The buffer may be disconnected, stuck, or faulty. Check it before retrying
   The buffer saw no movement for 16 seconds. Check for a blockage between the CFS and the extruder, or a stuck buffer: The buffer saw no movement for 16 seconds. Check for a blockage between the CFS and the extruder, or a stuck buffer
@@ -3072,6 +3102,7 @@ translations:
   ? The loaded spool is {}, but this file was sliced for {}. Filled filament runs at a lower flow rate and needs a hardened nozzle.
   : The loaded spool is {}, but this file was sliced for {}. Filled filament runs at a lower flow rate and needs a hardened nozzle.
   The nozzle extrudes a few short test moves in a corner, away from the print area, and repeats until it agrees with itself.: The nozzle extrudes a few short test moves in a corner, away from the print area, and repeats until it agrees with itself.
+  The plate and the spools are still hot. Use gloves.: The plate and the spools are still hot. Use gloves.
   ? The print is paused. Changing tools now moves the toolhead and swaps the filament at the nozzle. Resume the print once the change finishes.
   : The print is paused. Changing tools now moves the toolhead and swaps the filament at the nozzle. Resume the print once the change finishes.
   The printer applied this value and keeps it for this tool.: 'The printer applied this value and keeps it for this tool.'
@@ -3082,6 +3113,8 @@ translations:
   ? The printer heats the nozzle, extrudes a few short test moves in a corner of the plate, and measures them itself. It repeats until the readings agree, then reports one number.
   : The printer heats the nozzle, extrudes a few short test moves in a corner of the plate, and measures them itself. It repeats until the readings agree, then reports one number.
   The printer homes and sweeps the cutter (about 1 minute). Keep the filament path clear.: The printer homes and sweeps the cutter (about 1 minute). Keep the filament path clear.
+  ? The printer homes, then moves the plate as far from the nozzle as it goes. Some spools are not heat-resistant enough and can deform. Nothing moves from this screen until you confirm the spools are off the bed; Mainsail, macros and prints sent from a slicer are not blocked.
+  : The printer homes, then moves the plate as far from the nozzle as it goes. Some spools are not heat-resistant enough and can deform. Nothing moves from this screen until you confirm the spools are off the bed; Mainsail, macros and prints sent from a slicer are not blocked.
   The printer is not homed. Continuing will home all axes, moving the toolhead. Make sure the bed is clear.: The printer is not homed. Continuing will home all axes, moving the toolhead. Make sure the bed is clear.
   The printer lost power during a print. It can resume where it left off.: The printer lost power during a print. It can resume where it left off.
   The printer lost power during a print. The resumed layer may not line up exactly.: The printer lost power during a print. The resumed layer may not line up exactly.
@@ -3336,6 +3369,7 @@ translations:
   'Unload at end': 'Unload at end'
   Unload failed: Unload failed
   Unload filament: Unload filament
+  Unload filament?: Unload filament?
   Unload from toolhead first: Unload from toolhead first
   Unload macro not configured: Unload macro not configured
   Unload the CFS filament before enabling bypass: Unload the CFS filament before enabling bypass
