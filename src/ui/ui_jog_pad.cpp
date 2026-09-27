@@ -7,6 +7,7 @@
 #include "ui_utils.h"
 #include "ui_widget_memory.h"
 
+#include "hold_repeat_timer.h"
 #include "theme_manager.h"
 
 #include <spdlog/spdlog.h>
@@ -69,6 +70,12 @@ typedef struct {
     JogDirection pressed_direction;
     bool pressed_is_inner;
     bool pressed_is_home;
+
+    // Hold-to-repeat: the ring distance captured at press time; each repeat
+    // re-fires the zone under the press point until release, refusal or a
+    // slide into another zone.
+    helix::HoldRepeatTimer hold_timer;
+    float hold_distance_mm;
 
     // Homing state: when false (not all axes homed) the center home button is
     // drawn in a warning color to signal that homing is required.
@@ -175,6 +182,45 @@ static JogDirection angle_to_direction(float angle) {
         return JogDirection::W;
     else
         return JogDirection::NW;
+}
+
+// Which zone one point on the pad lands in: off the circle, the home button,
+// or one of the eight directional wedges split into inner/outer rings. The
+// single source for every zone decision - press, press tracking and click.
+namespace {
+struct JogPadZone {
+    bool on_pad;
+    bool home;
+    JogDirection direction;
+    bool inner;
+};
+} // namespace
+
+static JogPadZone jog_pad_zone_at(lv_obj_t* obj, jog_pad_state_t* st, const lv_point_t& point) {
+    JogPadZone zone{false, false, JogDirection::N, false};
+
+    lv_area_t obj_coords;
+    lv_obj_get_coords(obj, &obj_coords);
+    lv_coord_t width = lv_area_get_width(&obj_coords);
+    lv_coord_t center_x = obj_coords.x1 + width / 2;
+    lv_coord_t center_y = obj_coords.y1 + width / 2; // square pad: width is the height too
+    lv_coord_t radius = width / 2;
+
+    lv_coord_t dx = point.x - center_x;
+    lv_coord_t dy = point.y - center_y;
+    float distance = sqrtf((float)(dx * dx + dy * dy));
+    if (distance > radius)
+        return zone;
+
+    jog_pad_recompute_zones(st, radius);
+    zone.on_pad = true;
+    if (distance < st->home_radius_px) {
+        zone.home = true;
+        return zone;
+    }
+    zone.direction = angle_to_direction(calculate_angle(dx, dy));
+    zone.inner = distance < st->inner_boundary_px;
+    return zone;
 }
 
 // Custom draw event: Draw two-zone circular jog pad (Bambu Lab style)
@@ -524,7 +570,21 @@ static void jog_pad_draw_cb(lv_event_t* e) {
     }
 }
 
-// Press event: Track pressed zone for visual feedback
+// One hold repeat: re-fire the jog captured at press. The callback's return
+// value decides whether repeats continue (false = the jog was refused or
+// fully clamped, e.g. the axis is at its envelope edge).
+static bool jog_pad_repeat_fire(void* user_data) {
+    lv_obj_t* obj = static_cast<lv_obj_t*>(user_data);
+    jog_pad_state_t* state = get_state(obj);
+    if (!state || !state->jog_callback) {
+        return false;
+    }
+    return state->jog_callback(state->pressed_direction, state->hold_distance_mm,
+                               state->jog_user_data);
+}
+
+// Press event: Track pressed zone for visual feedback, arm hold-to-repeat on
+// directional zones (the home button never repeats)
 static void jog_pad_press_cb(lv_event_t* e) {
     lv_obj_t* obj = (lv_obj_t*)lv_event_get_target(e);
     jog_pad_state_t* state = get_state(obj);
@@ -535,60 +595,76 @@ static void jog_pad_press_cb(lv_event_t* e) {
     lv_indev_t* indev = lv_indev_active();
     lv_indev_get_point(indev, &point);
 
-    // Get container dimensions and center
-    lv_area_t obj_coords;
-    lv_obj_get_coords(obj, &obj_coords);
-    lv_coord_t width = lv_area_get_width(&obj_coords);
-    lv_coord_t center_x = obj_coords.x1 + width / 2;
-    lv_coord_t center_y = obj_coords.y1 + width / 2;
-    lv_coord_t radius = width / 2;
-
-    // Calculate distance and angle from center
-    lv_coord_t dx = point.x - center_x;
-    lv_coord_t dy = point.y - center_y;
-    float distance = sqrtf((float)(dx * dx + dy * dy));
-
-    // Check if press is within circular boundary
-    if (distance > radius) {
-        state->is_pressed = false;
+    const JogPadZone zone = jog_pad_zone_at(obj, state, point);
+    state->is_pressed = zone.on_pad;
+    if (!zone.on_pad)
         return;
+
+    state->pressed_is_home = zone.home;
+    state->pressed_is_inner = zone.inner;
+    state->pressed_direction = zone.direction;
+
+    if (!zone.home) {
+        // Capture the ring distance under the press point; the repeat re-fires
+        // this zone until release, refusal or a slide into another zone.
+        const auto& mode_dist = get_jog_mode_distances(state->current_mode);
+        state->hold_distance_mm = zone.inner ? mode_dist.inner : mode_dist.outer;
+        state->hold_timer.begin(&jog_pad_repeat_fire, obj);
     }
 
-    state->is_pressed = true;
-
-    jog_pad_recompute_zones(state, radius);
-
-    // Home button: center at HOME_ZONE_RATIO
-    if (distance < state->home_radius_px) {
-        state->pressed_is_home = true;
-        state->pressed_is_inner = false;
-        lv_obj_invalidate(obj); // Trigger redraw
-        return;
-    }
-
-    state->pressed_is_home = false;
-
-    // Determine direction from angle
-    float angle = calculate_angle(dx, dy);
-    state->pressed_direction = angle_to_direction(angle);
-
-    // Determine if inner or outer zone
-    state->pressed_is_inner = (distance < state->inner_boundary_px);
-
-    // Trigger redraw to show highlight
-    lv_obj_invalidate(obj);
+    lv_obj_invalidate(obj); // Trigger redraw
 }
 
-// Release event: Clear press state
+// Pressing event (finger moved while held): repeats target the zone under the
+// press point, so a slide into a different zone or off the circle stops them.
+// The swallow state survives: a release after a repeated hold must not fire
+// one more click jog.
+static void jog_pad_pressing_cb(lv_event_t* e) {
+    lv_obj_t* obj = (lv_obj_t*)lv_event_get_target(e);
+    jog_pad_state_t* state = get_state(obj);
+    if (!state || !state->hold_timer.ticking())
+        return;
+
+    lv_point_t point;
+    lv_indev_t* indev = lv_indev_active();
+    lv_indev_get_point(indev, &point);
+
+    const JogPadZone zone = jog_pad_zone_at(obj, state, point);
+    if (!zone.on_pad || zone.home || zone.direction != state->pressed_direction ||
+        zone.inner != state->pressed_is_inner) {
+        state->hold_timer.stop_ticking();
+    }
+}
+
+// Release event: Clear press state, stop repeats (keeping the swallow answer
+// for the CLICKED that follows)
 static void jog_pad_release_cb(lv_event_t* e) {
     lv_obj_t* obj = (lv_obj_t*)lv_event_get_target(e);
     jog_pad_state_t* state = get_state(obj);
     if (!state)
         return;
 
+    state->hold_timer.release();
+
     if (state->is_pressed) {
         state->is_pressed = false;
         // Trigger redraw to remove highlight
+        lv_obj_invalidate(obj);
+    }
+}
+
+// Press lost (finger slid off the widget or the press was taken by a scroll):
+// stop repeats and forget them - no CLICKED follows, so nothing to swallow
+static void jog_pad_press_lost_cb(lv_event_t* e) {
+    lv_obj_t* obj = (lv_obj_t*)lv_event_get_target(e);
+    jog_pad_state_t* state = get_state(obj);
+    if (!state)
+        return;
+
+    state->hold_timer.cancel();
+
+    if (state->is_pressed) {
+        state->is_pressed = false;
         lv_obj_invalidate(obj);
     }
 }
@@ -600,31 +676,24 @@ static void jog_pad_click_cb(lv_event_t* e) {
     if (!state)
         return;
 
+    // A hold that repeated must not add one extra jog on release.
+    if (state->hold_timer.swallow_click()) {
+        state->hold_timer.cancel();
+        spdlog::debug("[JogPad] Click swallowed after hold repeat");
+        return;
+    }
+    state->hold_timer.cancel();
+
     lv_point_t point;
     lv_indev_t* indev = lv_indev_active();
     lv_indev_get_point(indev, &point);
 
-    // Get container dimensions and center
-    lv_area_t obj_coords;
-    lv_obj_get_coords(obj, &obj_coords);
-    lv_coord_t width = lv_area_get_width(&obj_coords);
-    lv_coord_t center_x = obj_coords.x1 + width / 2;
-    lv_coord_t center_y = obj_coords.y1 + width / 2;
-    lv_coord_t radius = width / 2;
-
-    // Calculate distance and angle from center
-    lv_coord_t dx = point.x - center_x;
-    lv_coord_t dy = point.y - center_y;
-    float distance = sqrtf((float)(dx * dx + dy * dy));
-
-    // Check if click is within circular boundary
-    if (distance > radius)
+    const JogPadZone zone = jog_pad_zone_at(obj, state, point);
+    if (!zone.on_pad)
         return;
 
-    jog_pad_recompute_zones(state, radius);
-
     // Home button: center at HOME_ZONE_RATIO
-    if (distance < state->home_radius_px) {
+    if (zone.home) {
         if (state->home_callback) {
             state->home_callback(state->home_user_data);
         }
@@ -632,26 +701,28 @@ static void jog_pad_click_cb(lv_event_t* e) {
         return;
     }
 
-    // Determine direction from angle
-    float angle = calculate_angle(dx, dy);
-    JogDirection direction = angle_to_direction(angle);
-
     // Zone boundary: inner ring (25-60%), outer ring (60-100%)
     const auto& mode_dist = get_jog_mode_distances(state->current_mode);
-    float jog_dist = (distance < state->inner_boundary_px) ? mode_dist.inner : mode_dist.outer;
+    float jog_dist = zone.inner ? mode_dist.inner : mode_dist.outer;
 
     if (state->jog_callback) {
-        state->jog_callback(direction, jog_dist, state->jog_user_data);
+        state->jog_callback(zone.direction, jog_dist, state->jog_user_data);
     }
 
     const char* dir_names[] = {"N(+Y)",    "S(-Y)",    "E(+X)",    "W(-X)",
                                "NE(+X+Y)", "NW(-X+Y)", "SE(+X-Y)", "SW(-X-Y)"};
-    spdlog::debug("[JogPad] Jog: {} {:.1f}mm", dir_names[static_cast<int>(direction)], jog_dist);
+    spdlog::debug("[JogPad] Jog: {} {:.1f}mm", dir_names[static_cast<int>(zone.direction)],
+                  jog_dist);
 }
 
 // Cleanup callback: Free allocated state
 static void jog_pad_delete_cb(lv_event_t* e) {
     lv_obj_t* obj = (lv_obj_t*)lv_event_get_target(e);
+    // lv_free() never runs destructors, so the hold timer must be torn down
+    // here by hand before the state memory goes away.
+    if (jog_pad_state_t* state = get_state(obj)) {
+        state->hold_timer.teardown();
+    }
     // Transfer ownership to RAII wrapper - automatic cleanup
     lvgl_unique_ptr<jog_pad_state_t> state(get_state(obj));
     lv_obj_set_user_data(obj, nullptr);
@@ -710,7 +781,9 @@ lv_obj_t* ui_jog_pad_create(lv_obj_t* parent) {
     // Register event handlers
     lv_obj_add_event_cb(obj, jog_pad_draw_cb, LV_EVENT_DRAW_POST, nullptr);
     lv_obj_add_event_cb(obj, jog_pad_press_cb, LV_EVENT_PRESSED, nullptr);
+    lv_obj_add_event_cb(obj, jog_pad_pressing_cb, LV_EVENT_PRESSING, nullptr);
     lv_obj_add_event_cb(obj, jog_pad_release_cb, LV_EVENT_RELEASED, nullptr);
+    lv_obj_add_event_cb(obj, jog_pad_press_lost_cb, LV_EVENT_PRESS_LOST, nullptr);
     lv_obj_add_event_cb(obj, jog_pad_click_cb, LV_EVENT_CLICKED, nullptr);
     lv_obj_add_event_cb(obj, jog_pad_delete_cb, LV_EVENT_DELETE, nullptr);
 
@@ -723,6 +796,14 @@ void ui_jog_pad_set_jog_callback(lv_obj_t* obj, jog_pad_jog_cb_t cb, void* user_
     if (state) {
         state->jog_callback = cb;
         state->jog_user_data = user_data;
+    }
+}
+
+// NAMESPACE_OK: joins this header's global ui_jog_pad_* free-function API
+void ui_jog_pad_stop_repeat(lv_obj_t* obj) {
+    jog_pad_state_t* state = get_state(obj);
+    if (state) {
+        state->hold_timer.cancel();
     }
 }
 

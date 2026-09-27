@@ -164,3 +164,83 @@ TEST_CASE_METHOD(LVGLTestFixture, "HoldRepeatTimer release stops ticks and keeps
     timer.cancel();
     CHECK_FALSE(timer.swallow_click());
 }
+// ============================================================================
+// Panel level: a blocked jog cancels the Z hold repeat
+// ============================================================================
+
+#include "ui_nav_manager.h"
+#include "ui_panel_motion.h"
+#include "ui_update_queue.h"
+
+#include "../lvgl_ui_test_fixture.h"
+#include "../ui_test_utils.h"
+#include "app_globals.h"
+#include "static_panel_registry.h"
+#include "ui/ui_lazy_panel_helper.h"
+
+#include <array>
+#include <lvgl.h>
+#include <string>
+#include <vector>
+
+TEST_CASE_METHOD(LVGLUITestFixture, "a Z jog blocked at the ceiling cancels the hold repeat",
+                 "[motion][hold_repeat][xml]") {
+    std::array<lv_obj_t*, UI_PANEL_COUNT> panels{};
+    for (auto& p : panels)
+        p = lv_obj_create(lv_screen_active());
+    NavigationManager::instance().set_panels(panels.data());
+
+    lv_obj_t* cached = nullptr;
+    REQUIRE(helix::ui::lazy_create_and_push_overlay<MotionPanel>(
+        get_global_motion_panel, cached, lv_screen_active(), "Motion", "test"));
+    helix::ui::UpdateQueue::instance().drain();
+
+    MotionPanel& panel = get_global_motion_panel();
+    lv_obj_t* root = panel.get_root();
+    REQUIRE(root != nullptr);
+    lv_obj_t* z_up = lv_obj_find_by_name(root, "z_up_large");
+    REQUIRE(z_up != nullptr);
+
+    // Known envelope (Z 0..250), all axes homed, toolhead parked at the Z
+    // ceiling: any z_up jog clamps to zero.
+    get_printer_state().update_from_status({{"toolhead",
+                                             {{"homed_axes", "xyz"},
+                                              {"axis_minimum", {0.0, 0.0, 0.0, 0.0}},
+                                              {"axis_maximum", {235.0, 235.0, 250.0, 0.0}}}}});
+    helix::ui::UpdateQueue::instance().drain();
+    lv_subject_set_int(get_printer_state().get_gcode_position_z_subject(), 25'000); // 250.00mm
+    helix::ui::UpdateQueue::instance().drain();
+
+    std::vector<std::string> warnings;
+    helix::ui::set_test_notification_warning_hook(
+        [&warnings](const std::string& msg) { warnings.push_back(msg); });
+
+    // Press arms the repeat (this is the XML pressed event's whole job).
+    lv_obj_send_event(z_up, LV_EVENT_PRESSED, nullptr);
+    REQUIRE(panel.z_hold_timer().ticking());
+
+    // Before the delay: no repeat, no jog attempt, no toast.
+    CHECK_FALSE(panel.z_hold_timer().poll(HoldRepeat::DELAY_MS - 1));
+    CHECK(warnings.empty());
+
+    // First repeat at the delay: the jog is clamped to zero at the ceiling,
+    // warned once, and the refusal stops the repeat.
+    CHECK(panel.z_hold_timer().poll(HoldRepeat::DELAY_MS));
+    CHECK_FALSE(panel.z_hold_timer().ticking());
+    REQUIRE(warnings.size() == 1);
+    CHECK(warnings.front().find("blocked") != std::string::npos);
+
+    // No further ticks, so ticks into the wall can never raise a second toast.
+    CHECK_FALSE(panel.z_hold_timer().poll(HoldRepeat::DELAY_MS + HoldRepeat::INTERVAL_MS));
+    CHECK(warnings.size() == 1);
+
+    // The release click is swallowed (a repeat fired): no extra jog, no toast.
+    lv_obj_send_event(z_up, LV_EVENT_RELEASED, nullptr);
+    lv_obj_send_event(z_up, LV_EVENT_CLICKED, nullptr);
+    CHECK(warnings.size() == 1);
+    CHECK_FALSE(panel.z_hold_timer().ticking());
+
+    helix::ui::set_test_notification_warning_hook(nullptr);
+    StaticPanelRegistry::instance().destroy_all();
+    helix::ui::UpdateQueue::instance().drain();
+}

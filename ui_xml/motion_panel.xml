@@ -138,11 +138,17 @@
                        width="100%" flex_grow="1" icon_position="top" icon="arrow_up" bind_icon="motion_z_up_icon"
                        bind_text="motion_z_large_label">
               <event_cb trigger="clicked" callback="on_motion_z_button" user_data="z_up_large"/>
+              <event_cb trigger="pressed" callback="on_motion_z_button_pressed" user_data="z_up_large"/>
+              <event_cb trigger="released" callback="on_motion_z_button_released"/>
+              <event_cb trigger="press_lost" callback="on_motion_z_button_press_lost"/>
             </ui_button>
             <ui_button name="z_up_small"
                        width="100%" flex_grow="1" icon_position="top" icon="arrow_up" bind_icon="motion_z_up_icon"
                        bind_text="motion_z_small_label">
               <event_cb trigger="clicked" callback="on_motion_z_button" user_data="z_up_small"/>
+              <event_cb trigger="pressed" callback="on_motion_z_button_pressed" user_data="z_up_small"/>
+              <event_cb trigger="released" callback="on_motion_z_button_released"/>
+              <event_cb trigger="press_lost" callback="on_motion_z_button_press_lost"/>
             </ui_button>
             <!-- Same widget and binding as the landscape column between the
                  up and down buttons: "Print Head" or "Bed" by kinematics. -->
@@ -151,11 +157,17 @@
                        width="100%" flex_grow="1" icon_position="top" icon="arrow_down" bind_icon="motion_z_down_icon"
                        bind_text="motion_z_small_label">
               <event_cb trigger="clicked" callback="on_motion_z_button" user_data="z_down_small"/>
+              <event_cb trigger="pressed" callback="on_motion_z_button_pressed" user_data="z_down_small"/>
+              <event_cb trigger="released" callback="on_motion_z_button_released"/>
+              <event_cb trigger="press_lost" callback="on_motion_z_button_press_lost"/>
             </ui_button>
             <ui_button name="z_down_large"
                        width="100%" flex_grow="1" icon_position="top" icon="arrow_down" bind_icon="motion_z_down_icon"
                        bind_text="motion_z_large_label">
               <event_cb trigger="clicked" callback="on_motion_z_button" user_data="z_down_large"/>
+              <event_cb trigger="pressed" callback="on_motion_z_button_pressed" user_data="z_down_large"/>
+              <event_cb trigger="released" callback="on_motion_z_button_released"/>
+              <event_cb trigger="press_lost" callback="on_motion_z_button_press_lost"/>
             </ui_button>
           </lv_obj>
         </lv_obj>
@@ -262,11 +274,17 @@
                        width="100%" flex_grow="1" style_max_height="#button_height_lg" icon="arrow_up"
                        bind_icon="motion_z_up_icon" bind_text="motion_z_large_label">
               <event_cb trigger="clicked" callback="on_motion_z_button" user_data="z_up_large"/>
+              <event_cb trigger="pressed" callback="on_motion_z_button_pressed" user_data="z_up_large"/>
+              <event_cb trigger="released" callback="on_motion_z_button_released"/>
+              <event_cb trigger="press_lost" callback="on_motion_z_button_press_lost"/>
             </ui_button>
             <ui_button name="z_up_small"
                        width="100%" flex_grow="1" style_max_height="#button_height_lg" icon="arrow_up"
                        bind_icon="motion_z_up_icon" bind_text="motion_z_small_label">
               <event_cb trigger="clicked" callback="on_motion_z_button" user_data="z_up_small"/>
+              <event_cb trigger="pressed" callback="on_motion_z_button_pressed" user_data="z_up_small"/>
+              <event_cb trigger="released" callback="on_motion_z_button_released"/>
+              <event_cb trigger="press_lost" callback="on_motion_z_button_press_lost"/>
             </ui_button>
             <!-- Z-Axis label - shows "Bed" or "Print Head" based on kinematics -->
             <text_body name="z_axis_label" width="100%" bind_text="motion_z_axis_label" style_text_align="center"/>
@@ -274,11 +292,17 @@
                        width="100%" flex_grow="1" style_max_height="#button_height_lg" icon="arrow_down"
                        bind_icon="motion_z_down_icon" bind_text="motion_z_small_label">
               <event_cb trigger="clicked" callback="on_motion_z_button" user_data="z_down_small"/>
+              <event_cb trigger="pressed" callback="on_motion_z_button_pressed" user_data="z_down_small"/>
+              <event_cb trigger="released" callback="on_motion_z_button_released"/>
+              <event_cb trigger="press_lost" callback="on_motion_z_button_press_lost"/>
             </ui_button>
             <ui_button name="z_down_large"
                        width="100%" flex_grow="1" style_max_height="#button_height_lg" icon="arrow_down"
                        bind_icon="motion_z_down_icon" bind_text="motion_z_large_label">
               <event_cb trigger="clicked" callback="on_motion_z_button" user_data="z_down_large"/>
+              <event_cb trigger="pressed" callback="on_motion_z_button_pressed" user_data="z_down_large"/>
+              <event_cb trigger="released" callback="on_motion_z_button_released"/>
+              <event_cb trigger="press_lost" callback="on_motion_z_button_press_lost"/>
             </ui_button>
           </lv_obj>
           <!-- Leveling Buttons: QGL and/or Z-Tilt (conditionally visible) -->
