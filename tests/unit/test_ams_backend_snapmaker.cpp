@@ -890,6 +890,41 @@ TEST_CASE_METHOD(SnapmakerFixture,
     CHECK(backend.get_system_info().action != AmsAction::ERROR);
 }
 
+TEST_CASE_METHOD(SnapmakerFixture,
+                 "Snapmaker a terminal channel_state on the first frame fires no unload event",
+                 "[ams][snapmaker][unload][action_state]") {
+    helix::test::RegisteredBackend<AmsBackendSnapmaker> backend_reg(nullptr, nullptr);
+    AmsBackendSnapmaker& backend = *backend_reg;
+
+    SECTION("unload_finish left over from before startup") {
+        SnapmakerTestAccess::handle_status(backend,
+                                           feed_with_action(3, "unload_finish", "unload_finish"));
+        CHECK(backend.get_system_info().action == AmsAction::IDLE);
+        CHECK_FALSE(AmsState::instance().was_slot_recently_unloaded(3));
+
+        SECTION("a full frame repeating it is still not an unload") {
+            SnapmakerTestAccess::handle_status(
+                backend, feed_with_action(3, "unload_finish", "unload_finish"));
+            CHECK_FALSE(AmsState::instance().was_slot_recently_unloaded(3));
+        }
+        SECTION("a real unload afterwards still marks the slot") {
+            SnapmakerTestAccess::handle_status(backend,
+                                               feed_with_action(3, "unload_doing", "unload_doing"));
+            REQUIRE(backend.get_system_info().action == AmsAction::UNLOADING);
+            SnapmakerTestAccess::handle_status(
+                backend, feed_with_action(3, "unload_finish", "unload_finish"));
+            CHECK(backend.get_system_info().action == AmsAction::IDLE);
+            CHECK(AmsState::instance().was_slot_recently_unloaded(3));
+        }
+    }
+    SECTION("load_finish left over from before startup") {
+        SnapmakerTestAccess::handle_status(backend,
+                                           feed_with_action(3, "load_finish", "load_finish"));
+        CHECK(backend.get_system_info().action == AmsAction::IDLE);
+        CHECK_FALSE(AmsState::instance().was_slot_recently_unloaded(3));
+    }
+}
+
 TEST_CASE_METHOD(SnapmakerFixture, "Snapmaker a spool-insert preload ends at preload_finish",
                  "[ams][snapmaker][action_state]") {
     helix::test::RegisteredBackend<AmsBackendSnapmaker> backend_reg(nullptr, nullptr);

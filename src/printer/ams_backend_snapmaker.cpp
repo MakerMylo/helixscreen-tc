@@ -1659,6 +1659,7 @@ void AmsBackendSnapmaker::handle_status_update(const nlohmann::json& notificatio
                         // enabled flag, so that field rides the same rule).
                         // Absent-or-null is "no change" for every field.
                         ChannelSnapshot snap = channel_snapshots_[static_cast<size_t>(i)];
+                        const std::string prev_state = snap.state;
                         const std::string prev_action_state = snap.action_state;
                         const auto state_it = ch.find("channel_state");
                         if (state_it != ch.end() && state_it->is_string()) {
@@ -1691,6 +1692,11 @@ void AmsBackendSnapmaker::handle_status_update(const nlohmann::json& notificatio
                             helix::snapmaker::settled_op_outcome(snap.state, prev_action_state,
                                                                  snap.action_state);
                         channel_snapshots_[static_cast<size_t>(i)] = std::move(snap);
+                        // An unload terminal marks the lane only when this frame
+                        // moved the channel to it; see observed_change.
+                        const bool outcome_is_new =
+                            settled_outcome.has_value() ||
+                            helix::snapmaker::observed_change(prev_state, state);
 
                         const ChannelStateInfo info = classify_channel_state(state);
                         const std::string& op_state = settled_outcome ? *settled_outcome : state;
@@ -1828,7 +1834,7 @@ void AmsBackendSnapmaker::handle_status_update(const nlohmann::json& notificatio
                                 // name that tool: with no slot it dispatches the
                                 // bare INNER_FILAMENT_UNLOAD, which the firmware
                                 // runs on T0.
-                                if (op_state == "unload_finish") {
+                                if (op_state == "unload_finish" && outcome_is_new) {
                                     // Deferred to after the lock for the same
                                     // reason emit_event is: this reaches into
                                     // AmsState, which takes its own mutex, while
