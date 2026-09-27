@@ -480,12 +480,39 @@ void PrinterImageWidget::schedule_cache_check() {
     lv_timer_set_repeat_count(cache_timer_, 1);
 }
 
+namespace {
+
+/// The size the image takes at the next layout pass. A callout move declares a
+/// pixel rect whose coords only follow once layout runs, and this is read from
+/// timers that may fire before it, so the declared size wins over the coords;
+/// the XML's 100% resolves against the container's content box.
+void declared_image_size(lv_obj_t* img, int32_t& w, int32_t& h) {
+    lv_obj_t* parent = lv_obj_get_parent(img);
+    const auto resolve = [](int32_t v, int32_t full) {
+        return LV_COORD_IS_PCT(v) ? full * LV_COORD_GET_PCT(v) / 100 : v;
+    };
+    w = resolve(lv_obj_get_style_width(img, LV_PART_MAIN), lv_obj_get_content_width(parent));
+    h = resolve(lv_obj_get_style_height(img, LV_PART_MAIN), lv_obj_get_content_height(parent));
+}
+
+/// Shows an exact-size copy 1:1. LVGL keeps the scale CONTAIN computed when the
+/// align leaves CONTAIN (lv_image_set_scale refuses while CONTAIN is still set),
+/// so the scale is reset after the align changes, and before the src so no
+/// CONTAIN pass runs on the new copy.
+void show_exact_copy(lv_obj_t* img, const std::string& lvgl_path) {
+    lv_image_set_inner_align(img, LV_IMAGE_ALIGN_CENTER);
+    lv_image_set_scale(img, LV_SCALE_NONE);
+    lv_image_set_src(img, lvgl_path.c_str());
+}
+
+} // namespace
+
 bool PrinterImageWidget::try_set_exact_size_source(lv_obj_t* img) {
     if (!img || current_source_path_.empty())
         return false;
 
-    const int32_t w = lv_obj_get_width(img);
-    const int32_t h = lv_obj_get_height(img);
+    int32_t w = 0, h = 0;
+    declared_image_size(img, w, h);
     if (w <= 0 || h <= 0)
         return false;
 
@@ -500,8 +527,7 @@ bool PrinterImageWidget::try_set_exact_size_source(lv_obj_t* img) {
     if (lvgl_path == current_displayed_path_)
         return true; // already showing it; re-setting would invalidate for nothing
 
-    lv_image_set_src(img, lvgl_path.c_str());
-    lv_image_set_inner_align(img, LV_IMAGE_ALIGN_CENTER);
+    show_exact_copy(img, lvgl_path);
     current_displayed_path_ = lvgl_path;
     spdlog::debug("[PrinterImageWidget] Exact-size image: {} ({}x{})", cache_path, w, h);
     return true;
@@ -518,8 +544,8 @@ void PrinterImageWidget::check_or_generate_cache() {
     if (try_set_exact_size_source(img))
         return;
 
-    int32_t w = lv_obj_get_width(img);
-    int32_t h = lv_obj_get_height(img);
+    int32_t w = 0, h = 0;
+    declared_image_size(img, w, h);
     if (w <= 0 || h <= 0) {
         spdlog::debug("[PrinterImageWidget] Not laid out yet ({}x{}), skipping cache", w, h);
         return;
@@ -583,13 +609,14 @@ void PrinterImageWidget::check_or_generate_cache() {
             }
             // The image was resized while the worker ran (a callout layout
             // moved it); this copy is cut for the old rect.
-            if (lv_obj_get_width(cached_img) != gen_w || lv_obj_get_height(cached_img) != gen_h) {
+            int32_t now_w = 0, now_h = 0;
+            declared_image_size(cached_img, now_w, now_h);
+            if (now_w != gen_w || now_h != gen_h) {
                 schedule_cache_check();
                 return;
             }
             std::string lvgl_path = "A:" + cache_path;
-            lv_image_set_src(cached_img, lvgl_path.c_str());
-            lv_image_set_inner_align(cached_img, LV_IMAGE_ALIGN_CENTER);
+            show_exact_copy(cached_img, lvgl_path);
             this->current_displayed_path_ = lvgl_path;
             spdlog::debug("[PrinterImageWidget] Cached and loaded: {} ({}x{})", cache_path, gen_w,
                           gen_h);

@@ -459,6 +459,15 @@ int mode_now() {
     return lv_subject_get_int(lv_xml_get_subject(nullptr, "printer_callout_mode"));
 }
 
+/// Deletes one scaled-image cache entry, refusing anything outside the cache.
+void forget_cache_entry(const std::string& path) {
+    REQUIRE(path.rfind(helix::get_printer_image_cache_dir() + "/", 0) == 0);
+    REQUIRE(path.size() > 4);
+    REQUIRE(path.compare(path.size() - 4, 4, ".bin") == 0);
+    std::error_code ec;
+    std::filesystem::remove(path, ec);
+}
+
 } // namespace
 
 TEST_CASE_METHOD(LVGLUITestFixture, "callouts: wide widget draws a line to the bed chip",
@@ -582,15 +591,6 @@ TEST_CASE_METHOD(LVGLUITestFixture,
                  "[printer_image][callouts]") {
     prepare_tagged_widget();
     const std::string source = PrinterImages::get_best_printer_image("");
-    const std::string cache_dir = helix::get_printer_image_cache_dir();
-    const auto forget = [&](const std::string& path) {
-        // Only cache entries: never anything the widget displays from the tree.
-        REQUIRE(path.rfind(cache_dir + "/", 0) == 0);
-        REQUIRE(path.size() > 4);
-        REQUIRE(path.compare(path.size() - 4, 4, ".bin") == 0);
-        std::error_code ec;
-        std::filesystem::remove(path, ec);
-    };
 
     PanelWidgetHarness<PrinterImageWidget> h(test_screen());
     h.resize(8, 4, 480, 160);
@@ -601,8 +601,8 @@ TEST_CASE_METHOD(LVGLUITestFixture,
         helix::get_cached_printer_image_path(source, lv_obj_get_content_width(container), area_h);
     const CalloutRect side = fit_image(400, area_h, 1601, 1204);
     const std::string moved = helix::get_cached_printer_image_path(source, side.w, side.h);
-    forget(full);
-    forget(moved);
+    forget_cache_entry(full);
+    forget_cache_entry(moved);
     const auto src_now = [&] {
         const auto* p = static_cast<const char*>(lv_image_get_src(img));
         return std::string(p ? p : "");
@@ -632,8 +632,54 @@ TEST_CASE_METHOD(LVGLUITestFixture,
     CHECK(src_now() != "A:" + full);
     CHECK(landed);
     h.widget().detach();
-    forget(full);
-    forget(moved);
+    forget_cache_entry(full);
+    forget_cache_entry(moved);
+    set_image_regions_for_testing({});
+}
+
+// A copy cut for the tile's full size already on disk is what the image shows
+// before a one-side layout moves it; after the move it must not be drawn at
+// the scale that full-size copy needed.
+TEST_CASE_METHOD(LVGLUITestFixture,
+                 "callouts: a one-side image draws the source contain-fit into its rect",
+                 "[printer_image][callouts]") {
+    prepare_tagged_widget();
+    const std::string source = PrinterImages::get_best_printer_image("");
+    PanelWidgetHarness<PrinterImageWidget> h(test_screen());
+    h.resize(8, 4, 400, 160);
+    lv_obj_t* img = h.child("printer_image");
+    lv_obj_t* container = h.child("printer_container");
+    const int area_w = lv_obj_get_content_width(container);
+    const int area_h = lv_obj_get_content_height(container);
+    const std::string full = helix::get_cached_printer_image_path(source, area_w, area_h);
+    const CalloutRect side = fit_image(area_w, area_h, 1601, 1204);
+    const std::string moved = helix::get_cached_printer_image_path(source, side.w, side.h);
+    forget_cache_entry(moved);
+    if (!helix::generate_cached_printer_image(source, area_w, area_h, full))
+        SKIP("no cacheable printer image in this tree (source '" + source + "')");
+    const auto src_now = [&] {
+        const auto* p = static_cast<const char*>(lv_image_get_src(img));
+        return std::string(p ? p : "");
+    };
+
+    settle();
+    lv_obj_update_layout(h.root());
+    REQUIRE(mode_now() == static_cast<int>(CalloutMode::OneSide));
+    CHECK(lv_obj_get_width(img) == side.w);
+    CHECK(lv_obj_get_height(img) == side.h);
+    // Never the full-size copy; until the rect's own copy exists, the source
+    // contain-scaled to the rect.
+    CHECK(src_now() != "A:" + full);
+    if (src_now() == source)
+        CHECK(lv_image_get_inner_align(img) == LV_IMAGE_ALIGN_CONTAIN);
+
+    // The rect's own copy, drawn 1:1.
+    CHECK(wait_until([&] { return src_now() == "A:" + moved; }, 3000));
+    CHECK(lv_image_get_inner_align(img) == LV_IMAGE_ALIGN_CENTER);
+    CHECK(lv_image_get_scale(img) == LV_SCALE_NONE);
+    h.widget().detach();
+    forget_cache_entry(full);
+    forget_cache_entry(moved);
     set_image_regions_for_testing({});
 }
 
