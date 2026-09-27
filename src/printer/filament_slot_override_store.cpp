@@ -3,6 +3,7 @@
 
 #include "ams_types.h"
 #include "data_root_resolver.h"
+#include "exception_policy.h"
 #include "filament_database.h"
 #include "filament_slot_override.h"
 #include "filament_variants.h"
@@ -1240,19 +1241,18 @@ parse_namespace_document(const nlohmann::json& namespace_doc, LaneKeyStyle key_s
     return records;
 }
 
-// The per-record handlers inside load_blocking_impl scope the common cases to
-// one lost slot. This catch is the backstop for everything else: worst case the
-// user sees no overrides, which is the fresh-install state and fully
-// recoverable, rather than an AMS subsystem that failed to come up.
+// load_blocking_impl reads every record without throwing. Where the build has
+// exceptions, anything else escaping it is contained here: worst case the user
+// sees no overrides, which is the fresh-install state and fully recoverable,
+// rather than an AMS subsystem that failed to come up.
 std::unordered_map<int, FilamentSlotOverride> FilamentSlotOverrideStore::load_blocking() {
-    try {
-        return load_blocking_impl();
-    } catch (const std::exception& e) {
-        spdlog::warn("[FilamentSlotOverrideStore:{}] load aborted ({}); continuing with no "
-                     "overrides",
-                     backend_id_, e.what());
+    std::unordered_map<int, FilamentSlotOverride> result;
+    if (!helix::contain_exceptions(fmt::format("[FilamentSlotOverrideStore:{}] load", backend_id_),
+                                   [&] { result = load_blocking_impl(); })) {
+        spdlog::warn("[FilamentSlotOverrideStore:{}] continuing with no overrides", backend_id_);
         return {};
     }
+    return result;
 }
 
 void FilamentSlotOverrideStore::reload_async(ReloadCallback cb) {

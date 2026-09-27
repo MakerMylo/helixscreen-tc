@@ -308,15 +308,10 @@ void HardwareValidator::save_session_snapshot(Config* config,
     snapshot.timestamp = ts_buf;
 
     // Save to config
-    try {
-        config->set<json>(config->df() + "hardware/last_snapshot", snapshot.to_json());
-        config->save();
-        spdlog::debug(
-            "[HardwareValidator] Saved session snapshot with {} heaters, {} fans, {} leds",
-            snapshot.heaters.size(), snapshot.fans.size(), snapshot.leds.size());
-    } catch (const std::exception& e) {
-        spdlog::warn("[HardwareValidator] Failed to save session snapshot: {}", e.what());
-    }
+    config->set<json>(config->df() + "hardware/last_snapshot", snapshot.to_json());
+    config->save();
+    spdlog::debug("[HardwareValidator] Saved session snapshot with {} heaters, {} fans, {} leds",
+                  snapshot.heaters.size(), snapshot.fans.size(), snapshot.leds.size());
 }
 
 HardwareSnapshot HardwareValidator::create_snapshot(const helix::PrinterDiscovery& hardware) {
@@ -368,32 +363,27 @@ void HardwareValidator::set_hardware_optional(Config* config, const std::string&
         return;
     }
 
-    try {
-        // Ensure the hardware/optional array exists
-        json& optional_list = config->get_json(config->df() + "hardware/optional");
-        if (optional_list.is_null() || !optional_list.is_array()) {
-            optional_list = json::array();
-        }
-
-        // Find if already in list
-        auto it = std::find(optional_list.begin(), optional_list.end(), hardware_name);
-        bool in_list = (it != optional_list.end());
-
-        if (optional && !in_list) {
-            // Add to list
-            optional_list.push_back(hardware_name);
-            spdlog::info("[HardwareValidator] Marked '{}' as optional", hardware_name);
-        } else if (!optional && in_list) {
-            // Remove from list
-            optional_list.erase(it);
-            spdlog::info("[HardwareValidator] Unmarked '{}' as optional", hardware_name);
-        }
-
-        config->save();
-
-    } catch (const std::exception& e) {
-        spdlog::warn("[HardwareValidator] Failed to set optional status: {}", e.what());
+    // Ensure the hardware/optional array exists
+    json& optional_list = config->get_json(config->df() + "hardware/optional");
+    if (optional_list.is_null() || !optional_list.is_array()) {
+        optional_list = json::array();
     }
+
+    // Find if already in list
+    auto it = std::find(optional_list.begin(), optional_list.end(), hardware_name);
+    bool in_list = (it != optional_list.end());
+
+    if (optional && !in_list) {
+        // Add to list
+        optional_list.push_back(hardware_name);
+        spdlog::info("[HardwareValidator] Marked '{}' as optional", hardware_name);
+    } else if (!optional && in_list) {
+        // Remove from list
+        optional_list.erase(it);
+        spdlog::info("[HardwareValidator] Unmarked '{}' as optional", hardware_name);
+    }
+
+    config->save();
 }
 
 void HardwareValidator::add_expected_hardware(Config* config, const std::string& hardware_name) {
@@ -401,25 +391,20 @@ void HardwareValidator::add_expected_hardware(Config* config, const std::string&
         return;
     }
 
-    try {
-        // Ensure the hardware/expected array exists
-        json& expected_list = config->get_json(config->df() + "hardware/expected");
-        if (expected_list.is_null() || !expected_list.is_array()) {
-            expected_list = json::array();
-        }
+    // Ensure the hardware/expected array exists
+    json& expected_list = config->get_json(config->df() + "hardware/expected");
+    if (expected_list.is_null() || !expected_list.is_array()) {
+        expected_list = json::array();
+    }
 
-        // Check if already in list
-        auto it = std::find(expected_list.begin(), expected_list.end(), hardware_name);
-        if (it == expected_list.end()) {
-            expected_list.push_back(hardware_name);
-            spdlog::info("[HardwareValidator] Added '{}' to expected hardware", hardware_name);
-            config->save();
-        } else {
-            spdlog::debug("[HardwareValidator] '{}' already in expected list", hardware_name);
-        }
-
-    } catch (const std::exception& e) {
-        spdlog::warn("[HardwareValidator] Failed to add expected hardware: {}", e.what());
+    // Check if already in list
+    auto it = std::find(expected_list.begin(), expected_list.end(), hardware_name);
+    if (it == expected_list.end()) {
+        expected_list.push_back(hardware_name);
+        spdlog::info("[HardwareValidator] Added '{}' to expected hardware", hardware_name);
+        config->save();
+    } else {
+        spdlog::debug("[HardwareValidator] '{}' already in expected list", hardware_name);
     }
 }
 
@@ -445,37 +430,30 @@ size_t HardwareValidator::acknowledge_discovered_hardware(Config* config,
         names.push_back(sensor);
     }
 
-    try {
-        json& expected_list = config->get_json(config->df() + "hardware/expected");
-        if (expected_list.is_null() || !expected_list.is_array()) {
-            expected_list = json::array();
-        }
-
-        size_t added = 0;
-        for (const auto& name : names) {
-            if (name.empty()) {
-                continue;
-            }
-            if (std::find(expected_list.begin(), expected_list.end(), name) !=
-                expected_list.end()) {
-                continue;
-            }
-            expected_list.push_back(name);
-            ++added;
-        }
-
-        if (added > 0) {
-            spdlog::info("[HardwareValidator] Accepted {} discovered object(s) as expected", added);
-            if (!config->save()) {
-                spdlog::warn("[HardwareValidator] Failed to save accepted hardware");
-            }
-        }
-        return added;
-
-    } catch (const std::exception& e) {
-        spdlog::warn("[HardwareValidator] Failed to accept discovered hardware: {}", e.what());
-        return 0;
+    json& expected_list = config->get_json(config->df() + "hardware/expected");
+    if (expected_list.is_null() || !expected_list.is_array()) {
+        expected_list = json::array();
     }
+
+    size_t added = 0;
+    for (const auto& name : names) {
+        if (name.empty()) {
+            continue;
+        }
+        if (std::find(expected_list.begin(), expected_list.end(), name) != expected_list.end()) {
+            continue;
+        }
+        expected_list.push_back(name);
+        ++added;
+    }
+
+    if (added > 0) {
+        spdlog::info("[HardwareValidator] Accepted {} discovered object(s) as expected", added);
+        if (!config->save()) {
+            spdlog::warn("[HardwareValidator] Failed to save accepted hardware");
+        }
+    }
+    return added;
 }
 
 // =============================================================================

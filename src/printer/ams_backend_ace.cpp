@@ -18,6 +18,7 @@
 #include "ui_update_queue.h"
 
 #include "ams_bypass_policy.h"
+#include "exception_policy.h"
 #include "i_moonraker_api.h"
 #include "i_moonraker_client.h"
 #include "lane_apply.h"
@@ -1384,14 +1385,14 @@ void AmsBackendAce::start_rest_fallback() {
     if (rest_polling_thread_.joinable()) {
         rest_polling_thread_.join();
     }
-    // Wrap — EAGAIN under thread exhaustion throws std::system_error ([L083]).
-    try {
-        rest_polling_thread_ = std::thread(&AmsBackendAce::rest_polling_loop, this);
-        spdlog::info("[ACE] REST fallback polling started");
-    } catch (const std::system_error& e) {
-        spdlog::error("[ACE] Failed to spawn REST polling thread: {}", e.what());
+    // EAGAIN under thread exhaustion throws std::system_error ([L083]).
+    if (!helix::contain_exceptions("[ACE] Spawning the REST polling thread", [&] {
+            rest_polling_thread_ = std::thread(&AmsBackendAce::rest_polling_loop, this);
+        })) {
         use_rest_fallback_ = false;
+        return;
     }
+    spdlog::info("[ACE] REST fallback polling started");
 }
 
 void AmsBackendAce::stop_rest_fallback() {

@@ -763,12 +763,9 @@ inline std::string json_string_list_or(const nlohmann::json& obj, const char* ke
 
     // Stringified JSON array
     if (raw.front() == '[') {
-        try {
-            auto arr = nlohmann::json::parse(raw);
-            if (arr.is_array())
-                return join_array(arr);
-        } catch (...) {
-        }
+        auto arr = nlohmann::json::parse(raw, nullptr, false);
+        if (arr.is_array())
+            return join_array(arr);
     }
 
     return raw;
@@ -796,11 +793,11 @@ inline std::string json_string_list_or(const nlohmann::json& obj, const char* ke
  */
 inline std::vector<double> parse_filament_weights(const nlohmann::json& obj) {
     auto parse_text = [](const std::string& text, double& out) {
-        try {
-            out = std::stod(text);
-        } catch (...) {
+        const auto parsed = helix::text_io::parse_leading<double>(text);
+        if (!parsed) {
             return false;
         }
+        out = *parsed;
         return std::isfinite(out);
     };
     auto parse_array = [&parse_text](const nlohmann::json& arr) {

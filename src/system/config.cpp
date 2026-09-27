@@ -2151,10 +2151,9 @@ void Config::init(const std::string& config_path) {
                      storage_->describe());
     }
 
-    // A thrown load() means the document is present but unreadable (e.g.
-    // permission denied) — distinct from "absent" (nullopt, no throw). The
-    // ESP32 build has no exceptions, so there load() cannot report it. Both
-    // cases route into the "load existing config" branch below so a
+    // A read error means the document is present but unreadable (e.g.
+    // permission denied), distinct from "absent" (nullopt, no error). Both
+    // route into the "load existing config" branch below so a
     // present-but-unreadable config gets the same corrupt-preserve +
     // backup-restore recovery as a parse failure, instead of being silently
     // treated as first-boot and reset to defaults.
@@ -2162,18 +2161,9 @@ void Config::init(const std::string& config_path) {
     // True while `data` is the document parsed from `path`, whatever put it
     // there (a backup restored onto a missing file counts).
     bool data_is_on_disk_doc = false;
-    bool load_read_failed = false;
     std::string load_read_error;
-#if defined(__cpp_exceptions)
-    try {
-        loaded_doc = storage_->load();
-    } catch (const std::exception& e) {
-        load_read_failed = true;
-        load_read_error = e.what();
-    }
-#else
-    loaded_doc = storage_->load();
-#endif
+    loaded_doc = storage_->load(load_read_error);
+    const bool load_read_failed = !loaded_doc && !load_read_error.empty();
 
     if (loaded_doc || load_read_failed) {
         // Load existing config

@@ -202,6 +202,37 @@ decide_all() {
     [ "$status" -eq 0 ]
 }
 
+@test "flags each call that aborts a firmware built without exceptions" {
+    decide_all
+    cat > "$ROOT/src/printer/compiled.cpp" <<'CPP'
+int a = j.value("speed", 0);
+auto b = j.at("name");
+auto c = json::parse(text);
+int d = std::stoi(s);
+float e = std::any_cast<float>(value);
+CPP
+    run_gate
+    [ "$status" -eq 1 ]
+    contains "src/printer/compiled.cpp:1: json .value" "$output"
+    contains "src/printer/compiled.cpp:2: json .at" "$output"
+    contains "src/printer/compiled.cpp:3: one-argument json::parse" "$output"
+    contains "src/printer/compiled.cpp:4: std::sto*" "$output"
+    contains "src/printer/compiled.cpp:5: value-form std::any_cast" "$output"
+}
+
+@test "the non-throwing forms, comments and excluded files pass the aborting-call check" {
+    decide_all
+    cat > "$ROOT/src/printer/compiled.cpp" <<'CPP'
+auto c = json::parse(text, nullptr, false);
+const float* e = std::any_cast<float>(&value);
+auto o = maybe.value();
+// j.value("speed", 0) would throw here
+CPP
+    printf 'int d = std::stoi(s);\n' > "$ROOT/src/printer/excluded_one.cpp"
+    run_gate
+    [ "$status" -eq 0 ]
+}
+
 @test "passes when every src/ file is in the manifest or exclusions" {
     # decide the new file: add it to the manifest
     decide_all

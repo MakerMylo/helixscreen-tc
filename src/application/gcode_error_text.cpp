@@ -60,7 +60,11 @@ void GcodeErrorRouter::clean_error_text(std::string& text, std::string& out_code
 
         if (obj_end != std::string::npos) {
             std::string json_str = text.substr(json_start, obj_end - json_start);
+#if defined(__cpp_exceptions)
             try {
+#else
+            {
+#endif
                 auto j = nlohmann::json::parse(json_str, nullptr, false);
                 if (!j.is_discarded()) {
                     // Read the firmware's msg once: table entries that prefer it
@@ -96,11 +100,15 @@ void GcodeErrorRouter::clean_error_text(std::string& text, std::string& out_code
                         text = fw_msg;
                     }
                 }
+#if defined(__cpp_exceptions)
             } catch (...) {
                 // A throw from the error-table formatters (fmt::runtime over a
                 // translated format string) -- leave text untouched and fall
                 // through to heuristic patterns.
             }
+#else
+            }
+#endif
         }
     }
 

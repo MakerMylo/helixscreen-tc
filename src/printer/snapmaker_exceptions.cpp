@@ -151,7 +151,9 @@ std::vector<ActiveException> read_active_exceptions(const nlohmann::json& status
     if (!status_carries_exceptions(status)) {
         return out;
     }
-    for (const auto& entry : status.at("exception_manager").at("exceptions")) {
+    // status_carries_exceptions() has proven both keys present.
+    const auto& manager = *status.find("exception_manager");
+    for (const auto& entry : *manager.find("exceptions")) {
         if (auto active = read_exception_entry(entry)) {
             out.push_back(std::move(*active));
         }

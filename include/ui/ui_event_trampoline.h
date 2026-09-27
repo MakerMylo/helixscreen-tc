@@ -9,6 +9,23 @@
 
 #include <exception>
 
+// A handler's exception is logged, not let through LVGL's C dispatch frame.
+// Without exceptions (the ESP32 build) the guard is a plain block.
+#if defined(__cpp_exceptions)
+#define HELIX_TRAMPOLINE_GUARD_BEGIN try {
+#define HELIX_TRAMPOLINE_GUARD_END(PanelClass, name)                                               \
+    }                                                                                              \
+    catch (const std::exception& ex) {                                                             \
+        spdlog::error("[" #PanelClass "] Exception in on_" #name ": {}", ex.what());               \
+    }                                                                                              \
+    catch (...) {                                                                                  \
+        spdlog::error("[" #PanelClass "] Unknown exception in on_" #name);                         \
+    }
+#else
+#define HELIX_TRAMPOLINE_GUARD_BEGIN {
+#define HELIX_TRAMPOLINE_GUARD_END(PanelClass, name) }
+#endif
+
 /**
  * @file ui_event_trampoline.h
  * @brief Macros to reduce boilerplate for LVGL event callback trampolines
@@ -106,14 +123,9 @@
  */
 #define PANEL_TRAMPOLINE(PanelClass, getter_func, name)                                            \
     void PanelClass::on_##name(lv_event_t* e) {                                                    \
-        try {                                                                                      \
-            (void)e;                                                                               \
-            getter_func().handle_##name();                                                         \
-        } catch (const std::exception& ex) {                                                       \
-            spdlog::error("[" #PanelClass "] Exception in on_" #name ": {}", ex.what());           \
-        } catch (...) {                                                                            \
-            spdlog::error("[" #PanelClass "] Unknown exception in on_" #name);                     \
-        }                                                                                          \
+        HELIX_TRAMPOLINE_GUARD_BEGIN(void) e;                                                      \
+        getter_func().handle_##name();                                                             \
+        HELIX_TRAMPOLINE_GUARD_END(PanelClass, name)                                               \
     }
 
 /**
@@ -135,16 +147,12 @@
  */
 #define PANEL_TRAMPOLINE_USERDATA(PanelClass, name)                                                \
     void PanelClass::on_##name(lv_event_t* e) {                                                    \
-        try {                                                                                      \
-            if (!e)                                                                                \
-                return;                                                                            \
-            auto* self = static_cast<PanelClass*>(lv_event_get_user_data(e));                      \
-            if (self) {                                                                            \
-                self->handle_##name();                                                             \
-            }                                                                                      \
-        } catch (const std::exception& ex) {                                                       \
-            spdlog::error("[" #PanelClass "] Exception in on_" #name ": {}", ex.what());           \
-        } catch (...) {                                                                            \
-            spdlog::error("[" #PanelClass "] Unknown exception in on_" #name);                     \
+        HELIX_TRAMPOLINE_GUARD_BEGIN                                                               \
+        if (!e)                                                                                    \
+            return;                                                                                \
+        auto* self = static_cast<PanelClass*>(lv_event_get_user_data(e));                          \
+        if (self) {                                                                                \
+            self->handle_##name();                                                                 \
         }                                                                                          \
+        HELIX_TRAMPOLINE_GUARD_END(PanelClass, name)                                               \
     }

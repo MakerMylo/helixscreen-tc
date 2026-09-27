@@ -102,6 +102,23 @@ LOCALE_INCLUDE = re.compile(
     r"^\s*#\s*include\s*<(sstream|fstream|iostream|istream|ostream|iomanip|regex|filesystem|locale)>",
     re.M)
 
+# The ESP32 image is built without exceptions, so each of these aborts the device on
+# input the desktop build would catch: a wrongly typed or missing JSON field, text
+# that is not a number, an any holding another type. try/catch and throw no longer
+# compile there, so the compiler flags those; these calls compile and abort.
+ABORTING_CALLS = [
+    (re.compile(r'\.value\(\s*"'), 'json .value("key", d) throws on a wrongly typed field',
+     "json_util::safe_*(j, \"key\", d)"),
+    (re.compile(r'\.at\(\s*"'), 'json .at("key") throws on a missing key',
+     "find() or contains() first"),
+    (re.compile(r'json::parse\([^,()]*\)'), "one-argument json::parse throws on bad input",
+     "json::parse(s, nullptr, false) and is_discarded()"),
+    (re.compile(r'\bstd::sto(?:i|l|ll|ul|ull|f|d|ld)\s*\('), "std::sto* throws on text that is not a number",
+     "text_io::parse_leading<T>(s)"),
+    (re.compile(r'\bany_cast<[^>]+>\s*\((?!\s*&)'), "value-form std::any_cast throws on another type",
+     "std::any_cast<T>(&a) and a null check"),
+]
+
 EXCLUSIONS_HEADER = [
     "# ESP32 firmware app_srcs exclusion baseline.",
     "#",
@@ -146,11 +163,13 @@ class Findings:
     stale_exclusions: list[tuple[int, str, str]] = field(default_factory=list)  # (lineno, path, why)
     overlap: list[tuple[str, str]] = field(default_factory=list)  # (file, exclusion entry)
     locale_includes: list[tuple[str, int, str]] = field(default_factory=list)  # (file, lineno, header)
+    aborting_calls: list[tuple[str, int, str, str]] = field(default_factory=list)  # (file, lineno, why, fix)
     universe: set[str] = field(default_factory=set)
 
     def any(self) -> bool:
         return bool(self.undecided or self.malformed or self.stale_manifest
-                    or self.stale_exclusions or self.overlap or self.locale_includes)
+                    or self.stale_exclusions or self.overlap or self.locale_includes
+                    or self.aborting_calls)
 
 
 def why_cmake_drops(line: str) -> str:
@@ -289,16 +308,25 @@ def compute(manifest: Path, exclusions: Path, src_root: Path) -> Findings:
             overlap.append((f, cover))
 
     locale_includes: list[tuple[str, int, str]] = []
+    aborting_calls: list[tuple[str, int, str, str]] = []
     for f in sorted(included):
         if not f.startswith("src/") or f not in universe:
             continue
         text = (src_root.parent / f).read_text(errors="replace")
         for m in LOCALE_INCLUDE.finditer(text):
             locale_includes.append((f, text.count("\n", 0, m.start()) + 1, m.group(1)))
+        for lineno, line in enumerate(text.splitlines(), 1):
+            code = line.split("//", 1)[0]
+            if code.lstrip().startswith("*"):
+                continue
+            for pattern, why, fix in ABORTING_CALLS:
+                if pattern.search(code):
+                    aborting_calls.append((f, lineno, why, fix))
 
     return Findings(undecided=undecided, malformed=malformed,
                     stale_manifest=stale_manifest, stale_exclusions=stale_exclusions,
-                    overlap=overlap, locale_includes=locale_includes, universe=universe)
+                    overlap=overlap, locale_includes=locale_includes,
+                    aborting_calls=aborting_calls, universe=universe)
 
 
 def compress_dirs(undecided_set: set[str], universe: set[str]) -> dict[str, list[str]]:
@@ -404,6 +432,11 @@ def report(f: Findings) -> None:
             print(f"        {path}:{lineno}: <{header}>", file=sys.stderr)
         print("\n      Use text_io.h (streams), helix_regex.h (<regex>) or helix_fs.h "
               "(<filesystem>).", file=sys.stderr)
+    if f.aborting_calls:
+        print(f"FAIL: {len(f.aborting_calls)} call(s) in firmware-compiled files that abort the "
+              "ESP32 image,\n      which is built without exceptions:", file=sys.stderr)
+        for path, lineno, why, fix in f.aborting_calls:
+            print(f"        {path}:{lineno}: {why}; use {fix}", file=sys.stderr)
     if f.overlap:
         print(f"FAIL: {len(f.overlap)} file(s) in BOTH app_srcs.txt and app_srcs_excluded.txt.\n"
               "      CMake compiles them; the exclusion baseline says it does not. Remove\n"

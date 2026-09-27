@@ -3,6 +3,7 @@
 #include "system/afc_message_dedup.h"
 
 #include "config.h"
+#include "exception_policy.h"
 #include "helix_fs.h"
 #include "json_utils.h"
 #include "text_io.h"
@@ -154,20 +155,17 @@ void AfcMessageDedup::record_cleared() {
 
 bool AfcMessageDedup::save_locked() {
     const std::string path = seed_path_locked();
+    // safe_dump: message text carries whatever the printer printed, and
+    // strict-mode dump would throw on invalid UTF-8 and cost the file.
     std::string data;
-    try {
-        json printers = json::object();
-        for (const auto& [printer_id, text] : last_error_by_printer_) {
-            printers[printer_id] = text;
-        }
-        // safe_dump: message text carries whatever the printer printed, and
-        // strict-mode dump would throw on invalid UTF-8 and cost the file.
-        data = helix::json_util::safe_dump(json{{"printers", printers}}) + "\n";
-    } catch (const json::exception& e) {
-        spdlog::warn("[AfcMessageDedup] Cannot serialize seed for {}: {}", path, e.what());
-        return false;
-    } catch (const std::bad_alloc&) {
-        spdlog::warn("[AfcMessageDedup] Out of memory serializing seed for {}", path);
+    if (!helix::contain_exceptions(
+            fmt::format("[AfcMessageDedup] Serializing the seed for {}", path), [&] {
+                json printers = json::object();
+                for (const auto& [printer_id, text] : last_error_by_printer_) {
+                    printers[printer_id] = text;
+                }
+                data = helix::json_util::safe_dump(json{{"printers", printers}}) + "\n";
+            })) {
         return false;
     }
     if (!tio::write_file(path, data)) {

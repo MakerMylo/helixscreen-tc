@@ -27,9 +27,8 @@ namespace helix::json_util {
 /// made. ::replace substitutes U+FFFD for the offending bytes and keeps
 /// everything else, so the save still lands.
 ///
-/// This does not remove the need for a try/catch around a save: serialization
-/// can still throw bad_alloc on a RAM-constrained target. It removes the one
-/// failure free-form text makes routine.
+/// Serialization can still run out of memory on a RAM-constrained target; this
+/// removes the one failure free-form text makes routine.
 ///
 /// @param indent  As json::dump(): -1 is compact, >= 0 pretty-prints.
 inline std::string safe_dump(const nlohmann::json& j, int indent = -1) {

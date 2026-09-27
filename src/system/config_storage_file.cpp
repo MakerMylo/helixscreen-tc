@@ -46,7 +46,7 @@ class FileConfigStorage : public ConfigStorage {
   public:
     explicit FileConfigStorage(std::string path) : path_(std::move(path)) {}
 
-    std::optional<std::string> load() override {
+    std::optional<std::string> load(std::string& read_error) override {
         struct stat st;
         if (stat(path_.c_str(), &st) != 0) {
             return std::nullopt; // absent — first boot
@@ -58,8 +58,8 @@ class FileConfigStorage : public ConfigStorage {
             // corrupt-preserve + backup-restore instead of silently
             // treating a locked-down existing config as first-boot.
             int err = errno;
-            throw std::runtime_error(
-                fmt::format("failed to open {} for reading: {}", path_, errno_reason(err)));
+            read_error = fmt::format("failed to open {} for reading: {}", path_, errno_reason(err));
+            return std::nullopt;
         }
         return text;
     }

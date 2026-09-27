@@ -16,6 +16,7 @@
 
 #include "app_globals.h"
 #include "config.h"
+#include "exception_policy.h"
 #include "i_moonraker_api.h"
 #include "lvgl/src/others/translation/lv_translation.h"
 #include "macro_modification_manager.h"
@@ -38,7 +39,7 @@ AdvancedPanel& get_global_advanced_panel() {
     // Should be initialized by main.cpp before use
     if (!g_advanced_panel) {
         spdlog::error("[Advanced Panel] get_global_advanced_panel() called before initialization!");
-        throw std::runtime_error("AdvancedPanel not initialized");
+        helix::throw_or_abort(std::runtime_error("AdvancedPanel not initialized"));
     }
     return *g_advanced_panel;
 }

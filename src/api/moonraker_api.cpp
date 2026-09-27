@@ -211,7 +211,7 @@ void MoonrakerAPI::database_get_item(const std::string& namespace_name, const st
             // {"jsonrpc","id","result":{"namespace","key","value": <payload>}}.
             if (on_success) {
                 const json& result =
-                    response.contains("result") ? response.at("result") : json::object();
+                    response.contains("result") ? response["result"] : json::object();
                 const json* value = json_util::detail::find(result, "value");
                 on_success(value ? *value : json{});
             }
@@ -252,7 +252,7 @@ void MoonrakerAPI::database_get_namespace(const std::string& namespace_name,
             // See database_get_item above: unwrap response["result"] first.
             if (on_success) {
                 const json& result =
-                    response.contains("result") ? response.at("result") : json::object();
+                    response.contains("result") ? response["result"] : json::object();
                 const json* value = json_util::detail::find(result, "value");
                 on_success(value ? *value : json::object());
             }

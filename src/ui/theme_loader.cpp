@@ -5,6 +5,7 @@
 
 #include "border_radius_sizes.h"
 #include "data_root_resolver.h"
+#include "exception_policy.h"
 #include "helix_fs.h"
 #include "json_utils.h"
 #include "text_io.h"
@@ -73,7 +74,7 @@ const std::string& ModePalette::at(size_t index) const {
     case 15:
         return focus;
     default:
-        throw std::out_of_range("ModePalette index out of range");
+        helix::throw_or_abort(std::out_of_range("ModePalette index out of range"));
     }
 }
 
