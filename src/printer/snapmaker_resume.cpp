@@ -68,10 +68,8 @@ std::string snapmaker_extract_coded_msg(const std::string& raw_error, const std:
     }
 
     std::string candidate = raw_error.substr(start, end - start + 1);
-    json parsed;
-    try {
-        parsed = json::parse(candidate);
-    } catch (const json::parse_error&) {
+    json parsed = json::parse(candidate, nullptr, false);
+    if (parsed.is_discarded()) {
         return fallback;
     }
     if (!parsed.is_object()) {

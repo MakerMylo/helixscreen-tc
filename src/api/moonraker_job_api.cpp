@@ -3,6 +3,7 @@
 
 #include "moonraker_job_api.h"
 
+#include "json_utils.h"
 #include "moonraker_api_internal.h"
 #include "moonraker_client.h"
 #include "moonraker_gcode_guards.h"
@@ -100,8 +101,9 @@ void MoonrakerJobAPI::check_helix_plugin(BoolCallback on_result, ErrorCallback o
             std::string version = "unknown";
             if (response.contains("result")) {
                 const auto& r = response["result"];
-                enabled = r.value("enabled", true);
-                version = r.value("version", "1.0.0"); // Old plugins lack version
+                enabled = helix::json_util::safe_bool(r, "enabled", true);
+                version = helix::json_util::safe_string(r, "version",
+                                                        "1.0.0"); // Old plugins lack version
             }
             spdlog::info("[Moonraker API] helix_print plugin v{} detected (enabled={})", version,
                          enabled);
@@ -151,10 +153,11 @@ void MoonrakerJobAPI::start_modified_print(const std::string& original_filename,
             ModifiedPrintResult result;
             if (response.contains("result")) {
                 const auto& r = response["result"];
-                result.original_filename = r.value("original_filename", original_filename);
-                result.print_filename = r.value("print_filename", "");
-                result.temp_filename = r.value("temp_filename", "");
-                result.status = r.value("status", "unknown");
+                result.original_filename =
+                    helix::json_util::safe_string(r, "original_filename", original_filename);
+                result.print_filename = helix::json_util::safe_string(r, "print_filename", "");
+                result.temp_filename = helix::json_util::safe_string(r, "temp_filename", "");
+                result.status = helix::json_util::safe_string(r, "status", "unknown");
             } else {
                 result.original_filename = original_filename;
                 result.status = "printing";

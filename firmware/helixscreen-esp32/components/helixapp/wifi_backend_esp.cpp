@@ -599,12 +599,7 @@ class WifiBackendEsp : public WifiBackend {
             }
             cb = it->second;
         }
-        try {
-            cb(data);
-        } catch (const std::exception& e) {
-            spdlog::error("[WifiBackend] esp32: exception in callback '{}': {}", event_name,
-                          e.what());
-        }
+        cb(data);
     }
 
     void arm_assoc_timeout() {

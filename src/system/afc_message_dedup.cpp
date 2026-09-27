@@ -3,6 +3,7 @@
 #include "system/afc_message_dedup.h"
 
 #include "config.h"
+#include "exception_policy.h"
 #include "helix_fs.h"
 #include "json_utils.h"
 #include "text_io.h"
@@ -56,30 +57,25 @@ void AfcMessageDedup::init(const std::string& config_dir) {
                          path, *size, MAX_SEED_BYTES);
             return;
         }
-        try {
-            if (!size) {
-                spdlog::warn("[AfcMessageDedup] Cannot load seed file {}: {}", path,
-                             std::strerror(errno));
+        if (!size) {
+            spdlog::warn("[AfcMessageDedup] Cannot load seed file {}: {}", path,
+                         std::strerror(errno));
+            last_error_by_printer_.clear();
+        } else {
+            // Read only after the cap check: the cap exists so an oversized file is
+            // never pulled into memory.
+            // A corrupt seed costs one extra toast; say so and move on.
+            json data = json::parse(tio::read_file(path).value_or(""), nullptr, false);
+            if (data.is_discarded()) {
+                spdlog::warn("[AfcMessageDedup] Unreadable seed file {}: not valid JSON", path);
                 last_error_by_printer_.clear();
-            } else {
-                // Read only after the cap check: the cap exists so an oversized file is
-                // never pulled into memory.
-                json data = json::parse(tio::read_file(path).value_or(""));
-                if (data.contains("printers") && data["printers"].is_object()) {
-                    for (const auto& [printer_id, text] : data["printers"].items()) {
-                        if (text.is_string()) {
-                            last_error_by_printer_[printer_id] = text.get<std::string>();
-                        }
+            } else if (data.contains("printers") && data["printers"].is_object()) {
+                for (const auto& [printer_id, text] : data["printers"].items()) {
+                    if (text.is_string()) {
+                        last_error_by_printer_[printer_id] = text.get<std::string>();
                     }
                 }
             }
-        } catch (const json::exception& e) {
-            // A corrupt seed costs one extra toast; say so and move on.
-            spdlog::warn("[AfcMessageDedup] Unreadable seed file {}: {}", path, e.what());
-            last_error_by_printer_.clear();
-        } catch (const std::exception& e) {
-            spdlog::warn("[AfcMessageDedup] Cannot load seed file {}: {}", path, e.what());
-            last_error_by_printer_.clear();
         }
     }
 
@@ -159,20 +155,17 @@ void AfcMessageDedup::record_cleared() {
 
 bool AfcMessageDedup::save_locked() {
     const std::string path = seed_path_locked();
+    // safe_dump: message text carries whatever the printer printed, and
+    // strict-mode dump would throw on invalid UTF-8 and cost the file.
     std::string data;
-    try {
-        json printers = json::object();
-        for (const auto& [printer_id, text] : last_error_by_printer_) {
-            printers[printer_id] = text;
-        }
-        // safe_dump: message text carries whatever the printer printed, and
-        // strict-mode dump would throw on invalid UTF-8 and cost the file.
-        data = helix::json_util::safe_dump(json{{"printers", printers}}) + "\n";
-    } catch (const json::exception& e) {
-        spdlog::warn("[AfcMessageDedup] Cannot serialize seed for {}: {}", path, e.what());
-        return false;
-    } catch (const std::bad_alloc&) {
-        spdlog::warn("[AfcMessageDedup] Out of memory serializing seed for {}", path);
+    if (!helix::contain_exceptions(
+            fmt::format("[AfcMessageDedup] Serializing the seed for {}", path), [&] {
+                json printers = json::object();
+                for (const auto& [printer_id, text] : last_error_by_printer_) {
+                    printers[printer_id] = text;
+                }
+                data = helix::json_util::safe_dump(json{{"printers", printers}}) + "\n";
+            })) {
         return false;
     }
     if (!tio::write_file(path, data)) {

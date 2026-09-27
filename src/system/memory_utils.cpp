@@ -45,9 +45,9 @@ bool read_memory_stats(int64_t& rss_kb, int64_t& hwm_kb) {
     std::string line;
     while (status.next(line)) {
         if (line.compare(0, 6, "VmRSS:") == 0) {
-            rss_kb = std::stoll(line.substr(6));
+            rss_kb = tio::parse_leading<long long>(line.substr(6)).value_or(0);
         } else if (line.compare(0, 6, "VmHWM:") == 0) {
-            hwm_kb = std::stoll(line.substr(6));
+            hwm_kb = tio::parse_leading<long long>(line.substr(6)).value_or(0);
         }
     }
     return rss_kb > 0;
@@ -83,7 +83,7 @@ bool read_private_dirty(int64_t& private_dirty_kb) {
     std::string line;
     while (smaps.next(line)) {
         if (line.compare(0, 14, "Private_Dirty:") == 0) {
-            private_dirty_kb = std::stoll(line.substr(14));
+            private_dirty_kb = tio::parse_leading<long long>(line.substr(14)).value_or(0);
             return true;
         }
     }
@@ -105,28 +105,28 @@ bool read_smaps_rollup(SmapsRollup& rollup) {
     while (smaps.next(line)) {
         // Fields in smaps_rollup: "FieldName:     1234 kB"
         if (line.compare(0, 4, "Rss:") == 0) {
-            rollup.rss_kb = std::stoll(line.substr(4));
+            rollup.rss_kb = tio::parse_leading<long long>(line.substr(4)).value_or(0);
             ++fields_found;
         } else if (line.compare(0, 4, "Pss:") == 0) {
-            rollup.pss_kb = std::stoll(line.substr(4));
+            rollup.pss_kb = tio::parse_leading<long long>(line.substr(4)).value_or(0);
             ++fields_found;
         } else if (line.compare(0, 14, "Private_Dirty:") == 0) {
-            rollup.private_dirty_kb = std::stoll(line.substr(14));
+            rollup.private_dirty_kb = tio::parse_leading<long long>(line.substr(14)).value_or(0);
             ++fields_found;
         } else if (line.compare(0, 14, "Private_Clean:") == 0) {
-            rollup.private_clean_kb = std::stoll(line.substr(14));
+            rollup.private_clean_kb = tio::parse_leading<long long>(line.substr(14)).value_or(0);
             ++fields_found;
         } else if (line.compare(0, 13, "Shared_Clean:") == 0) {
-            rollup.shared_clean_kb = std::stoll(line.substr(13));
+            rollup.shared_clean_kb = tio::parse_leading<long long>(line.substr(13)).value_or(0);
             ++fields_found;
         } else if (line.compare(0, 13, "Shared_Dirty:") == 0) {
-            rollup.shared_dirty_kb = std::stoll(line.substr(13));
+            rollup.shared_dirty_kb = tio::parse_leading<long long>(line.substr(13)).value_or(0);
             ++fields_found;
         } else if (line.compare(0, 8, "SwapPss:") == 0) {
-            rollup.swap_pss_kb = std::stoll(line.substr(8));
+            rollup.swap_pss_kb = tio::parse_leading<long long>(line.substr(8)).value_or(0);
             ++fields_found;
         } else if (line.compare(0, 5, "Swap:") == 0) {
-            rollup.swap_kb = std::stoll(line.substr(5));
+            rollup.swap_kb = tio::parse_leading<long long>(line.substr(5)).value_or(0);
             ++fields_found;
         }
     }
@@ -149,11 +149,14 @@ MemoryInfo get_system_memory_info() {
     while (meminfo.next(line)) {
         // Parse lines like "MemTotal:       1234567 kB"
         if (line.compare(0, 9, "MemTotal:") == 0) {
-            info.total_kb = static_cast<size_t>(std::stoll(line.substr(9)));
+            info.total_kb =
+                static_cast<size_t>(tio::parse_leading<long long>(line.substr(9)).value_or(0));
         } else if (line.compare(0, 13, "MemAvailable:") == 0) {
-            info.available_kb = static_cast<size_t>(std::stoll(line.substr(13)));
+            info.available_kb =
+                static_cast<size_t>(tio::parse_leading<long long>(line.substr(13)).value_or(0));
         } else if (line.compare(0, 8, "MemFree:") == 0) {
-            info.free_kb = static_cast<size_t>(std::stoll(line.substr(8)));
+            info.free_kb =
+                static_cast<size_t>(tio::parse_leading<long long>(line.substr(8)).value_or(0));
         }
     }
 

@@ -146,6 +146,10 @@ HeatState classify_heat_state_with_mode(int current, int target, helix::ChamberM
     return classify_heat_state(current, target, tolerance);
 }
 
+bool is_residual_hot(int current_deci) {
+    return current_deci > RESIDUAL_HEAT_THRESHOLD_DECI;
+}
+
 lv_color_t get_heating_state_color(HeatState state) {
     switch (state) {
     case HeatState::Off:

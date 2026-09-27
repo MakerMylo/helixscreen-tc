@@ -13,6 +13,7 @@
 #include "printer_state.h"
 #include "spdlog/spdlog.h"
 #include "spool_latch_gate.h"
+#include "text_io.h"
 
 #include <spdlog/fmt/fmt.h>
 
@@ -149,14 +150,14 @@ void TemperatureController::ensure_limits(HeaterType type) {
                 const auto& sec = config[section];
                 if (sec.contains("max_temp")) {
                     const auto& mt = sec["max_temp"];
-                    try {
-                        if (mt.is_string()) {
-                            max_deg = static_cast<int>(std::stof(mt.get<std::string>()));
-                        } else if (mt.is_number()) {
-                            max_deg = static_cast<int>(mt.get<double>());
+                    if (mt.is_string()) {
+                        const auto parsed =
+                            helix::text_io::parse_leading<float>(mt.get_ref<const std::string&>());
+                        if (parsed) {
+                            max_deg = static_cast<int>(*parsed);
                         }
-                    } catch (const std::exception&) {
-                        max_deg = 0;
+                    } else if (mt.is_number()) {
+                        max_deg = static_cast<int>(mt.get<double>());
                     }
                 }
             }
@@ -388,11 +389,15 @@ void TemperatureController::read_configured_idle_timeout(std::function<void(int)
             int configured_s = kKlipperDefaultS;
             if (config.contains("idle_timeout") && config["idle_timeout"].contains("timeout")) {
                 const auto& t = config["idle_timeout"]["timeout"];
-                try {
-                    configured_s = t.is_string() ? static_cast<int>(std::stof(t.get<std::string>()))
-                                                 : static_cast<int>(t.get<double>());
-                } catch (const std::exception&) {
-                    return;
+                if (t.is_string()) {
+                    const auto parsed =
+                        helix::text_io::parse_leading<float>(t.get_ref<const std::string&>());
+                    if (!parsed) {
+                        return;
+                    }
+                    configured_s = static_cast<int>(*parsed);
+                } else if (t.is_number()) {
+                    configured_s = static_cast<int>(t.get<double>());
                 }
             }
             if (configured_s <= 0) {

@@ -519,7 +519,8 @@ void TelemetryDataOverlay::populate_events() {
             }
             if (event.contains("build_volume") && event["build_volume"].is_object()) {
                 const auto& bv = event["build_volume"];
-                if (bv.contains("x_mm") && bv.contains("y_mm")) {
+                if (bv.contains("x_mm") && bv["x_mm"].is_number() && bv.contains("y_mm") &&
+                    bv["y_mm"].is_number()) {
                     std::string vol = std::to_string(bv["x_mm"].get<int>()) + "x" +
                                       std::to_string(bv["y_mm"].get<int>());
                     if (bv.contains("z_mm") && bv["z_mm"].is_number()) {
@@ -535,10 +536,12 @@ void TelemetryDataOverlay::populate_events() {
                 if (e.contains("count") && e["count"].is_number_integer()) {
                     line = std::to_string(e["count"].get<int>()) + " " + lv_tr("extruder(s)");
                 }
-                if (e.contains("has_heater_bed") && e["has_heater_bed"].get<bool>()) {
+                if (e.contains("has_heater_bed") && e["has_heater_bed"].is_boolean() &&
+                    e["has_heater_bed"].get<bool>()) {
                     line += ", " + std::string(lv_tr("heated bed"));
                 }
-                if (e.contains("has_chamber_heater") && e["has_chamber_heater"].get<bool>()) {
+                if (e.contains("has_chamber_heater") && e["has_chamber_heater"].is_boolean() &&
+                    e["has_chamber_heater"].get<bool>()) {
                     line += ", " + std::string(lv_tr("chamber heater"));
                 }
                 if (!line.empty()) {
@@ -548,17 +551,20 @@ void TelemetryDataOverlay::populate_events() {
             // Fans, steppers, LEDs summary
             {
                 std::string hw_line;
-                if (event.contains("fans") && event["fans"].contains("total")) {
+                if (event.contains("fans") && event["fans"].contains("total") &&
+                    event["fans"]["total"].is_number()) {
                     hw_line +=
                         std::to_string(event["fans"]["total"].get<int>()) + " " + lv_tr("fans");
                 }
-                if (event.contains("steppers") && event["steppers"].contains("count")) {
+                if (event.contains("steppers") && event["steppers"].contains("count") &&
+                    event["steppers"]["count"].is_number()) {
                     if (!hw_line.empty())
                         hw_line += ", ";
                     hw_line += std::to_string(event["steppers"]["count"].get<int>()) + " " +
                                lv_tr("steppers");
                 }
-                if (event.contains("leds") && event["leds"].contains("count")) {
+                if (event.contains("leds") && event["leds"].contains("count") &&
+                    event["leds"]["count"].is_number()) {
                     if (!hw_line.empty())
                         hw_line += ", ";
                     hw_line +=
@@ -607,7 +613,8 @@ void TelemetryDataOverlay::populate_events() {
                 if (t.contains("count") && t["count"].is_number_integer()) {
                     std::string line =
                         std::to_string(t["count"].get<int>()) + " " + lv_tr("tool(s)");
-                    if (t.contains("is_multi_tool") && t["is_multi_tool"].get<bool>()) {
+                    if (t.contains("is_multi_tool") && t["is_multi_tool"].is_boolean() &&
+                        t["is_multi_tool"].get<bool>()) {
                         line += " " + std::string(lv_tr("(multi-tool)"));
                     }
                     make_label(card, std::string(lv_tr("Tools: ")) + line, "text_subtle");
@@ -630,6 +637,9 @@ void TelemetryDataOverlay::populate_events() {
                 std::string panels;
                 for (auto it = event["panel_time_sec"].begin(); it != event["panel_time_sec"].end();
                      ++it) {
+                    if (!it.value().is_number()) {
+                        continue;
+                    }
                     if (!panels.empty())
                         panels += ", ";
                     panels += it.key() + ": " + std::to_string(it.value().get<int>()) + "s";
@@ -642,6 +652,9 @@ void TelemetryDataOverlay::populate_events() {
                 std::string overlays;
                 for (auto it = event["overlay_visits"].begin(); it != event["overlay_visits"].end();
                      ++it) {
+                    if (!it.value().is_number()) {
+                        continue;
+                    }
                     if (!overlays.empty())
                         overlays += ", ";
                     overlays += it.key() + ": " + std::to_string(it.value().get<int>());
@@ -655,6 +668,9 @@ void TelemetryDataOverlay::populate_events() {
                 std::string visits;
                 for (auto it = event["panel_visits"].begin(); it != event["panel_visits"].end();
                      ++it) {
+                    if (!it.value().is_number()) {
+                        continue;
+                    }
                     if (!visits.empty())
                         visits += ", ";
                     visits += it.key() + ": " + std::to_string(it.value().get<int>());
@@ -676,7 +692,7 @@ void TelemetryDataOverlay::populate_events() {
 
         } else if (type_str == "print_start_context") {
             add_field_str("source", lv_tr("Source"));
-            if (event.contains("has_thumbnail")) {
+            if (event.contains("has_thumbnail") && event["has_thumbnail"].is_boolean()) {
                 make_label(card,
                            std::string(lv_tr("Thumbnail: ")) +
                                (event["has_thumbnail"].get<bool>() ? lv_tr("Yes") : lv_tr("No")),
@@ -686,7 +702,7 @@ void TelemetryDataOverlay::populate_events() {
             add_field_str("estimated_duration_bucket", lv_tr("Est. Duration"));
             add_field_str("slicer", lv_tr("Slicer"));
             add_field_num("tool_count_used", lv_tr("Tools Used"), "");
-            if (event.contains("ams_active")) {
+            if (event.contains("ams_active") && event["ams_active"].is_boolean()) {
                 make_label(card,
                            std::string(lv_tr("AMS Active: ")) +
                                (event["ams_active"].get<bool>() ? lv_tr("Yes") : lv_tr("No")),

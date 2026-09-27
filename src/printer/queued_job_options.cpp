@@ -5,6 +5,7 @@
 
 #include "async_lifetime_guard.h"
 #include "i_moonraker_api.h"
+#include "json_utils.h"
 
 #include <spdlog/spdlog.h>
 
@@ -54,9 +55,9 @@ QueuedJobOptions decode_queued_job_entry(const json& value) {
     if (!entry_shape_ok(value)) {
         return parsed;
     }
-    // entry_shape_ok() proved the key holds a string; .value() keeps the
-    // read fallible so a malformed row can never reach a hard assert.
-    parsed.filename = value.value("filename", std::string{});
+    // entry_shape_ok() proved the key holds a string; the defaulted read keeps
+    // a malformed row from ever reaching a hard assert.
+    parsed.filename = helix::json_util::safe_string(value, "filename");
     if (value.contains("options")) {
         const json& options = value["options"];
         for (auto opt = options.begin(); opt != options.end(); ++opt) {

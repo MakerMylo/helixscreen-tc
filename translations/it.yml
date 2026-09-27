@@ -1341,6 +1341,7 @@ translations:
   Flying Toasters: Tostapane volanti
   Follow active tool: Segui strumento attivo
   Follow graph screen: Segui schermata grafico
+  Force/weight sensors: 'Sensori di forza/peso'
   Forget: Dimentica
   Forget Network?: Dimenticare la rete?
   Forget network '{}'? You will need the password to reconnect.: Dimenticare la rete '{}'? Servirà la password per riconnetterti.
@@ -1681,6 +1682,7 @@ translations:
     dell'illuminazione
   LEDs: LEDs
   LEDs controlled by the light button: LEDs controllati dal pulsante luce
+  LOAD CELLS: 'CELLE DI CARICO'
   LOADED: CARICATO
   LOCKED: BLOCCATO
   LOT-2024-001: LOT-2024-001
@@ -1732,6 +1734,8 @@ translations:
   Listening: In ascolto
   Live view from your webcam: Vista live dalla webcam
   Load: Carica
+  Load Cell: 'Cella di carico'
+  Load Cells: 'Celle di carico'
   Load Failed: 'Caricamento non riuscito'
   Load Filament: Carica filamento
   Load a filament first before trying to unload: Prima carica il filamento, poi prova a scaricarlo

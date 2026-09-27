@@ -13,6 +13,7 @@
 #include "config.h"
 #include "device_display_name.h"
 #include "hardware_role_registry.h"
+#include "json_utils.h"
 #include "state/subject_macros.h"
 #include "unit_conversions.h"
 
@@ -107,7 +108,8 @@ void PrinterFanState::update_from_status(const nlohmann::json& status) {
     // Update main part-cooling fan speed
     if (status.contains("fan")) {
         const auto& fan = status["fan"];
-        spdlog::trace("[PrinterFanState] Received fan status update: {}", fan.dump());
+        spdlog::trace("[PrinterFanState] Received fan status update: {}",
+                      helix::json_util::safe_dump(fan));
 
         if (fan.contains("speed") && fan["speed"].is_number()) {
             double speed = fan["speed"].get<double>();

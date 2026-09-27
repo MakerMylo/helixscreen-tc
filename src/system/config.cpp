@@ -63,6 +63,87 @@ bool is_default_cooldown_gcode(const std::string& gcode) {
 
 namespace {
 
+/// The unescaped reference tokens of @p ptr, or nullopt where
+/// json::json_pointer's constructor would throw: a non-empty pointer without a
+/// leading '/', or a '~' not followed by '0' or '1'.
+std::optional<std::vector<std::string>> pointer_tokens(const std::string& ptr) {
+    std::vector<std::string> tokens;
+    if (ptr.empty()) {
+        return tokens;
+    }
+    if (ptr[0] != '/') {
+        return std::nullopt;
+    }
+    std::string token;
+    for (size_t i = 1; i <= ptr.size(); ++i) {
+        if (i == ptr.size() || ptr[i] == '/') {
+            tokens.push_back(std::move(token));
+            token.clear();
+        } else if (ptr[i] == '~') {
+            if (i + 1 >= ptr.size() || (ptr[i + 1] != '0' && ptr[i + 1] != '1')) {
+                return std::nullopt;
+            }
+            token += ptr[i + 1] == '0' ? '~' : '/';
+            ++i;
+        } else {
+            token += ptr[i];
+        }
+    }
+    return tokens;
+}
+
+/// An array index token as nlohmann accepts one: "0", or digits with no
+/// leading zero, fitting size_t. "-" (one past the end) is not an index.
+std::optional<size_t> array_token_index(const std::string& token) {
+    if (token.empty() || token[0] < '0' || token[0] > '9' ||
+        (token.size() > 1 && token[0] == '0')) {
+        return std::nullopt;
+    }
+    return tio::parse_int<size_t>(token);
+}
+
+/// The node @p root[json_pointer(ptr)] would assign to, creating missing
+/// objects on the way, or nullptr where nlohmann would throw: a malformed
+/// pointer, a path through a scalar, or an array token that is not an index.
+/// @p why names the refusal. The whole path is checked before any of it is
+/// created, so a refusal leaves @p root untouched.
+json* node_for_write(json& root, const std::string& ptr, const char** why) {
+    const auto tokens = pointer_tokens(ptr);
+    if (!tokens) {
+        *why = "malformed JSON pointer";
+        return nullptr;
+    }
+    // Past the first missing component everything is created fresh, and
+    // nlohmann can always create that.
+    const json* node = &root;
+    for (const auto& token : *tokens) {
+        if (node->is_null()) {
+            break;
+        }
+        if (node->is_object()) {
+            const auto it = node->find(token);
+            if (it == node->end()) {
+                break;
+            }
+            node = &*it;
+        } else if (node->is_array()) {
+            const auto idx = array_token_index(token);
+            if (!idx) {
+                *why = "not an index into an array";
+                return nullptr;
+            }
+            if (*idx >= node->size()) {
+                break;
+            }
+            node = &(*node)[*idx];
+        } else {
+            *why = "a path component holds a value, not an object";
+            return nullptr;
+        }
+    }
+    return &root[json::json_pointer(ptr)];
+}
+
 /// Default macro configuration - shared between init() and reset_to_defaults()
 json get_default_macros() {
     return {{"load_filament", {{"label", "Load"}, {"gcode", "LOAD_FILAMENT"}}},
@@ -140,6 +221,9 @@ bool migrate_display_config(json& data) {
     // Ensure display section exists
     if (!data.contains("display")) {
         data["display"] = json::object();
+    } else if (!data["display"].is_object()) {
+        spdlog::warn("[Config] /display is not an object - leaving display settings unmigrated");
+        return false;
     }
 
     // Migrate root-level display settings (only if target key doesn't already exist)
@@ -180,6 +264,10 @@ bool migrate_display_config(json& data) {
         // Ensure calibration subsection exists
         if (!data["display"].contains("calibration")) {
             data["display"]["calibration"] = json::object();
+        } else if (!data["display"]["calibration"].is_object()) {
+            spdlog::warn("[Config] /display/calibration is not an object - leaving touch "
+                         "calibration unmigrated");
+            return true;
         }
 
         if (data.contains("touch_calibrated")) {
@@ -251,6 +339,12 @@ bool migrate_config_keys(json& data,
     bool any_migrated = false;
 
     for (const auto& [from_path, to_path] : migrations) {
+        // A target built from a printer id carries whatever the id holds.
+        if (!pointer_tokens(from_path) || !pointer_tokens(to_path)) {
+            spdlog::warn("[Config] Migration of {} -> {} skipped: malformed path", from_path,
+                         to_path);
+            continue;
+        }
         json::json_pointer from_ptr(from_path);
         json::json_pointer to_ptr(to_path);
 
@@ -276,19 +370,15 @@ bool migrate_config_keys(json& data,
             continue;
         }
 
-        // Ensure parent path exists for target
-        // For example, if to_path is "/input/calibration", ensure "/input" exists
-        auto last_slash = to_path.rfind('/');
-        if (last_slash != std::string::npos && last_slash > 0) {
-            std::string parent_path = to_path.substr(0, last_slash);
-            json::json_pointer parent_ptr(parent_path);
-            if (!data.contains(parent_ptr)) {
-                data[parent_ptr] = json::object();
-            }
+        // Copy value to new location (creating its parents) and remove from old
+        json value = data.at(from_ptr);
+        const char* why = nullptr;
+        json* target = node_for_write(data, to_path, &why);
+        if (target == nullptr) {
+            spdlog::warn("[Config] Migration of {} -> {} skipped: {}", from_path, to_path, why);
+            continue;
         }
-
-        // Copy value to new location and remove from old
-        data[to_ptr] = data[from_ptr];
+        *target = std::move(value);
         erase_at_pointer(data, from_ptr);
         spdlog::info("[Config] Migrated {} -> {}", from_path, to_path);
         any_migrated = true;
@@ -367,26 +457,36 @@ static void migrate_v1_to_v2(json& config) {
         return;
     }
 
+    auto write_selected = [&config](json value) {
+        const char* why = nullptr;
+        json* selected = node_for_write(config, "/printer/leds/selected", &why);
+        if (selected == nullptr) {
+            spdlog::warn("[Config] Migration v2: /printer/leds/selected not created: {}", why);
+            return false;
+        }
+        *selected = std::move(value);
+        return true;
+    };
+
     // Convert old single string to array
     if (config.contains(strip_ptr)) {
         auto& strip_val = config[strip_ptr];
         if (strip_val.is_string()) {
             std::string led = strip_val.get<std::string>();
             if (!led.empty()) {
-                config[selected_ptr] = json::array({led});
-                spdlog::info("[Config] Migration v2: converted LED '{}' from /printer/leds/strip "
-                             "to /printer/leds/selected array",
-                             led);
-            } else {
-                config[selected_ptr] = json::array();
+                if (write_selected(json::array({led}))) {
+                    spdlog::info("[Config] Migration v2: converted LED '{}' from "
+                                 "/printer/leds/strip to /printer/leds/selected array",
+                                 led);
+                }
+            } else if (write_selected(json::array())) {
                 spdlog::info(
                     "[Config] Migration v2: empty LED strip, created empty selected array");
             }
         }
         // Don't remove /printer/leds/strip - keep for wizard backward compat
-    } else {
+    } else if (write_selected(json::array())) {
         // No LED configured at all - create empty array
-        config[selected_ptr] = json::array();
         spdlog::info("[Config] Migration v2: no LED configured, created empty selected array");
     }
 }
@@ -477,8 +577,12 @@ static void default_printer_switcher_off(json& config, int target_version) {
         }
     }
 
-    if (printer_count <= 1) {
-        config["/printers/show_printer_switcher"_json_pointer] = false;
+    const char* why = nullptr;
+    json* flag = printer_count <= 1
+                     ? node_for_write(config, "/printers/show_printer_switcher", &why)
+                     : nullptr;
+    if (flag != nullptr) {
+        *flag = false;
         spdlog::info(
             "[Config] Migration v{}: disabled show_printer_switcher for single-printer config",
             target_version);
@@ -564,14 +668,11 @@ static void migrate_v9_to_v10(json& config) {
                 if (!page.contains("widgets") || !page["widgets"].is_array())
                     continue;
                 for (auto& widget : page["widgets"]) {
-                    std::string id = widget.value("id", "");
+                    std::string id = helix::json_util::safe_string(widget, "id");
                     if (id.substr(0, 13) == "power_device:") {
-                        try {
-                            int n = std::stoi(id.substr(13));
-                            if (n > max_instance)
-                                max_instance = n;
-                        } catch (...) {
-                        }
+                        const auto n = tio::parse_leading<int>(id.substr(13));
+                        if (n && *n > max_instance)
+                            max_instance = *n;
                     }
                 }
             }
@@ -581,7 +682,7 @@ static void migrate_v9_to_v10(json& config) {
                 if (!page.contains("widgets") || !page["widgets"].is_array())
                     continue;
                 for (auto& widget : page["widgets"]) {
-                    if (widget.value("id", "") == "power") {
+                    if (helix::json_util::safe_string(widget, "id") == "power") {
                         max_instance++;
                         widget["id"] = "power_device:" + std::to_string(max_instance);
                         widget["config"] = {{"device", "__all__"}, {"icon", "power_cycle"}};
@@ -608,8 +709,15 @@ static void migrate_v10_to_v11(json& config) {
                                config["thermal"]["rates"][heater].contains("heat_rate");
 
             if (!dest_exists) {
-                config["thermal"]["rates"][heater]["heat_rate"] =
-                    config["calibration"]["pid_history"][heater]["heat_rate"];
+                const char* why = nullptr;
+                json* dest = node_for_write(
+                    config, std::string("/thermal/rates/") + heater + "/heat_rate", &why);
+                if (dest == nullptr) {
+                    spdlog::warn("[Config] Migration v11: heat_rate for '{}' not copied: {}",
+                                 heater, why);
+                    continue;
+                }
+                *dest = config["calibration"]["pid_history"][heater]["heat_rate"];
                 spdlog::info("[Config] Migration v11: copied heat_rate for '{}' to /thermal/rates",
                              heater);
             }
@@ -674,11 +782,11 @@ static void migrate_v11_to_v12(json& config) {
 /// (backlight never turns off at sleep).
 static void migrate_v12_to_v13(json& config) {
     bool is_ad5x = false;
-    if (config.value("preset", "") == "ad5x") {
+    if (helix::json_util::safe_string(config, "preset") == "ad5x") {
         is_ad5x = true;
     } else if (config.contains("printers") && config["printers"].is_object()) {
         for (auto& [printer_id, printer] : config["printers"].items()) {
-            if (printer.is_object() && printer.value("type", "") == "FlashForge Adventurer 5X") {
+            if (helix::json_util::safe_string(printer, "type") == "FlashForge Adventurer 5X") {
                 is_ad5x = true;
                 break;
             }
@@ -691,8 +799,8 @@ static void migrate_v12_to_v13(json& config) {
         return;
 
     auto& display = config["display"];
-    if (display.value("sleep_backlight_off", true) == false &&
-        display.value("hardware_blank", -1) == 0) {
+    if (!helix::json_util::safe_bool(display, "sleep_backlight_off", true) &&
+        helix::json_util::safe_int(display, "hardware_blank", -1) == 0) {
         display["sleep_backlight_off"] = true;
         display["hardware_blank"] = 1;
         spdlog::info("[Config] Migration v13: restored AD5X backlight-off sleep "
@@ -723,20 +831,19 @@ static void migrate_v13_to_v14(json& config, const std::string& config_path) {
         return;
     }
 
-    try {
-        json legacy = json::parse(tio::read_file(legacy_path).value_or(""));
-        if (!has_key && legacy.contains("enabled") && legacy["enabled"].is_boolean()) {
-            bool legacy_enabled = legacy["enabled"].get<bool>();
-            config["telemetry_enabled"] = legacy_enabled;
-            spdlog::info("[Config] Migration v14: imported telemetry_enabled={} "
-                         "from legacy {}",
-                         legacy_enabled ? "true" : "false", legacy_path);
-        }
-    } catch (const std::exception& e) {
-        spdlog::warn("[Config] Migration v14: failed to read legacy {}: {} "
-                     "(leaving file in place for retry)",
-                     legacy_path, e.what());
+    const json legacy = json::parse(tio::read_file(legacy_path).value_or(""), nullptr, false);
+    if (legacy.is_discarded()) {
+        spdlog::warn("[Config] Migration v14: failed to read legacy {}: unreadable or not "
+                     "valid JSON (leaving file in place for retry)",
+                     legacy_path);
         return;
+    }
+    if (!has_key && legacy.contains("enabled") && legacy["enabled"].is_boolean()) {
+        bool legacy_enabled = legacy["enabled"].get<bool>();
+        config["telemetry_enabled"] = legacy_enabled;
+        spdlog::info("[Config] Migration v14: imported telemetry_enabled={} "
+                     "from legacy {}",
+                     legacy_enabled ? "true" : "false", legacy_path);
     }
 
     if (hfs::remove(legacy_path)) {
@@ -752,11 +859,11 @@ static void migrate_v13_to_v14(json& config, const std::string& config_path) {
 /// v12→v13 so the fix is idempotent if the wizard is re-run on an older build.
 static void migrate_v14_to_v15(json& config) {
     bool is_ad5x = false;
-    if (config.value("preset", "") == "ad5x") {
+    if (helix::json_util::safe_string(config, "preset") == "ad5x") {
         is_ad5x = true;
     } else if (config.contains("printers") && config["printers"].is_object()) {
         for (auto& [printer_id, printer] : config["printers"].items()) {
-            if (printer.is_object() && printer.value("type", "") == "FlashForge Adventurer 5X") {
+            if (helix::json_util::safe_string(printer, "type") == "FlashForge Adventurer 5X") {
                 is_ad5x = true;
                 break;
             }
@@ -769,8 +876,8 @@ static void migrate_v14_to_v15(json& config) {
         return;
 
     auto& display = config["display"];
-    if (display.value("sleep_backlight_off", true) == false &&
-        display.value("hardware_blank", -1) == 0) {
+    if (!helix::json_util::safe_bool(display, "sleep_backlight_off", true) &&
+        helix::json_util::safe_int(display, "hardware_blank", -1) == 0) {
         display["sleep_backlight_off"] = true;
         display["hardware_blank"] = 1;
         spdlog::info("[Config] Migration v15: re-applied AD5X backlight-off sleep "
@@ -802,7 +909,7 @@ static void migrate_v15_to_v16(json& config) {
     }
     auto& display = config["display"];
 
-    int current_type = display.value("screensaver_type", 0);
+    int current_type = helix::json_util::safe_int(display, "screensaver_type", 0);
     if (current_type != 1) {
         return; // only migrate Flying Toasters
     }
@@ -1649,7 +1756,8 @@ static void migrate_v24_to_v25(json& config) {
                 renamed[key] = it.value();
                 continue;
             }
-            const int ordinal = std::stoi(key);
+            // At most three digits, so it always parses.
+            const int ordinal = tio::parse_int<int>(key).value_or(-1);
             changed = true;
             if (ordinal < 0 || ordinal >= LEGACY_PHASE_COUNT) {
                 ++dropped;
@@ -1675,7 +1783,20 @@ static void migrate_v24_to_v25(json& config) {
 static void run_versioned_migrations(json& config, const std::string& config_path = "") {
     int version = 0;
     if (config.contains("config_version")) {
-        version = config["config_version"].get<int>();
+        const json& stamp = config["config_version"];
+        // Running the chain from 0 would replay non-idempotent steps (v8's
+        // toolhead remap) over a current document, so an unreadable stamp
+        // leaves the document unmigrated and unstamped for the user to fix.
+        if (!stamp.is_number() && !stamp.is_boolean()) {
+            spdlog::error("[Config] Migration failed, continuing with un-migrated config: "
+                          "config_version is {}, not a number",
+                          stamp.type_name());
+            CONFIG_RECORD_ERROR(
+                "migration", "config_migration_failed",
+                fmt::format("migration error: config_version is {}", stamp.type_name()));
+            return;
+        }
+        version = stamp.get<int>();
     }
 
     // A config written by a NEWER build than this one — reachable as soon as
@@ -1865,13 +1986,14 @@ static void recover_config_from_backup_or_defaults(json& data, ConfigStorage& st
 
     bool restored = false;
     if (!backup_src.empty()) {
-        try {
-            data = json::parse(tio::read_file(backup_src).value_or(""));
+        json backup = json::parse(tio::read_file(backup_src).value_or(""), nullptr, false);
+        if (backup.is_object()) {
+            data = std::move(backup);
             restored = true;
             spdlog::info("[Config] Restored from backup: {}", backup_src);
             NOTIFY_WARNING("Settings were corrupted — restored from backup");
-        } catch (const json::exception& e2) {
-            spdlog::warn("[Config] Backup also corrupt: {}", e2.what());
+        } else {
+            spdlog::warn("[Config] Backup also corrupt: {}", backup_src);
         }
     }
 
@@ -2029,9 +2151,9 @@ void Config::init(const std::string& config_path) {
                      storage_->describe());
     }
 
-    // A thrown load() means the document is present but unreadable (e.g.
-    // permission denied) — distinct from "absent" (nullopt, no throw). Both
-    // cases route into the "load existing config" branch below so a
+    // A read error means the document is present but unreadable (e.g.
+    // permission denied), distinct from "absent" (nullopt, no error). Both
+    // route into the "load existing config" branch below so a
     // present-but-unreadable config gets the same corrupt-preserve +
     // backup-restore recovery as a parse failure, instead of being silently
     // treated as first-boot and reset to defaults.
@@ -2039,114 +2161,95 @@ void Config::init(const std::string& config_path) {
     // True while `data` is the document parsed from `path`, whatever put it
     // there (a backup restored onto a missing file counts).
     bool data_is_on_disk_doc = false;
-    bool load_read_failed = false;
     std::string load_read_error;
-    try {
-        loaded_doc = storage_->load();
-    } catch (const std::exception& e) {
-        load_read_failed = true;
-        load_read_error = e.what();
-    }
+    loaded_doc = storage_->load(load_read_error);
+    const bool load_read_failed = !loaded_doc && !load_read_error.empty();
 
     if (loaded_doc || load_read_failed) {
         // Load existing config
         spdlog::info("[Config] Loading config from {}", path);
 
         if (load_read_failed) {
-            // Route directly into the shared recovery path rather than
-            // re-throwing into the json::parse try/catch below — that would
-            // require widening its catch to std::exception, which would
-            // also swallow an unrelated failure (e.g. bad_alloc under
-            // memory pressure on RAM-constrained embedded targets) and
-            // misdiagnose it as document corruption, renaming a perfectly
-            // healthy settings.json to .corrupt.
             spdlog::error("[Config] Failed to read {}: {}", path, load_read_error);
             CONFIG_RECORD_ERROR("file_io", "config_read_failed",
                                 fmt::format("read error: {}", load_read_error));
             recover_config_from_backup_or_defaults(data, *storage_);
             config_modified = true;
+        } else if (json parsed = json::parse(*loaded_doc, nullptr, false); !parsed.is_object()) {
+            // Everything downstream indexes the document by key, so a
+            // well-formed array or scalar is as unusable as a syntax error.
+            const char* problem = parsed.is_discarded() ? "not valid JSON" : "not a JSON object";
+            spdlog::error("[Config] Failed to parse {}: {}", path, problem);
+            CONFIG_RECORD_ERROR("file_io", "config_read_failed",
+                                fmt::format("parse error: {}", problem));
+            data_is_on_disk_doc = false;
+            recover_config_from_backup_or_defaults(data, *storage_);
+            config_modified = true;
         } else {
-            try {
-                data = json::parse(*loaded_doc);
-                data_is_on_disk_doc = true;
+            data = std::move(parsed);
+            data_is_on_disk_doc = true;
 
-                // Detect tarball default that replaced user config during a Moonraker
-                // web update.  Moonraker type:web does rmtree() on the install dir and
-                // extracts the release tarball fresh — the tarball includes a preset-based
-                // settings.json with wizard_completed=false and no config_version.  If a
-                // rolling backup with real user data exists, prefer it.
-                // safe_int, not .value(): a hand-edited "config_version": null throws
-                // type_error.302, which lands in the catch below and destroys the
-                // user's settings.json (renamed .corrupt, then reset to defaults)
-                // over a single bad field.
-                //
-                // The packaged document alone cannot say which of the two
-                // happened: a fresh install ships the identical bytes, and
-                // neither the backup's age (the archive's stored mtime is the
-                // release build date, newer than the backup in both cases) nor
-                // its richness differs between them.  The installer settles it.
-                // It leaves FRESH_INSTALL_MARKER beside settings.json whenever
-                // it kept the packaged config because no user config existed to
-                // restore; Moonraker's rmtree() removes the marker and the
-                // re-extract does not bring it back, since it is not in the
-                // archive.  Consumed here so it only ever answers for the
-                // config it shipped beside.
-                if (helix::json_util::safe_int(data, "config_version", 0) == 0) {
-                    const std::string fresh_marker = hfs::join_path(
-                        hfs::parent_path(path), AppConstants::Update::FRESH_INSTALL_MARKER);
-                    const bool installer_kept_it = hfs::exists(fresh_marker);
-                    if (installer_kept_it) {
-                        spdlog::info("[Config] Packaged config kept - installer marked a fresh "
-                                     "install ({})",
-                                     fresh_marker);
-                        hfs::remove(fresh_marker);
-                    }
+            // Detect tarball default that replaced user config during a Moonraker
+            // web update.  Moonraker type:web does rmtree() on the install dir and
+            // extracts the release tarball fresh — the tarball includes a preset-based
+            // settings.json with wizard_completed=false and no config_version.  If a
+            // rolling backup with real user data exists, prefer it.
+            // safe_int, not .value(): a hand-edited "config_version": null has
+            // to read as 0 here, not fail the whole document over one field.
+            //
+            // The packaged document alone cannot say which of the two
+            // happened: a fresh install ships the identical bytes, and
+            // neither the backup's age (the archive's stored mtime is the
+            // release build date, newer than the backup in both cases) nor
+            // its richness differs between them.  The installer settles it.
+            // It leaves FRESH_INSTALL_MARKER beside settings.json whenever
+            // it kept the packaged config because no user config existed to
+            // restore; Moonraker's rmtree() removes the marker and the
+            // re-extract does not bring it back, since it is not in the
+            // archive.  Consumed here so it only ever answers for the
+            // config it shipped beside.
+            if (helix::json_util::safe_int(data, "config_version", 0) == 0) {
+                const std::string fresh_marker = hfs::join_path(
+                    hfs::parent_path(path), AppConstants::Update::FRESH_INSTALL_MARKER);
+                const bool installer_kept_it = hfs::exists(fresh_marker);
+                if (installer_kept_it) {
+                    spdlog::info("[Config] Packaged config kept - installer marked a fresh "
+                                 "install ({})",
+                                 fresh_marker);
+                    hfs::remove(fresh_marker);
+                }
 
-                    std::string backup_src = installer_kept_it
-                                                 ? std::string{}
-                                                 : find_backup(config_backup_search_paths());
-                    if (!backup_src.empty()) {
-                        try {
-                            auto backup_data = json::parse(tio::read_file(backup_src).value_or(""));
-                            if (helix::json_util::safe_int(backup_data, "config_version", 0) > 0) {
-                                spdlog::warn("[Config] Loaded config is a tarball default "
-                                             "(no config_version) — restoring from backup: {}",
-                                             backup_src);
-                                data = std::move(backup_data);
-                                data_is_on_disk_doc = false;
-                                config_modified = true;
-                                NOTIFY_WARNING("Settings restored after update");
-                            }
-                        } catch (const json::exception& e) {
-                            spdlog::warn(
-                                "[Config] Backup parse failed during tarball detection: {}",
-                                e.what());
-                        }
+                std::string backup_src =
+                    installer_kept_it ? std::string{} : find_backup(config_backup_search_paths());
+                if (!backup_src.empty()) {
+                    auto backup_data =
+                        json::parse(tio::read_file(backup_src).value_or(""), nullptr, false);
+                    if (!backup_data.is_object()) {
+                        spdlog::warn("[Config] Backup parse failed during tarball detection: {}",
+                                     backup_src);
+                    } else if (helix::json_util::safe_int(backup_data, "config_version", 0) > 0) {
+                        spdlog::warn("[Config] Loaded config is a tarball default "
+                                     "(no config_version) — restoring from backup: {}",
+                                     backup_src);
+                        data = std::move(backup_data);
+                        data_is_on_disk_doc = false;
+                        config_modified = true;
+                        NOTIFY_WARNING("Settings restored after update");
                     }
                 }
-            } catch (const json::exception& e) {
-                spdlog::error("[Config] Failed to parse {}: {}", path, e.what());
-                CONFIG_RECORD_ERROR("file_io", "config_read_failed",
-                                    fmt::format("parse error: {}", e.what()));
-                data_is_on_disk_doc = false;
-                recover_config_from_backup_or_defaults(data, *storage_);
-                config_modified = true;
             }
         }
 
-        // The migrations below get their own try/catch, deliberately separate
-        // from the parse recovery above.
-        //
-        // They used to sit outside every handler: Config::init() has no other
-        // try, and neither does its caller Application::init_config(), so a
-        // single null field anywhere in a migration threw straight out of app
-        // startup. But they must NOT share the parse handler either — that one
-        // renames settings.json to .corrupt and resets to factory defaults,
-        // which is far too destructive a response to a migration bug. A failed
-        // migration should leave the user's config un-migrated and loudly
-        // logged, not discarded. config_version is left unstamped, so the
-        // migration is retried on the next boot.
+        // With exceptions, the migrations run under their own catch-all,
+        // separate from the parse recovery above: that one renames
+        // settings.json to .corrupt and resets to factory defaults, far too
+        // destructive a response to a migration bug. A failed migration leaves
+        // the config un-migrated and logged, with config_version unstamped so
+        // it is retried on the next boot. Without exceptions (ESP32) there is
+        // nothing to catch, so every step has to be non-throwing by itself.
+#if defined(__cpp_exceptions)
         try {
+#endif
             // Moves root-level display_* to /display/, then the touch keys from
             // /display/ to /input/. Shared with the config_testing seam so tests
             // drive this exact sequence instead of restating it.
@@ -2171,13 +2274,11 @@ void Config::init(const std::string& config_path) {
             if (data_is_on_disk_doc && version_before > 0 &&
                 version_before < CURRENT_CONFIG_VERSION && storage_->describe() == path &&
                 !read_only_mode_) {
-                int snapshot_version = 0;
-                try {
-                    snapshot_version = helix::json_util::safe_int(
-                        json::parse(tio::read_file(snapshot).value_or("")), "config_version", 0);
-                } catch (const json::exception&) {
-                    // Absent or unreadable: nothing worth keeping.
-                }
+                // Absent or unreadable parses as discarded, which reads as 0:
+                // nothing worth keeping.
+                const int snapshot_version = helix::json_util::safe_int(
+                    json::parse(tio::read_file(snapshot).value_or(""), nullptr, false),
+                    "config_version", 0);
                 if (snapshot_version == version_before) {
                     spdlog::debug("[Config] Keeping existing v{} pre-migration copy: {}",
                                   version_before, snapshot);
@@ -2195,12 +2296,14 @@ void Config::init(const std::string& config_path) {
             if (helix::json_util::safe_int(data, "config_version", 0) != version_before) {
                 config_modified = true;
             }
+#if defined(__cpp_exceptions)
         } catch (const std::exception& e) {
             spdlog::error("[Config] Migration failed, continuing with un-migrated config: {}",
                           e.what());
             CONFIG_RECORD_ERROR("migration", "config_migration_failed",
                                 fmt::format("migration error: {}", e.what()));
         }
+#endif
     } else {
         // Create default config
         spdlog::info("[Config] Creating default config at {}", path);
@@ -2222,80 +2325,42 @@ void Config::init(const std::string& config_path) {
         config_modified = true;
     }
 
-    // Ensure active printer has required fields with defaults
+    // Ensure active printer has required fields with defaults. Addressed by key,
+    // not through a df() pointer: the id is a key of the printers object (made
+    // an object above), whatever characters it holds.
     if (!active_printer_id_.empty()) {
-        auto printer_ptr = json::json_pointer("/printers/" + active_printer_id_);
-        auto& printer = data[printer_ptr];
+        json& printer = data["printers"][active_printer_id_];
         if (printer.is_null()) {
-            data[printer_ptr] = get_default_printer_config("127.0.0.1");
+            printer = get_default_printer_config("127.0.0.1");
             config_modified = true;
-        } else {
-            // Ensure heaters exists with defaults
-            auto& heaters = data[json::json_pointer(df() + "heaters")];
-            if (heaters.is_null()) {
-                data[json::json_pointer(df() + "heaters")] = {{"bed", "heater_bed"},
-                                                              {"hotend", "extruder"}};
-                config_modified = true;
-            }
-
-            // Ensure temp_sensors exists with defaults
-            auto& temp_sensors = data[json::json_pointer(df() + "temp_sensors")];
-            if (temp_sensors.is_null()) {
-                data[json::json_pointer(df() + "temp_sensors")] = {{"bed", "heater_bed"},
-                                                                   {"hotend", "extruder"}};
-                config_modified = true;
-            }
-
-            // Ensure fans exists with defaults
-            auto& fans = data[json::json_pointer(df() + "fans")];
-            if (fans.is_null()) {
-                data[json::json_pointer(df() + "fans")] = {{"part", "fan"},
-                                                           {"hotend", "heater_fan hotend_fan"}};
-                config_modified = true;
-            }
-
-            // Ensure leds exists with defaults
-            auto& leds = data[json::json_pointer(df() + "leds")];
-            if (leds.is_null()) {
-                data[json::json_pointer(df() + "leds")] = {{"strip", "neopixel chamber_light"}};
-                config_modified = true;
-            }
+        } else if (printer.is_object()) {
+            auto ensure = [&](const char* key, json value) {
+                if (!printer.contains(key) || printer[key].is_null()) {
+                    printer[key] = std::move(value);
+                    config_modified = true;
+                }
+            };
+            ensure("heaters", {{"bed", "heater_bed"}, {"hotend", "extruder"}});
+            ensure("temp_sensors", {{"bed", "heater_bed"}, {"hotend", "extruder"}});
+            ensure("fans", {{"part", "fan"}, {"hotend", "heater_fan hotend_fan"}});
+            ensure("leds", {{"strip", "neopixel chamber_light"}});
 
             // Ensure leds/selected array exists (for multi-LED support)
-            auto& leds_selected = data[json::json_pointer(df() + "leds/selected")];
-            if (leds_selected.is_null()) {
-                // Check if there's a legacy strip value to migrate. Read it
-                // through the non-vivifying accessor — get_json()/operator[]
-                // would leave a permanent "leds/strip": null behind (#1129).
-                const json* strip = try_get_json(df() + "leds/strip");
+            json& leds = printer["leds"];
+            if (leds.is_object() && (!leds.contains("selected") || leds["selected"].is_null())) {
+                // Seed it from a legacy strip value when there is one.
+                const auto strip = leds.find("strip");
                 std::string led =
-                    (strip != nullptr && strip->is_string()) ? strip->get<std::string>() : "";
-                leds_selected = led.empty() ? json::array() : json::array({led});
+                    (strip != leds.end() && strip->is_string()) ? strip->get<std::string>() : "";
+                leds["selected"] = led.empty() ? json::array() : json::array({led});
                 config_modified = true;
             }
 
-            // Ensure extra_sensors exists (empty object for user additions)
-            auto& extra_sensors = data[json::json_pointer(df() + "extra_sensors")];
-            if (extra_sensors.is_null()) {
-                data[json::json_pointer(df() + "extra_sensors")] = json::object();
-                config_modified = true;
-            }
-
-            // Ensure hardware section exists
-            auto& hardware = data[json::json_pointer(df() + "hardware")];
-            if (hardware.is_null()) {
-                data[json::json_pointer(df() + "hardware")] = {{"optional", json::array()},
-                                                               {"expected", json::array()},
-                                                               {"last_snapshot", json::object()}};
-                config_modified = true;
-            }
-
-            // Ensure default_macros exists
-            auto& default_macros = data[json::json_pointer(df() + "default_macros")];
-            if (default_macros.is_null()) {
-                data[json::json_pointer(df() + "default_macros")] = get_default_macros();
-                config_modified = true;
-            }
+            ensure("extra_sensors", json::object());
+            ensure("hardware", {{"optional", json::array()},
+                                {"expected", json::array()},
+                                {"last_snapshot", json::object()}});
+            ensure("default_macros", get_default_macros());
         }
     }
 
@@ -2309,7 +2374,7 @@ void Config::init(const std::string& config_path) {
     // log_level intentionally NOT migrated - absence allows test_mode fallback
 
     // Ensure display section exists with defaults
-    if (!data.contains("display")) {
+    if (!data.contains("display") || !data["display"].is_object()) {
         data["display"] = get_default_display_config();
         config_modified = true;
     } else {
@@ -2326,7 +2391,7 @@ void Config::init(const std::string& config_path) {
     }
 
     // Ensure input section exists with defaults (scroll settings + touch calibration)
-    if (!data.contains("input")) {
+    if (!data.contains("input") || !data["input"].is_object()) {
         data["input"] = {{"scroll_throw", 25},
                          {"scroll_limit", 10},
                          {"long_press_time", 500},
@@ -2359,7 +2424,7 @@ void Config::init(const std::string& config_path) {
         }
 
         // Ensure calibration subsection exists with all required fields
-        if (!input.contains("calibration")) {
+        if (!input.contains("calibration") || !input["calibration"].is_object()) {
             input["calibration"] = {{"valid", false}, {"a", 1.0}, {"b", 0.0}, {"c", 0.0},
                                     {"d", 0.0},       {"e", 1.0}, {"f", 0.0}};
             config_modified = true;
@@ -2470,6 +2535,9 @@ std::vector<std::string> Config::get_printer_ids() const {
 void Config::add_printer(const std::string& printer_id, const json& printer_data) {
     if (!data.contains("printers")) {
         data["printers"] = json::object();
+    } else if (!data["printers"].is_object()) {
+        spdlog::error("[Config] Cannot add printer '{}': /printers is not an object", printer_id);
+        return;
     }
     data["printers"][printer_id] = printer_data;
     spdlog::info("[Config] Added printer '{}'", printer_id);
@@ -2540,6 +2608,11 @@ void Config::archive_printer(const std::string& printer_id) {
     }
 
     snapshot[ARCHIVED_AT_KEY] = next_archive_stamp();
+    // The printer is already gone from /printers, so a malformed archive is
+    // replaced rather than losing the snapshot too.
+    if (!data.contains("removed_printers") || !data["removed_printers"].is_object()) {
+        data["removed_printers"] = json::object();
+    }
     data["removed_printers"][printer_id] = std::move(snapshot);
     spdlog::info("[Config] Archived printer '{}' to /removed_printers", printer_id);
     prune_archived_printers();
@@ -2629,12 +2702,12 @@ std::string Config::get_path() {
 }
 
 void Config::log_type_mismatch(const std::string& json_ptr, const char* stored_type,
-                               const char* expected_type, const char* detail) {
+                               const char* expected_type) {
     // warn, not debug: the user's setting was silently discarded, and the only
     // way they can act on it is by seeing which key and which type to correct.
     spdlog::warn("[Config] '{}' is stored as {} but must be a {} - ignoring it and using the "
-                 "built-in default ({})",
-                 json_ptr, stored_type, expected_type, detail);
+                 "built-in default",
+                 json_ptr, stored_type, expected_type);
 }
 
 void Config::log_set_failed(const std::string& json_ptr, const char* detail) {
@@ -2642,16 +2715,47 @@ void Config::log_set_failed(const std::string& json_ptr, const char* detail) {
                  detail);
 }
 
+json* Config::create_path(const std::string& json_ptr) {
+    const char* why = nullptr;
+    json* node = node_for_write(data, json_ptr, &why);
+    if (node == nullptr) {
+        log_set_failed(json_ptr, why);
+    }
+    return node;
+}
+
 json& Config::get_json(const std::string& json_path) {
-    return data[json::json_pointer(json_path)];
+    if (json* node = create_path(json_path)) {
+        return *node;
+    }
+    discarded_write_ = nullptr;
+    return discarded_write_;
 }
 
 const json* Config::try_get_json(const std::string& json_path) const {
-    json::json_pointer ptr(json_path);
-    if (!data.contains(ptr)) {
+    const auto tokens = pointer_tokens(json_path);
+    if (!tokens) {
         return nullptr;
     }
-    return &data.at(ptr);
+    const json* node = &data;
+    for (const auto& token : *tokens) {
+        if (node->is_object()) {
+            const auto it = node->find(token);
+            if (it == node->end()) {
+                return nullptr;
+            }
+            node = &*it;
+        } else if (node->is_array()) {
+            const auto idx = array_token_index(token);
+            if (!idx || *idx >= node->size()) {
+                return nullptr;
+            }
+            node = &(*node)[*idx];
+        } else {
+            return nullptr;
+        }
+    }
+    return node;
 }
 
 std::vector<std::string> Config::get_string_array(const std::string& json_path) const {
@@ -2698,11 +2802,13 @@ bool Config::save() {
 
     // safe_dump() replaces invalid UTF-8 rather than throwing on it, so a stray
     // byte in a printer name or SSID costs those bytes and not the user's whole
-    // save. The try stays for what serialization can still throw — bad_alloc on
-    // a RAM-constrained target — because save() has 133 call sites, many inside
-    // LVGL event callbacks, where an escaping exception unwinds through a C
-    // frame.
+    // save. With exceptions, the try catches what serialization can still throw
+    // — bad_alloc on a RAM-constrained target — because save() has 133 call
+    // sites, many inside LVGL event callbacks, where an escaping exception
+    // unwinds through a C frame.
+#if defined(__cpp_exceptions)
     try {
+#endif
         if (!storage_->store(helix::json_util::safe_dump(data, 2) + "\n")) {
             // FileConfigStorage (the default backend) already reports the specific
             // failure via NOTIFY_ERROR + CONFIG_RECORD_ERROR at the failing phase
@@ -2711,6 +2817,7 @@ bool Config::save() {
             spdlog::error("[Config] Failed to save via {}", storage_->describe());
             return false;
         }
+#if defined(__cpp_exceptions)
     } catch (const std::exception& e) {
         NOTIFY_ERROR("Failed to save configuration: {}", e.what());
         LOG_ERROR_INTERNAL("Exception while saving config to {}: {}", path, e.what());
@@ -2718,6 +2825,7 @@ bool Config::save() {
                             fmt::format("exception: {}", e.what()));
         return false;
     }
+#endif
     spdlog::trace("[Config] saved successfully to {}", storage_->describe());
 
     // Rolling backup outside the install dir (survives Moonraker wipes). Kept
@@ -2758,19 +2866,19 @@ void Config::set_preset(const std::string& preset_name) {
     if (preset_name.empty()) {
         return;
     }
-    data[json::json_pointer(df() + "preset")] = preset_name;
+    set(df() + "preset", preset_name);
     spdlog::info("[Config] Preset set to '{}' for printer '{}'", preset_name, active_printer_id_);
 }
 
 void Config::clear_preset() {
     bool cleared = false;
-    if (data.contains(json::json_pointer(df() + "preset"))) {
-        // df() ends in '/', which as a JSON pointer would name an empty-string
-        // key inside the printer node rather than the node itself.
-        std::string printer_path = df();
-        printer_path.pop_back();
-        data[json::json_pointer(printer_path)].erase("preset");
-        cleared = true;
+    const std::string id = active_printer_id_.empty() ? "default" : active_printer_id_;
+    if (data.contains("printers") && data["printers"].is_object()) {
+        const auto printer = data["printers"].find(id);
+        if (printer != data["printers"].end() && printer->is_object() &&
+            printer->erase("preset") > 0) {
+            cleared = true;
+        }
     }
     // Drop any legacy root-level marker too. Leaving it would let lift_root_preset()
     // put the preset straight back on the next boot, silently undoing the wizard
@@ -2817,7 +2925,10 @@ bool Config::apply_preset_file(const std::string& preset_name) {
     // installs: existing users stay broken even after an update.
     const bool wizard_done = get<bool>(df() + "wizard_completed", false);
     if (wizard_done) {
-        if (active_printer_id_.empty()) {
+        // The merge addresses the printer both through df() pointers and as
+        // /printers/<id>, so both have to be usable.
+        if (active_printer_id_.empty() || !pointer_tokens(df()) ||
+            (data.contains("printers") && !data["printers"].is_object())) {
             spdlog::info("[Config] Wizard completed, skipping preset '{}' merge", preset_name);
             return false;
         }
@@ -2827,10 +2938,8 @@ bool Config::apply_preset_file(const std::string& preset_name) {
             spdlog::info("[Config] Wizard completed, skipping preset '{}' merge", preset_name);
             return false;
         }
-        json preset_json;
-        try {
-            preset_json = json::parse(tio::read_file(preset_path).value_or(""));
-        } catch (const json::exception&) {
+        json preset_json = json::parse(tio::read_file(preset_path).value_or(""), nullptr, false);
+        if (preset_json.is_discarded()) {
             spdlog::info("[Config] Wizard completed, skipping preset '{}' merge", preset_name);
             return false;
         }
@@ -2871,18 +2980,22 @@ bool Config::apply_preset_file(const std::string& preset_name) {
                 for (const auto& preset_sensor : preset_fs["sensors"]) {
                     if (!preset_sensor.is_object())
                         continue;
-                    std::string preset_klipper = preset_sensor.value("klipper_name", "");
-                    std::string preset_role = preset_sensor.value("role", "none");
+                    std::string preset_klipper =
+                        helix::json_util::safe_string(preset_sensor, "klipper_name");
+                    std::string preset_role =
+                        helix::json_util::safe_string(preset_sensor, "role", "none");
                     if (preset_klipper.empty() || preset_role == "none")
                         continue;
                     bool found = false;
                     for (auto& user_sensor : user_sensors) {
                         if (!user_sensor.is_object())
                             continue;
-                        if (user_sensor.value("klipper_name", "") != preset_klipper)
+                        if (helix::json_util::safe_string(user_sensor, "klipper_name") !=
+                            preset_klipper)
                             continue;
                         found = true;
-                        std::string user_role = user_sensor.value("role", "none");
+                        std::string user_role =
+                            helix::json_util::safe_string(user_sensor, "role", "none");
                         // Only upgrade when user has role=none — never overwrite an
                         // explicit user assignment (runout/toolhead/entry/z_probe).
                         if (user_role == "none") {
@@ -2952,7 +3065,8 @@ bool Config::apply_preset_file(const std::string& preset_name) {
                 printer_node = json::object();
             }
             for (const char* group : {"fans", "heaters", "temp_sensors"}) {
-                if (!preset_printer.contains(group) || !preset_printer[group].is_object()) {
+                if (!preset_printer.contains(group) || !preset_printer[group].is_object() ||
+                    (printer_node.contains(group) && !printer_node[group].is_object())) {
                     continue;
                 }
                 for (const auto& [key, val] : preset_printer[group].items()) {
@@ -2960,9 +3074,9 @@ bool Config::apply_preset_file(const std::string& preset_name) {
                         continue;
                     }
                     const std::string rel = std::string(group) + "/" + key;
-                    json::json_pointer ptr(df() + rel);
-                    const bool held = data.contains(ptr) && data.at(ptr).is_string() &&
-                                      !data.at(ptr).get<std::string>().empty();
+                    const json* stored = try_get_json(df() + rel);
+                    const bool held = stored != nullptr && stored->is_string() &&
+                                      !stored->get<std::string>().empty();
                     if (!held) {
                         printer_node[group][key] = val;
                         changed = true;
@@ -2979,25 +3093,31 @@ bool Config::apply_preset_file(const std::string& preset_name) {
         if (preset_printer.contains("hardware") && preset_printer["hardware"].is_object() &&
             preset_printer["hardware"].contains("expected") &&
             preset_printer["hardware"]["expected"].is_array()) {
-            json::json_pointer exp_ptr(df() + "hardware/expected");
-            if (!data.contains(exp_ptr) || !data.at(exp_ptr).is_array()) {
-                data[exp_ptr] = json::array();
-            }
-            json& stored = data.at(exp_ptr);
-            for (const auto& entry : preset_printer["hardware"]["expected"]) {
-                if (!entry.is_string()) {
-                    continue;
+            const char* why = nullptr;
+            json* expected = node_for_write(data, df() + "hardware/expected", &why);
+            if (expected == nullptr) {
+                spdlog::warn("[Config] hardware/expected not merged from preset '{}': {}",
+                             preset_name, why);
+            } else {
+                if (!expected->is_array()) {
+                    *expected = json::array();
                 }
-                const std::string name = entry.get<std::string>();
-                if (name.empty() || name == "AFC" || name == "mmu" || name == "toolchanger" ||
-                    name == "ace") {
-                    continue;
-                }
-                if (std::find(stored.begin(), stored.end(), entry) == stored.end()) {
-                    stored.push_back(entry);
-                    changed = true;
-                    spdlog::info("[Config] Added '{}' to hardware/expected from preset '{}'", name,
-                                 preset_name);
+                json& stored = *expected;
+                for (const auto& entry : preset_printer["hardware"]["expected"]) {
+                    if (!entry.is_string()) {
+                        continue;
+                    }
+                    const std::string name = entry.get<std::string>();
+                    if (name.empty() || name == "AFC" || name == "mmu" || name == "toolchanger" ||
+                        name == "ace") {
+                        continue;
+                    }
+                    if (std::find(stored.begin(), stored.end(), entry) == stored.end()) {
+                        stored.push_back(entry);
+                        changed = true;
+                        spdlog::info("[Config] Added '{}' to hardware/expected from preset '{}'",
+                                     name, preset_name);
+                    }
                 }
             }
         }
@@ -3024,11 +3144,10 @@ bool Config::apply_preset_file(const std::string& preset_name) {
     }
 
     // Load and parse preset JSON
-    json preset_json;
-    try {
-        preset_json = json::parse(tio::read_file(preset_path).value_or(""));
-    } catch (const json::exception& e) {
-        spdlog::error("[Config] Failed to parse preset '{}': {}", preset_path, e.what());
+    json preset_json = json::parse(tio::read_file(preset_path).value_or(""), nullptr, false);
+    if (preset_json.is_discarded()) {
+        spdlog::error("[Config] Failed to parse preset '{}': unreadable or not valid JSON",
+                      preset_path);
         return false;
     }
 
@@ -3044,7 +3163,8 @@ bool Config::apply_preset_file(const std::string& preset_name) {
     // HelixScreen connect to localhost on the next restart. Strip those keys so the
     // preset can never overwrite them.
     if (preset_json.contains("printer") && preset_json["printer"].is_object() &&
-        !active_printer_id_.empty()) {
+        !active_printer_id_.empty() &&
+        (!data.contains("printers") || data["printers"].is_object())) {
         json patch = preset_json["printer"];
         patch.erase("moonraker_host");
         patch.erase("moonraker_port");
@@ -3129,23 +3249,18 @@ bool Config::apply_preset_file(const std::string& preset_name) {
 bool Config::is_wizard_required() {
     // Check per-printer wizard_completed first (v3 config)
     if (!active_printer_id_.empty()) {
-        json::json_pointer printer_ptr(df() + "wizard_completed");
-        if (data.contains(printer_ptr)) {
-            auto& wc = data[printer_ptr];
-            if (wc.is_boolean()) {
-                bool is_completed = wc.get<bool>();
-                spdlog::trace("[Config] Per-printer wizard_completed = {}", is_completed);
-                return !is_completed;
-            }
+        const json* wc = try_get_json(df() + "wizard_completed");
+        if (wc != nullptr && wc->is_boolean()) {
+            bool is_completed = wc->get<bool>();
+            spdlog::trace("[Config] Per-printer wizard_completed = {}", is_completed);
+            return !is_completed;
         }
     }
 
     // Fall back to root-level wizard_completed (backward compat)
-    json::json_pointer ptr("/wizard_completed");
-    if (data.contains(ptr)) {
-        auto& wizard_completed = data[ptr];
-        if (wizard_completed.is_boolean()) {
-            bool is_completed = wizard_completed.get<bool>();
+    if (const json* wizard_completed = try_get_json("/wizard_completed")) {
+        if (wizard_completed->is_boolean()) {
+            bool is_completed = wizard_completed->get<bool>();
             spdlog::trace("[Config] Root wizard_completed flag = {}", is_completed);
             return !is_completed;
         }
@@ -3211,39 +3326,37 @@ void Config::reset_to_defaults() {
 }
 
 MacroConfig Config::get_macro(const std::string& key, const MacroConfig& default_val) {
-    try {
-        std::string path = df() + "default_macros/" + key;
-        json::json_pointer ptr(path);
-
-        if (!data.contains(ptr)) {
-            spdlog::trace("[Config] Macro '{}' not found, using default", key);
-            return default_val;
-        }
-
-        const auto& val = data[ptr];
-
-        // Handle string format (backward compatibility): use as both label and gcode
-        if (val.is_string()) {
-            std::string macro = val.get<std::string>();
-            spdlog::trace("[Config] Macro '{}' is string format: '{}'", key, macro);
-            return {macro, macro};
-        }
-
-        // Handle object format: {label, gcode}
-        if (val.is_object()) {
-            MacroConfig result;
-            result.label = val.value("label", default_val.label);
-            result.gcode = val.value("gcode", default_val.gcode);
-            spdlog::trace("[Config] Macro '{}': label='{}', gcode='{}'", key, result.label,
-                          result.gcode);
-            return result;
-        }
-
-        spdlog::warn("[Config] Macro '{}' has unexpected type, using default", key);
-        return default_val;
-
-    } catch (const std::exception& e) {
-        spdlog::warn("[Config] Error reading macro '{}': {}", key, e.what());
+    const json* val = try_get_json(df() + "default_macros/" + key);
+    if (val == nullptr) {
+        spdlog::trace("[Config] Macro '{}' not found, using default", key);
         return default_val;
     }
+
+    // Handle string format (backward compatibility): use as both label and gcode
+    if (val->is_string()) {
+        std::string macro = val->get<std::string>();
+        spdlog::trace("[Config] Macro '{}' is string format: '{}'", key, macro);
+        return {macro, macro};
+    }
+
+    // Handle object format: {label, gcode}. A field of the wrong type makes the
+    // whole entry unusable rather than half of it.
+    if (val->is_object()) {
+        const auto label = val->find("label");
+        const auto gcode = val->find("gcode");
+        if ((label != val->end() && !label->is_string()) ||
+            (gcode != val->end() && !gcode->is_string())) {
+            spdlog::warn("[Config] Error reading macro '{}': label and gcode must be strings", key);
+            return default_val;
+        }
+        MacroConfig result;
+        result.label = label != val->end() ? label->get<std::string>() : default_val.label;
+        result.gcode = gcode != val->end() ? gcode->get<std::string>() : default_val.gcode;
+        spdlog::trace("[Config] Macro '{}': label='{}', gcode='{}'", key, result.label,
+                      result.gcode);
+        return result;
+    }
+
+    spdlog::warn("[Config] Macro '{}' has unexpected type, using default", key);
+    return default_val;
 }

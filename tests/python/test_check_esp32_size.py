@@ -62,3 +62,33 @@ def test_linked_locale_fails_and_names_the_chain(tmp_path):
 
 def test_map_without_locale_passes(tmp_path):
     assert run(tmp_path, 100, 200, MAP_WITHOUT_LOCALE).returncode == 0
+
+
+# A link with exceptions on: the personality routine pulled by an object compiled
+# with them, and IDF's .eh_frame output section.
+MAP_WITH_EH = """\
+Archive member included to satisfy reference by file (symbol)
+
+/x/libstdc++.a(eh_personality.o)
+                              esp-idf/helixapp/libhelixapp.a(config.cpp.obj) (__gxx_personality_v0)
+
+Discarded input sections
+
+.eh_frame       0x3c5eb9f4    0x6c264
+"""
+
+MAP_EMPTY_EH_FRAME = MAP_WITHOUT_LOCALE + """
+.eh_frame       0x3c5eb9f4    0x0
+"""
+
+
+def test_linked_exception_support_fails_and_names_the_object(tmp_path):
+    r = run(tmp_path, 100, 200, MAP_WITH_EH)
+    assert r.returncode == 1
+    assert "eh_personality.o <- config.cpp.obj (__gxx_personality_v0)" in r.stderr
+    assert ".eh_frame output section: 442980 bytes" in r.stderr
+
+
+def test_no_exception_support_and_an_empty_eh_frame_pass(tmp_path):
+    assert run(tmp_path, 100, 200, MAP_WITHOUT_LOCALE).returncode == 0
+    assert run(tmp_path, 100, 200, MAP_EMPTY_EH_FRAME).returncode == 0

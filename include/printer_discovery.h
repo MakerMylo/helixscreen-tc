@@ -20,11 +20,13 @@
 #include "macro_patterns.h"          // Shared macro-name tables (nozzle clean, ...)
 #include "openams_api.h"             // OpenAMS claims only a manager speaking its API
 #include "printer_detector.h"        // For BuildVolume struct
+#include "text_io.h"
 
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <cctype>
+#include <climits>
 #include <cstdlib>
 #include <string>
 #include <unordered_map>
@@ -199,6 +201,12 @@ class PrinterDiscovery {
                 heaters_.push_back(name);
                 std::string heater_name = name.substr(15); // Remove "heater_generic " prefix
                 try_set_chamber_heater(name, heater_name, CHAMBER_HEATER_GENERIC_WEIGHT);
+            }
+            // ================================================================
+            // Load cells: load_cell
+            // ================================================================
+            else if (name.rfind("load_cell ", 0) == 0 || name == "load_cell") {
+                load_cells_.push_back(name);
             }
             // ================================================================
             // Sensors: temperature_sensor, temperature_fan (dual-purpose)
@@ -1017,6 +1025,7 @@ class PrinterDiscovery {
         // Hardware lists
         heaters_.clear();
         fans_.clear();
+        load_cells_.clear();
         sensors_.clear();
         leds_.clear();
         steppers_.clear();
@@ -1114,6 +1123,10 @@ class PrinterDiscovery {
 
     [[nodiscard]] const std::vector<std::string>& fans() const {
         return fans_;
+    }
+
+    [[nodiscard]] const std::vector<std::string>& load_cells() const {
+        return load_cells_;
     }
 
     [[nodiscard]] const std::vector<std::string>& sensors() const {
@@ -1799,8 +1812,13 @@ class PrinterDiscovery {
             if (prefix_a != prefix_b)
                 return prefix_a < prefix_b;
             // Same prefix — compare numeric suffixes
-            int num_a = (da < a.size()) ? std::stoi(a.substr(da)) : -1;
-            int num_b = (db < b.size()) ? std::stoi(b.substr(db)) : -1;
+            // A suffix too long for an int sorts after every one that fits.
+            int num_a = (da < a.size())
+                            ? helix::text_io::parse_leading<int>(a.substr(da)).value_or(INT_MAX)
+                            : -1;
+            int num_b = (db < b.size())
+                            ? helix::text_io::parse_leading<int>(b.substr(db)).value_or(INT_MAX)
+                            : -1;
             return num_a < num_b;
         });
     }
@@ -1838,6 +1856,7 @@ class PrinterDiscovery {
     // Hardware lists
     std::vector<std::string> heaters_;
     std::vector<std::string> fans_;
+    std::vector<std::string> load_cells_;
     std::vector<std::string> sensors_;
     std::vector<std::string> leds_;
     std::vector<std::string> steppers_;

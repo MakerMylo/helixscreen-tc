@@ -11,6 +11,7 @@
 #include "helix-xml/src/xml/lv_xml.h"
 #include "lvgl/src/others/translation/lv_translation.h"
 #include "static_subject_registry.h"
+#include "text_io.h"
 
 #include <spdlog/spdlog.h>
 
@@ -122,7 +123,12 @@ std::vector<int> BatchFilamentModal::selected_slots(const std::vector<std::strin
     std::vector<int> slots;
     slots.reserve(keys.size());
     for (const auto& key : keys) {
-        slots.push_back(std::stoi(key));
+        const auto slot = helix::text_io::parse_leading<int>(key);
+        if (!slot) {
+            spdlog::warn("[BatchFilamentModal] non-numeric row key '{}' - ignoring selection", key);
+            return {};
+        }
+        slots.push_back(*slot);
     }
     return slots;
 }

@@ -256,54 +256,46 @@ void MaterialSettingsManager::load_presets_from_config() {
     if (!config || !config->exists("/preset_materials")) {
         return;
     }
-    try {
-        auto& arr = config->get_json("/preset_materials");
-        if (!arr.is_array() || arr.size() != 4) {
-            return; // malformed → keep defaults
+    auto& arr = config->get_json("/preset_materials");
+    if (!arr.is_array() || arr.size() != 4) {
+        return; // malformed → keep defaults
+    }
+    for (int i = 0; i < 4; ++i) {
+        const auto& v = arr[i];
+        if (v.is_string()) {
+            // Legacy / defensive: pre-migration or hand-edited bare-string entry.
+            std::string s = v.get<std::string>();
+            if (!s.empty()) {
+                preset_materials_[i] = s;
+            }
+            continue;
         }
-        for (int i = 0; i < 4; ++i) {
-            const auto& v = arr[i];
-            if (v.is_string()) {
-                // Legacy / defensive: pre-migration or hand-edited bare-string entry.
-                std::string s = v.get<std::string>();
-                if (!s.empty()) {
-                    preset_materials_[i] = s;
-                }
-                continue;
-            }
-            if (!v.is_object()) {
-                continue;
-            }
-            if (v.contains("type") && v["type"].is_string()) {
-                std::string t = v["type"].get<std::string>();
-                if (!t.empty()) {
-                    preset_materials_[i] = t;
-                }
-            }
-            if (v.contains("filament_id") && v["filament_id"].is_string() &&
-                !v["filament_id"].get<std::string>().empty()) {
-                PresetFilament pf;
-                pf.filament_id = v["filament_id"].get<std::string>();
-                if (v.contains("brand") && v["brand"].is_string()) {
-                    pf.brand = v["brand"].get<std::string>();
-                }
-                if (v.contains("name") && v["name"].is_string()) {
-                    pf.name = v["name"].get<std::string>();
-                }
-                if (v.contains("nozzle") && v["nozzle"].is_number_integer()) {
-                    pf.nozzle = v["nozzle"].get<int>();
-                }
-                if (v.contains("bed") && v["bed"].is_number_integer()) {
-                    pf.bed = v["bed"].get<int>();
-                }
-                preset_filaments_[i] = pf;
+        if (!v.is_object()) {
+            continue;
+        }
+        if (v.contains("type") && v["type"].is_string()) {
+            std::string t = v["type"].get<std::string>();
+            if (!t.empty()) {
+                preset_materials_[i] = t;
             }
         }
-    } catch (const std::exception& e) {
-        spdlog::warn("[MaterialSettingsManager] Failed to load presets: {}", e.what());
-        assign_defaults();
-        for (auto& pf : preset_filaments_) {
-            pf.reset();
+        if (v.contains("filament_id") && v["filament_id"].is_string() &&
+            !v["filament_id"].get<std::string>().empty()) {
+            PresetFilament pf;
+            pf.filament_id = v["filament_id"].get<std::string>();
+            if (v.contains("brand") && v["brand"].is_string()) {
+                pf.brand = v["brand"].get<std::string>();
+            }
+            if (v.contains("name") && v["name"].is_string()) {
+                pf.name = v["name"].get<std::string>();
+            }
+            if (v.contains("nozzle") && v["nozzle"].is_number_integer()) {
+                pf.nozzle = v["nozzle"].get<int>();
+            }
+            if (v.contains("bed") && v["bed"].is_number_integer()) {
+                pf.bed = v["bed"].get<int>();
+            }
+            preset_filaments_[i] = pf;
         }
     }
 }

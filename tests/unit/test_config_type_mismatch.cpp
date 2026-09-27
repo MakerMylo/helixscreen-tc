@@ -203,6 +203,89 @@ TEST_CASE_METHOD(ConfigTypeFixture, "Config: set() through a scalar parent fails
     REQUIRE_FALSE(config.exists("/input/home_edit_mode_enabled"));
 }
 
+TEST_CASE_METHOD(ConfigTypeFixture,
+                 "Config: a bool where a number belongs converts as nlohmann does",
+                 "[core][config][get][type_mismatch]") {
+    // nlohmann reads a JSON boolean as an int, so this is a value, not a
+    // mismatch. Its own double type refuses one, and a number where a bool
+    // belongs is rejected too; both read as the default.
+    seed({{"input", {{"jitter_threshold", true}, {"home_edit_mode_enabled", 1}}}});
+
+    REQUIRE(config.get<int>("/input/jitter_threshold", 9) == 1);
+    REQUIRE(config.get<double>("/input/jitter_threshold", 9.0) == 9.0);
+    REQUIRE(config.get<bool>("/input/home_edit_mode_enabled", false) == false);
+}
+
+TEST_CASE_METHOD(ConfigTypeFixture, "Config: a refused set() is logged and leaves no partial path",
+                 "[core][config][set][type_mismatch]") {
+    seed({{"input", {{"calibration", 3}}}});
+
+    LogCapture log;
+    config.set<bool>("/input/calibration/valid/deep", true);
+
+    REQUIRE(log.has_line_with({"/input/calibration/valid/deep", "will not persist"}));
+    REQUIRE(data()["input"]["calibration"] == 3);
+}
+
+TEST_CASE_METHOD(ConfigTypeFixture, "Config: malformed and array pointers never throw",
+                 "[core][config][get][set][type_mismatch]") {
+    seed({{"list", json::array({10, 20})}, {"display", json::object()}});
+
+    // No leading '/', and a '~' that is not ~0 or ~1: json_pointer throws on both.
+    REQUIRE(config.get<int>("display/rotate", 4) == 4);
+    REQUIRE(config.get<int>("/display/ro~2tate", 4) == 4);
+    REQUIRE_FALSE(config.exists("/display/ro~2tate"));
+    REQUIRE_NOTHROW(config.set<int>("/display/ro~2tate", 1));
+    REQUIRE(data()["display"].empty());
+
+    // Array tokens read like nlohmann's contains(): an index, never "-" or "01".
+    REQUIRE(config.get<int>("/list/1", 0) == 20);
+    REQUIRE(config.get<int>("/list/-", 0) == 0);
+    REQUIRE(config.get<int>("/list/01", 0) == 0);
+    REQUIRE(config.get<int>("/list/99999999999999999999999", 0) == 0);
+
+    // Writing appends past the end as nlohmann does; a name into an array is refused.
+    config.set<int>("/list/2", 30);
+    REQUIRE(data()["list"] == json::array({10, 20, 30}));
+    REQUIRE_NOTHROW(config.set<int>("/list/name", 1));
+    REQUIRE(data()["list"].size() == 3);
+
+    // An escaped key is still reachable.
+    config.set<int>("/display/a~1b", 7);
+    REQUIRE(data()["display"]["a/b"] == 7);
+    REQUIRE(config.get<int>("/display/a~1b", 0) == 7);
+}
+
+TEST_CASE_METHOD(ConfigTypeFixture,
+                 "Config: a macro with a wrongly typed field reads as the default",
+                 "[core][config][get][type_mismatch]") {
+    // With no active printer df() routes to /printers/default/.
+    seed({{"printers",
+           {{"default",
+             {{"default_macros",
+               {{"bad", {{"label", 5}, {"gcode", "G28"}}},
+                {"good", {{"label", "Home"}, {"gcode", "G28"}}}}}}}}}});
+    const MacroConfig fallback{"Fallback", "M117"};
+
+    const MacroConfig bad = config.get_macro("bad", fallback);
+    REQUIRE(bad.label == "Fallback");
+    REQUIRE(bad.gcode == "M117");
+
+    const MacroConfig good = config.get_macro("good", fallback);
+    REQUIRE(good.label == "Home");
+    REQUIRE(good.gcode == "G28");
+}
+
+TEST_CASE_METHOD(ConfigTypeFixture, "Config: get_json() through a scalar hands back a scratch node",
+                 "[core][config][set][type_mismatch]") {
+    seed({{"input", "oops"}});
+
+    config.get_json("/input/calibration") = json{{"valid", true}};
+
+    REQUIRE(data()["input"] == "oops");
+    REQUIRE_FALSE(config.exists("/input/calibration"));
+}
+
 // ============================================================================
 // End-to-end: the crash path this defect actually took
 // ============================================================================

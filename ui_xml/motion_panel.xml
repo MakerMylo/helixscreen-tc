@@ -2,6 +2,16 @@
 <!-- Copyright (C) 2025-2026 356C LLC -->
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <component>
+  <consts>
+    <!-- Portrait Z column width. At tiny (320x480) the coordinate row's 32px
+         touch targets make the pad height-bound, so the column takes the width
+         the pad cannot use rather than leaving a dead band beside it. -->
+    <px name="motion_z_col_w_micro" value="54"/>
+    <px name="motion_z_col_w_tiny" value="64"/>
+    <px name="motion_z_col_w_small" value="64"/>
+    <px name="motion_z_col_w_medium" value="64"/>
+    <px name="motion_z_col_w_large" value="64"/>
+  </consts>
   <!-- Motion Sub-Screen: XYZ Movement & Homing -->
   <!-- Coordinates live in the header slot on landscape screens and in a slim
        full-width strip under the header on portrait screens, where the header
@@ -223,8 +233,8 @@
                the pad's claim on the row deterministic at every portrait
                width. -->
           <lv_obj name="z_column"
-                  width="54" height="100%" style_pad_all="0" style_border_opa="0" scrollable="false" flex_flow="column"
-                  style_pad_gap="#space_xs">
+                  width="#motion_z_col_w" height="100%" style_pad_all="0" style_border_opa="0" scrollable="false"
+                  flex_flow="column" style_pad_gap="#space_xs">
             <ui_button name="z_up_large"
                        width="100%" flex_grow="1" icon_position="top" icon="arrow_up" bind_icon="motion_z_up_icon"
                        bind_text="motion_z_large_label">

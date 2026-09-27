@@ -42,10 +42,11 @@ _LANDSCAPE = [
 ]
 
 _PORTRAIT = [
-    # The Jog/Move tab strip under the coordinate row claims this much of the
-    # pad's column, so the portrait floors sit below the landscape-era sizes.
-    ("272x480", 198),
-    ("320x480", 192),
+    ("272x480", 204),
+    # The coordinate row's 32px touch targets (the coordinates open a keypad,
+    # the swap icon flips commanded/actual) take their height from the pad,
+    # and the Jog/Move tab strip claims more of the pad's column.
+    ("320x480", 232),
 ]
 
 # 1/100 mm: the widest realistic readout, 3 digits + 2 decimals per axis.

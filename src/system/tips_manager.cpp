@@ -59,46 +59,43 @@ bool TipsManager::init(const std::string& tips_path) {
         return false;
     }
 
-    try {
-        spdlog::debug("[TipsManager] Loading tips from {}", tips_path);
-        data = json::parse(helix::text_io::read_file(tips_path).value_or(""));
+    spdlog::debug("[TipsManager] Loading tips from {}", tips_path);
+    data = json::parse(helix::text_io::read_file(tips_path).value_or(""), nullptr, false);
 
-        // Validate required fields
-        if (!data.contains("categories") || !data["categories"].is_object()) {
-            NOTIFY_WARNING(lv_tr("Tips database format error"));
-            LOG_ERROR_INTERNAL(
-                "[TipsManager] Invalid tips file: missing or invalid 'categories' field");
-            return false;
-        }
-
-        // Build cache for fast access
-        // Cache the two things the DOM was still being kept alive for, then
-        // release it. `data` and tips_cache held the same 105 KB twice for the
-        // whole session; only get_version() and get_all_categories() still read
-        // the DOM, and both are satisfied by these.
-        version_ = helix::json_util::safe_string(data, "version", "unknown");
-        categories_.clear();
-        for (auto& [category_key, _] : data["categories"].items()) {
-            categories_.push_back(category_key);
-        }
-
-        build_tips_cache();
+    if (data.is_discarded()) {
         data = json();
-
-        // Reads the cached members, not `data` — it has just been released.
-        spdlog::trace("[TipsManager] Loaded {} tips from {} categories (version: {})",
-                      tips_cache.size(), categories_.size(), version_);
-
-        return true;
-    } catch (const json::parse_error& e) {
         NOTIFY_WARNING(lv_tr("Could not parse tips database"));
-        LOG_ERROR_INTERNAL("[TipsManager] JSON parse error: {}", e.what());
-        return false;
-    } catch (const std::exception& e) {
-        NOTIFY_WARNING(lv_tr("Error loading printing tips"));
-        LOG_ERROR_INTERNAL("[TipsManager] Error loading tips: {}", e.what());
+        LOG_ERROR_INTERNAL("[TipsManager] JSON parse error in {}: not valid JSON", tips_path);
         return false;
     }
+
+    // Validate required fields
+    if (!data.contains("categories") || !data["categories"].is_object()) {
+        NOTIFY_WARNING(lv_tr("Tips database format error"));
+        LOG_ERROR_INTERNAL(
+            "[TipsManager] Invalid tips file: missing or invalid 'categories' field");
+        return false;
+    }
+
+    // Build cache for fast access
+    // Cache the two things the DOM was still being kept alive for, then
+    // release it. `data` and tips_cache held the same 105 KB twice for the
+    // whole session; only get_version() and get_all_categories() still read
+    // the DOM, and both are satisfied by these.
+    version_ = helix::json_util::safe_string(data, "version", "unknown");
+    categories_.clear();
+    for (auto& [category_key, _] : data["categories"].items()) {
+        categories_.push_back(category_key);
+    }
+
+    build_tips_cache();
+    data = json();
+
+    // Reads the cached members, not `data` — it has just been released.
+    spdlog::trace("[TipsManager] Loaded {} tips from {} categories (version: {})",
+                  tips_cache.size(), categories_.size(), version_);
+
+    return true;
 }
 
 void TipsManager::build_tips_cache() {

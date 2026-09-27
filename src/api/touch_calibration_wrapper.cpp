@@ -5,6 +5,7 @@
 #include "config.h"
 #include "display_backend.h"
 #include "helix_display_telemetry.h"
+#include "pointer_frame_hook.h"
 
 #include <spdlog/fmt/fmt.h>
 #include <spdlog/spdlog.h>
@@ -85,6 +86,15 @@ void note_raw_sample(CalibrationContext& ctx, int raw_x, int raw_y) {
     helix_display_telemetry_error("display", "touch-range-declared-too-narrow", detail.c_str());
 }
 
+/// A driver point with the calibration in @p ctx applied. The point is PANEL space,
+/// ahead of lv_display_rotate_point(); the affine was solved against logical,
+/// post-rotation targets, so it is placed rather than applied directly.
+Point calibrate_panel_point(const CalibrationContext& ctx, Point panel_point) {
+    return apply_calibration_in_panel_space(ctx.calibration, panel_point,
+                                            ctx.calibration.capture_rotation, ctx.screen_width,
+                                            ctx.screen_height);
+}
+
 } // namespace
 
 void calibrated_read_cb(lv_indev_t* indev, lv_indev_data_t* data) {
@@ -123,13 +133,8 @@ void calibrated_read_cb(lv_indev_t* indev, lv_indev_data_t* data) {
 
     // Apply affine calibration if valid (for both PRESSED and RELEASED states)
     if (ctx->calibration.valid) {
-        // data->point is PANEL space: this callback runs before
-        // lv_display_rotate_point(). The affine was solved against logical,
-        // post-rotation targets, so it is placed rather than applied directly.
         helix::Point raw{static_cast<int>(data->point.x), static_cast<int>(data->point.y)};
-        helix::Point transformed = helix::apply_calibration_in_panel_space(
-            ctx->calibration, raw, ctx->calibration.capture_rotation, ctx->screen_width,
-            ctx->screen_height);
+        helix::Point transformed = calibrate_panel_point(*ctx, raw);
         data->point.x = transformed.x;
         data->point.y = transformed.y;
 
@@ -142,6 +147,21 @@ void calibrated_read_cb(lv_indev_t* indev, lv_indev_data_t* data) {
             }
         }
     }
+}
+
+lv_point_t map_touch_point_to_screen(lv_indev_t* indev, lv_point_t driver_point) {
+    Point point{static_cast<int>(driver_point.x), static_cast<int>(driver_point.y)};
+    // One calibrated touch indev per process (see s_active_ctx), and a multi-touch
+    // gesture only ever comes from that touch panel.
+    if (const CalibrationContext* ctx = s_active_ctx) {
+        point = calibrate_panel_point(*ctx, point);
+    }
+    const PointerXY turned = PointerFrameHook::map_panel_point(indev, PointerXY{point.x, point.y});
+    lv_point_t screen{turned.x, turned.y};
+    if (lv_display_t* disp = lv_indev_get_display(indev)) {
+        lv_display_rotate_point(disp, &screen);
+    }
+    return screen;
 }
 
 void set_touch_pipeline_info(const TouchPipelineInfo& info) {

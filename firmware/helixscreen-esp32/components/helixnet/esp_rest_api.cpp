@@ -365,10 +365,10 @@ void MoonrakerRestAPI::call_rest_get(const std::string& endpoint, RestCallback o
             resp.success = true;
             resp.status_code = 200; // the lane only succeeds on HTTP 200/206
             if (size > 0) {
-                try {
-                    resp.data = nlohmann::json::parse(reinterpret_cast<const char*>(data),
-                                                      reinterpret_cast<const char*>(data) + size);
-                } catch (const nlohmann::json::exception&) {
+                resp.data = nlohmann::json::parse(reinterpret_cast<const char*>(data),
+                                                  reinterpret_cast<const char*>(data) + size,
+                                                  nullptr, false);
+                if (resp.data.is_discarded()) {
                     resp.data = nlohmann::json::object();
                     resp.data["_raw_body"] = std::string(reinterpret_cast<const char*>(data), size);
                 }

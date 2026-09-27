@@ -18,6 +18,7 @@
 #include "ui_update_queue.h"
 
 #include "ams_bypass_policy.h"
+#include "exception_policy.h"
 #include "i_moonraker_api.h"
 #include "i_moonraker_client.h"
 #include "lane_apply.h"
@@ -28,6 +29,7 @@
 #include "post_op_cooldown_manager.h"
 #include "settings_manager.h"
 #include "spdlog/spdlog.h"
+#include "text_io.h"
 
 #include <spdlog/fmt/fmt.h>
 
@@ -1193,13 +1195,11 @@ void AmsBackendAce::parse_ace_object(const json& data) {
         const std::string cf = data["current_filament"].get<std::string>();
         auto dash = cf.find('-');
         if (!cf.empty() && dash != std::string::npos && dash + 1 < cf.size()) {
-            try {
-                int local_index = std::stoi(cf.substr(dash + 1));
-                if (local_index >= 0) {
-                    seat_from_local_index_locked(local_index);
-                }
-            } catch (const std::exception& e) {
-                spdlog::debug("[ACE] Failed to parse current_filament '{}': {}", cf, e.what());
+            const auto local_index = helix::text_io::parse_leading<int>(cf.substr(dash + 1));
+            if (!local_index) {
+                spdlog::debug("[ACE] Failed to parse current_filament '{}'", cf);
+            } else if (*local_index >= 0) {
+                seat_from_local_index_locked(*local_index);
             }
         }
     }
@@ -1339,16 +1339,21 @@ std::optional<uint32_t> AmsBackendAce::parse_slot_color(const json& color_val) {
     // spelling, not a colour string, so the shared text grammar has nothing to
     // say about it.
     if (color_val.is_array() && color_val.size() >= 3) {
-        try {
-            uint8_t r = static_cast<uint8_t>(color_val[0].get<int>());
-            uint8_t g = static_cast<uint8_t>(color_val[1].get<int>());
-            uint8_t b = static_cast<uint8_t>(color_val[2].get<int>());
-            return (static_cast<uint32_t>(r) << 16) | (static_cast<uint32_t>(g) << 8) |
-                   static_cast<uint32_t>(b);
-        } catch (const std::exception& e) {
-            spdlog::debug("[ACE] Failed to parse color array: {}", e.what());
+        // nlohmann's get<int>() reads any number (and a boolean); anything
+        // else in the triplet makes the whole colour unreadable.
+        const auto& r_val = color_val[0];
+        const auto& g_val = color_val[1];
+        const auto& b_val = color_val[2];
+        const auto readable = [](const json& v) { return v.is_number() || v.is_boolean(); };
+        if (!readable(r_val) || !readable(g_val) || !readable(b_val)) {
+            spdlog::debug("[ACE] Failed to parse color array");
             return std::nullopt;
         }
+        uint8_t r = static_cast<uint8_t>(r_val.get<int>());
+        uint8_t g = static_cast<uint8_t>(g_val.get<int>());
+        uint8_t b = static_cast<uint8_t>(b_val.get<int>());
+        return (static_cast<uint32_t>(r) << 16) | (static_cast<uint32_t>(g) << 8) |
+               static_cast<uint32_t>(b);
     }
 
     // REST bridge format: hex string "#RRGGBB" or "0xRRGGBB", read by the same
@@ -1380,14 +1385,14 @@ void AmsBackendAce::start_rest_fallback() {
     if (rest_polling_thread_.joinable()) {
         rest_polling_thread_.join();
     }
-    // Wrap — EAGAIN under thread exhaustion throws std::system_error ([L083]).
-    try {
-        rest_polling_thread_ = std::thread(&AmsBackendAce::rest_polling_loop, this);
-        spdlog::info("[ACE] REST fallback polling started");
-    } catch (const std::system_error& e) {
-        spdlog::error("[ACE] Failed to spawn REST polling thread: {}", e.what());
+    // EAGAIN under thread exhaustion throws std::system_error ([L083]).
+    if (!helix::contain_exceptions("[ACE] Spawning the REST polling thread", [&] {
+            rest_polling_thread_ = std::thread(&AmsBackendAce::rest_polling_loop, this);
+        })) {
         use_rest_fallback_ = false;
+        return;
     }
+    spdlog::info("[ACE] REST fallback polling started");
 }
 
 void AmsBackendAce::stop_rest_fallback() {
@@ -1893,10 +1898,9 @@ AmsError AmsBackendAce::execute_device_action(const std::string& action_id, cons
 
         bool enable = true;
         if (value.has_value()) {
-            try {
-                enable = std::any_cast<bool>(value);
-            } catch (const std::bad_any_cast&) {
-                // Default to enable if cast fails
+            // Default to enable if cast fails
+            if (const auto* v = std::any_cast<bool>(&value)) {
+                enable = *v;
             }
         }
 

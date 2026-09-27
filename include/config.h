@@ -42,6 +42,42 @@ template <typename T> constexpr const char* expected_json_type() {
     }
 }
 
+template <typename> inline constexpr bool always_false_v = false;
+
+/// Whether nlohmann's get<T>() can read @p node without throwing. An int or a
+/// float accepts a JSON boolean (nlohmann converts it), but nlohmann's own
+/// number types (double, int64_t, uint64_t) do not, and a boolean does not
+/// accept a number. A T not listed here fails to compile, so a new
+/// instantiation of Config::get<T>(ptr, default) has to say what it can read.
+template <typename T> bool converts_to(const nlohmann::json& node) {
+    if constexpr (std::is_same_v<T, nlohmann::json>) {
+        return true;
+    } else if constexpr (std::is_same_v<T, bool>) {
+        return node.is_boolean();
+    } else if constexpr (std::is_same_v<T, nlohmann::json::number_float_t> ||
+                         std::is_same_v<T, nlohmann::json::number_integer_t> ||
+                         std::is_same_v<T, nlohmann::json::number_unsigned_t>) {
+        return node.is_number();
+    } else if constexpr (std::is_arithmetic_v<T>) {
+        return node.is_number() || node.is_boolean();
+    } else if constexpr (std::is_same_v<T, std::string>) {
+        return node.is_string();
+    } else if constexpr (std::is_same_v<T, std::vector<std::string>>) {
+        if (!node.is_array()) {
+            return false;
+        }
+        for (const auto& element : node) {
+            if (!element.is_string()) {
+                return false;
+            }
+        }
+        return true;
+    } else {
+        static_assert(always_false_v<T>, "Config::get<T>: add T to config_detail::converts_to");
+        return false;
+    }
+}
+
 } // namespace config_detail
 
 /**
@@ -145,14 +181,21 @@ class Config {
     /// type and the caller's default was substituted. Out-of-line so this
     /// very widely included header does not pull in spdlog.
     static void log_type_mismatch(const std::string& json_ptr, const char* stored_type,
-                                  const char* expected_type, const char* detail);
+                                  const char* expected_type);
 
     /// Warn that a set() could not store its value, so the setting will not
     /// persist. Out-of-line for the same reason as log_type_mismatch().
     static void log_set_failed(const std::string& json_ptr, const char* detail);
 
+    /// The node set() will write at @p json_ptr, creating missing objects on
+    /// the way, or nullptr (logged) when the path is malformed or passes
+    /// through a scalar or an unusable array index.
+    json* create_path(const std::string& json_ptr);
+
   protected:
     json data;
+    /// Target of a get_json() whose path cannot be created; never saved.
+    json discarded_write_;
 
     /// Allow test-only accessor to reach protected/private members
     friend class ConfigTestAccess;
@@ -224,11 +267,13 @@ class Config {
         storage_is_default_ = false;
     }
 
+#if defined(__cpp_exceptions)
     /**
      * @brief Get configuration value at JSON pointer path
      *
      * Throws nlohmann::json::exception if path doesn't exist.
-     * Use the overload with default_value for safer access.
+     * Use the overload with default_value for safer access. Desktop only: the
+     * ESP32 build has no exceptions, so firmware code reads with a default.
      *
      * Non-vivifying: uses at() rather than operator[], so a missing path
      * throws instead of silently inserting nulls along the way (#1129).
@@ -241,6 +286,7 @@ class Config {
     template <typename T> T get(const std::string& json_ptr) const {
         return data.at(json::json_pointer(json_ptr)).template get<T>();
     };
+#endif
 
     /**
      * @brief Get configuration value with default fallback
@@ -261,21 +307,15 @@ class Config {
      * @return Configuration value or default_value
      */
     template <typename T> T get(const std::string& json_ptr, const T& default_value) const {
-        json::json_pointer ptr(json_ptr);
-        if (!data.contains(ptr)) {
+        const json* node = try_get_json(json_ptr);
+        if (node == nullptr || node->is_null()) {
             return default_value;
         }
-        const json& node = data.at(ptr);
-        if (node.is_null()) {
+        if (!config_detail::converts_to<T>(*node)) {
+            log_type_mismatch(json_ptr, node->type_name(), config_detail::expected_json_type<T>());
             return default_value;
         }
-        try {
-            return node.template get<T>();
-        } catch (const json::exception& e) {
-            log_type_mismatch(json_ptr, node.type_name(), config_detail::expected_json_type<T>(),
-                              e.what());
-            return default_value;
-        }
+        return node->template get<T>();
     };
 
     /**
@@ -285,7 +325,7 @@ class Config {
      * @return true if the key exists in the configuration
      */
     bool exists(const std::string& json_ptr) const {
-        return data.contains(json::json_pointer(json_ptr));
+        return try_get_json(json_ptr) != nullptr;
     }
 
     /**
@@ -296,9 +336,9 @@ class Config {
      *
      * A path cannot be created through a component that a corrupted config
      * stores as a scalar (`"input": "oops"` blocks /input/scroll_guard), which
-     * nlohmann reports as out_of_range.404. That is logged and the value is
-     * dropped rather than thrown: the setting fails to persist, but toggling it
-     * does not take the app down.
+     * nlohmann reports by throwing. That path is refused, logged, and the value
+     * dropped: the setting fails to persist, but toggling it does not take the
+     * app down.
      *
      * @tparam T Value type to store
      * @param json_ptr JSON pointer path (e.g., "/printer/moonraker_port")
@@ -306,12 +346,10 @@ class Config {
      * @return The value that was set
      */
     template <typename T> T set(const std::string& json_ptr, T v) {
-        try {
-            return data[json::json_pointer(json_ptr)] = v;
-        } catch (const json::exception& e) {
-            log_set_failed(json_ptr, e.what());
-            return v;
+        if (json* node = create_path(json_ptr)) {
+            *node = v;
         }
+        return v;
     };
 
     /**
@@ -327,6 +365,9 @@ class Config {
      * Use this ONLY when you are about to assign through the returned
      * reference. For read-only access use try_get_json(), get_string_array(),
      * get<T>(path, default) or exists() — all non-vivifying.
+     *
+     * A path set() would refuse (see create_path()) returns a scratch node
+     * instead, so writes through it are dropped as set() drops them.
      *
      * @param json_path JSON pointer path
      * @return Mutable reference to the JSON node at path (created if missing)

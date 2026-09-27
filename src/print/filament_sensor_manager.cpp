@@ -11,6 +11,7 @@
 #include "app_globals.h"
 #include "config.h"
 #include "i_moonraker_api.h"
+#include "json_utils.h"
 #include "print_lifecycle_state.h"
 #include "printer_discovery.h"
 #include "printer_state.h"
@@ -315,44 +316,55 @@ void FilamentSensorManager::load_config_from_file() {
         lv_subject_set_int(&master_enabled_subject_, master_enabled_ ? 1 : 0);
     }
 
-    // Load per-sensor config
-    try {
-        const json* sensors_node = config->try_get_json(base_path + "/sensors");
-        if (sensors_node != nullptr && sensors_node->is_array()) {
-            for (const auto& sensor_json : *sensors_node) {
-                if (!sensor_json.contains("klipper_name")) {
-                    continue;
-                }
+    // Load per-sensor config. A wrong-typed field stops the load here and
+    // leaves the remaining sensors on their in-memory config; the subjects
+    // are still updated below.
+    const json* sensors_node = config->try_get_json(base_path + "/sensors");
+    if (sensors_node != nullptr && sensors_node->is_array()) {
+        for (const auto& sensor_json : *sensors_node) {
+            if (!sensor_json.contains("klipper_name")) {
+                continue;
+            }
+            if (!sensor_json["klipper_name"].is_string()) {
+                spdlog::debug("[FilamentSensorManager] No sensor config found: {}",
+                              "klipper_name is not a string");
+                break;
+            }
 
-                std::string klipper_name = sensor_json["klipper_name"].get<std::string>();
-                auto* sensor = find_config(klipper_name);
+            std::string klipper_name = sensor_json["klipper_name"].get<std::string>();
+            auto* sensor = find_config(klipper_name);
 
-                if (sensor) {
-                    // Update existing sensor config
-                    if (sensor_json.contains("role")) {
-                        sensor->role =
-                            role_from_config_string(sensor_json["role"].get<std::string>());
+            if (sensor) {
+                // Update existing sensor config
+                if (sensor_json.contains("role")) {
+                    if (!sensor_json["role"].is_string()) {
+                        spdlog::debug("[FilamentSensorManager] No sensor config found: {}",
+                                      "role is not a string");
+                        break;
                     }
-                    if (sensor_json.contains("enabled")) {
-                        sensor->enabled = sensor_json["enabled"].get<bool>();
-                    }
-                    if (auto lane = sensor_json.find("lane"); lane != sensor_json.end()) {
-                        if (lane->is_number_integer() && lane->get<int>() >= 0) {
-                            sensor->lane = lane->get<int>();
-                        } else {
-                            spdlog::warn("[FilamentSensorManager] {}: ignoring lane {} (expected "
-                                         "a slot index, 0 or more)",
-                                         klipper_name, lane->dump());
-                        }
-                    }
-                    spdlog::debug(
-                        "[FilamentSensorManager] Loaded config for {}: role={}, enabled={}",
-                        klipper_name, role_to_config_string(sensor->role), sensor->enabled);
+                    sensor->role = role_from_config_string(sensor_json["role"].get<std::string>());
                 }
+                if (sensor_json.contains("enabled")) {
+                    if (!sensor_json["enabled"].is_boolean()) {
+                        spdlog::debug("[FilamentSensorManager] No sensor config found: {}",
+                                      "enabled is not a boolean");
+                        break;
+                    }
+                    sensor->enabled = sensor_json["enabled"].get<bool>();
+                }
+                if (auto lane = sensor_json.find("lane"); lane != sensor_json.end()) {
+                    if (lane->is_number_integer() && lane->get<int>() >= 0) {
+                        sensor->lane = lane->get<int>();
+                    } else {
+                        spdlog::warn("[FilamentSensorManager] {}: ignoring lane {} (expected "
+                                     "a slot index, 0 or more)",
+                                     klipper_name, json_util::safe_dump(*lane));
+                    }
+                }
+                spdlog::debug("[FilamentSensorManager] Loaded config for {}: role={}, enabled={}",
+                              klipper_name, role_to_config_string(sensor->role), sensor->enabled);
             }
         }
-    } catch (const std::exception& e) {
-        spdlog::debug("[FilamentSensorManager] No sensor config found: {}", e.what());
     }
 
     update_subjects();
