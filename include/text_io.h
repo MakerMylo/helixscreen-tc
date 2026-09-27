@@ -65,10 +65,14 @@ struct FileCloser {
 using File = std::unique_ptr<std::FILE, FileCloser>;
 
 /// fopen with ownership. `mode` is fopen's ("rb", "wb", "ab"). Empty on failure,
-/// errno set.
-inline File open_file(const std::string& path, const char* mode) {
-    return File(std::fopen(path.c_str(), mode));
-}
+/// errno set. Opens files past 2GB on 32-bit targets too.
+File open_file(const std::string& path, const char* mode);
+
+/// fseek with a 64-bit offset on every target. `whence` is SEEK_SET/CUR/END.
+bool seek(std::FILE* f, std::int64_t offset, int whence);
+
+/// The current position as a 64-bit offset. nullopt on failure.
+std::optional<std::int64_t> tell(std::FILE* f);
 
 /// fwrite all of `data`. false on a short write.
 bool write_all(std::FILE* f, std::string_view data);
