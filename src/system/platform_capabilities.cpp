@@ -136,12 +136,12 @@ uint64_t parse_meminfo_kb(const std::string& content, const std::string& key) {
     helix::RegexMatch match;
 
     if (helix::regex_search(content, match, field_regex) && match.size() > 1) {
-        try {
-            return std::stoull(match[1].str());
-        } catch (const std::exception& e) {
-            spdlog::warn("Failed to parse {} value: {}", key, e.what());
+        const auto kb = helix::text_io::parse_leading<unsigned long long>(match[1].str());
+        if (!kb) {
+            spdlog::warn("Failed to parse {} value: out of range", key);
             return 0;
         }
+        return *kb;
     }
 
     return 0;
@@ -174,22 +174,17 @@ CpuInfo parse_cpuinfo(const std::string& content) {
     helix::Regex bogomips_regex(R"([Bb]ogo[Mm][Ii][Pp][Ss]\s*:\s*([0-9.]+))");
     helix::RegexMatch match;
     if (helix::regex_search(content, match, bogomips_regex) && match.size() > 1) {
-        try {
-            info.bogomips = std::stof(match[1].str());
-        } catch (const std::exception&) {
-            // Ignore parse failures
-        }
+        // Ignore parse failures
+        info.bogomips = helix::text_io::parse_leading<float>(match[1].str()).value_or(0.0f);
     }
 
     // Extract CPU MHz if BogoMIPS not found or as supplement
     // Format: "cpu MHz : 2400.000"
     helix::Regex mhz_regex(R"(cpu MHz\s*:\s*([0-9.]+))");
     if (helix::regex_search(content, match, mhz_regex) && match.size() > 1) {
-        try {
-            info.cpu_mhz = static_cast<int>(std::stof(match[1].str()));
-        } catch (const std::exception&) {
-            // Ignore parse failures
-        }
+        // Ignore parse failures
+        info.cpu_mhz =
+            static_cast<int>(helix::text_io::parse_leading<float>(match[1].str()).value_or(0.0f));
     }
 
     // CPU name. No architecture publishes it under the same key: x86 has

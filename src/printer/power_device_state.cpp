@@ -183,6 +183,9 @@ void PowerDeviceState::on_power_changed(const nlohmann::json& msg) {
         if (!param.is_object() || !param.contains("device") || !param.contains("status")) {
             continue;
         }
+        if (!param["device"].is_string() || !param["status"].is_string()) {
+            continue;
+        }
 
         std::string device_name = param["device"].get<std::string>();
         std::string new_status = param["status"].get<std::string>();

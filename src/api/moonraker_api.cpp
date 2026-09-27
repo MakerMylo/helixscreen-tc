@@ -5,6 +5,7 @@
 
 #include "ui_update_queue.h"
 
+#include "json_utils.h"
 #include "moonraker_api_internal.h"
 #include "runtime_config.h"
 #include "spdlog/spdlog.h"
@@ -211,7 +212,8 @@ void MoonrakerAPI::database_get_item(const std::string& namespace_name, const st
             if (on_success) {
                 const json& result =
                     response.contains("result") ? response.at("result") : json::object();
-                on_success(result.value("value", json{}));
+                const json* value = json_util::detail::find(result, "value");
+                on_success(value ? *value : json{});
             }
         },
         [on_error](const MoonrakerError& err) {
@@ -251,7 +253,8 @@ void MoonrakerAPI::database_get_namespace(const std::string& namespace_name,
             if (on_success) {
                 const json& result =
                     response.contains("result") ? response.at("result") : json::object();
-                on_success(result.value("value", json::object()));
+                const json* value = json_util::detail::find(result, "value");
+                on_success(value ? *value : json::object());
             }
         },
         [on_error](const MoonrakerError& err) {

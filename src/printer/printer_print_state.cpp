@@ -15,6 +15,7 @@
 
 #include "data_root_resolver.h"
 #include "format_utils.h"
+#include "json_utils.h"
 #include "plr_backend.h"
 #include "print_lifecycle_state.h"
 #include "printer_state.h" // For enum definitions
@@ -609,7 +610,8 @@ void PrinterPrintState::update_from_status(const nlohmann::json& status) {
         // Note: Moonraker can send null values for layer fields when not available
         if (stats.contains("info") && stats["info"].is_object()) {
             const auto& info = stats["info"];
-            spdlog::trace("[LayerTracker] print_stats.info received: {}", info.dump());
+            spdlog::trace("[LayerTracker] print_stats.info received: {}",
+                          helix::json_util::safe_dump(info));
 
             if (info.contains("current_layer") && info["current_layer"].is_number()) {
                 int current_layer = info["current_layer"].get<int>();

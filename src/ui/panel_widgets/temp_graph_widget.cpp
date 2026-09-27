@@ -8,6 +8,7 @@
 #include "app_globals.h"
 #include "display_numbering.h"
 #include "helix-xml/src/xml/lv_xml.h"
+#include "json_utils.h"
 #include "klipper_extruder_naming.h"
 #include "lvgl/src/others/translation/lv_translation.h"
 #include "observer_factory.h"
@@ -64,7 +65,8 @@ std::string TempGraphWidget::get_component_name() const {
 
 void TempGraphWidget::set_config(const nlohmann::json& config) {
     config_ = config;
-    follow_overlay_ = config.is_object() && config.value("follow_overlay", false);
+    follow_overlay_ =
+        config.is_object() && helix::json_util::safe_bool(config, "follow_overlay", false);
 }
 
 void TempGraphWidget::attach(lv_obj_t* widget_obj, lv_obj_t* parent_screen) {
@@ -308,7 +310,7 @@ std::vector<TempGraphSeriesSpec> TempGraphWidget::build_series_from_config() con
             enabled =
                 std::find(snapshot->begin(), snapshot->end(), klipper_name) != snapshot->end();
         } else {
-            enabled = entry.value("enabled", true);
+            enabled = helix::json_util::safe_bool(entry, "enabled", true);
         }
         if (!enabled)
             continue;
@@ -581,7 +583,7 @@ void TempGraphWidget::TempGraphConfigModal::populate_follow_toggle() {
     // Toggle switch
     lv_obj_t* sw = lv_switch_create(row);
     lv_obj_set_size(sw, 44, 24);
-    if (config_.is_object() && config_.value("follow_overlay", false))
+    if (config_.is_object() && helix::json_util::safe_bool(config_, "follow_overlay", false))
         lv_obj_add_state(sw, LV_STATE_CHECKED);
     follow_switch_ = sw;
 }
@@ -624,16 +626,16 @@ void TempGraphWidget::TempGraphConfigModal::populate_sensor_list() {
     const auto& sensors = config_["sensors"];
     for (size_t i = 0; i < sensors.size(); ++i) {
         const auto& entry = sensors[i];
-        if (!entry.contains("name"))
+        if (!entry.contains("name") || !entry["name"].is_string())
             continue;
 
         SensorRow row;
         row.name = entry["name"].get<std::string>();
         row.display = sensor_display_name(row.name);
-        row.enabled = entry.value("enabled", true);
+        row.enabled = helix::json_util::safe_bool(entry, "enabled", true);
 
         // Find the matching color index from the palette
-        if (entry.contains("color")) {
+        if (entry.contains("color") && entry["color"].is_number_integer()) {
             uint32_t cfg_hex = entry["color"].get<uint32_t>();
             lv_color_t cfg_color = lv_color_hex(cfg_hex);
             row.color_idx = static_cast<int>(i) % TEMP_GRAPH_PALETTE_SIZE; // default

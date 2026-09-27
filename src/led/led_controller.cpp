@@ -10,6 +10,7 @@
 #include "helix/xml/scoped_subject_registry.h"
 #include "i_moonraker_api.h"
 #include "i_moonraker_client.h"
+#include "json_utils.h"
 #include "led/led_color_utils.h"
 #include "led_wled_json.h"
 #include "moonraker_error.h"
@@ -425,7 +426,7 @@ void LedController::discover_wled_strips() {
                     // Use strip name from response data, or fall back to key
                     std::string raw_name;
                     if (it.value().is_object() && it.value().contains("strip")) {
-                        raw_name = it.value()["strip"].get<std::string>();
+                        raw_name = helix::json_util::as_string(it.value()["strip"], it.key());
                     } else {
                         raw_name = it.key();
                     }
@@ -509,8 +510,9 @@ void LedController::discover_wled_strips() {
 
                             std::string strip_name = key.substr(5); // strip "wled " prefix
                             if (it.value().is_object() && it.value().contains("address")) {
-                                wled_addrs.emplace_back(std::move(strip_name),
-                                                        it.value()["address"].get<std::string>());
+                                wled_addrs.emplace_back(
+                                    std::move(strip_name),
+                                    helix::json_util::as_string(it.value()["address"]));
                             }
                         }
 
@@ -940,7 +942,7 @@ void LedEffectBackend::update_from_status(const nlohmann::json& status) {
         if (!effect_data.is_object() || !effect_data.contains("enabled"))
             continue;
 
-        bool new_enabled = effect_data["enabled"].get<bool>();
+        const bool new_enabled = helix::json_util::as_bool(effect_data["enabled"], effect.enabled);
         if (new_enabled != effect.enabled) {
             spdlog::debug("[LedEffectBackend] Effect '{}' enabled: {} -> {}", effect.name,
                           effect.enabled, new_enabled);
@@ -1329,31 +1331,32 @@ void WledBackend::poll_status(std::function<void()> on_complete) {
     }
 
     api_->rest().wled_get_strips(
-        lifetime_.bg_cb("WledBackend::poll_status",
-                        [this, on_complete](const RestResponse& resp) {
-                            const json& strips_data = detail::wled_strip_map(resp.data);
+        lifetime_.bg_cb(
+            "WledBackend::poll_status",
+            [this, on_complete](const RestResponse& resp) {
+                const json& strips_data = detail::wled_strip_map(resp.data);
 
-                            if (strips_data.is_object()) {
-                                for (auto it = strips_data.begin(); it != strips_data.end(); ++it) {
-                                    WledStripState state;
-                                    auto& val = it.value();
-                                    if (val.is_object()) {
-                                        // Parse status field: "on"/"off" or boolean "state"
-                                        if (val.contains("status")) {
-                                            state.is_on = val["status"].get<std::string>() == "on";
-                                        } else if (val.contains("state")) {
-                                            state.is_on = val["state"].get<bool>();
-                                        }
-                                        state.brightness = val.value("brightness", 255);
-                                        state.active_preset = val.value("preset", -1);
-                                    }
-                                    strip_states_[it.key()] = state;
-                                }
+                if (strips_data.is_object()) {
+                    for (auto it = strips_data.begin(); it != strips_data.end(); ++it) {
+                        WledStripState state;
+                        auto& val = it.value();
+                        if (val.is_object()) {
+                            // Parse status field: "on"/"off" or boolean "state"
+                            if (val.contains("status")) {
+                                state.is_on = helix::json_util::as_string(val["status"]) == "on";
+                            } else if (val.contains("state")) {
+                                state.is_on = helix::json_util::as_bool(val["state"]);
                             }
+                            state.brightness = helix::json_util::safe_int(val, "brightness", 255);
+                            state.active_preset = helix::json_util::safe_int(val, "preset", -1);
+                        }
+                        strip_states_[it.key()] = state;
+                    }
+                }
 
-                            if (on_complete)
-                                on_complete();
-                        }),
+                if (on_complete)
+                    on_complete();
+            }),
         lifetime_.bg_cb("WledBackend::poll_status_error", [on_complete](const MoonrakerError& err) {
             spdlog::warn("[WledBackend] Status poll failed: {}", err.message);
             if (on_complete)
@@ -1760,13 +1763,13 @@ void LedController::load_config() {
                 continue;
             }
             LedMacroInfo info;
-            info.display_name = m.value("name", "");
-            info.on_macro = m.value("on_macro", "");
-            info.off_macro = m.value("off_macro", "");
-            info.toggle_macro = m.value("toggle_macro", "");
+            info.display_name = helix::json_util::safe_string(m, "name");
+            info.on_macro = helix::json_util::safe_string(m, "on_macro");
+            info.off_macro = helix::json_util::safe_string(m, "off_macro");
+            info.toggle_macro = helix::json_util::safe_string(m, "toggle_macro");
 
             // Parse type field (with backward compat inference)
-            std::string type_str = m.value("type", "");
+            std::string type_str = helix::json_util::safe_string(m, "type");
             if (type_str == "on_off") {
                 info.type = MacroLedType::ON_OFF;
             } else if (type_str == "toggle") {
@@ -1789,7 +1792,7 @@ void LedController::load_config() {
                 for (const auto& p : m["presets"]) {
                     if (p.is_object()) {
                         // Handle both old {name, macro} and new {macro} formats
-                        auto macro_val = p.value("macro", "");
+                        auto macro_val = helix::json_util::safe_string(p, "macro");
                         if (!macro_val.empty()) {
                             info.presets.emplace_back(macro_val);
                         }
@@ -1805,7 +1808,7 @@ void LedController::load_config() {
                 // Legacy format: custom_actions -> presets
                 for (const auto& a : m["custom_actions"]) {
                     if (a.is_object()) {
-                        auto macro_val = a.value("macro", "");
+                        auto macro_val = helix::json_util::safe_string(a, "macro");
                         if (!macro_val.empty()) {
                             info.presets.emplace_back(macro_val);
                         }
@@ -2291,11 +2294,11 @@ void LedController::query_tracked_led_state() {
             if (!status.contains(tracked)) {
                 spdlog::warn(
                     "[LedController] query_tracked_led_state: '{}' not in response (keys: {})",
-                    tracked, nlohmann::json(status).dump().substr(0, 200));
+                    tracked, helix::json_util::safe_dump(status).substr(0, 200));
                 return;
             }
             spdlog::debug("[LedController] query_tracked_led_state: got {} = {}", tracked,
-                          status[tracked].dump().substr(0, 200));
+                          helix::json_util::safe_dump(status[tracked]).substr(0, 200));
             helix::ui::queue_update([status]() { get_printer_state().update_from_status(status); });
         });
 }

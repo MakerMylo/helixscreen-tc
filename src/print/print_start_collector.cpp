@@ -8,6 +8,7 @@
 
 #include "config.h"
 #include "format_utils.h"
+#include "json_utils.h"
 #include "lvgl/src/others/translation/lv_translation.h"
 #include "memory_monitor.h"
 #include "printer_detector.h"
@@ -2437,23 +2438,23 @@ void PrintStartCollector::query_mesh_probe_count() {
 
             // Prefer probed_matrix dimensions from last completed mesh (fixed-grid
             // printers only). probe_count config overstates on adaptive printers.
-            if (!adaptive) {
-                try {
-                    const auto& status = response["result"]["status"];
-                    if (status.contains("bed_mesh") &&
-                        status["bed_mesh"].contains("probed_matrix")) {
-                        const auto& pm = status["bed_mesh"]["probed_matrix"];
-                        if (pm.is_array() && !pm.empty() && pm[0].is_array()) {
-                            int rows = static_cast<int>(pm.size());
-                            int cols = static_cast<int>(pm[0].size());
-                            if (rows > 0 && cols > 0) {
-                                total = rows * cols;
-                                source = "probed_matrix";
-                            }
+            // A missing or wrong-typed result/status chain leaves total at 0 and
+            // falls through to the configfile probe_count fallback below.
+            const json* result = json_util::detail::find(response, "result");
+            const json* status =
+                result != nullptr ? json_util::detail::find(*result, "status") : nullptr;
+            if (!adaptive && status != nullptr) {
+                if (status->contains("bed_mesh") &&
+                    (*status)["bed_mesh"].contains("probed_matrix")) {
+                    const auto& pm = (*status)["bed_mesh"]["probed_matrix"];
+                    if (pm.is_array() && !pm.empty() && pm[0].is_array()) {
+                        int rows = static_cast<int>(pm.size());
+                        int cols = static_cast<int>(pm[0].size());
+                        if (rows > 0 && cols > 0) {
+                            total = rows * cols;
+                            source = "probed_matrix";
                         }
                     }
-                } catch (...) {
-                    // fall through to config
                 }
             }
 
@@ -2463,22 +2464,21 @@ void PrintStartCollector::query_mesh_probe_count() {
             // probe count by ~5x. Better to show "Bed Mesh (N)" without total
             // than "Bed Mesh (5/169)" lying.
             const bool skip_config_fallback = adaptive;
-            if (total == 0 && !skip_config_fallback) {
-                try {
-                    const auto& settings = response["result"]["status"]["configfile"]["settings"];
-                    if (settings.contains("bed_mesh") &&
-                        settings["bed_mesh"].contains("probe_count")) {
-                        const auto& pc = settings["bed_mesh"]["probe_count"];
-                        if (pc.is_array() && pc.size() >= 2) {
-                            total = pc[0].template get<int>() * pc[1].template get<int>();
-                        } else if (pc.is_number_integer()) {
-                            int n = pc.template get<int>();
-                            total = n * n; // square grid
-                        }
-                        source = "probe_count";
+            if (total == 0 && !skip_config_fallback && status != nullptr) {
+                const json* configfile = json_util::detail::find(*status, "configfile");
+                const json* settings = configfile != nullptr
+                                           ? json_util::detail::find(*configfile, "settings")
+                                           : nullptr;
+                if (settings != nullptr && settings->contains("bed_mesh") &&
+                    (*settings)["bed_mesh"].contains("probe_count")) {
+                    const auto& pc = (*settings)["bed_mesh"]["probe_count"];
+                    if (pc.is_array() && pc.size() >= 2) {
+                        total = json_util::as_int(pc[0], 0) * json_util::as_int(pc[1], 0);
+                    } else if (pc.is_number_integer()) {
+                        int n = pc.template get<int>();
+                        total = n * n; // square grid
                     }
-                } catch (...) {
-                    // Non-fatal — fallback mode continues without total
+                    source = "probe_count";
                 }
             }
 
@@ -2614,16 +2614,11 @@ void PrintStartCollector::save_prediction_entry() {
             return;
         }
 
-        try {
-            cfg->set<json>(PREPRINT_HISTORY_PATH,
-                           helix::PreprintPredictor::entries_to_json(entries));
-            ThermalRateManager::instance().save_to_config(*cfg);
-            cfg->save();
+        cfg->set<json>(PREPRINT_HISTORY_PATH, helix::PreprintPredictor::entries_to_json(entries));
+        ThermalRateManager::instance().save_to_config(*cfg);
+        cfg->save();
 
-            spdlog::debug("[PrintStartCollector] Saved prediction history ({} entries)",
-                          entries.size());
-        } catch (const std::exception& ex) {
-            spdlog::error("[PrintStartCollector] Failed to save prediction history: {}", ex.what());
-        }
+        spdlog::debug("[PrintStartCollector] Saved prediction history ({} entries)",
+                      entries.size());
     });
 }

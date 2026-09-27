@@ -222,9 +222,9 @@ ThemeData parse_theme_json(const std::string& json_str, const std::string& filen
         theme.filename = theme.filename.substr(0, theme.filename.size() - 5);
     }
 
-    // The try covers the parse and nothing else, deliberately. Syntactically
-    // broken JSON is the one failure where "this file is not a theme" is true
-    // and falling back to the built-in theme is right. Every read below degrades on
+    // Only the parse falls back to the built-in theme wholesale, deliberately.
+    // Syntactically broken JSON is the one failure where "this file is not a
+    // theme" is true. Every read below degrades on
     // its own instead: they go through the safe_* helpers, because .value()
     // throws type_error.302 on a key that is PRESENT with a null value (a
     // missing key is fine) and type_error.306 when the receiver is not an
@@ -232,11 +232,9 @@ ThemeData parse_theme_json(const std::string& json_str, const std::string& filen
     // the catch and replaced the user's ENTIRE theme — both palettes, every
     // property — with the built-in theme. A bad property is now worth exactly that
     // property.
-    nlohmann::json json;
-    try {
-        json = nlohmann::json::parse(json_str);
-    } catch (const nlohmann::json::exception& e) {
-        spdlog::error("[ThemeLoader] Failed to parse {}: {}", filename, e.what());
+    nlohmann::json json = nlohmann::json::parse(json_str, nullptr, false);
+    if (json.is_discarded()) {
+        spdlog::error("[ThemeLoader] Failed to parse {}", filename);
         return get_builtin_fallback_theme();
     }
 

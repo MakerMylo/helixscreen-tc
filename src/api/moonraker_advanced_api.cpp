@@ -227,32 +227,24 @@ void MoonrakerAdvancedAPI::get_excluded_objects(
         [on_success](json response) {
             std::set<std::string> excluded;
 
-            try {
-                if (response.contains("result") && response["result"].contains("status") &&
-                    response["result"]["status"].contains("exclude_object")) {
-                    const json& exclude_obj = response["result"]["status"]["exclude_object"];
+            if (response.contains("result") && response["result"].contains("status") &&
+                response["result"]["status"].contains("exclude_object")) {
+                const json& exclude_obj = response["result"]["status"]["exclude_object"];
 
-                    // excluded_objects is an array of object names
-                    if (exclude_obj.contains("excluded_objects") &&
-                        exclude_obj["excluded_objects"].is_array()) {
-                        for (const auto& obj : exclude_obj["excluded_objects"]) {
-                            if (obj.is_string()) {
-                                excluded.insert(obj.get<std::string>());
-                            }
+                // excluded_objects is an array of object names
+                if (exclude_obj.contains("excluded_objects") &&
+                    exclude_obj["excluded_objects"].is_array()) {
+                    for (const auto& obj : exclude_obj["excluded_objects"]) {
+                        if (obj.is_string()) {
+                            excluded.insert(obj.get<std::string>());
                         }
                     }
                 }
+            }
 
-                spdlog::debug("[Moonraker API] get_excluded_objects() -> {} objects",
-                              excluded.size());
-                if (on_success) {
-                    on_success(excluded);
-                }
-            } catch (const std::exception& e) {
-                spdlog::error("[Moonraker API] Failed to parse excluded objects: {}", e.what());
-                if (on_success) {
-                    on_success(std::set<std::string>{}); // Return empty set on error
-                }
+            spdlog::debug("[Moonraker API] get_excluded_objects() -> {} objects", excluded.size());
+            if (on_success) {
+                on_success(excluded);
             }
         },
         on_error);
@@ -268,32 +260,23 @@ void MoonrakerAdvancedAPI::get_available_objects(
         [on_success](json response) {
             std::vector<std::string> objects;
 
-            try {
-                if (response.contains("result") && response["result"].contains("status") &&
-                    response["result"]["status"].contains("exclude_object")) {
-                    const json& exclude_obj = response["result"]["status"]["exclude_object"];
+            if (response.contains("result") && response["result"].contains("status") &&
+                response["result"]["status"].contains("exclude_object")) {
+                const json& exclude_obj = response["result"]["status"]["exclude_object"];
 
-                    // objects is an array of {name, center, polygon} objects
-                    if (exclude_obj.contains("objects") && exclude_obj["objects"].is_array()) {
-                        for (const auto& obj : exclude_obj["objects"]) {
-                            if (obj.is_object() && obj.contains("name") &&
-                                obj["name"].is_string()) {
-                                objects.push_back(obj["name"].get<std::string>());
-                            }
+                // objects is an array of {name, center, polygon} objects
+                if (exclude_obj.contains("objects") && exclude_obj["objects"].is_array()) {
+                    for (const auto& obj : exclude_obj["objects"]) {
+                        if (obj.is_object() && obj.contains("name") && obj["name"].is_string()) {
+                            objects.push_back(obj["name"].get<std::string>());
                         }
                     }
                 }
+            }
 
-                spdlog::debug("[Moonraker API] get_available_objects() -> {} objects",
-                              objects.size());
-                if (on_success) {
-                    on_success(objects);
-                }
-            } catch (const std::exception& e) {
-                spdlog::error("[Moonraker API] Failed to parse available objects: {}", e.what());
-                if (on_success) {
-                    on_success(std::vector<std::string>{}); // Return empty vector on error
-                }
+            spdlog::debug("[Moonraker API] get_available_objects() -> {} objects", objects.size());
+            if (on_success) {
+                on_success(objects);
             }
         },
         on_error);
@@ -731,7 +714,8 @@ class PIDCalibrateCollector : public std::enable_shared_from_this<PIDCalibrateCo
     void on_gcode_response(const json& msg) {
         if (core_.completed())
             return;
-        if (!msg.contains("params") || !msg["params"].is_array() || msg["params"].empty())
+        if (!msg.contains("params") || !msg["params"].is_array() || msg["params"].empty() ||
+            !msg["params"][0].is_string())
             return;
 
         const std::string& line = msg["params"][0].get_ref<const std::string&>();
@@ -742,14 +726,11 @@ class PIDCalibrateCollector : public std::enable_shared_from_this<PIDCalibrateCo
             R"(sample:(\d+)\s+pwm:[\d.]+\s+asymmetry:[\d.]+\s+tolerance:(\S+))");
         helix::RegexMatch progress_match;
         if (helix::regex_search(line, progress_match, sample_regex)) {
-            int sample_num = std::stoi(progress_match[1].str());
+            int sample_num = text_io::parse_leading<int>(progress_match[1].str()).value_or(0);
             float tolerance_val = -1.0f;
             std::string tol_str = progress_match[2].str();
             if (tol_str != "n/a") {
-                try {
-                    tolerance_val = std::stof(tol_str);
-                } catch (...) {
-                }
+                tolerance_val = text_io::parse_leading<float>(tol_str).value_or(tolerance_val);
             }
             spdlog::debug("[PIDCalibrateCollector] Progress: sample={} tolerance={}", sample_num,
                           tolerance_val);
@@ -763,10 +744,12 @@ class PIDCalibrateCollector : public std::enable_shared_from_this<PIDCalibrateCo
             R"(pid_Kp=([\d.]+)\s+pid_Ki=([\d.]+)\s+pid_Kd=([\d.]+))");
         helix::RegexMatch match;
         if (helix::regex_search(line, match, pid_regex) && match.size() == 4) {
-            float kp = std::stof(match[1].str());
-            float ki = std::stof(match[2].str());
-            float kd = std::stof(match[3].str());
-            complete_success(kp, ki, kd);
+            const auto kp = text_io::parse_leading<float>(match[1].str());
+            const auto ki = text_io::parse_leading<float>(match[2].str());
+            const auto kd = text_io::parse_leading<float>(match[3].str());
+            if (kp && ki && kd) {
+                complete_success(*kp, *ki, *kd);
+            }
             return;
         }
 
@@ -902,7 +885,8 @@ class PACalibrateCollector : public std::enable_shared_from_this<PACalibrateColl
     void on_gcode_response(const json& msg) {
         if (completed_.load())
             return;
-        if (!msg.contains("params") || !msg["params"].is_array() || msg["params"].empty())
+        if (!msg.contains("params") || !msg["params"].is_array() || msg["params"].empty() ||
+            !msg["params"][0].is_string())
             return;
 
         const std::string& line = msg["params"][0].get_ref<const std::string&>();
@@ -913,10 +897,11 @@ class PACalibrateCollector : public std::enable_shared_from_this<PACalibrateColl
         // attempt pattern, and reading it as progress would drop the result.
         helix::RegexMatch match;
         if (helix::regex_search(line, match, result_re_) && match.size() >= 2) {
-            try {
-                complete_success(std::stof(match[1].str()));
-            } catch (const std::exception& ex) {
-                spdlog::warn("[PACalibrateCollector] Unparseable K in '{}': {}", line, ex.what());
+            const auto k = text_io::parse_leading<float>(match[1].str());
+            if (k) {
+                complete_success(*k);
+            } else {
+                spdlog::warn("[PACalibrateCollector] Unparseable K in '{}'", line);
             }
             return;
         }
@@ -929,11 +914,7 @@ class PACalibrateCollector : public std::enable_shared_from_this<PACalibrateColl
             // a repeating extrusion looks like a stuck machine.
             float k_so_far = -1.0f;
             if (attempt_match.size() >= 2) {
-                try {
-                    k_so_far = std::stof(attempt_match[1].str());
-                } catch (const std::exception&) {
-                    k_so_far = -1.0f;
-                }
+                k_so_far = text_io::parse_leading<float>(attempt_match[1].str()).value_or(-1.0f);
             }
             spdlog::debug("[PACalibrateCollector] Attempt {} of ~{} (k={:.4f})", attempt,
                           proc_.expected_attempts, k_so_far);
@@ -1055,7 +1036,8 @@ class MPCCalibrateCollector : public std::enable_shared_from_this<MPCCalibrateCo
     void on_gcode_response(const json& msg) {
         if (core_.completed())
             return;
-        if (!msg.contains("params") || !msg["params"].is_array() || msg["params"].empty())
+        if (!msg.contains("params") || !msg["params"].is_array() || msg["params"].empty() ||
+            !msg["params"][0].is_string())
             return;
 
         const std::string& line = msg["params"][0].get_ref<const std::string&>();
@@ -1145,7 +1127,11 @@ class MPCCalibrateCollector : public std::enable_shared_from_this<MPCCalibrateCo
         }
 
         if (helix::regex_search(line, match, bhc_regex)) {
-            result_.block_heat_capacity = std::stof(match[1].str());
+            const auto bhc = text_io::parse_leading<float>(match[1].str());
+            if (!bhc) {
+                return;
+            }
+            result_.block_heat_capacity = *bhc;
             spdlog::debug("[MPCCalibrateCollector] block_heat_capacity={}",
                           result_.block_heat_capacity);
             parsed_bhc_ = true;
@@ -1153,7 +1139,11 @@ class MPCCalibrateCollector : public std::enable_shared_from_this<MPCCalibrateCo
         }
 
         if (helix::regex_search(line, match, sr_regex)) {
-            result_.sensor_responsiveness = std::stof(match[1].str());
+            const auto sr = text_io::parse_leading<float>(match[1].str());
+            if (!sr) {
+                return;
+            }
+            result_.sensor_responsiveness = *sr;
             spdlog::debug("[MPCCalibrateCollector] sensor_responsiveness={}",
                           result_.sensor_responsiveness);
             parsed_sr_ = true;
@@ -1161,7 +1151,11 @@ class MPCCalibrateCollector : public std::enable_shared_from_this<MPCCalibrateCo
         }
 
         if (helix::regex_search(line, match, at_regex)) {
-            result_.ambient_transfer = std::stof(match[1].str());
+            const auto at = text_io::parse_leading<float>(match[1].str());
+            if (!at) {
+                return;
+            }
+            result_.ambient_transfer = *at;
             spdlog::debug("[MPCCalibrateCollector] ambient_transfer={}", result_.ambient_transfer);
             parsed_at_ = true;
             // ambient_transfer is the last required param. Complete now unless we're
@@ -1326,7 +1320,8 @@ class ScrewsTiltCollector : public std::enable_shared_from_this<ScrewsTiltCollec
         }
 
         // notify_gcode_response format: {"method": "notify_gcode_response", "params": ["line"]}
-        if (!msg.contains("params") || !msg["params"].is_array() || msg["params"].empty()) {
+        if (!msg.contains("params") || !msg["params"].is_array() || msg["params"].empty() ||
+            !msg["params"][0].is_string()) {
             return;
         }
 
@@ -1537,7 +1532,8 @@ class InputShaperCollector : public std::enable_shared_from_this<InputShaperColl
             return;
         }
 
-        if (!msg.contains("params") || !msg["params"].is_array() || msg["params"].empty()) {
+        if (!msg.contains("params") || !msg["params"].is_array() || msg["params"].empty() ||
+            !msg["params"][0].is_string()) {
             return;
         }
 
@@ -1696,57 +1692,56 @@ class InputShaperCollector : public std::enable_shared_from_this<InputShaperColl
         static const helix::Regex freq_regex(R"(Testing frequency ([\d.]+) Hz)");
         helix::RegexMatch match;
         if (helix::regex_search(line, match, freq_regex) && match.size() == 2) {
-            try {
-                float freq = std::stof(match[1].str());
-                last_sweep_freq_.store(freq);
+            const auto parsed_freq = text_io::parse_leading<float>(match[1].str());
+            if (!parsed_freq) {
+                return;
+            }
+            float freq = *parsed_freq;
+            last_sweep_freq_.store(freq);
 
-                // A sweep line arriving after the analysis phase began means the
-                // range we were given is not the range this run used. Report it
-                // — no string identifies this, only the ordering does — but do
-                // not drag the phase backwards: a label flickering between
-                // "measuring" and "analyzing" is worse than one that is early.
-                if (collector_state_ == CollectorState::CALCULATING ||
-                    collector_state_ == CollectorState::COMPLETE) {
-                    spdlog::warn("[InputShaperCollector] Sweep line at {:.1f} Hz arrived after the "
-                                 "sweep was believed finished (ceiling {:.1f} Hz) — the reported "
-                                 "[resonance_tester] range does not match this run",
-                                 freq, max_freq_.load());
-                    return;
-                }
+            // A sweep line arriving after the analysis phase began means the
+            // range we were given is not the range this run used. Report it
+            // — no string identifies this, only the ordering does — but do
+            // not drag the phase backwards: a label flickering between
+            // "measuring" and "analyzing" is worse than one that is early.
+            if (collector_state_ == CollectorState::CALCULATING ||
+                collector_state_ == CollectorState::COMPLETE) {
+                spdlog::warn("[InputShaperCollector] Sweep line at {:.1f} Hz arrived after the "
+                             "sweep was believed finished (ceiling {:.1f} Hz) — the reported "
+                             "[resonance_tester] range does not match this run",
+                             freq, max_freq_.load());
+                return;
+            }
 
-                collector_state_ = CollectorState::SWEEPING;
+            collector_state_ = CollectorState::SWEEPING;
 
-                // Progress: 0..100 mapped across min_freq..max_freq.
-                // A sweep that runs past the expected ceiling (configfile query
-                // missed, or TEST_RESONANCES was given explicit bounds) sits at
-                // 100 until it ends. That is still honest — the
-                // phase stays Sweeping, so the UI keeps saying "measuring"
-                // rather than claiming the analysis has started.
-                const float min_freq = min_freq_.load();
-                const float range = max_freq_.load() - min_freq;
-                const float progress_frac = (range > 0) ? (freq - min_freq) / range : 0.0f;
-                int percent = static_cast<int>(std::lround(progress_frac * 100.0f));
-                percent = std::clamp(percent, 0, 100);
+            // Progress: 0..100 mapped across min_freq..max_freq.
+            // A sweep that runs past the expected ceiling (configfile query
+            // missed, or TEST_RESONANCES was given explicit bounds) sits at
+            // 100 until it ends. That is still honest — the
+            // phase stays Sweeping, so the UI keeps saying "measuring"
+            // rather than claiming the analysis has started.
+            const float min_freq = min_freq_.load();
+            const float range = max_freq_.load() - min_freq;
+            const float progress_frac = (range > 0) ? (freq - min_freq) / range : 0.0f;
+            int percent = static_cast<int>(std::lround(progress_frac * 100.0f));
+            percent = std::clamp(percent, 0, 100);
 
-                char status[64];
-                snprintf(status, sizeof(status), "Testing frequency %.0f Hz", freq);
-                emit_progress(percent, ShaperCalibrationPhase::Sweeping, status);
+            char status[64];
+            snprintf(status, sizeof(status), "Testing frequency %.0f Hz", freq);
+            emit_progress(percent, ShaperCalibrationPhase::Sweeping, status);
 
-                // Structural end-of-sweep: reaching the configured ceiling means
-                // the toolhead is done regardless of what the firmware prints
-                // next, so a fork that reworded both the marker line and its
-                // "Fitted shaper" lines still leaves the Sweeping phase.
-                //
-                // Gated on range_from_config_ on purpose. Against a defaulted
-                // ceiling this check would re-create the very bug it backs up —
-                // a printer sweeping past our guess would trip it mid-sweep and
-                // claim to be analyzing while still moving.
-                if (range_from_config_.load() &&
-                    freq >= max_freq_.load() - SWEEP_END_TOLERANCE_HZ) {
-                    enter_analyzing();
-                }
-            } catch (const std::exception&) {
-                // Ignore parse errors
+            // Structural end-of-sweep: reaching the configured ceiling means
+            // the toolhead is done regardless of what the firmware prints
+            // next, so a fork that reworded both the marker line and its
+            // "Fitted shaper" lines still leaves the Sweeping phase.
+            //
+            // Gated on range_from_config_ on purpose. Against a defaulted
+            // ceiling this check would re-create the very bug it backs up —
+            // a printer sweeping past our guess would trip it mid-sweep and
+            // claim to be analyzing while still moving.
+            if (range_from_config_.load() && freq >= max_freq_.load() - SWEEP_END_TOLERANCE_HZ) {
+                enter_analyzing();
             }
         }
     }
@@ -1771,14 +1766,16 @@ class InputShaperCollector : public std::enable_shared_from_this<InputShaperColl
         if (matched && match.size() >= 5) {
             ShaperFitData fit;
             fit.type = match[1].str();
-            try {
-                fit.frequency = std::stof(match[2].str());
-                fit.vibrations = std::stof(match[3].str());
-                fit.smoothing = std::stof(match[4].str());
-            } catch (const std::exception& e) {
-                spdlog::warn("[InputShaperCollector] Failed to parse values: {}", e.what());
+            const auto frequency = text_io::parse_leading<float>(match[2].str());
+            const auto vibrations = text_io::parse_leading<float>(match[3].str());
+            const auto smoothing = text_io::parse_leading<float>(match[4].str());
+            if (!frequency || !vibrations || !smoothing) {
+                spdlog::warn("[InputShaperCollector] Failed to parse shaper fit values");
                 return;
             }
+            fit.frequency = *frequency;
+            fit.vibrations = *vibrations;
+            fit.smoothing = *smoothing;
 
             spdlog::debug("[InputShaperCollector] Parsed: {} @ {:.1f} Hz (vib: {:.1f}%)", fit.type,
                           fit.frequency, fit.vibrations);
@@ -1798,16 +1795,15 @@ class InputShaperCollector : public std::enable_shared_from_this<InputShaperColl
         static const helix::Regex accel_regex(R"(suggested max_accel <= (\d+))");
         helix::RegexMatch match;
         if (helix::regex_search(line, match, accel_regex) && match.size() == 2) {
-            try {
-                float max_accel = std::stof(match[1].str());
-                // Attach to the most recently parsed shaper fit
-                if (!shaper_fits_.empty()) {
-                    shaper_fits_.back().max_accel = max_accel;
-                    spdlog::debug("[InputShaperCollector] {} max_accel: {:.0f}",
-                                  shaper_fits_.back().type, max_accel);
-                }
-            } catch (const std::exception&) {
-                // Ignore parse errors
+            const auto max_accel = text_io::parse_leading<float>(match[1].str());
+            if (!max_accel) {
+                return;
+            }
+            // Attach to the most recently parsed shaper fit
+            if (!shaper_fits_.empty()) {
+                shaper_fits_.back().max_accel = *max_accel;
+                spdlog::debug("[InputShaperCollector] {} max_accel: {:.0f}",
+                              shaper_fits_.back().type, *max_accel);
             }
         }
     }
@@ -1830,11 +1826,7 @@ class InputShaperCollector : public std::enable_shared_from_this<InputShaperColl
 
         if (matched && match.size() == 3) {
             recommended_type_ = match[1].str();
-            try {
-                recommended_freq_ = std::stof(match[2].str());
-            } catch (const std::exception&) {
-                recommended_freq_ = 0.0f;
-            }
+            recommended_freq_ = text_io::parse_leading<float>(match[2].str()).value_or(0.0f);
             spdlog::info("[InputShaperCollector] Recommendation: {} @ {:.1f} Hz", recommended_type_,
                          recommended_freq_);
         }
@@ -2033,7 +2025,8 @@ class NoiseCheckCollector : public std::enable_shared_from_this<NoiseCheckCollec
             return;
         }
 
-        if (!msg.contains("params") || !msg["params"].is_array() || msg["params"].empty()) {
+        if (!msg.contains("params") || !msg["params"].is_array() || msg["params"].empty() ||
+            !msg["params"][0].is_string()) {
             return;
         }
 
@@ -2070,37 +2063,37 @@ class NoiseCheckCollector : public std::enable_shared_from_this<NoiseCheckCollec
 
         helix::RegexMatch match;
         if (helix::regex_search(line, match, noise_regex) && match.size() == 4) {
-            try {
-                float noise_x = std::stof(match[1].str());
-                float noise_y = std::stof(match[2].str());
-                float noise_z = std::stof(match[3].str());
-
-                spdlog::info("[NoiseCheckCollector] Noise: x={:.2f}, y={:.2f}, z={:.2f}", noise_x,
-                             noise_y, noise_z);
-
-                // Zero reading on X or Y means accelerometer isn't working on that axis
-                constexpr float MIN_NOISE = 0.001f;
-                if (noise_x < MIN_NOISE || noise_y < MIN_NOISE) {
-                    std::string dead_axes;
-                    if (noise_x < MIN_NOISE)
-                        dead_axes += "X";
-                    if (noise_y < MIN_NOISE) {
-                        if (!dead_axes.empty())
-                            dead_axes += " and ";
-                        dead_axes += "Y";
-                    }
-                    complete_error("Accelerometer reading zero on " + dead_axes +
-                                   " axis — check wiring and axes_map configuration");
-                    return;
-                }
-
-                // Report max of x,y as the overall noise level
-                float noise = std::max(noise_x, noise_y);
-                complete_success(noise);
-            } catch (const std::exception& e) {
-                spdlog::warn("[NoiseCheckCollector] Failed to parse noise value: {}", e.what());
+            const auto noise_x = text_io::parse_leading<float>(match[1].str());
+            const auto noise_y = text_io::parse_leading<float>(match[2].str());
+            const auto noise_z = text_io::parse_leading<float>(match[3].str());
+            if (!noise_x || !noise_y || !noise_z) {
+                spdlog::warn("[NoiseCheckCollector] Failed to parse noise value");
                 complete_error("Failed to parse noise measurement");
+                return;
             }
+
+            spdlog::info("[NoiseCheckCollector] Noise: x={:.2f}, y={:.2f}, z={:.2f}", *noise_x,
+                         *noise_y, *noise_z);
+
+            // Zero reading on X or Y means accelerometer isn't working on that axis
+            constexpr float MIN_NOISE = 0.001f;
+            if (*noise_x < MIN_NOISE || *noise_y < MIN_NOISE) {
+                std::string dead_axes;
+                if (*noise_x < MIN_NOISE)
+                    dead_axes += "X";
+                if (*noise_y < MIN_NOISE) {
+                    if (!dead_axes.empty())
+                        dead_axes += " and ";
+                    dead_axes += "Y";
+                }
+                complete_error("Accelerometer reading zero on " + dead_axes +
+                               " axis — check wiring and axes_map configuration");
+                return;
+            }
+
+            // Report max of x,y as the overall noise level
+            float noise = std::max(*noise_x, *noise_y);
+            complete_success(noise);
         }
     }
 
@@ -2215,7 +2208,8 @@ class BedMeshProgressCollector : public std::enable_shared_from_this<BedMeshProg
         }
 
         // notify_gcode_response format: {"method": "notify_gcode_response", "params": ["line"]}
-        if (!msg.contains("params") || !msg["params"].is_array() || msg["params"].empty()) {
+        if (!msg.contains("params") || !msg["params"].is_array() || msg["params"].empty() ||
+            !msg["params"][0].is_string()) {
             return;
         }
 
@@ -2498,37 +2492,38 @@ void MoonrakerAdvancedAPI::start_resonance_test(char axis, ShaperProgressCallbac
     // it never lands the collector keeps its defaults.
     json range_params = {{"objects", json::object({{"configfile", json::array({"settings"})}})}};
     client_.send_jsonrpc("printer.objects.query", range_params, [collector](const json& response) {
-        try {
-            if (!response.contains("result") || !response["result"].contains("status") ||
-                !response["result"]["status"].contains("configfile") ||
-                !response["result"]["status"]["configfile"].contains("settings")) {
-                return;
-            }
-            const json& settings = response["result"]["status"]["configfile"]["settings"];
-            if (!settings.contains("resonance_tester") ||
-                !settings["resonance_tester"].is_object()) {
-                return;
-            }
-            const json& rt = settings["resonance_tester"];
-            // configfile reports numbers, but forks have been seen echoing
-            // strings — accept both rather than silently keeping defaults.
-            auto read = [&rt](const char* key, float fallback) -> float {
-                if (!rt.contains(key)) {
-                    return fallback;
-                }
-                const json& v = rt[key];
-                if (v.is_number()) {
-                    return v.get<float>();
-                }
-                if (v.is_string()) {
-                    return std::stof(v.get<std::string>());
-                }
+        if (!response.contains("result") || !response["result"].contains("status") ||
+            !response["result"]["status"].contains("configfile") ||
+            !response["result"]["status"]["configfile"].contains("settings")) {
+            return;
+        }
+        const json& settings = response["result"]["status"]["configfile"]["settings"];
+        if (!settings.contains("resonance_tester") || !settings["resonance_tester"].is_object()) {
+            return;
+        }
+        const json& rt = settings["resonance_tester"];
+        // configfile reports numbers, but forks have been seen echoing
+        // strings — accept both rather than silently keeping defaults.
+        auto read = [&rt](const char* key, float fallback) -> std::optional<float> {
+            if (!rt.contains(key)) {
                 return fallback;
-            };
-            collector->set_sweep_range(read("min_freq", InputShaperCollector::DEFAULT_MIN_FREQ),
-                                       read("max_freq", InputShaperCollector::DEFAULT_MAX_FREQ));
-        } catch (const std::exception& e) {
-            spdlog::debug("[Moonraker API] Could not read resonance_tester range: {}", e.what());
+            }
+            const json& v = rt[key];
+            if (v.is_number()) {
+                return v.get<float>();
+            }
+            if (v.is_string()) {
+                return text_io::parse_leading<float>(v.get<std::string>());
+            }
+            return fallback;
+        };
+        const auto min_freq = read("min_freq", InputShaperCollector::DEFAULT_MIN_FREQ);
+        const auto max_freq = read("max_freq", InputShaperCollector::DEFAULT_MAX_FREQ);
+        if (min_freq && max_freq) {
+            collector->set_sweep_range(*min_freq, *max_freq);
+        } else {
+            spdlog::debug("[Moonraker API] Could not read resonance_tester range: unparseable "
+                          "value");
         }
     });
 
@@ -2602,65 +2597,80 @@ void MoonrakerAdvancedAPI::get_input_shaper_config(InputShaperConfigCallback on_
     client_.send_jsonrpc(
         "printer.objects.query", params,
         [on_success, on_error](json response) {
-            try {
-                InputShaperConfig config;
-
-                if (response.contains("result") && response["result"].contains("status") &&
-                    response["result"]["status"].contains("configfile") &&
-                    response["result"]["status"]["configfile"].contains("config") &&
-                    response["result"]["status"]["configfile"]["config"].contains("input_shaper")) {
-                    const auto& shaper =
-                        response["result"]["status"]["configfile"]["config"]["input_shaper"];
-
-                    config.shaper_type_x = shaper.value("shaper_type_x", "");
-                    config.shaper_type_y = shaper.value("shaper_type_y", "");
-
+            InputShaperConfig config;
+            // A field present with a type we cannot read fails the whole read,
+            // like a parse error does.
+            bool parse_ok = true;
+            auto read_string = [&parse_ok](const json& shaper, const char* key) -> std::string {
+                const json* v = json_util::detail::find(shaper, key);
+                if (!v) {
+                    return "";
+                }
+                if (!v->is_string()) {
+                    parse_ok = false;
+                    return "";
+                }
+                return v->get<std::string>();
+            };
+            auto read_float = [&parse_ok](const json& shaper, const char* key, float& out) {
+                const json* v = json_util::detail::find(shaper, key);
+                if (!v) {
+                    return;
+                }
+                if (v->is_number()) {
+                    out = v->get<float>();
+                } else if (v->is_string()) {
                     // configfile returns frequencies as strings
-                    if (shaper.contains("shaper_freq_x")) {
-                        auto& val = shaper["shaper_freq_x"];
-                        config.shaper_freq_x =
-                            val.is_string() ? std::stof(val.get<std::string>()) : val.get<float>();
+                    const auto parsed = text_io::parse_leading<float>(v->get<std::string>());
+                    if (parsed) {
+                        out = *parsed;
+                    } else {
+                        parse_ok = false;
                     }
-                    if (shaper.contains("shaper_freq_y")) {
-                        auto& val = shaper["shaper_freq_y"];
-                        config.shaper_freq_y =
-                            val.is_string() ? std::stof(val.get<std::string>()) : val.get<float>();
-                    }
-                    if (shaper.contains("damping_ratio_x")) {
-                        auto& val = shaper["damping_ratio_x"];
-                        config.damping_ratio_x =
-                            val.is_string() ? std::stof(val.get<std::string>()) : val.get<float>();
-                    }
-                    if (shaper.contains("damping_ratio_y")) {
-                        auto& val = shaper["damping_ratio_y"];
-                        config.damping_ratio_y =
-                            val.is_string() ? std::stof(val.get<std::string>()) : val.get<float>();
-                    }
-
-                    // Input shaper is configured if at least one axis has a type set
-                    config.is_configured =
-                        !config.shaper_type_x.empty() || !config.shaper_type_y.empty();
-
-                    spdlog::info(
-                        "[Moonraker API] Input shaper config: X={}@{:.1f}Hz, Y={}@{:.1f}Hz",
-                        config.shaper_type_x, config.shaper_freq_x, config.shaper_type_y,
-                        config.shaper_freq_y);
                 } else {
-                    spdlog::debug(
-                        "[Moonraker API] Input shaper section not found in printer config");
-                    config.is_configured = false;
+                    parse_ok = false;
+                }
+            };
+
+            if (response.contains("result") && response["result"].contains("status") &&
+                response["result"]["status"].contains("configfile") &&
+                response["result"]["status"]["configfile"].contains("config") &&
+                response["result"]["status"]["configfile"]["config"].contains("input_shaper")) {
+                const auto& shaper =
+                    response["result"]["status"]["configfile"]["config"]["input_shaper"];
+
+                config.shaper_type_x = read_string(shaper, "shaper_type_x");
+                config.shaper_type_y = read_string(shaper, "shaper_type_y");
+                read_float(shaper, "shaper_freq_x", config.shaper_freq_x);
+                read_float(shaper, "shaper_freq_y", config.shaper_freq_y);
+                read_float(shaper, "damping_ratio_x", config.damping_ratio_x);
+                read_float(shaper, "damping_ratio_y", config.damping_ratio_y);
+
+                if (!parse_ok) {
+                    spdlog::error(
+                        "[Moonraker API] Failed to parse input shaper config: malformed field");
+                    if (on_error) {
+                        MoonrakerError err =
+                            MoonrakerError::unknown("Failed to parse input shaper config");
+                        on_error(err);
+                    }
+                    return;
                 }
 
-                if (on_success) {
-                    on_success(config);
-                }
-            } catch (const std::exception& e) {
-                spdlog::error("[Moonraker API] Failed to parse input shaper config: {}", e.what());
-                if (on_error) {
-                    MoonrakerError err = MoonrakerError::unknown(
-                        std::string("Failed to parse input shaper config: ") + e.what());
-                    on_error(err);
-                }
+                // Input shaper is configured if at least one axis has a type set
+                config.is_configured =
+                    !config.shaper_type_x.empty() || !config.shaper_type_y.empty();
+
+                spdlog::info("[Moonraker API] Input shaper config: X={}@{:.1f}Hz, Y={}@{:.1f}Hz",
+                             config.shaper_type_x, config.shaper_freq_x, config.shaper_type_y,
+                             config.shaper_freq_y);
+            } else {
+                spdlog::debug("[Moonraker API] Input shaper section not found in printer config");
+                config.is_configured = false;
+            }
+
+            if (on_success) {
+                on_success(config);
             }
         },
         on_error);
@@ -2676,45 +2686,35 @@ void MoonrakerAdvancedAPI::get_machine_limits(MachineLimitsCallback on_success,
     client_.send_jsonrpc(
         "printer.objects.query", params,
         [on_success, on_error](json response) {
-            try {
-                if (!response.contains("result") || !response["result"].contains("status") ||
-                    !response["result"]["status"].contains("toolhead")) {
-                    spdlog::warn("[Moonraker API] Toolhead object not available in response");
-                    if (on_error) {
-                        MoonrakerError err =
-                            MoonrakerError::unknown("Toolhead object not available");
-                        on_error(err);
-                    }
-                    return;
-                }
-
-                const auto& toolhead = response["result"]["status"]["toolhead"];
-                MachineLimits limits;
-
-                // Extract limits with safe defaults
-                limits.max_velocity = toolhead.value("max_velocity", 0.0);
-                limits.max_accel = toolhead.value("max_accel", 0.0);
-                limits.max_accel_to_decel = toolhead.value("max_accel_to_decel", 0.0);
-                limits.square_corner_velocity = toolhead.value("square_corner_velocity", 0.0);
-                limits.max_z_velocity = toolhead.value("max_z_velocity", 0.0);
-                limits.max_z_accel = toolhead.value("max_z_accel", 0.0);
-
-                spdlog::info("[Moonraker API] Machine limits: vel={:.0f} accel={:.0f} "
-                             "accel_to_decel={:.0f} scv={:.1f} z_vel={:.0f} z_accel={:.0f}",
-                             limits.max_velocity, limits.max_accel, limits.max_accel_to_decel,
-                             limits.square_corner_velocity, limits.max_z_velocity,
-                             limits.max_z_accel);
-
-                if (on_success) {
-                    on_success(limits);
-                }
-            } catch (const std::exception& e) {
-                spdlog::error("[Moonraker API] Failed to parse machine limits: {}", e.what());
+            if (!response.contains("result") || !response["result"].contains("status") ||
+                !response["result"]["status"].contains("toolhead")) {
+                spdlog::warn("[Moonraker API] Toolhead object not available in response");
                 if (on_error) {
-                    MoonrakerError err = MoonrakerError::unknown(
-                        std::string("Failed to parse machine limits: ") + e.what());
+                    MoonrakerError err = MoonrakerError::unknown("Toolhead object not available");
                     on_error(err);
                 }
+                return;
+            }
+
+            const auto& toolhead = response["result"]["status"]["toolhead"];
+            MachineLimits limits;
+
+            // Extract limits with safe defaults
+            limits.max_velocity = json_util::safe_double(toolhead, "max_velocity", 0.0);
+            limits.max_accel = json_util::safe_double(toolhead, "max_accel", 0.0);
+            limits.max_accel_to_decel = json_util::safe_double(toolhead, "max_accel_to_decel", 0.0);
+            limits.square_corner_velocity =
+                json_util::safe_double(toolhead, "square_corner_velocity", 0.0);
+            limits.max_z_velocity = json_util::safe_double(toolhead, "max_z_velocity", 0.0);
+            limits.max_z_accel = json_util::safe_double(toolhead, "max_z_accel", 0.0);
+
+            spdlog::info("[Moonraker API] Machine limits: vel={:.0f} accel={:.0f} "
+                         "accel_to_decel={:.0f} scv={:.1f} z_vel={:.0f} z_accel={:.0f}",
+                         limits.max_velocity, limits.max_accel, limits.max_accel_to_decel,
+                         limits.square_corner_velocity, limits.max_z_velocity, limits.max_z_accel);
+
+            if (on_success) {
+                on_success(limits);
             }
         },
         on_error);
@@ -2871,49 +2871,54 @@ void MoonrakerAdvancedAPI::get_heater_pid_values(
     client_.send_jsonrpc(
         "printer.objects.query", params,
         [heater, on_complete, on_error](json response) {
-            try {
-                if (!response.contains("result") || !response["result"].contains("status") ||
-                    !response["result"]["status"].contains("configfile") ||
-                    !response["result"]["status"]["configfile"].contains("settings")) {
-                    spdlog::debug("[Moonraker API] configfile.settings not available in response");
-                    if (on_error) {
-                        on_error(MoonrakerError::unknown("configfile.settings not available",
-                                                         "get_pid_values"));
-                    }
-                    return;
-                }
-
-                const json& settings = response["result"]["status"]["configfile"]["settings"];
-
-                if (!settings.contains(heater)) {
-                    if (on_error) {
-                        on_error(MoonrakerError::unknown("Heater '" + heater + "' not in config",
-                                                         "get_pid_values"));
-                    }
-                    return;
-                }
-
-                const json& h = settings[heater];
-                if (h.contains("pid_kp") && h.contains("pid_ki") && h.contains("pid_kd")) {
-                    float kp = h["pid_kp"].get<float>();
-                    float ki = h["pid_ki"].get<float>();
-                    float kd = h["pid_kd"].get<float>();
-                    spdlog::debug(
-                        "[Moonraker API] Fetched PID values for {}: Kp={:.3f} Ki={:.3f} Kd={:.3f}",
-                        heater, kp, ki, kd);
-                    if (on_complete) {
-                        on_complete(kp, ki, kd);
-                    }
-                } else {
-                    if (on_error) {
-                        on_error(MoonrakerError::unknown(
-                            "No PID values for heater '" + heater + "'", "get_pid_values"));
-                    }
-                }
-            } catch (const std::exception& ex) {
-                spdlog::warn("[Moonraker API] Error parsing PID values: {}", ex.what());
+            if (!response.contains("result") || !response["result"].contains("status") ||
+                !response["result"]["status"].contains("configfile") ||
+                !response["result"]["status"]["configfile"].contains("settings")) {
+                spdlog::debug("[Moonraker API] configfile.settings not available in response");
                 if (on_error) {
-                    on_error(MoonrakerError::unknown(std::string("Parse error: ") + ex.what(),
+                    on_error(MoonrakerError::unknown("configfile.settings not available",
+                                                     "get_pid_values"));
+                }
+                return;
+            }
+
+            const json& settings = response["result"]["status"]["configfile"]["settings"];
+
+            if (!settings.contains(heater)) {
+                if (on_error) {
+                    on_error(MoonrakerError::unknown("Heater '" + heater + "' not in config",
+                                                     "get_pid_values"));
+                }
+                return;
+            }
+
+            const json& h = settings[heater];
+            if (h.contains("pid_kp") && h.contains("pid_ki") && h.contains("pid_kd")) {
+                const json& kp_v = h["pid_kp"];
+                const json& ki_v = h["pid_ki"];
+                const json& kd_v = h["pid_kd"];
+                if (!(kp_v.is_number() || kp_v.is_boolean()) ||
+                    !(ki_v.is_number() || ki_v.is_boolean()) ||
+                    !(kd_v.is_number() || kd_v.is_boolean())) {
+                    spdlog::warn("[Moonraker API] Error parsing PID values: non-numeric value");
+                    if (on_error) {
+                        on_error(MoonrakerError::unknown("Parse error: non-numeric PID value",
+                                                         "get_pid_values"));
+                    }
+                    return;
+                }
+                float kp = kp_v.get<float>();
+                float ki = ki_v.get<float>();
+                float kd = kd_v.get<float>();
+                spdlog::debug(
+                    "[Moonraker API] Fetched PID values for {}: Kp={:.3f} Ki={:.3f} Kd={:.3f}",
+                    heater, kp, ki, kd);
+                if (on_complete) {
+                    on_complete(kp, ki, kd);
+                }
+            } else {
+                if (on_error) {
+                    on_error(MoonrakerError::unknown("No PID values for heater '" + heater + "'",
                                                      "get_pid_values"));
                 }
             }
@@ -2934,41 +2939,33 @@ void MoonrakerAdvancedAPI::get_heater_control_type(
     client_.send_jsonrpc(
         "printer.objects.query", params,
         [heater, on_complete, on_error](json response) {
-            try {
-                if (!response.contains("result") || !response["result"].contains("status") ||
-                    !response["result"]["status"].contains("configfile") ||
-                    !response["result"]["status"]["configfile"].contains("settings")) {
-                    spdlog::debug(
-                        "[Moonraker API] configfile.settings not available for control type query");
-                    if (on_error) {
-                        on_error(MoonrakerError::unknown("configfile.settings not available",
-                                                         "get_heater_control_type"));
-                    }
-                    return;
-                }
-
-                const json& settings = response["result"]["status"]["configfile"]["settings"];
-
-                if (!settings.contains(heater)) {
-                    if (on_error) {
-                        on_error(MoonrakerError::unknown("Heater '" + heater + "' not in config",
-                                                         "get_heater_control_type"));
-                    }
-                    return;
-                }
-
-                const json& h = settings[heater];
-                std::string control = h.value("control", "pid");
-                spdlog::debug("[Moonraker API] Heater '{}' control type: {}", heater, control);
-                if (on_complete) {
-                    on_complete(control);
-                }
-            } catch (const std::exception& ex) {
-                spdlog::warn("[Moonraker API] Error parsing heater control type: {}", ex.what());
+            if (!response.contains("result") || !response["result"].contains("status") ||
+                !response["result"]["status"].contains("configfile") ||
+                !response["result"]["status"]["configfile"].contains("settings")) {
+                spdlog::debug(
+                    "[Moonraker API] configfile.settings not available for control type query");
                 if (on_error) {
-                    on_error(MoonrakerError::unknown(std::string("Parse error: ") + ex.what(),
+                    on_error(MoonrakerError::unknown("configfile.settings not available",
                                                      "get_heater_control_type"));
                 }
+                return;
+            }
+
+            const json& settings = response["result"]["status"]["configfile"]["settings"];
+
+            if (!settings.contains(heater)) {
+                if (on_error) {
+                    on_error(MoonrakerError::unknown("Heater '" + heater + "' not in config",
+                                                     "get_heater_control_type"));
+                }
+                return;
+            }
+
+            const json& h = settings[heater];
+            std::string control = json_util::safe_string(h, "control", "pid");
+            spdlog::debug("[Moonraker API] Heater '{}' control type: {}", heater, control);
+            if (on_complete) {
+                on_complete(control);
             }
         },
         [on_error](const MoonrakerError& err) {
@@ -3119,42 +3116,41 @@ void MoonrakerAdvancedAPI::detect_belt_hardware(BeltHardwareCallback on_complete
             client_.send_jsonrpc(
                 "printer.objects.query", query_params,
                 [hw, on_complete, on_error](const json& config_response) mutable {
-                    try {
-                        if (config_response.contains("result") &&
-                            config_response["result"].contains("status") &&
-                            config_response["result"]["status"].contains("configfile") &&
-                            config_response["result"]["status"]["configfile"].contains(
-                                "settings")) {
-                            const auto& settings =
-                                config_response["result"]["status"]["configfile"]["settings"];
+                    if (config_response.contains("result") &&
+                        config_response["result"].contains("status") &&
+                        config_response["result"]["status"].contains("configfile") &&
+                        config_response["result"]["status"]["configfile"].contains("settings")) {
+                        const auto& settings =
+                            config_response["result"]["status"]["configfile"]["settings"];
 
-                            if (settings.contains("printer") &&
-                                settings["printer"].contains("kinematics")) {
-                                hw.kinematics_name =
-                                    settings["printer"]["kinematics"].get<std::string>();
+                        if (settings.contains("printer") &&
+                            settings["printer"].contains("kinematics")) {
+                            const auto& kinematics = settings["printer"]["kinematics"];
+                            if (!kinematics.is_string()) {
+                                spdlog::error(
+                                    "[MoonrakerAPI] Failed to parse kinematics: not a string");
+                                if (on_error)
+                                    on_error(MoonrakerError::json_rpc_error(
+                                        "", "Failed to detect kinematics: not a string"));
+                                return;
+                            }
+                            hw.kinematics_name = kinematics.get<std::string>();
 
-                                if (hw.kinematics_name == "corexy" ||
-                                    hw.kinematics_name == "corexz") {
-                                    hw.kinematics = helix::calibration::KinematicsType::COREXY;
-                                } else if (hw.kinematics_name == "cartesian") {
-                                    hw.kinematics = helix::calibration::KinematicsType::CARTESIAN;
-                                } else {
-                                    hw.kinematics = helix::calibration::KinematicsType::UNKNOWN;
-                                }
+                            if (hw.kinematics_name == "corexy" || hw.kinematics_name == "corexz") {
+                                hw.kinematics = helix::calibration::KinematicsType::COREXY;
+                            } else if (hw.kinematics_name == "cartesian") {
+                                hw.kinematics = helix::calibration::KinematicsType::CARTESIAN;
+                            } else {
+                                hw.kinematics = helix::calibration::KinematicsType::UNKNOWN;
                             }
                         }
-
-                        spdlog::info("[MoonrakerAPI] Belt HW kinematics: {} (type={})",
-                                     hw.kinematics_name, static_cast<int>(hw.kinematics));
-
-                        if (on_complete)
-                            on_complete(hw);
-                    } catch (const std::exception& e) {
-                        spdlog::error("[MoonrakerAPI] Failed to parse kinematics: {}", e.what());
-                        if (on_error)
-                            on_error(MoonrakerError::json_rpc_error(
-                                "", fmt::format("Failed to detect kinematics: {}", e.what())));
                     }
+
+                    spdlog::info("[MoonrakerAPI] Belt HW kinematics: {} (type={})",
+                                 hw.kinematics_name, static_cast<int>(hw.kinematics));
+
+                    if (on_complete)
+                        on_complete(hw);
                 },
                 [on_error](const MoonrakerError& err) {
                     spdlog::error("[MoonrakerAPI] Kinematics query failed: {}", err.message);
@@ -3251,36 +3247,29 @@ void MoonrakerAdvancedAPI::download_accel_csv(const std::string& name,
             std::string target_prefix = "raw_data_" + name;
             std::string best_file;
 
-            try {
-                if (!response.contains("result")) {
-                    spdlog::error("[MoonrakerAPI] File list response missing 'result' field");
-                    if (on_error)
-                        on_error(MoonrakerError::json_rpc_error(
-                            "", "File list response missing 'result' field"));
-                    return;
-                }
-                const auto& result = response["result"];
-                if (!result.is_array()) {
-                    spdlog::error("[MoonrakerAPI] File list 'result' is not an array");
-                    if (on_error)
-                        on_error(MoonrakerError::json_rpc_error(
-                            "", "File list 'result' is not an array"));
-                    return;
-                }
-                for (const auto& file : result) {
-                    std::string filename = file.value("path", "");
-                    if (filename.find(target_prefix) != std::string::npos &&
-                        filename.find(".csv") != std::string::npos) {
-                        if (filename > best_file) {
-                            best_file = filename;
-                        }
+            if (!response.contains("result")) {
+                spdlog::error("[MoonrakerAPI] File list response missing 'result' field");
+                if (on_error)
+                    on_error(MoonrakerError::json_rpc_error(
+                        "", "File list response missing 'result' field"));
+                return;
+            }
+            const auto& result = response["result"];
+            if (!result.is_array()) {
+                spdlog::error("[MoonrakerAPI] File list 'result' is not an array");
+                if (on_error)
+                    on_error(
+                        MoonrakerError::json_rpc_error("", "File list 'result' is not an array"));
+                return;
+            }
+            for (const auto& file : result) {
+                std::string filename = json_util::safe_string(file, "path");
+                if (filename.find(target_prefix) != std::string::npos &&
+                    filename.find(".csv") != std::string::npos) {
+                    if (filename > best_file) {
+                        best_file = filename;
                     }
                 }
-            } catch (const std::exception& e) {
-                spdlog::error("[MoonrakerAPI] Failed to parse file list: {}", e.what());
-                if (on_error)
-                    on_error(MoonrakerError::json_rpc_error("", "Failed to find CSV data file"));
-                return;
             }
 
             if (best_file.empty()) {
@@ -3300,28 +3289,21 @@ void MoonrakerAdvancedAPI::download_accel_csv(const std::string& name,
             client_.send_jsonrpc(
                 "server.files.get_file", dl_params,
                 [on_complete, on_error](const json& file_response) {
-                    try {
-                        std::string csv_data;
-                        if (file_response.contains("result")) {
-                            const auto& result = file_response["result"];
-                            if (result.is_string()) {
-                                csv_data = result.get<std::string>();
-                            } else {
-                                csv_data = result.dump();
-                            }
-                        } else if (file_response.is_string()) {
-                            csv_data = file_response.get<std::string>();
+                    std::string csv_data;
+                    if (file_response.contains("result")) {
+                        const auto& result = file_response["result"];
+                        if (result.is_string()) {
+                            csv_data = result.get<std::string>();
                         } else {
-                            csv_data = file_response.dump();
+                            csv_data = json_util::safe_dump(result);
                         }
-                        if (on_complete)
-                            on_complete(csv_data);
-                    } catch (const std::exception& e) {
-                        spdlog::error("[MoonrakerAPI] Failed to read CSV data: {}", e.what());
-                        if (on_error)
-                            on_error(MoonrakerError::json_rpc_error(
-                                "", fmt::format("Failed to read CSV data: {}", e.what())));
+                    } else if (file_response.is_string()) {
+                        csv_data = file_response.get<std::string>();
+                    } else {
+                        csv_data = json_util::safe_dump(file_response);
                     }
+                    if (on_complete)
+                        on_complete(csv_data);
                 },
                 [on_error](const MoonrakerError& err) {
                     spdlog::error("[MoonrakerAPI] Failed to download CSV: {}", err.message);

@@ -374,7 +374,8 @@ void PrinterState::update_from_notification(const json& notification) {
         // frame was synthesized rather than received.
         const double eventtime =
             (params.size() > 1 && params[1].is_number()) ? params[1].get<double>() : 0.0;
-        const bool from_cached_snapshot = notification.value(helix::CACHED_SNAPSHOT_MARKER, false);
+        const bool from_cached_snapshot =
+            helix::json_util::safe_bool(notification, helix::CACHED_SNAPSHOT_MARKER);
         async_lifetime_.defer("PrinterState::on_status_update", [this, state_json = params[0],
                                                                  eventtime,
                                                                  from_cached_snapshot]() {
@@ -483,7 +484,7 @@ void PrinterState::update_from_status(const json& state, double eventtime,
         if (eo.contains("objects") && eo["objects"].is_array()) {
             std::vector<PrinterExcludedObjectsState::ObjectInfo> objects;
             for (const auto& obj : eo["objects"]) {
-                if (!obj.is_object() || !obj.contains("name"))
+                if (!obj.is_object() || !obj.contains("name") || !obj["name"].is_string())
                     continue;
 
                 PrinterExcludedObjectsState::ObjectInfo info;

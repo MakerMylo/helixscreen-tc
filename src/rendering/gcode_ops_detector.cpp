@@ -40,11 +40,8 @@ int temp_from_call_line(const std::string& line, const char* key) {
             continue;
         if (helix::to_upper(token.substr(0, eq)) != key_upper)
             continue;
-        try {
-            return static_cast<int>(std::stof(token.substr(eq + 1)));
-        } catch (const std::exception&) {
-            return 0;
-        }
+        const auto parsed = helix::text_io::parse_leading<float>(token.substr(eq + 1));
+        return parsed ? static_cast<int>(*parsed) : 0;
     }
     return 0;
 }
@@ -356,24 +353,20 @@ bool GCodeOpsDetector::is_first_extrusion(const std::string& line) const {
     }
 
     // Extract value after E
-    try {
-        std::string e_str;
-        for (size_t i = e_pos + 2; i < line.size(); i++) {
-            char c = line[i];
-            if (c == '-' || c == '.' || std::isdigit(c)) {
-                e_str += c;
-            } else {
-                break;
-            }
+    std::string e_str;
+    for (size_t i = e_pos + 2; i < line.size(); i++) {
+        char c = line[i];
+        if (c == '-' || c == '.' || std::isdigit(c)) {
+            e_str += c;
+        } else {
+            break;
         }
-        if (e_str.empty()) {
-            return false;
-        }
-        float e_val = std::stof(e_str);
-        return e_val > 0.001f; // Positive extrusion
-    } catch (...) {
+    }
+    if (e_str.empty()) {
         return false;
     }
+    const auto e_val = helix::text_io::parse_leading<float>(e_str);
+    return e_val && *e_val > 0.001f; // Positive extrusion
 }
 
 bool GCodeOpsDetector::is_layer_marker(const std::string& line) const {
@@ -409,14 +402,10 @@ bool is_truthy_value(const std::string& value) {
         return false;
     }
 
-    // Try parsing as number
-    try {
-        float num = std::stof(value);
-        return num > 0;
-    } catch (...) {
-        // Not a number - be conservative
-        return false;
-    }
+    // Try parsing as number; anything that does not parse is not a number -
+    // be conservative
+    const auto num = helix::text_io::parse_leading<float>(value);
+    return num && *num > 0;
 }
 
 } // namespace

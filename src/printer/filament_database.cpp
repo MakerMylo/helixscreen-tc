@@ -114,18 +114,20 @@ nlohmann::json read_asset_types(const std::string& path) {
         spdlog::error("[filament] material types asset not found: '{}'", path);
         return nlohmann::json::array();
     }
-    try {
-        auto doc = nlohmann::json::parse(
-            *text, [](int depth, nlohmann::json::parse_event_t event, nlohmann::json& parsed) {
-                return !(depth == 1 && event == nlohmann::json::parse_event_t::key &&
-                         parsed != "types");
-            });
-        if (doc.is_object() && doc.contains("types") && doc["types"].is_array())
-            return std::move(doc["types"]);
-        spdlog::error("[filament] {} has no `types` array", path);
-    } catch (const std::exception& e) {
-        spdlog::error("[filament] material types parse failed {}: {}", path, e.what());
+    auto doc = nlohmann::json::parse(
+        *text,
+        [](int depth, nlohmann::json::parse_event_t event, nlohmann::json& parsed) {
+            return !(depth == 1 && event == nlohmann::json::parse_event_t::key &&
+                     parsed != "types");
+        },
+        false);
+    if (doc.is_discarded()) {
+        spdlog::error("[filament] material types parse failed: {}", path);
+        return nlohmann::json::array();
     }
+    if (doc.is_object() && doc.contains("types") && doc["types"].is_array())
+        return std::move(doc["types"]);
+    spdlog::error("[filament] {} has no `types` array", path);
     return nlohmann::json::array();
 }
 

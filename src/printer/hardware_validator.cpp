@@ -9,6 +9,7 @@
 
 #include "config.h"
 #include "hardware_role_registry.h"
+#include "json_utils.h"
 #include "lvgl/src/others/translation/lv_translation.h"
 #include "printer_discovery.h"
 #include "printer_hardware.h"
@@ -99,28 +100,33 @@ json HardwareSnapshot::to_json() const {
 HardwareSnapshot HardwareSnapshot::from_json(const json& j) {
     HardwareSnapshot snapshot;
 
-    try {
-        if (j.contains("timestamp") && j["timestamp"].is_string()) {
-            snapshot.timestamp = j["timestamp"].get<std::string>();
+    if (j.contains("timestamp") && j["timestamp"].is_string()) {
+        snapshot.timestamp = j["timestamp"].get<std::string>();
+    }
+
+    // An absent or non-array field leaves that list empty; an array holding a
+    // non-string element discards the whole snapshot, so the caller never acts
+    // on a half-populated one.
+    const auto read_string_array = [&j](const char* key, std::vector<std::string>& out) -> bool {
+        const json* v = helix::json_util::detail::find(j, key);
+        if (v == nullptr || !v->is_array()) {
+            return true;
         }
-        if (j.contains("heaters") && j["heaters"].is_array()) {
-            snapshot.heaters = j["heaters"].get<std::vector<std::string>>();
+        for (const auto& elem : *v) {
+            if (!elem.is_string()) {
+                return false;
+            }
         }
-        if (j.contains("sensors") && j["sensors"].is_array()) {
-            snapshot.sensors = j["sensors"].get<std::vector<std::string>>();
-        }
-        if (j.contains("fans") && j["fans"].is_array()) {
-            snapshot.fans = j["fans"].get<std::vector<std::string>>();
-        }
-        if (j.contains("leds") && j["leds"].is_array()) {
-            snapshot.leds = j["leds"].get<std::vector<std::string>>();
-        }
-        if (j.contains("filament_sensors") && j["filament_sensors"].is_array()) {
-            snapshot.filament_sensors = j["filament_sensors"].get<std::vector<std::string>>();
-        }
-    } catch (const std::exception& e) {
-        spdlog::warn("[HardwareValidator] Failed to parse snapshot: {}", e.what());
-        return HardwareSnapshot{}; // Return empty snapshot on error
+        out = v->get<std::vector<std::string>>();
+        return true;
+    };
+
+    if (!read_string_array("heaters", snapshot.heaters) ||
+        !read_string_array("sensors", snapshot.sensors) ||
+        !read_string_array("fans", snapshot.fans) || !read_string_array("leds", snapshot.leds) ||
+        !read_string_array("filament_sensors", snapshot.filament_sensors)) {
+        spdlog::warn("[HardwareValidator] Snapshot field unreadable; discarding snapshot");
+        return HardwareSnapshot{};
     }
 
     return snapshot;
@@ -330,26 +336,19 @@ std::optional<HardwareSnapshot> HardwareValidator::load_session_snapshot(Config*
         return std::nullopt;
     }
 
-    // from_json() parses untrusted on-disk data — keep the catch.
-    try {
-        const json* snapshot_json = config->try_get_json(config->df() + "hardware/last_snapshot");
-        if (snapshot_json == nullptr || snapshot_json->is_null() || snapshot_json->empty()) {
-            spdlog::debug("[HardwareValidator] No previous session snapshot found");
-            return std::nullopt;
-        }
-
-        auto snapshot = HardwareSnapshot::from_json(*snapshot_json);
-        if (snapshot.is_empty()) {
-            return std::nullopt;
-        }
-
-        spdlog::debug("[HardwareValidator] Loaded previous snapshot from {}", snapshot.timestamp);
-        return snapshot;
-
-    } catch (const std::exception& e) {
-        spdlog::debug("[HardwareValidator] Failed to load session snapshot: {}", e.what());
+    const json* snapshot_json = config->try_get_json(config->df() + "hardware/last_snapshot");
+    if (snapshot_json == nullptr || snapshot_json->is_null() || snapshot_json->empty()) {
+        spdlog::debug("[HardwareValidator] No previous session snapshot found");
         return std::nullopt;
     }
+
+    auto snapshot = HardwareSnapshot::from_json(*snapshot_json);
+    if (snapshot.is_empty()) {
+        return std::nullopt;
+    }
+
+    spdlog::debug("[HardwareValidator] Loaded previous snapshot from {}", snapshot.timestamp);
+    return snapshot;
 }
 
 bool HardwareValidator::is_hardware_optional(Config* config, const std::string& hardware_name) {
@@ -543,40 +542,37 @@ void HardwareValidator::validate_configured_hardware(Config* config,
     // Bypasses is_hardware_optional for role targets: a configured role pointing at
     // an optional object is a stale role, not a silent drop.
     for (const auto& desc : helix::hardware_role_registry()) {
-        try {
-            const std::vector<std::string>* discovered = nullptr;
-            if (desc.category == helix::HardwareCategory::Fan)
-                discovered = &hardware.fans();
-            else if (desc.category == helix::HardwareCategory::Heater)
-                discovered = &hardware.heaters();
-            if (!discovered)
-                continue;
+        const std::vector<std::string>* discovered = nullptr;
+        if (desc.category == helix::HardwareCategory::Fan)
+            discovered = &hardware.fans();
+        else if (desc.category == helix::HardwareCategory::Heater)
+            discovered = &hardware.heaters();
+        if (!discovered)
+            continue;
 
-            const std::string key = config->df() + desc.config_key;
-            // Read with an EMPTY default (NOT the canonical default): an absent key
-            // means this role is not configured for THIS printer (a bed-less printer
-            // has no heaters/bed key). Absent is legitimate, not a problem to flag.
-            std::string saved = config->get<std::string>(key, "");
-            if (saved.empty())
-                continue; // unconfigured role
+        const std::string key = config->df() + desc.config_key;
+        // Read with an EMPTY default (NOT the canonical default): an absent key
+        // means this role is not configured for THIS printer (a bed-less printer
+        // has no heaters/bed key). Absent is legitimate, not a problem to flag.
+        std::string saved = config->get<std::string>(key, "");
+        if (saved.empty())
+            continue; // unconfigured role
 
-            auto res = helix::resolve_role(desc, saved, *discovered);
-            // Confident heals are resolved+persisted upstream (FanRoleConfig::from_config and the
-            // heater heal block in the discovery sequence) BEFORE validate() runs, so an AutoHealed
-            // role is already Resolved here. We surface ONLY Unresolved NON-GUIDED roles as a
-            // warning. Guided roles (every current registry role) are routed to the targeted
-            // reconfig wizard via helix::unresolved_guided_steps()/the collector — toasting them
-            // here too would double-notify (spec §3.4: guided → reconfig only; non-guided →
-            // warning). After this change the validator surfaces none of the current registry
-            // roles by design; the collector + wizard are the authority. Do not re-add an
-            // AutoHealed branch here without moving the upstream pre-heal, or you reintroduce an
-            // every-boot toast.
-            if (res.status == helix::RoleResolutionStatus::Unresolved && !desc.guided) {
-                result.expected_missing.push_back(HardwareIssue::warning(
-                    saved, hardware_type_for(desc.category),
-                    "Configured hardware no longer present", /*optional=*/false));
-            }
-        } catch (...) {
+        auto res = helix::resolve_role(desc, saved, *discovered);
+        // Confident heals are resolved+persisted upstream (FanRoleConfig::from_config and the
+        // heater heal block in the discovery sequence) BEFORE validate() runs, so an AutoHealed
+        // role is already Resolved here. We surface ONLY Unresolved NON-GUIDED roles as a
+        // warning. Guided roles (every current registry role) are routed to the targeted
+        // reconfig wizard via helix::unresolved_guided_steps()/the collector — toasting them
+        // here too would double-notify (spec §3.4: guided → reconfig only; non-guided →
+        // warning). After this change the validator surfaces none of the current registry
+        // roles by design; the collector + wizard are the authority. Do not re-add an
+        // AutoHealed branch here without moving the upstream pre-heal, or you reintroduce an
+        // every-boot toast.
+        if (res.status == helix::RoleResolutionStatus::Unresolved && !desc.guided) {
+            result.expected_missing.push_back(HardwareIssue::warning(
+                saved, hardware_type_for(desc.category), "Configured hardware no longer present",
+                /*optional=*/false));
         }
     }
 
@@ -585,14 +581,11 @@ void HardwareValidator::validate_configured_hardware(Config* config,
     // what keeps a missing aux fan visible as a hardware issue. Some presets (e.g.
     // AD5M Pro ForgeX) map a fifth fan role; without it the fan would silently
     // disappear.
-    try {
-        std::string aux_fan = config->get<std::string>(config->df() + "fans/aux", "");
-        if (!aux_fan.empty() && !contains_name(fans, aux_fan) &&
-            !is_hardware_optional(config, aux_fan)) {
-            result.expected_missing.push_back(
-                HardwareIssue::warning(aux_fan, HardwareType::FAN, "Configured aux fan not found"));
-        }
-    } catch (...) {
+    std::string aux_fan = config->get<std::string>(config->df() + "fans/aux", "");
+    if (!aux_fan.empty() && !contains_name(fans, aux_fan) &&
+        !is_hardware_optional(config, aux_fan)) {
+        result.expected_missing.push_back(
+            HardwareIssue::warning(aux_fan, HardwareType::FAN, "Configured aux fan not found"));
     }
 
     // Check configured LEDs. Synthetic strips are skipped: discovery cannot see them,
@@ -716,13 +709,9 @@ void HardwareValidator::validate_new_hardware(Config* config,
     if (config) {
         // Collect all fans assigned to roles
         auto add_fan = [&](const std::string& key, const std::string& default_val) {
-            try {
-                std::string name =
-                    config->get<std::string>(config->df() + "fans/" + key, default_val);
-                if (!name.empty()) {
-                    configured_fans.push_back(name);
-                }
-            } catch (...) {
+            std::string name = config->get<std::string>(config->df() + "fans/" + key, default_val);
+            if (!name.empty()) {
+                configured_fans.push_back(name);
             }
         };
         add_fan("part", "fan");

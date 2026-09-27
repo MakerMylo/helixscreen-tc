@@ -3,6 +3,7 @@
 #include "macro_param_defaults.h"
 
 #include "config.h"
+#include "json_utils.h"
 
 #include <spdlog/spdlog.h>
 
@@ -30,13 +31,7 @@ std::string store_key(const std::string& macro_name) {
 /// one hand-edited settings.json must not take macro running down. A table
 /// that is not an object reads as empty so the next set() replaces it.
 json read_record_table() {
-    json table;
-    try {
-        table = Config::get_instance()->get<json>(store_leaf(), json::object());
-    } catch (const std::exception& e) {
-        spdlog::warn("[MacroParamDefaults] {} malformed, ignoring: {}", store_leaf(), e.what());
-        return json::object();
-    }
+    json table = Config::get_instance()->get<json>(store_leaf(), json::object());
     if (!table.is_object()) {
         spdlog::warn("[MacroParamDefaults] {} is not an object, ignoring", store_leaf());
         return json::object();
@@ -59,7 +54,10 @@ MacroParamDefaults& MacroParamDefaults::instance() {
 
 MacroParamDefaultRecord MacroParamDefaults::get(const std::string& macro_name) const {
     MacroParamDefaultRecord record;
-    const json node = read_record_table().value(store_key(macro_name), json());
+    const json table = read_record_table();
+    const std::string key = store_key(macro_name);
+    const json* stored = helix::json_util::detail::find(table, key.c_str());
+    const json node = stored ? *stored : json();
     if (!node.is_object()) {
         return record;
     }

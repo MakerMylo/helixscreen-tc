@@ -68,6 +68,7 @@ bool provisioning_run_portal() {
 #include "lwip/sockets.h"
 #include "lwip/sys.h"
 #include "nvs.h"
+#include "text_io.h"
 #include "utils/network_validation.h"
 #include "wifi_backend_esp.h"
 #include "wifi_manager.h"
@@ -484,7 +485,9 @@ esp_err_t save_post_handler(httpd_req_t* req) {
         helix::Config* config = helix::Config::get_instance();
         config->set(config->df() + "moonraker_host", host);
         if (!port_str.empty()) {
-            config->set(config->df() + "moonraker_port", std::stoi(port_str));
+            // is_valid_port() has already held it to 1-65535.
+            config->set(config->df() + "moonraker_port",
+                        helix::text_io::parse_leading<int>(port_str).value_or(7125));
         }
         config->save();
     }

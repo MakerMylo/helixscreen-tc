@@ -20,6 +20,7 @@
 #include "probe_sensor_manager.h"
 #include "probe_sensor_types.h"
 #include "static_panel_registry.h"
+#include "text_io.h"
 #include "toolhead_homing.h"
 
 #include <spdlog/spdlog.h>
@@ -805,12 +806,8 @@ void ProbeOverlay::show_accuracy_results(const std::string& results_line) {
 
     // Assess quality based on range value
     std::string range_str = extract_value("range ");
-    double range_val = 0.0;
-    try {
-        range_val = std::stod(range_str);
-    } catch (...) {
-        range_val = 1.0; // Unknown = treat as poor
-    }
+    // Unknown = treat as poor
+    const double range_val = helix::text_io::parse_leading<double>(range_str).value_or(1.0);
 
     // quality: 1 = good (range < 0.05mm), 0 = poor
     // < 0.01 = excellent (Cartographer, Beacon, good BLTouch)
@@ -954,7 +951,7 @@ void ProbeOverlay::load_config_values() {
             // Helper to extract string value and copy to subject buffer
             auto set_cfg = [](const json& sec, const char* key, char* buf, size_t buf_size,
                               lv_subject_t* subject) {
-                if (sec.contains(key)) {
+                if (sec.contains(key) && sec[key].is_string()) {
                     std::string val = sec[key].get<std::string>();
                     snprintf(buf, buf_size, "%s", val.c_str());
                 } else {

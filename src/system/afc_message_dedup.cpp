@@ -56,30 +56,25 @@ void AfcMessageDedup::init(const std::string& config_dir) {
                          path, *size, MAX_SEED_BYTES);
             return;
         }
-        try {
-            if (!size) {
-                spdlog::warn("[AfcMessageDedup] Cannot load seed file {}: {}", path,
-                             std::strerror(errno));
+        if (!size) {
+            spdlog::warn("[AfcMessageDedup] Cannot load seed file {}: {}", path,
+                         std::strerror(errno));
+            last_error_by_printer_.clear();
+        } else {
+            // Read only after the cap check: the cap exists so an oversized file is
+            // never pulled into memory.
+            // A corrupt seed costs one extra toast; say so and move on.
+            json data = json::parse(tio::read_file(path).value_or(""), nullptr, false);
+            if (data.is_discarded()) {
+                spdlog::warn("[AfcMessageDedup] Unreadable seed file {}: not valid JSON", path);
                 last_error_by_printer_.clear();
-            } else {
-                // Read only after the cap check: the cap exists so an oversized file is
-                // never pulled into memory.
-                json data = json::parse(tio::read_file(path).value_or(""));
-                if (data.contains("printers") && data["printers"].is_object()) {
-                    for (const auto& [printer_id, text] : data["printers"].items()) {
-                        if (text.is_string()) {
-                            last_error_by_printer_[printer_id] = text.get<std::string>();
-                        }
+            } else if (data.contains("printers") && data["printers"].is_object()) {
+                for (const auto& [printer_id, text] : data["printers"].items()) {
+                    if (text.is_string()) {
+                        last_error_by_printer_[printer_id] = text.get<std::string>();
                     }
                 }
             }
-        } catch (const json::exception& e) {
-            // A corrupt seed costs one extra toast; say so and move on.
-            spdlog::warn("[AfcMessageDedup] Unreadable seed file {}: {}", path, e.what());
-            last_error_by_printer_.clear();
-        } catch (const std::exception& e) {
-            spdlog::warn("[AfcMessageDedup] Cannot load seed file {}: {}", path, e.what());
-            last_error_by_printer_.clear();
         }
     }
 

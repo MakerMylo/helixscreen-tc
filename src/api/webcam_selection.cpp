@@ -3,6 +3,8 @@
 
 #include "webcam_selection.h"
 
+#include "json_utils.h"
+
 #include <algorithm>
 #include <cctype>
 
@@ -52,15 +54,15 @@ WebcamInfo parse_webcam_entry(const nlohmann::json& entry) {
     WebcamInfo cam;
     if (!entry.is_object())
         return cam;
-    cam.name = entry.value("name", "");
-    cam.service = entry.value("service", "");
-    cam.snapshot_url = entry.value("snapshot_url", "");
-    cam.stream_url = entry.value("stream_url", "");
-    cam.uid = entry.value("uid", "");
-    cam.enabled = entry.value("enabled", true);
-    cam.flip_horizontal = entry.value("flip_horizontal", false);
-    cam.flip_vertical = entry.value("flip_vertical", false);
-    cam.target_fps = entry.value("target_fps", 15);
+    cam.name = json_util::safe_string(entry, "name", "");
+    cam.service = json_util::safe_string(entry, "service", "");
+    cam.snapshot_url = json_util::safe_string(entry, "snapshot_url", "");
+    cam.stream_url = json_util::safe_string(entry, "stream_url", "");
+    cam.uid = json_util::safe_string(entry, "uid", "");
+    cam.enabled = json_util::safe_bool(entry, "enabled", true);
+    cam.flip_horizontal = json_util::safe_bool(entry, "flip_horizontal", false);
+    cam.flip_vertical = json_util::safe_bool(entry, "flip_vertical", false);
+    cam.target_fps = json_util::safe_int(entry, "target_fps", 15);
     return cam;
 }
 

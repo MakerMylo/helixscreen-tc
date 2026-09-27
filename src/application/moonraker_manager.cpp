@@ -26,6 +26,7 @@
 #include "filament_sensor_manager.h"
 #include "host_identity.h"
 #include "i_moonraker_client.h"
+#include "json_utils.h"
 #include "macro_modification_manager.h"
 #include "moonraker_api.h"
 #include "moonraker_client.h"
@@ -264,7 +265,13 @@ void MoonrakerManager::process_notifications() {
 
         // Check for connection state change (queued from state_change_callback)
         if (notification.contains("_connection_state")) {
-            int new_state = notification["new_state"].get<int>();
+            const json* new_state_json = helix::json_util::detail::find(notification, "new_state");
+            if (!new_state_json || !(new_state_json->is_number() || new_state_json->is_boolean())) {
+                spdlog::warn("[MoonrakerManager] Connection-state notification without a numeric "
+                             "new_state");
+                continue;
+            }
+            int new_state = new_state_json->get<int>();
             static const char* messages[] = {
                 "Disconnected",     // DISCONNECTED
                 "Connecting...",    // CONNECTING
@@ -332,8 +339,8 @@ void MoonrakerManager::process_notifications() {
                         const double eventtime = (params.size() > 1 && params[1].is_number())
                                                      ? params[1].get<double>()
                                                      : 0.0;
-                        const bool from_cached_snapshot =
-                            notification.value(helix::CACHED_SNAPSHOT_MARKER, false);
+                        const bool from_cached_snapshot = helix::json_util::safe_bool(
+                            notification, helix::CACHED_SNAPSHOT_MARKER, false);
                         get_printer_state().update_from_status(params[0], eventtime,
                                                                from_cached_snapshot);
                         helix::ToolState::instance().update_from_status(params[0]);
