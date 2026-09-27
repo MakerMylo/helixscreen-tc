@@ -40,8 +40,7 @@ void AfcMessageDedup::init(const std::string& config_dir) {
 
     const std::string path = seed_path_locked();
     {
-        const auto in = tio::read_file(path);
-        if (!in) {
+        if (!tio::open_file(path, "rb")) {
             // Absent is the common first-boot case, not an error.
             spdlog::debug("[AfcMessageDedup] No seed file at {}", path);
             return;
@@ -56,7 +55,9 @@ void AfcMessageDedup::init(const std::string& config_dir) {
                              path, size, MAX_SEED_BYTES);
                 return;
             }
-            json data = json::parse(*in);
+            // Read only after the cap check: the cap exists so an oversized file is
+            // never pulled into memory.
+            json data = json::parse(tio::read_file(path).value_or(""));
             if (data.contains("printers") && data["printers"].is_object()) {
                 for (const auto& [printer_id, text] : data["printers"].items()) {
                     if (text.is_string()) {
