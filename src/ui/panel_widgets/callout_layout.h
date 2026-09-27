@@ -168,39 +168,92 @@ inline void place_docked(const CalloutLayoutInput& in, const CalloutRect& img,
     }
 }
 
-/// Pinned chips sit on their points and can land on each other. Chips whose
-/// x-ranges intersect form a column, and spread_1d moves each column's chips
-/// apart vertically by the least that clears them; the rest stay put.
-inline void slide_apart(const CalloutLayoutInput& in, std::vector<CalloutChipOut>& chips) {
-    std::vector<CalloutChipOut*> by_x;
-    for (auto& c : chips)
-        by_x.push_back(&c);
-    std::sort(by_x.begin(), by_x.end(), [](const CalloutChipOut* a, const CalloutChipOut* b) {
-        return a->rect.x < b->rect.x;
-    });
+/// The first `n` of `chips` grouped into columns: chips whose x-ranges intersect,
+/// transitively. Each column's indices are sorted top to bottom.
+inline std::vector<std::vector<size_t>> x_columns(const std::vector<CalloutChipOut>& chips,
+                                                  size_t n) {
+    std::vector<size_t> by_x(n);
+    for (size_t i = 0; i < n; ++i)
+        by_x[i] = i;
+    std::sort(by_x.begin(), by_x.end(),
+              [&](size_t a, size_t b) { return chips[a].rect.x < chips[b].rect.x; });
+    std::vector<std::vector<size_t>> cols;
     for (size_t b = 0; b < by_x.size();) {
         size_t e = b + 1;
-        int right = by_x[b]->rect.x + by_x[b]->rect.w;
-        for (; e < by_x.size() && by_x[e]->rect.x < right; ++e)
-            right = std::max(right, by_x[e]->rect.x + by_x[e]->rect.w);
-        if (e - b > 1) {
-            std::vector<CalloutChipOut*> col(by_x.begin() + long(b), by_x.begin() + long(e));
-            std::sort(col.begin(), col.end(), [](const CalloutChipOut* p, const CalloutChipOut* q) {
-                return p->rect.y < q->rect.y;
-            });
-            std::vector<int> start, size;
-            for (const auto* c : col) {
-                start.push_back(c->rect.y);
-                size.push_back(c->rect.h);
-            }
-            spread_1d(start, size, in.gap, in.area_h - in.gap, in.gap);
-            for (size_t i = 0; i < col.size(); ++i) {
-                col[i]->rect.y = start[i];
-                col[i]->rect = clamp_into(col[i]->rect, in.area_w, in.area_h);
-            }
-        }
+        int right = chips[by_x[b]].rect.x + chips[by_x[b]].rect.w;
+        for (; e < by_x.size() && chips[by_x[e]].rect.x < right; ++e)
+            right = std::max(right, chips[by_x[e]].rect.x + chips[by_x[e]].rect.w);
+        std::vector<size_t> col(by_x.begin() + long(b), by_x.begin() + long(e));
+        std::sort(col.begin(), col.end(),
+                  [&](size_t p, size_t q) { return chips[p].rect.y < chips[q].rect.y; });
+        cols.push_back(std::move(col));
         b = e;
     }
+    return cols;
+}
+
+/// Which chip a column too tall to stack gives up to the docked row first.
+/// The nozzle and the toolhead never do.
+inline int dock_rank(CalloutKind k) {
+    switch (k) {
+    case CalloutKind::Light:
+        return 0;
+    case CalloutKind::Fan:
+        return 1;
+    case CalloutKind::Chamber:
+        return 2;
+    case CalloutKind::Bed:
+        return 3;
+    case CalloutKind::Nozzle:
+    case CalloutKind::Toolhead:
+        break;
+    }
+    return 4;
+}
+
+/// Pinned chips (the first `pinned` of `chips`) sit on their points and can land
+/// on each other. Each x-column is moved apart vertically by spread_1d, above the
+/// docked row (the rest of `chips`); a lone chip moves only to clear that row.
+/// Returns the index of the chip a column too tall to stack gives up to the
+/// docked row, before moving anything, or nullopt once every column fits.
+inline std::optional<size_t> slide_apart(const CalloutLayoutInput& in,
+                                         std::vector<CalloutChipOut>& chips, size_t pinned) {
+    int hi = in.area_h - in.gap;
+    for (size_t i = pinned; i < chips.size(); ++i)
+        hi = std::min(hi, chips[i].rect.y - in.gap);
+    const auto cols = x_columns(chips, pinned);
+    for (const auto& col : cols) {
+        int total = in.gap * int(col.size() - 1);
+        for (size_t i : col)
+            total += chips[i].rect.h;
+        if (total <= hi - in.gap)
+            continue;
+        std::optional<size_t> victim;
+        for (size_t i : col)
+            if (dock_rank(chips[i].kind) < 4 &&
+                (!victim || dock_rank(chips[i].kind) < dock_rank(chips[*victim].kind)))
+                victim = i;
+        if (victim)
+            return victim;
+    }
+    for (const auto& col : cols) {
+        if (col.size() == 1) {
+            auto& r = chips[col[0]].rect;
+            r.y = std::min(r.y, hi - r.h);
+        } else {
+            std::vector<int> start, size;
+            for (size_t i : col) {
+                start.push_back(chips[i].rect.y);
+                size.push_back(chips[i].rect.h);
+            }
+            spread_1d(start, size, in.gap, hi, in.gap);
+            for (size_t k = 0; k < col.size(); ++k)
+                chips[col[k]].rect.y = start[k];
+        }
+        for (size_t i : col)
+            chips[i].rect = clamp_into(chips[i].rect, in.area_w, in.area_h);
+    }
+    return std::nullopt;
 }
 
 inline CalloutChipOut chip_at(const CalloutChipIn& c, int x, int y, int h, int ax, int ay) {
@@ -343,22 +396,28 @@ inline bool try_line_modes(const CalloutLayoutInput& in, CalloutLayout& out) {
             out.toolhead_merged = true;
         }
         out.mode = CalloutMode::Pinned;
-        std::vector<CalloutChipIn> unanchored;
-        for (const auto& c : chips) {
-            if (!c.anchor) {
-                unanchored.push_back(c);
-                continue;
+        std::vector<CalloutChipIn> pinned, docked;
+        for (const auto& c : chips)
+            (c.anchor ? pinned : docked).push_back(c);
+        // Each pass places the pinned chips on their points and the rest in the
+        // docked row, until every column of pinned chips stacks above that row.
+        for (;;) {
+            out.chips.clear();
+            for (const auto& c : pinned) {
+                const int cx = px(c.anchor->x, out.image.x, out.image.w);
+                const int cy = px(c.anchor->y, out.image.y, out.image.h);
+                out.chips.push_back(
+                    {c.kind, clamp_into({cx - c.w / 2, cy - in.chip_h / 2, c.w, in.chip_h},
+                                        in.area_w, in.area_h)});
             }
-            const int cx = px(c.anchor->x, out.image.x, out.image.w);
-            const int cy = px(c.anchor->y, out.image.y, out.image.h);
-            out.chips.push_back(
-                {c.kind, clamp_into({cx - c.w / 2, cy - in.chip_h / 2, c.w, in.chip_h}, in.area_w,
-                                    in.area_h)});
+            // The docked row is the bottom edge: the side bands belong to the image here.
+            place_docked(in, CalloutRect{0, 0, in.area_w, 0}, docked, out.chips);
+            const auto victim = slide_apart(in, out.chips, pinned.size());
+            if (!victim)
+                return out;
+            docked.push_back(pinned[*victim]);
+            pinned.erase(pinned.begin() + long(*victim));
         }
-        // Unanchored chips always use the bottom row: the side bands belong to the image here.
-        place_docked(in, CalloutRect{0, 0, in.area_w, 0}, unanchored, out.chips);
-        slide_apart(in, out.chips);
-        return out;
     }
 
     out.mode = CalloutMode::Docked;

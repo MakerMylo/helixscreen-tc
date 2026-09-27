@@ -505,7 +505,37 @@ TEST_CASE("pinned: chamber and nozzle chips slide apart (Q2-like)",
     const auto l = compute_callout_layout(in);
     REQUIRE(l.mode == CalloutMode::Pinned);
     REQUIRE(l.chips.size() == 2);
+    // Placed on their points, the two would collide.
+    const auto on_point = [&](const CalloutChipIn& c) {
+        const int x = l.image.x + int(c.anchor->x * l.image.w);
+        const int y = l.image.y + int(c.anchor->y * l.image.h);
+        return CalloutRect{x - c.w / 2, y - in.chip_h / 2, c.w, in.chip_h};
+    };
+    REQUIRE(overlaps(on_point(in.active[0]), on_point(in.active[1])));
     check_apart_and_inside(l, in);
+}
+
+TEST_CASE("pinned: a column too tall for a short tile docks its lowest-priority chips",
+          "[printer_image][callout_layout]") {
+    auto in = base();
+    in.area_w = 240;
+    in.area_h = 100; // four stacked chips need 132
+    in.chip_h = 30;
+    in.active = {{CalloutKind::Nozzle, 150, NormPoint{0.513f, 0.279f}},
+                 {CalloutKind::Bed, 100, NormPoint{0.46f, 0.57f}},
+                 {CalloutKind::Chamber, 90, NormPoint{0.31f, 0.38f}},
+                 {CalloutKind::Light, 28, NormPoint{0.32f, 0.16f}}};
+    const auto l = compute_callout_layout(in);
+    REQUIRE(l.mode == CalloutMode::Pinned);
+    REQUIRE(l.chips.size() == 4);
+    check_apart_and_inside(l, in);
+    // The nozzle keeps its point; the light gives way first, to the bottom row.
+    const auto* nozzle = find(l, CalloutKind::Nozzle);
+    REQUIRE(nozzle);
+    CHECK(nozzle->rect.x == l.image.x + int(0.513f * l.image.w) - 75);
+    const auto* light = find(l, CalloutKind::Light);
+    REQUIRE(light);
+    CHECK(light->rect.y + light->rect.h == in.area_h - in.gap);
 }
 
 TEST_CASE("pinned: chips that do not collide stay centred on their points",
@@ -528,4 +558,20 @@ TEST_CASE("pinned: chips that do not collide stay centred on their points",
         CHECK(c->rect.x == px - a.w / 2);
         CHECK(c->rect.y == py - in.chip_h / 2);
     }
+}
+
+TEST_CASE("pinned: a chip on a low point stays clear of the docked row",
+          "[printer_image][callout_layout]") {
+    auto in = base();
+    in.active = {{CalloutKind::Bed, 60, NormPoint{0.5f, 0.9f}},
+                 {CalloutKind::Chamber, 50, std::nullopt}};
+    const auto l = compute_callout_layout(in);
+    REQUIRE(l.mode == CalloutMode::Pinned);
+    const auto* chamber = find(l, CalloutKind::Chamber);
+    REQUIRE(chamber);
+    REQUIRE(chamber->rect.y + chamber->rect.h == in.area_h - in.gap); // docked row
+    // On its point the bed chip would sit on the docked chamber chip.
+    const int bx = l.image.x + int(0.5f * l.image.w), by = l.image.y + int(0.9f * l.image.h);
+    REQUIRE(overlaps({bx - 30, by - in.chip_h / 2, 60, in.chip_h}, chamber->rect));
+    check_apart_and_inside(l, in);
 }
