@@ -192,12 +192,15 @@ All three open the same modal.
 
 ### Sequence
 
-1. **Unload offer.** Filament left in a hot-adjacent toolhead softens and clogs, so
-   the modal always offers the printer's existing unload flow before anything moves.
-   When the printer reports filament at the toolhead (the filament sensor, or the AMS
-   backend's loaded slot), the offer is recommended. When it cannot tell, the offer
-   still appears beside a "make sure no filament is loaded" line. The user can skip it
-   either way.
+1. **Unload offer.** Filament left in a hot-adjacent toolhead softens and clogs. The
+   offer depends on what the printer can tell:
+   - a sensor says the toolhead is empty: no offer, the flow goes straight on
+   - a sensor says it is loaded (the filament sensor, or the AMS backend's loaded
+     slot): the printer's existing unload flow is offered as the recommended action
+   - the printer cannot tell: "Unload filament" is offered beside a "make sure no
+     filament is loaded" line
+
+   The user can skip it in both offered cases.
 2. **Home if needed**, bed empty. `IMotionAPI::home_axes` when any axis is unhomed.
 3. **Clearance move.** Z to `axis_maximum.z - 10`, the far end of travel minus a
    margin, then park XY at the back of the bed. On a printer whose bed moves this is
@@ -270,9 +273,9 @@ Decided (Preston, 2026-09-26):
   PLA Silk/CF 65-75, PETG 75-85, TPU 80-90, ABS/ASA/PC/PA 90-100. The table's upper
   value is used, then capped.
 - Cool-down: the remove prompt waits for the bed to read below 40°C.
-- The unload is always offered, recommended when filament is detected, and skippable.
-  Printers that cannot detect loaded filament show it beside a "make sure no filament
-  is loaded" line.
+- The unload is offered unless a sensor says the toolhead is empty: recommended when a
+  sensor says it is loaded, and beside a "make sure no filament is loaded" line when
+  the printer cannot tell. Skippable in both offered cases.
 
 ## Future work
 
