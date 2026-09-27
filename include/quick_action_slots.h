@@ -5,6 +5,7 @@
 #include <array>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace helix {
 
@@ -15,6 +16,14 @@ namespace helix {
 inline constexpr std::string_view kQuickSlotLight = "builtin:light";
 
 enum class QuickSlotKind { Empty, Macro, Light };
+
+/// Settings keys of the four Quick Actions slots, and what each reads when
+/// never written.
+inline constexpr std::array<const char*, 4> kQuickButtonKeys = {
+    "/standard_macros/quick_button_1", "/standard_macros/quick_button_2",
+    "/standard_macros/quick_button_3", "/standard_macros/quick_button_4"};
+inline constexpr std::array<const char*, 4> kQuickButtonDefaults = {"clean_nozzle", "bed_level", "",
+                                                                    ""};
 
 struct QuickSlotInput {
     /// The user has written this slot, including clearing it to empty. A slot
@@ -52,5 +61,36 @@ inline std::array<QuickSlotKind, 4> resolve_quick_slots(const std::array<QuickSl
     }
     return out;
 }
+
+/// Dropdown index the Quick Button picker selects for a slot: "(Empty)" is 0,
+/// the standard slots follow in @p slot_names order, and the light comes last.
+/// It shows what the slot resolves to, so a slot the light fills by default
+/// reads "Light" rather than the "(Empty)" it stores.
+inline int quick_slot_picker_index(QuickSlotKind kind, const std::string& stored,
+                                   const std::vector<std::string>& slot_names) {
+    if (kind == QuickSlotKind::Light) {
+        return static_cast<int>(slot_names.size()) + 1;
+    }
+    for (size_t i = 0; i < slot_names.size(); ++i) {
+        if (slot_names[i] == stored) {
+            return static_cast<int>(i) + 1;
+        }
+    }
+    return 0;
+}
+
+/// The four slots as stored in settings: whether each key exists, and its value
+/// (the default when it does not).
+struct StoredQuickSlots {
+    std::array<bool, 4> user_set{};
+    std::array<std::string, 4> value{};
+};
+
+/// Reads the slots from Config.
+StoredQuickSlots read_stored_quick_slots();
+
+/// What each slot shows now, from the stored slots, which standard macros this
+/// printer answers for, and whether an LED is controllable.
+std::array<QuickSlotKind, 4> resolve_current_quick_slots(const StoredQuickSlots& stored);
 
 } // namespace helix

@@ -14,6 +14,7 @@
 #include "config.h"
 #include "i_moonraker_api.h"
 #include "operation_timeout_guard.h"
+#include "quick_action_slots.h"
 #include "save_config_restart.h"
 #include "standard_macros.h"
 #include "subject_managed_panel.h"
@@ -427,10 +428,9 @@ class ControlsPanel : public PanelBase {
     lv_subject_t macro_header_visible_{};
     /// 1 while a Quick Actions slot shows the light toggle instead of a macro
     std::array<lv_subject_t, 4> macro_light_{};
-    /// Whether each slot's config key exists; a never-written slot may take
-    /// the light by default (see resolve_quick_slots).
-    std::array<bool, 4> macro_user_set_{};
-    std::array<bool, 4> macro_is_light_value_{};
+    /// The slots as stored; a never-written slot may take the light by
+    /// default (see resolve_quick_slots).
+    helix::StoredQuickSlots stored_quick_slots_;
     ObserverGuard led_controllable_observer_;
     void load_quick_button_config();
 

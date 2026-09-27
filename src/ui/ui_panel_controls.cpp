@@ -872,21 +872,7 @@ void ControlsPanel::refresh_macro_buttons() {
     lv_subject_t* name_subjects[] = {&macro_1_name_, &macro_2_name_, &macro_3_name_,
                                      &macro_4_name_};
 
-    std::array<helix::QuickSlotInput, 4> inputs{};
-    for (size_t i = 0; i < 4; ++i) {
-        inputs[i].user_set = macro_user_set_[i];
-        if (macro_is_light_value_[i]) {
-            inputs[i].value = std::string(helix::kQuickSlotLight);
-        } else if (*slots[i]) {
-            const auto& info = macros.get(**slots[i]);
-            inputs[i].value = info.slot_name;
-            inputs[i].macro_renders = !info.is_empty() || info.has_missing_macro();
-        }
-    }
-    const bool led_controllable =
-        lv_subject_get_int(helix::led::LedController::instance().get_led_controllable_subject()) !=
-        0;
-    const auto kinds = helix::resolve_quick_slots(inputs, led_controllable);
+    const auto kinds = helix::resolve_current_quick_slots(stored_quick_slots_);
 
     for (size_t i = 0; i < 4; ++i) {
         const bool light = kinds[i] == helix::QuickSlotKind::Light;
@@ -907,23 +893,14 @@ void ControlsPanel::refresh_macro_buttons() {
 }
 
 void ControlsPanel::load_quick_button_config() {
-    static constexpr const char* kKeys[] = {
-        "/standard_macros/quick_button_1", "/standard_macros/quick_button_2",
-        "/standard_macros/quick_button_3", "/standard_macros/quick_button_4"};
-    static constexpr const char* kDefaults[] = {"clean_nozzle", "bed_level", "", ""};
     std::optional<StandardMacroSlot>* slots[] = {&macro_1_slot_, &macro_2_slot_, &macro_3_slot_,
                                                  &macro_4_slot_};
-    Config* config = Config::get_instance();
-    if (!config) {
-        spdlog::warn("[{}] Config not available, using default macro slots", get_name());
-    }
+    stored_quick_slots_ = helix::read_stored_quick_slots();
     for (size_t i = 0; i < 4; ++i) {
-        macro_user_set_[i] = config && config->exists(kKeys[i]);
-        const std::string name =
-            config ? config->get<std::string>(kKeys[i], kDefaults[i]) : kDefaults[i];
-        macro_is_light_value_[i] = name == helix::kQuickSlotLight;
-        *slots[i] = name.empty() || macro_is_light_value_[i] ? std::nullopt
-                                                             : StandardMacros::slot_from_name(name);
+        const std::string& name = stored_quick_slots_.value[i];
+        *slots[i] = name.empty() || name == helix::kQuickSlotLight
+                        ? std::nullopt
+                        : StandardMacros::slot_from_name(name);
     }
 }
 

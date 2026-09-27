@@ -74,3 +74,24 @@ TEST_CASE("Quick slots: a missing-but-assigned macro still occupies its slot", "
     CHECK(k[0] == QuickSlotKind::Macro);
     CHECK(k[1] == QuickSlotKind::Light);
 }
+
+TEST_CASE("Quick slot picker: shows the resolved value", "[quick_slots]") {
+    const std::vector<std::string> names = {"load_filament", "clean_nozzle", "bed_level"};
+    // A slot the light fills by default stores "" but shows Light (last entry).
+    CHECK(helix::quick_slot_picker_index(QuickSlotKind::Light, "", names) == 4);
+    // An assigned light shows Light too.
+    CHECK(helix::quick_slot_picker_index(QuickSlotKind::Light, std::string(kQuickSlotLight),
+                                         names) == 4);
+    // A macro shows its own entry, and an empty slot "(Empty)".
+    CHECK(helix::quick_slot_picker_index(QuickSlotKind::Macro, "clean_nozzle", names) == 2);
+    CHECK(helix::quick_slot_picker_index(QuickSlotKind::Empty, "", names) == 0);
+    // A stored slot this printer cannot run still shows what the user chose.
+    CHECK(helix::quick_slot_picker_index(QuickSlotKind::Empty, "bed_level", names) == 3);
+}
+
+TEST_CASE("Quick slot defaults: two standard macros, then two empty slots", "[quick_slots]") {
+    CHECK(std::string(helix::kQuickButtonDefaults[0]) == "clean_nozzle");
+    CHECK(std::string(helix::kQuickButtonDefaults[1]) == "bed_level");
+    CHECK(std::string(helix::kQuickButtonDefaults[2]).empty());
+    CHECK(std::string(helix::kQuickButtonKeys[3]) == "/standard_macros/quick_button_4");
+}
