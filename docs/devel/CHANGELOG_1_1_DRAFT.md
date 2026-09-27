@@ -178,6 +178,38 @@ what gets saved.
   bed is clear, tap Print, and the job leaves the queue only once the print actually
   starts.
 
+- **The Motion screen is organized into Jog and Move tabs (#865)** - a labeled rail on the
+  left in landscape, icon pills in the header in portrait, and it opens on Jog every time.
+  The position readout that used to sit in a card beside the jog pad moved into the header,
+  so it stays visible on both tabs (the separate "Act:" line is gone; see the swap icon
+  below).
+- **The Move tab sends the toolhead to named bed positions** - a 3x3 grid laid out like the
+  bed seen from above (Rear at the top, Front at the bottom), outer positions 10% in from
+  the edges so the head clears rails and clamps; on a delta the eight outer positions sit
+  on a circle instead. Moves are XY only, homing first when needed, and the whole tab is
+  disabled while a print runs or is paused, or while the printer is not ready. Park and
+  Motors Off sit under the grid.
+- **Park parks the toolhead** - it runs the printer's own parking macro when one is
+  detected (`PARK`, `PARK_TOOLHEAD` or `TOOLHEAD_PARK`), otherwise sends the toolhead to
+  front-center; unhomed axes are homed first. Point it at a different macro in
+  Settings > Printing > Macro Buttons.
+- **Tap a coordinate in the header to move there** - a number pad opens for that axis, and
+  a value outside the printer's range is refused with the allowed range while nothing
+  moves; an unhomed axis is homed first, then moved. The swap icon beside the coordinates
+  toggles between Commanded and Actual position, lights up for Actual, and is remembered
+  per printer.
+- **Hold to repeat on the jog pad and Z buttons** - after about 0.4s the move repeats
+  roughly every 0.15s for as long as you hold; a quick tap is still exactly one move.
+- **Jog limits are quiet, and the edge is visible before you press** - holding into a limit
+  simply stops; a fresh press that cannot move at all says which axis is at its limit and
+  what the limit is; a partial move happens silently. The Z buttons grey out at their limit
+  (on printers whose bed moves in Z, that is the pair that would move the bed past it), and the
+  limits account for the printer's G-code offset.
+- **Motors Off has a second home and a print guard** - it sits on the Move tab as well as
+  the Controls panel, is disabled while a print runs or is paused, and if a print starts
+  while its confirmation dialog is open, confirming only tells you the motors stay on and
+  does nothing. E-stop remains the way to halt motion during a print.
+
 ### Changed
 
 - **Material types and your Material Temperatures changes live in one editable file** - the
