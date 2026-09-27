@@ -166,6 +166,14 @@ bool is_extrusion_safe(int current_temp, int min_extrusion_temp);
 int extrusion_floor_c(const SafetyLimits& limits, const std::string& extruder = "extruder");
 
 /**
+ * @brief Whether the active hotend may extrude right now
+ *
+ * At or above extrusion_floor_c(), or the user opted into cold extrusion (#978).
+ * Shared by every surface that refuses or defers a needs-hot-nozzle action.
+ */
+bool active_nozzle_ready_for_extrusion(const SafetyLimits& limits);
+
+/**
  * @brief A hotend's max_temp in whole degrees
  *
  * That extruder's own ceiling, SafetyLimits::max_temp_for(), from the same section

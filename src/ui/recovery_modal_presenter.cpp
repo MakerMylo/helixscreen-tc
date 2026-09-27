@@ -287,14 +287,7 @@ void RecoveryModalPresenter::dispatch_recovery(const std::string& gcode, const s
 }
 
 bool RecoveryModalPresenter::nozzle_ready_for_extrusion() const {
-    // #978 opt-out: users whose macros heat the nozzle themselves, or who are
-    // deliberately cold-pulling, already bypass this gate on the filament panel.
-    // The recovery modal must not re-impose it.
-    if (helix::SafetySettingsManager::instance().get_allow_cold_extrude()) {
-        return true;
-    }
-    const int min_extrude = helix::ui::temperature::extrusion_floor_c(api_->get_safety_limits());
-    return helix::ui::temperature::is_extrusion_safe(nozzle_current_c(), min_extrude);
+    return helix::ui::temperature::active_nozzle_ready_for_extrusion(api_->get_safety_limits());
 }
 
 int RecoveryModalPresenter::resolve_preheat_target() const {
