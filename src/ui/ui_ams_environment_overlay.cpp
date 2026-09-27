@@ -38,20 +38,6 @@
 
 namespace helix::ui {
 
-namespace {
-// Clamp a preset's nominal dry temperature to a box's reported settable range so
-// the displayed value matches what start_drying() will actually send.
-float clamp_preset_temp(float temp_c, const DryerInfo& dryer) {
-    if (dryer.max_temp_c > 0.0f && temp_c > dryer.max_temp_c) {
-        temp_c = dryer.max_temp_c;
-    }
-    if (dryer.min_temp_c > 0.0f && temp_c < dryer.min_temp_c) {
-        temp_c = dryer.min_temp_c;
-    }
-    return temp_c;
-}
-} // namespace
-
 // ============================================================================
 // SINGLETON ACCESSOR
 // ============================================================================
@@ -807,7 +793,7 @@ void AmsEnvironmentOverlay::populate_presets() {
         char buf[64];
         int hours = preset.duration_min / 60;
         snprintf(buf, sizeof(buf), "%s %g°C/%dh", preset.name.c_str(),
-                 clamp_preset_temp(preset.temp_c, dryer), hours);
+                 dryer.clamp_temp(preset.temp_c), hours);
         options += buf;
     }
 
@@ -827,8 +813,7 @@ void AmsEnvironmentOverlay::apply_preset(int index) {
     // what Start Drying will actually send (see populate_presets()).
     float applied_temp = preset.temp_c;
     if (AmsBackend* backend = AmsState::instance().get_backend()) {
-        applied_temp =
-            clamp_preset_temp(preset.temp_c, backend->get_dryer_info(acting_unit_index()));
+        applied_temp = backend->get_dryer_info(acting_unit_index()).clamp_temp(preset.temp_c);
     }
 
     if (temp_input_) {

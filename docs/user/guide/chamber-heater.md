@@ -44,7 +44,7 @@ the one it came with.
 |---|---|---|
 | Flashing needed | No | Yes, over Wi-Fi |
 | Chamber heating and filtration | Yes | Yes |
-| Filament drying | Yes, from the unit | Yes, from the unit |
+| Filament drying | Yes, from HelixScreen or the unit | From the unit only |
 | Fault reporting in HelixScreen | No | Yes, with a **Reset** button |
 | Filter-fan speed and control in HelixScreen | No | Yes |
 | Heating-element temperature in HelixScreen | No | Yes |
@@ -196,6 +196,8 @@ In HelixScreen you should now see:
 - A **diagnostics card** under the graph when you open the chamber temperature
   view — see [Temperature](temperature.md#chamber-heater-diagnostics) for what
   each part of it means
+- On stock firmware, a **Start Drying** button on that card — see
+  [Drying Filament in the Chamber](temperature.md#drying-filament-in-the-chamber)
 
 Nothing needs to be enabled in HelixScreen for any of that.
 

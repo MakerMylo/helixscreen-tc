@@ -53,6 +53,7 @@ void PrinterCapabilitiesState::init_subjects(bool register_xml) {
     INIT_SUBJECT_INT(printer_has_chamber_heater_diagnostics, 0, subjects_, register_xml);
     INIT_SUBJECT_INT(printer_has_chamber_filter_fan, 0, subjects_, register_xml);
     INIT_SUBJECT_INT(printer_has_chamber_element_temp, 0, subjects_, register_xml);
+    INIT_SUBJECT_INT(printer_has_chamber_dryer, 0, subjects_, register_xml);
     INIT_SUBJECT_INT(printer_has_chamber, 0, subjects_, register_xml);
     INIT_SUBJECT_INT(printer_has_screws_tilt, 0, subjects_, register_xml);
     INIT_SUBJECT_INT(printer_has_tool_offset_cal, 0, subjects_, register_xml);
@@ -333,6 +334,10 @@ void PrinterCapabilitiesState::set_has_chamber_filter_fan(bool available) {
 
 void PrinterCapabilitiesState::set_has_chamber_element_temp(bool available) {
     lv_subject_set_int(&printer_has_chamber_element_temp_, available ? 1 : 0);
+}
+
+void PrinterCapabilitiesState::set_has_chamber_dryer(bool available) {
+    lv_subject_set_int(&printer_has_chamber_dryer_, available ? 1 : 0);
 }
 
 void PrinterCapabilitiesState::update_has_chamber() {

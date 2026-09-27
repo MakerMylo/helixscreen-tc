@@ -28,6 +28,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <fstream>
 #include <iomanip>
 #include <map>
@@ -544,9 +545,18 @@ void MoonrakerClientMock::append_chamber_backend_status(json& status_obj, double
             // only one that raises the External badge.
             const bool mock_auto = mock_env_flag("HELIX_MOCK_PANDA_BREATH_AUTO");
             const bool klipper_driving = chamber_target > 0.0;
+            // A drying cycle counts down on the simulated clock and ends by
+            // itself, the way the appliance's own timer does.
+            const int dry_hours = chamber_dry_hours_.load();
+            const int dry_remaining =
+                chamber_drying_.load()
+                    ? std::max(0, static_cast<int>(dry_hours * 3600 - (mock_sim_time_.load() -
+                                                                       chamber_dry_start_.load())))
+                    : 0;
+            const bool drying = dry_remaining > 0;
             // work_mode latches at its last value once the output stops, so a
             // Klipper target that has been set and cleared still reads 2.
-            const int work_mode = klipper_driving ? 2 : (mock_auto ? 1 : 2);
+            const int work_mode = drying ? 3 : klipper_driving ? 2 : (mock_auto ? 1 : 2);
             // The device reports whole degrees.
             const double reported_temp = std::round(chamber_temp);
             status_obj[diag] = {{"temperature", reported_temp},
@@ -554,7 +564,7 @@ void MoonrakerClientMock::append_chamber_backend_status(json& status_obj, double
                                 {"smoothed_temp", reported_temp},
                                 {"connected", !mock_offline},
                                 {"work_mode", work_mode},
-                                {"work_on", klipper_driving || mock_auto},
+                                {"work_on", drying || klipper_driving || mock_auto},
                                 {"device_target", klipper_driving ? chamber_target
                                                   : mock_auto     ? 60.0
                                                                   : 0.0},
@@ -562,10 +572,10 @@ void MoonrakerClientMock::append_chamber_backend_status(json& status_obj, double
                                 {"auto_target", 45},
                                 {"auto_filtertemp", 30},
                                 {"auto_hotbedtemp", 80},
-                                {"filament_temp", 60},
-                                {"filament_timer", 12},
-                                {"remaining_seconds", 0},
-                                {"filament_drying_active", false}};
+                                {"filament_temp", drying ? chamber_dry_temp_.load() : 60},
+                                {"filament_timer", drying ? dry_hours : 12},
+                                {"remaining_seconds", dry_remaining},
+                                {"filament_drying_active", drying}};
         }
     }
 
@@ -2883,6 +2893,31 @@ int MoonrakerClientMock::gcode_script(const std::string& raw_gcode) {
         auto key = chamber_heater_status_key();
         if (!key.empty())
             dispatch_status_update({{key, {{"target", target}}}});
+    }
+    // VENDOR_OK: the stock Panda Breath binding's drying commands, simulated
+    // for the panda_breath mock shape (chamber_heater_backend_panda_breath.cpp
+    // builds them).
+    else if (gcode.find("PANDA_BREATH_DRY_START") != std::string::npos) {
+        auto int_param = [&gcode](const char* key, int fallback) {
+            const size_t pos = gcode.find(key);
+            if (pos == std::string::npos) {
+                return fallback;
+            }
+            try {
+                return std::stoi(gcode.substr(pos + std::strlen(key)));
+            } catch (const std::exception&) {
+                return fallback;
+            }
+        };
+        chamber_dry_temp_.store(int_param("TEMP=", 55));
+        chamber_dry_hours_.store(std::clamp(int_param("HOURS=", 6), 1, 12));
+        chamber_dry_start_.store(mock_sim_time_.load());
+        chamber_drying_.store(true);
+        spdlog::info("[MoonrakerClientMock] Chamber drying started: {}C for {}h",
+                     chamber_dry_temp_.load(), chamber_dry_hours_.load());
+    } else if (gcode.find("PANDA_BREATH_DRY_STOP") != std::string::npos) {
+        chamber_drying_.store(false);
+        spdlog::info("[MoonrakerClientMock] Chamber drying stopped");
     }
     // Check for SET_PIN (chamber filter fan: SET_PIN PIN=dragonbreath_filter VALUE=1)
     else if (gcode.find("SET_PIN") != std::string::npos) {
@@ -5386,6 +5421,9 @@ void MoonrakerClientMock::temperature_simulation_loop() {
         constexpr double PHASE_OFFSET = 1.57;            // Phase offset between heaters (pi/2)
 
         double sim_time = tick * base_dt; // Simulated elapsed time in seconds
+        // The dryer clock runs at the simulation speed, so --sim-speed plays a
+        // multi-hour cycle through in minutes.
+        mock_sim_time_.store(mock_sim_time_.load() + sim_speed().accelerate_progress(base_dt));
 
         // Simulate extruder temperature change (scaled by speedup)
         if (ext_target > 0) {

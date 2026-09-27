@@ -23,6 +23,7 @@
 
 #include "../lvgl_test_fixture.h"
 #include "app_globals.h"
+#include "chamber_heater_backend.h"
 #include "moonraker_api.h"
 #include "moonraker_client_mock.h"
 #include "panel_widget_manager.h"
@@ -32,9 +33,11 @@
 #include "temperature_controller.h"
 #include "test_helpers/update_queue_test_access.h"
 
+#include <algorithm>
 #include <functional>
 #include <optional>
 #include <string>
+#include <vector>
 
 #include "../catch_amalgamated.hpp"
 
@@ -177,6 +180,141 @@ TEST_CASE("fault reset + filter fan send backend gcode", "[chamber][actions]") {
     }
 }
 
+// The dryer takes the backend's commands, clamped to what the backend's
+// cycle accepts, so a preset outside the range sends what the card shows.
+TEST_CASE("chamber dryer start and stop send backend gcode", "[chamber][actions][dryer][1299]") {
+    ChamberFixture f;
+
+    SECTION("a backend with a dryer") {
+        f.controller.set_chamber_dryer(helix::chamber::backend_by_id("panda_breath"));
+        REQUIRE(f.controller.chamber_dryer().supported);
+
+        f.client.clear_gcode_script_history();
+        f.controller.start_chamber_drying(55.0f, 240);
+        f.controller.start_chamber_drying(80.0f, 90); // above the cycle's ceiling
+        f.controller.stop_chamber_drying();
+        REQUIRE(f.client.gcode_script_history().size() == 3);
+        CHECK(f.client.gcode_script_history()[0] == "PANDA_BREATH_DRY_START TEMP=55 HOURS=4");
+        CHECK(f.client.gcode_script_history()[1] == "PANDA_BREATH_DRY_START TEMP=60 HOURS=2");
+        CHECK(f.client.gcode_script_history()[2] == "PANDA_BREATH_DRY_STOP");
+    }
+
+    SECTION("no dryer is a clean no-op") {
+        for (const auto* backend :
+             {helix::chamber::backend_by_id("dragonbreath"),
+              static_cast<const helix::chamber::ChamberHeaterBackend*>(nullptr)}) {
+            f.controller.set_chamber_dryer(backend);
+            CHECK_FALSE(f.controller.chamber_dryer().supported);
+            f.client.clear_gcode_script_history();
+            f.controller.start_chamber_drying(55.0f, 240);
+            f.controller.stop_chamber_drying();
+            CHECK(f.client.gcode_script_history().empty());
+        }
+    }
+}
+
+namespace {
+
+constexpr const char* kBedOn = "SET_HEATER_TEMPERATURE HEATER=heater_bed TARGET=80";
+constexpr const char* kBedOff = "SET_HEATER_TEMPERATURE HEATER=heater_bed TARGET=0";
+
+/// The dryer's running state as the printer reports it, delivered the way
+/// production delivers it: a subject change the controller observes, drained
+/// through the update queue.
+void report_drying(ChamberFixture& f, bool running) {
+    lv_subject_set_int(f.state.get_chamber_dryer_active_subject(), running ? 1 : 0);
+    helix::ui::UpdateQueueTestAccess::drain_all(helix::ui::UpdateQueue::instance());
+}
+
+int count(const std::vector<std::string>& history, const std::string& line) {
+    return static_cast<int>(std::count(history.begin(), history.end(), line));
+}
+
+} // namespace
+
+// The bed assist heats the bed for the length of a drying cycle and turns it
+// off however the cycle ends: our Stop, the appliance ending it (its timer or
+// its own button), or the start being refused. It never touches a bed that a
+// print or a hand-set target owns.
+TEST_CASE("chamber dryer bed assist turns the bed off however the cycle ends",
+          "[chamber][actions][dryer][1299]") {
+    ChamberFixture f;
+    f.controller.set_chamber_dryer(helix::chamber::backend_by_id("panda_breath"),
+                                   /*has_heated_bed=*/true);
+    REQUIRE(f.controller.chamber_dryer_bed_assist_c() == 80);
+    report_drying(f, false);
+    f.client.clear_gcode_script_history();
+
+    SECTION("our Stop") {
+        f.controller.start_chamber_drying(55.0f, 240, /*heat_bed=*/true);
+        CHECK(count(f.client.gcode_script_history(), kBedOn) == 1);
+        f.controller.stop_chamber_drying();
+        CHECK(count(f.client.gcode_script_history(), kBedOff) == 1);
+    }
+
+    SECTION("the appliance ends the cycle") {
+        f.controller.start_chamber_drying(55.0f, 240, true);
+        // Idle frames before the appliance picks the start up end nothing.
+        report_drying(f, false);
+        CHECK(count(f.client.gcode_script_history(), kBedOff) == 0);
+        report_drying(f, true);
+        CHECK(count(f.client.gcode_script_history(), kBedOff) == 0);
+        report_drying(f, false);
+        CHECK(count(f.client.gcode_script_history(), kBedOff) == 1);
+        // Ended once: a later Stop does not send a second off.
+        f.controller.stop_chamber_drying();
+        CHECK(count(f.client.gcode_script_history(), kBedOff) == 1);
+    }
+
+    SECTION("a print owns the bed by the time the cycle ends") {
+        f.controller.start_chamber_drying(55.0f, 240, true);
+        report_drying(f, true);
+        lv_subject_set_int(f.state.get_job_holds_machine_subject(), 1);
+        report_drying(f, false);
+        CHECK(count(f.client.gcode_script_history(), kBedOff) == 0);
+        lv_subject_set_int(f.state.get_job_holds_machine_subject(), 0);
+    }
+
+    SECTION("a target set by hand since") {
+        f.controller.start_chamber_drying(55.0f, 240, true);
+        report_drying(f, true);
+        lv_subject_set_int(f.state.get_bed_target_subject(), 600);
+        f.controller.stop_chamber_drying();
+        CHECK(count(f.client.gcode_script_history(), kBedOff) == 0);
+    }
+
+    SECTION("the start is refused") {
+        f.client.force_next_gcode_error(MoonrakerErrorType::JSON_RPC_ERROR, "Unknown command",
+                                        "PANDA_BREATH_DRY_START");
+        f.controller.start_chamber_drying(55.0f, 240, true);
+        helix::ui::UpdateQueueTestAccess::drain_all(helix::ui::UpdateQueue::instance());
+        CHECK(count(f.client.gcode_script_history(), kBedOff) == 1);
+    }
+
+    SECTION("no assist asked for, no bed commands") {
+        f.controller.start_chamber_drying(55.0f, 240, false);
+        report_drying(f, true);
+        report_drying(f, false);
+        f.controller.stop_chamber_drying();
+        CHECK(count(f.client.gcode_script_history(), kBedOn) == 0);
+        CHECK(count(f.client.gcode_script_history(), kBedOff) == 0);
+    }
+
+    SECTION("refused while a job holds the machine") {
+        lv_subject_set_int(f.state.get_job_holds_machine_subject(), 1);
+        f.controller.start_chamber_drying(55.0f, 240, true);
+        CHECK(f.client.gcode_script_history().empty());
+        lv_subject_set_int(f.state.get_job_holds_machine_subject(), 0);
+    }
+
+    SECTION("no heated bed, no assist") {
+        f.controller.set_chamber_dryer(helix::chamber::backend_by_id("panda_breath"), false);
+        CHECK(f.controller.chamber_dryer_bed_assist_c() == 0);
+        f.controller.start_chamber_drying(55.0f, 240, true);
+        CHECK(count(f.client.gcode_script_history(), kBedOn) == 0);
+    }
+}
+
 TEST_CASE("set_hardware wires backend actions into the controller", "[chamber][actions]") {
     ChamberFixture f;
 
@@ -194,6 +332,21 @@ TEST_CASE("set_hardware wires backend actions into the controller", "[chamber][a
         REQUIRE(f.client.gcode_script_history().size() == 2);
         REQUIRE(f.client.gcode_script_history()[0] == "DRAGONBREATH_RESET");
         REQUIRE(f.client.gcode_script_history()[1] == "SET_PIN PIN=dragonbreath_filter VALUE=1");
+    }
+
+    SECTION("the dryer follows the matched backend") {
+        f.discover_dragonbreath();
+        CHECK_FALSE(f.controller.chamber_dryer().supported);
+
+        helix::PrinterDiscovery stock;
+        stock.parse_objects(nlohmann::json{"heater_generic panda_breath", "panda_breath",
+                                           "extruder", "heater_bed"});
+        f.state.set_hardware(stock);
+        CHECK(f.controller.chamber_dryer().supported);
+
+        helix::SettingsManager::instance().set_chamber_heater_assignment("none");
+        f.state.set_hardware(stock);
+        CHECK_FALSE(f.controller.chamber_dryer().supported);
     }
 
     SECTION("manual chamber-heater override detaches the backend actions") {

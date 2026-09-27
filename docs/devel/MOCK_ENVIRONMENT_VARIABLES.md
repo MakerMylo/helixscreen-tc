@@ -962,6 +962,12 @@ HELIX_MOCK_OBJECTS="heater_generic panda_breath panda_breath" \
   HELIX_MOCK_PANDA_BREATH_OFFLINE=1 ./build/bin/helix-screen --test -vv
 ```
 
+The stock pair also answers the binding's drying commands with no extra variable:
+`PANDA_BREATH_DRY_START TEMP= HOURS=` starts a `work_mode: 3` cycle whose
+`remaining_seconds` counts down at the `--sim-speed` rate and ends by itself, and
+`PANDA_BREATH_DRY_STOP` ends it. `--sim-speed 1000` plays a four-hour preset through in
+about fifteen seconds, which is how to watch the chamber dryer's bed assist switch off.
+
 ### `HELIX_MOCK_KALICO`
 
 Make the mock report Kalico-style MPC heater control instead of Klipper's PID. The extruder's `configfile` settings then carry `control: mpc` + `heater_power` rather than `control: pid` + the three PID coefficients — the discriminator HelixScreen uses to decide which tuning UI to show.

@@ -2053,6 +2053,15 @@ class MoonrakerClientMock : public helix::MoonrakerClient {
     // synthesized chamber-backend diagnostics frames)
     std::atomic<double> chamber_filter_value_{0.0};
 
+    // Chamber appliance drying cycle (stock panda_breath DRY_START/DRY_STOP).
+    // The countdown runs on the simulated clock: the tick loop advances it at
+    // the simulation speed, a DRY_START stamps it as the cycle's start.
+    std::atomic<double> mock_sim_time_{0.0};
+    std::atomic<bool> chamber_drying_{false};
+    std::atomic<int> chamber_dry_temp_{0};
+    std::atomic<int> chamber_dry_hours_{0};
+    std::atomic<double> chamber_dry_start_{0.0};
+
     // Calibration simulation timers (PID, MPC, shaper) — must be cleaned up
     // in destructor to prevent use-after-free when mock is destroyed before
     // LVGL timers fire in a subsequent test's process_lvgl(). Each entry also

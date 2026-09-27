@@ -440,6 +440,7 @@ void register_xml_components() {
     // branches of the chamber card inside temp_graph_overlay, so it must
     // load before temp_graph_overlay.xml, later here.
     register_xml("components/chamber_fault_banner.xml");
+    register_xml("components/chamber_dryer_row.xml");
     // Shared progress arc widget — diameter-driven stroke thickness, see
     // include/ui_progress_arc.h for the C++ companion (attach_progress_arc).
     register_xml("components/helix_progress_arc.xml");
@@ -515,6 +516,7 @@ void register_xml_components() {
     register_xml("macro_enhance_modal.xml");
     register_xml("action_prompt_modal.xml");
     register_xml("info_qr_modal.xml");
+    register_xml("chamber_dryer_modal.xml");
     register_xml("batch_filament_modal.xml");
     register_xml("color_picker.xml");
     register_color_picker_component_constants("color_picker");

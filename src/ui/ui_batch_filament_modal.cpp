@@ -169,10 +169,13 @@ BatchFilamentModal::BatchRowSource BatchFilamentModal::collect_rows(const AmsBac
     rows.slots.reserve(static_cast<size_t>(total));
     rows.lane_presence.reserve(static_cast<size_t>(total));
     rows.at_toolhead.reserve(static_cast<size_t>(total));
+    rows.unloadable.reserve(static_cast<size_t>(total));
     for (int slot = 0; slot < total; ++slot) {
         rows.slots.push_back(backend.get_slot_info(slot));
         rows.lane_presence.push_back(slot_presence(rows.slots.back()));
-        rows.at_toolhead.push_back(backend.can_unload_from_toolhead(slot));
+        const bool loaded = backend.can_unload_from_toolhead(slot);
+        rows.at_toolhead.push_back(loaded);
+        rows.unloadable.push_back(loaded || backend.slot_filament_parked_in_toolhead(slot));
     }
     return rows;
 }
@@ -193,7 +196,7 @@ void BatchFilamentModal::on_show() {
 
     const BatchRowSource rows = collect_rows(*backend);
     const std::vector<bool> ticked =
-        prefill_selection(rows.at_toolhead, rows.lane_presence, for_load_);
+        prefill_selection(rows.heads_for(for_load_), rows.lane_presence, for_load_);
 
     std::vector<MultiSelectItem> items;
     items.reserve(rows.slots.size());

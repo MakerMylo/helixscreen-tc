@@ -6,8 +6,11 @@
 #include "../lvgl_ui_test_fixture.h"
 #include "../test_helpers/backend_user_edit.h"
 #include "../test_helpers/print_state_test_drivers.h"
+#include "../test_helpers/registered_backend.h"
+#include "../test_helpers/snapmaker_test_access.h"
 #include "../ui_test_utils.h"
 #include "ams_backend_mock.h"
+#include "ams_backend_snapmaker.h"
 #include "ams_backend_toolchanger.h"
 #include "ams_types.h"
 #include "filament_database.h"
@@ -835,6 +838,47 @@ class DockSensorToolChanger : public AmsBackendToolChanger {
 }
 
 } // namespace
+
+// A U1 head whose toolhead switch reads filament while channel_state says
+// preload_finish: filament parked short of the nozzle. The menu offers the
+// heated Unload for it and keeps Load, since the head is not loaded.
+TEST_CASE("Snapmaker lane menu offers Unload and Load for filament parked in the toolhead",
+          "[ams][context_menu][snapmaker][parked]") {
+    using UnloadMode = AmsContextMenuTestAccess::UnloadMode;
+    helix::test::RegisteredBackend<helix::AmsBackendSnapmaker> reg(nullptr, nullptr);
+    auto& backend = *reg;
+    auto feed = [&](const char* channel_state, bool switch_detected) {
+        helix::SnapmakerTestAccess::handle_status(
+            backend,
+            nlohmann::json{
+                {"toolhead", {{"extruder", "extruder3"}}},
+                {"filament_feed right",
+                 {{"extruder3", {{"filament_detected", true}, {"channel_state", channel_state}}}}},
+                {"filament_motion_sensor e3_filament", {{"filament_detected", switch_detected}}}});
+    };
+
+    SECTION("parked") {
+        feed("preload_finish", true);
+        const auto d = ops_for(backend, 3);
+        CHECK(d.unload_mode == UnloadMode::Unload);
+        CHECK(d.unload_enabled);
+        CHECK(d.can_load);
+    }
+    SECTION("switch clear: nothing to unload") {
+        feed("preload_finish", false);
+        const auto d = ops_for(backend, 3);
+        CHECK(d.unload_mode == UnloadMode::Unavailable);
+        CHECK_FALSE(d.unload_enabled);
+        CHECK(d.can_load);
+    }
+    SECTION("loaded to the nozzle") {
+        feed("load_finish", true);
+        const auto d = ops_for(backend, 3);
+        CHECK(d.unload_mode == UnloadMode::Unload);
+        CHECK(d.unload_enabled);
+        CHECK_FALSE(d.can_load);
+    }
+}
 
 TEST_CASE("A dock-sensor fault disables Unmount and says why", "[ams][context_menu][toolchanger]") {
     using UnloadMode = AmsContextMenuTestAccess::UnloadMode;

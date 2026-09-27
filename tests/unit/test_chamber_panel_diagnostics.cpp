@@ -28,6 +28,7 @@
 
 #include "../test_fixtures.h"
 #include "app_globals.h"
+#include "chamber_heater_backend.h"
 #include "lvgl/src/widgets/label/lv_label_private.h" // lv_label_t::dot_begin: the ellipsization signal
 #include "moonraker_api.h"
 #include "moonraker_client_mock.h"
@@ -264,6 +265,7 @@ class ChamberOverlayFixture : public XMLTestFixture {
         REQUIRE(register_component("components/nozzle_icon"));
         REQUIRE(register_component("components/heater_icon"));
         REQUIRE(register_component("components/chamber_fault_banner"));
+        REQUIRE(register_component("components/chamber_dryer_row"));
         REQUIRE(register_component("header_bar"));
         REQUIRE(register_component("overlay_panel"));
         // The card's two diagnostics callbacks must exist before the overlay's
@@ -272,6 +274,10 @@ class ChamberOverlayFixture : public XMLTestFixture {
                                  TemperatureService::on_chamber_fault_reset_clicked);
         lv_xml_register_event_cb(nullptr, "on_chamber_filter_fan_clicked",
                                  TemperatureService::on_chamber_filter_fan_clicked);
+        lv_xml_register_event_cb(nullptr, "on_chamber_dryer_start_clicked",
+                                 TemperatureService::on_chamber_dryer_start_clicked);
+        lv_xml_register_event_cb(nullptr, "on_chamber_dryer_stop_clicked",
+                                 TemperatureService::on_chamber_dryer_stop_clicked);
         // The overlay's own callbacks (no-ops here; production registers the
         // TempGraphOverlay handlers in xml_registration.cpp).
         lv_xml_register_event_cb(nullptr, "on_temp_graph_preset_clicked", xml_test_noop_event_cb);
@@ -290,6 +296,24 @@ class ChamberOverlayFixture : public XMLTestFixture {
         set_xml_int("printer_has_chamber_heater_diagnostics", 1);
         set_xml_int("printer_has_chamber_filter_fan", 1);
         set_xml_int("printer_has_chamber_element_temp", 1);
+        set_xml_int("printer_has_chamber_dryer", 0);
+
+        overlay_ = create_component("temp_graph_overlay");
+        REQUIRE(overlay_ != nullptr);
+        helix::ui::UpdateQueue::instance().drain();
+        lv_obj_update_layout(overlay_);
+        return overlay_;
+    }
+
+    /// The stock appliance's card: a diagnostics object carrying link state
+    /// and a drying cycle, with no element temperature and no filter fan.
+    lv_obj_t* build_stock_overlay() {
+        lv_subject_set_int(mode_subject_, 3);
+        set_xml_int("printer_has_chamber_heater", 1);
+        set_xml_int("printer_has_chamber_heater_diagnostics", 1);
+        set_xml_int("printer_has_chamber_filter_fan", 0);
+        set_xml_int("printer_has_chamber_element_temp", 0);
+        set_xml_int("printer_has_chamber_dryer", 1);
 
         overlay_ = create_component("temp_graph_overlay");
         REQUIRE(overlay_ != nullptr);
@@ -1053,6 +1077,140 @@ TEST_CASE_METHOD(ChamberOverlayFixture, "chamber card controls drive the control
 // Formatter subjects: the parse block writes display-ready strings alongside
 // the raw ints (raw ints render bare; XML has no deci/percent formatter).
 // ============================================================================
+
+// ============================================================================
+// Dryer row (#1299)
+// ============================================================================
+
+TEST_CASE_METHOD(ChamberOverlayFixture, "chamber dryer row follows the cycle",
+                 "[chamber][panel][xml][dryer][1299]") {
+    build_stock_overlay();
+    set_xml_int("chamber_heater_offline", 0);
+    set_xml_int("chamber_heater_fault", 0);
+    set_xml_int("chamber_heater_inhibited", 0);
+    set_xml_int("job_holds_machine", 0);
+
+    lv_obj_t* row = lv_obj_find_by_name(overlay_, "dryer_row");
+    lv_obj_t* start = lv_obj_find_by_name(overlay_, "dryer_start_button");
+    lv_obj_t* stop = lv_obj_find_by_name(overlay_, "dryer_stop_button");
+    lv_obj_t* text = lv_obj_find_by_name(overlay_, "dryer_text");
+    REQUIRE(row != nullptr);
+    REQUIRE(start != nullptr);
+    REQUIRE(stop != nullptr);
+    REQUIRE(text != nullptr);
+
+    SECTION("idle offers Start and nothing else") {
+        set_xml_int("chamber_dryer_active", 0);
+        set_xml_string("chamber_dryer_text", "");
+        helix::ui::UpdateQueue::instance().drain();
+        CHECK_FALSE(hidden(row));
+        CHECK_FALSE(hidden(start));
+        CHECK_FALSE(lv_obj_has_state(start, LV_STATE_DISABLED));
+        CHECK(hidden(stop));
+        CHECK(hidden(text));
+    }
+
+    SECTION("a running cycle shows its readout and Stop") {
+        set_xml_int("chamber_dryer_active", 1);
+        set_xml_string("chamber_dryer_text", "41/55°C  3:12 left");
+        helix::ui::UpdateQueue::instance().drain();
+        CHECK(hidden(start));
+        CHECK_FALSE(hidden(stop));
+        CHECK_FALSE(hidden(text));
+        CHECK(std::string(lv_label_get_text(text)) == "41/55°C  3:12 left");
+    }
+
+    SECTION("Start is disabled while a job holds the machine or the appliance is offline") {
+        set_xml_int("chamber_dryer_active", 0);
+        set_xml_int("job_holds_machine", 1);
+        helix::ui::UpdateQueue::instance().drain();
+        CHECK(lv_obj_has_state(start, LV_STATE_DISABLED));
+        set_xml_int("job_holds_machine", 0);
+        set_xml_int("chamber_heater_offline", 1);
+        helix::ui::UpdateQueue::instance().drain();
+        CHECK(lv_obj_has_state(start, LV_STATE_DISABLED));
+        set_xml_int("chamber_heater_offline", 0);
+        helix::ui::UpdateQueue::instance().drain();
+        CHECK_FALSE(lv_obj_has_state(start, LV_STATE_DISABLED));
+    }
+
+    SECTION("no dryer capability hides the row") {
+        set_xml_int("printer_has_chamber_dryer", 0);
+        helix::ui::UpdateQueue::instance().drain();
+        CHECK(hidden(row));
+    }
+}
+
+TEST_CASE_METHOD(ChamberOverlayFixture,
+                 "chamber dryer row fits the card at every size while a cycle runs",
+                 "[chamber][panel][geometry][dryer][1299]") {
+    const std::pair<int32_t, int32_t> sizes[] = {{480, 272},  {480, 320}, {800, 480},
+                                                 {1024, 600}, {272, 480}, {320, 480}};
+    for (const auto& [w, h] : sizes) {
+        CAPTURE(w);
+        CAPTURE(h);
+        ScopedGeometry geo(w, h);
+        build_stock_overlay();
+        for (int offline : {0, 1}) {
+            for (int external : {0, 1}) {
+                CAPTURE(offline);
+                CAPTURE(external);
+                set_worst_case_chamber_data();
+                set_xml_int("chamber_heater_fault", 0);
+                set_xml_int("chamber_heater_offline", offline);
+                set_xml_int("chamber_heater_externally_controlled", external);
+                set_xml_int("chamber_dryer_active", 1);
+                // The widest readout a stock cycle produces: a 12-hour run.
+                set_xml_string("chamber_dryer_text",
+                               (std::string("59/60°C  12:00 ") + lv_tr("left")).c_str());
+                helix::ui::UpdateQueue::instance().drain();
+                lv_obj_update_layout(overlay_);
+
+                REQUIRE_FALSE(hidden(lv_obj_find_by_name(overlay_, "dryer_text")));
+                lv_obj_t* card = lv_obj_find_by_name(overlay_, "chamber_display_card");
+                REQUIRE(card != nullptr);
+                const int32_t content_right =
+                    abs_x2(card) - lv_obj_get_style_pad_right(card, LV_PART_MAIN);
+                check_no_descendant_past_card_content(card, content_right);
+                check_no_label_truncated(card);
+
+                if (w > h) {
+                    lv_obj_t* strip = lv_obj_find_by_name(overlay_, "chamber_control_strip");
+                    lv_obj_t* custom = lv_obj_find_by_name(overlay_, "chamber_btn_custom");
+                    REQUIRE(strip != nullptr);
+                    REQUIRE(custom != nullptr);
+                    CHECK_FALSE(hidden(custom));
+                    CHECK(abs_y2(custom) <= abs_y2(strip));
+                }
+            }
+        }
+    }
+}
+
+TEST_CASE_METHOD(ChamberOverlayFixture, "chamber dryer Stop drives the controller",
+                 "[chamber][panel][xml][actions][dryer][1299]") {
+    build_stock_overlay();
+    MoonrakerClientMock client(MoonrakerClientMock::PrinterType::VORON_24);
+    MoonrakerAPI api(client, state());
+    TemperatureController controller(state(), &api);
+    controller.set_chamber_dryer(helix::chamber::backend_by_id("panda_breath"), true);
+    state().set_klippy_state_sync(helix::KlippyState::READY);
+    helix::PanelWidgetManager::instance().register_shared_resource<helix::TemperatureController>(
+        &controller);
+
+    set_xml_int("chamber_dryer_active", 1);
+    helix::ui::UpdateQueue::instance().drain();
+    lv_obj_t* stop = lv_obj_find_by_name(overlay_, "dryer_stop_button");
+    REQUIRE(stop != nullptr);
+    client.clear_gcode_script_history();
+    lv_obj_send_event(stop, LV_EVENT_CLICKED, nullptr);
+    helix::ui::UpdateQueue::instance().drain();
+    REQUIRE(client.gcode_script_history().size() == 1);
+    CHECK(client.gcode_script_history()[0] == "PANDA_BREATH_DRY_STOP");
+
+    helix::PanelWidgetManager::instance().register_shared_resource<helix::TemperatureController>(
+        std::shared_ptr<helix::TemperatureController>{});
+}
 
 TEST_CASE("diagnostics parse block writes display text subjects", "[chamber][subjects][text]") {
     LVGLTestFixture fixture;

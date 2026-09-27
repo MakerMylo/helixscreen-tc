@@ -171,6 +171,9 @@ class PrinterCapabilitiesState {
     /** @brief Set chamber element-temperature capability (backend reports one) */
     void set_has_chamber_element_temp(bool available);
 
+    /** @brief Set chamber filament-dryer capability (backend has a drying cycle) */
+    void set_has_chamber_dryer(bool available);
+
     /**
      * @brief Set stepper_z position_endstop value (for non-probe printers)
      *
@@ -327,6 +330,11 @@ class PrinterCapabilitiesState {
     /// 1 if the chamber backend reports the heating element's own temperature
     lv_subject_t* get_printer_has_chamber_element_temp_subject() const {
         return const_cast<lv_subject_t*>(&printer_has_chamber_element_temp_);
+    }
+
+    /// 1 if the chamber backend can run a filament-drying cycle
+    lv_subject_t* get_printer_has_chamber_dryer_subject() const {
+        return const_cast<lv_subject_t*>(&printer_has_chamber_dryer_);
     }
 
     /// 1 if printer has any chamber capability (sensor OR heater)
@@ -490,6 +498,7 @@ class PrinterCapabilitiesState {
         printer_has_chamber_heater_diagnostics_{};    // chamber heater exposes backend diagnostics
     lv_subject_t printer_has_chamber_filter_fan_{};   // chamber filter fan (output_pin)
     lv_subject_t printer_has_chamber_element_temp_{}; // backend reports element temperature
+    lv_subject_t printer_has_chamber_dryer_{};        // backend runs a filament-drying cycle
     lv_subject_t printer_has_chamber_{};              // combined: sensor OR heater
     lv_subject_t printer_has_screws_tilt_{};          // screws_tilt_adjust
     lv_subject_t printer_has_webcam_{};               // enabled webcam configured

@@ -80,7 +80,8 @@ bool read_unload_target_loaded(AmsBackend* backend, const AmsSystemInfo& info, i
     }
     return unload_target_is_loaded(target_slot, backend->slot_is_actively_loaded(target_slot),
                                    backend->slot_has_filament_at_toolhead(target_slot),
-                                   info.current_slot == target_slot, info.filament_loaded);
+                                   info.current_slot == target_slot, info.filament_loaded) ||
+           backend->slot_filament_parked_in_toolhead(target_slot);
 }
 
 FilamentOpPlan plan_live_unload(const BackendCaps& caps, int target_slot, bool target_is_loaded) {
