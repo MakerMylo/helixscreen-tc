@@ -338,6 +338,14 @@ drying temperature, especially with the bed off, so the readout pairs the live
 chamber temperature with the target and the appliance's own `remaining_seconds`
 ends the cycle. `DryerInfo::is_at_temp()` has no caller on this path.
 
+`remaining_seconds` is not a live countdown from the start: on the U1 rig a
+45°C/1h run reported `filament_drying_active: true`, `work_mode: 3`,
+`filament_timer: 1` and `remaining_seconds: 0` for its first two minutes, while
+the chamber climbed 25 to 30°C. The module updates the field only when the device
+sends one. The readout therefore omits the countdown while it reads 0, and nothing
+may treat 0 during an active run as "finished"; `filament_drying_active` is the
+only end signal.
+
 **Bed assist.** `start_chamber_drying(..., heat_bed)` also sets the bed to
 `chamber_dryer_bed_assist_c()`: 80°C, the bed temperature the stock appliance's own
 auto mode keys on (`auto_hotbedtemp`), capped at the bed's ceiling. The controller
