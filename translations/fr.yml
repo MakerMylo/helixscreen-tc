@@ -1897,6 +1897,7 @@ translations:
     chemins de courroie
   Measure belt path frequencies: Mesurer les fréquences des chemins de courroie
   Measure every tool's XYZ offset automatically: Mesure automatiquement l'offset XYZ de chaque outil
+  Measure pressure advance automatically: 'Mesure automatiquement le Pressure Advance'
   Measured (shaper off): Mesuré (shaper désactivé)
   Measured filament diameter: Diamètre du filament mesuré
   Measured pressure advance: 'Pressure Advance mesuré'

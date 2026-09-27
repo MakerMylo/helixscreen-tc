@@ -1885,6 +1885,7 @@ translations:
     de correia
   Measure belt path frequencies: Medir frequências dos caminhos de correia
   Measure every tool's XYZ offset automatically: Mede o offset XYZ de cada ferramenta automaticamente
+  Measure pressure advance automatically: 'Mede o Pressure Advance automaticamente'
   Measured (shaper off): Medido (shaper desligado)
   Measured filament diameter: Diâmetro medido do filamento
   Measured pressure advance: 'Pressure Advance medido'

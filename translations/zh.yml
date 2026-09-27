@@ -1747,6 +1747,7 @@ translations:
   Measure and compare belt path frequencies: 测量和比较皮带路径频率
   Measure belt path frequencies: 测量皮带路径频率
   Measure every tool's XYZ offset automatically: 自动测量每个工具的 XYZ 偏移
+  Measure pressure advance automatically: '自动测量压力提前'
   Measured (shaper off): 实测（关闭整形）
   Measured filament diameter: 测量的耗材直径
   Measured pressure advance: '测得的压力提前'
