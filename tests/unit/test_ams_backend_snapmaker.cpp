@@ -22,6 +22,7 @@
 #include "lvgl_ui_test_fixture.h" #include "lvgl/src/others/translation/lv_translation.h"
 #include "moonraker_api_mock.h"
 #include "moonraker_client_mock.h"
+#include "post_op_cooldown_manager.h"
 #include "printer_discovery.h"
 #include "printer_state.h"
 #include "spoolman_types.h" // SpoolInfo + apply_spool_to_slot (the picker-side writer)
@@ -923,6 +924,54 @@ TEST_CASE_METHOD(SnapmakerFixture,
         CHECK(backend.get_system_info().action == AmsAction::IDLE);
         CHECK_FALSE(AmsState::instance().was_slot_recently_unloaded(3));
     }
+}
+
+TEST_CASE_METHOD(LVGLUITestFixture,
+                 "Snapmaker a stale terminal on another lane does not end the op",
+                 "[ams][snapmaker][action_state]") {
+    helix::test::RegisteredBackend<AmsBackendSnapmaker> backend_reg(nullptr, nullptr);
+    AmsBackendSnapmaker& backend = *backend_reg;
+    auto& cooldown = PostOpCooldownManager::instance();
+    cooldown.init();
+    cooldown.cancel();
+    helix::ui::UpdateQueue::instance().drain();
+    process_lvgl(10);
+    REQUIRE_FALSE(cooldown.has_pending_timer());
+
+    // One frame, two lanes: lane 1 mid-load, lane 4 resting at a terminal it
+    // reached before this backend started watching.
+    json frame = feed_with_action(0, "load_feeding", "load_feeding");
+    frame.merge_patch(feed_with_action(3, "unload_finish", "unload_finish"));
+    SnapmakerTestAccess::handle_status(backend, frame);
+    helix::ui::UpdateQueue::instance().drain();
+    process_lvgl(10);
+    CHECK(backend.get_system_info().action == AmsAction::LOADING);
+    CHECK_FALSE(cooldown.has_pending_timer());
+
+    SECTION("the load's own terminal still ends it and arms the cooldown") {
+        SnapmakerTestAccess::handle_status(backend,
+                                           feed_with_action(0, "load_finish", "load_finish"));
+        helix::ui::UpdateQueue::instance().drain();
+        process_lvgl(10);
+        CHECK(backend.get_system_info().action == AmsAction::IDLE);
+        CHECK(cooldown.has_pending_timer());
+    }
+    SECTION("a real unload on lane 4 still ends and arms the cooldown") {
+        SnapmakerTestAccess::handle_status(backend,
+                                           feed_with_action(0, "load_finish", "load_finish"));
+        cooldown.cancel();
+        SnapmakerTestAccess::handle_status(backend,
+                                           feed_with_action(3, "unload_doing", "unload_doing"));
+        REQUIRE(backend.get_system_info().action == AmsAction::UNLOADING);
+        SnapmakerTestAccess::handle_status(backend,
+                                           feed_with_action(3, "unload_finish", "unload_finish"));
+        helix::ui::UpdateQueue::instance().drain();
+        process_lvgl(10);
+        CHECK(backend.get_system_info().action == AmsAction::IDLE);
+        CHECK(cooldown.has_pending_timer());
+    }
+    cooldown.cancel();
+    helix::ui::UpdateQueue::instance().drain();
 }
 
 TEST_CASE_METHOD(SnapmakerFixture, "Snapmaker a spool-insert preload ends at preload_finish",

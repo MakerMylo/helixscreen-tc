@@ -1692,8 +1692,8 @@ void AmsBackendSnapmaker::handle_status_update(const nlohmann::json& notificatio
                             helix::snapmaker::settled_op_outcome(snap.state, prev_action_state,
                                                                  snap.action_state);
                         channel_snapshots_[static_cast<size_t>(i)] = std::move(snap);
-                        // An unload terminal marks the lane only when this frame
-                        // moved the channel to it; see observed_change.
+                        // A terminal ends the op or marks the lane only when this
+                        // frame moved the channel to it; see observed_change.
                         const bool outcome_is_new =
                             settled_outcome.has_value() ||
                             helix::snapmaker::observed_change(prev_state, state);
@@ -1844,8 +1844,9 @@ void AmsBackendSnapmaker::handle_status_update(const nlohmann::json& notificatio
                                     // reported the deadlock (nightly, 2026-08-16).
                                     unloaded_lanes.push_back(i);
                                 }
-                                if (system_info_.action == AmsAction::LOADING ||
-                                    system_info_.action == AmsAction::UNLOADING) {
+                                if (outcome_is_new &&
+                                    (system_info_.action == AmsAction::LOADING ||
+                                     system_info_.action == AmsAction::UNLOADING)) {
                                     system_info_.action = AmsAction::IDLE;
                                     system_info_.operation_detail.clear();
                                     PostOpCooldownManager::instance().schedule();
