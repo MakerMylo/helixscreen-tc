@@ -97,6 +97,14 @@ what gets saved.
   the settings sub-pages use. Widget names and descriptions are properly translated for the
   first time: 18 of 37 names and every description were invisible to the string extractor and
   only appeared in English. 74 new keys across all nine languages.
+- **The home screen's printer picture shows what the printer is doing (#1397)** - while the
+  nozzle, bed or chamber heats, and until a heater that was turned off drops below 50°C, a
+  temperature chip sits on the picture; the part fan shows its speed and the light shows
+  when it is on. Tap a chip for that heater's graph, the fan controls or the light controls.
+  On the 13 most common printers (K1, K1C, K1 Max, K2 Plus, Adventurer 5M Pro, AD5X,
+  Creator 5 Pro, Qidi Q2, Snapmaker U1, SV08, Voron 0, Trident and V2) each chip points at
+  its part: beside the picture with a line to it on a wide tile, on top of it on a small
+  one. Other printers show the chips along the picture's edge.
 - **The filament sensor tile on the home screen is tappable** - a tap now opens the tile's
   modal, and Load, Unload, Purge, Resume and Cancel Print all work from it, sharing the same
   dispatch the runout guidance dialog uses. Which sensor the tile watches is picked in edit
@@ -169,6 +177,38 @@ what gets saved.
   is idle opens the file in the file view with its saved options already set - check the
   bed is clear, tap Print, and the job leaves the queue only once the print actually
   starts.
+
+- **The Motion screen is organized into Jog and Move tabs (#865)** - a labeled rail on the
+  left in landscape, icon pills in the header in portrait, and it opens on Jog every time.
+  The position readout that used to sit in a card beside the jog pad moved into the header,
+  so it stays visible on both tabs (the separate "Act:" line is gone; see the swap icon
+  below).
+- **The Move tab sends the toolhead to named bed positions** - a 3x3 grid laid out like the
+  bed seen from above (Rear at the top, Front at the bottom), outer positions 10% in from
+  the edges so the head clears rails and clamps; on a delta the eight outer positions sit
+  on a circle instead. Moves are XY only, homing first when needed, and the whole tab is
+  disabled while a print runs or is paused, or while the printer is not ready. Park and
+  Motors Off sit under the grid.
+- **Park parks the toolhead** - it runs the printer's own parking macro when one is
+  detected (`PARK`, `PARK_TOOLHEAD` or `TOOLHEAD_PARK`), otherwise sends the toolhead to
+  front-center; unhomed axes are homed first. Point it at a different macro in
+  Settings > Printing > Macro Buttons.
+- **Tap a coordinate in the header to move there** - a number pad opens for that axis, and
+  a value outside the printer's range is refused with the allowed range while nothing
+  moves; an unhomed axis is homed first, then moved. The swap icon beside the coordinates
+  toggles between Commanded and Actual position, lights up for Actual, and is remembered
+  per printer.
+- **Hold to repeat on the jog pad and Z buttons** - after about 0.4s the move repeats
+  roughly every 0.15s for as long as you hold; a quick tap is still exactly one move.
+- **Jog limits are quiet, and the edge is visible before you press** - holding into a limit
+  simply stops; a fresh press that cannot move at all says which axis is at its limit and
+  what the limit is; a partial move happens silently. The Z buttons grey out at their limit
+  (on printers whose bed moves in Z, that is the pair that would move the bed past it), and the
+  limits account for the printer's G-code offset.
+- **Motors Off has a second home and a print guard** - it sits on the Move tab as well as
+  the Controls panel, is disabled while a print runs or is paused, and if a print starts
+  while its confirmation dialog is open, confirming only tells you the motors stay on and
+  does nothing. E-stop remains the way to halt motion during a print.
 
 ### Changed
 

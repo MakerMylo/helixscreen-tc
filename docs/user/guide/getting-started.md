@@ -40,7 +40,10 @@ HelixScreen supports these touch interactions:
 | **Swipe** | Scroll lists, move through content |
 | **Long press** | Access alternate characters on keyboard |
 | **Swipe left/right on Home panel** | Switch between widget pages |
-| **Pinch/spread** | Zoom 3D views (G-code preview, bed mesh) |
+| **Pinch/spread** | Zoom the 3D G-code preview or bed mesh in on the spot between your fingers |
+| **Two-finger drag** | Move a zoomed 3D view around |
+
+Pinch and two-finger drag need a screen that detects two fingers at once. Resistive screens (Flashforge Adventurer 5M and 5X, Creality Nebula Pad, Ender-3 V3 and V3 KE) detect one finger, so on those printers the 3D views rotate with a one-finger drag but do not zoom or pan. On the bed mesh, pinching all the way out returns to the full view.
 
 Temperature displays are tappable shortcuts — tap the nozzle or bed temperature on the Home panel to jump directly to that temperature control panel.
 

@@ -137,6 +137,33 @@ void init_fan_control_overlay(PrinterState& printer_state) {
     INIT_GLOBAL_OVERLAY(FanControlOverlay, g_fan_control_overlay, printer_state);
 }
 
+namespace helix {
+lv_obj_t* open_fan_control_overlay(lv_obj_t* parent_screen) {
+    auto& overlay = get_fan_control_overlay();
+    overlay.set_api(get_moonraker_api());
+    lv_obj_t* panel = overlay.get_root();
+    if (!panel && parent_screen) {
+        if (!overlay.are_subjects_initialized()) {
+            overlay.init_subjects();
+        }
+        overlay.register_callbacks();
+
+        panel = overlay.create(parent_screen);
+        if (!panel) {
+            spdlog::error("[FanControlOverlay] Failed to create fan control overlay");
+            return nullptr;
+        }
+    }
+    if (panel) {
+        // Registered before every push: a NavigationManager shutdown drops the
+        // registrations, and registering is idempotent.
+        NavigationManager::instance().register_overlay_instance(panel, &overlay);
+        NavigationManager::instance().push_overlay(panel);
+    }
+    return panel;
+}
+} // namespace helix
+
 // ============================================================================
 // CONSTRUCTOR / DESTRUCTOR
 // ============================================================================
@@ -180,6 +207,8 @@ lv_obj_t* FanControlOverlay::create(lv_obj_t* parent) {
         spdlog::error("[{}] Failed to create overlay from XML", get_name());
         return nullptr;
     }
+
+    lv_obj_add_event_cb(overlay_root_, on_root_deleted, LV_EVENT_DELETE, nullptr);
 
     // Find container widget
     fans_container_ = lv_obj_find_by_name(overlay_root_, "fans_container");
@@ -277,18 +306,37 @@ void FanControlOverlay::cleanup() {
         auto freeze = helix::ui::UpdateQueue::instance().scoped_freeze();
         helix::ui::UpdateQueue::instance().drain();
 
-        fans_observer_.reset();
-        anim_settings_observer_.reset();
-        unsubscribe_from_fan_speeds();
-        // Stop spin animations before clearing cards
-        for (auto& card : auto_fan_cards_) {
-            helix::ui::fan_spin_stop(card.fan_icon);
-        }
-        // Clear widget tracking vectors (widgets will be destroyed by OverlayBase::cleanup)
-        animated_fan_dials_.clear();
-        auto_fan_cards_.clear();
+        release_fan_widgets();
     }
     OverlayBase::cleanup();
+}
+
+void FanControlOverlay::release_fan_widgets() {
+    fans_observer_.reset();
+    anim_settings_observer_.reset();
+    unsubscribe_from_fan_speeds();
+    // Stop spin animations before clearing cards
+    for (auto& card : auto_fan_cards_) {
+        helix::ui::fan_spin_stop(card.fan_icon);
+    }
+    animated_fan_dials_.clear();
+    auto_fan_cards_.clear();
+}
+
+void FanControlOverlay::on_root_deleted(lv_event_t* e) {
+    // Resolved through the global, not user_data: a printer switch destroys the
+    // overlay before freeing its tree, and the re-created overlay can be opened
+    // on a new root before the old one is freed.
+    if (!g_fan_control_overlay ||
+        g_fan_control_overlay->overlay_root_ != lv_event_get_target_obj(e)) {
+        return;
+    }
+    // LVGL sends LV_EVENT_DELETE before deleting the children, so the dials'
+    // widgets are still alive here.
+    auto& self = *g_fan_control_overlay;
+    self.release_fan_widgets();
+    self.fans_container_ = nullptr;
+    self.overlay_root_ = nullptr;
 }
 
 // ============================================================================

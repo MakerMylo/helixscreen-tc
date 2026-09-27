@@ -49,7 +49,6 @@ class LedControlsWidget : public PanelWidget {
 
     lv_obj_t* widget_obj_ = nullptr;
     lv_obj_t* parent_screen_ = nullptr;
-    lv_obj_t* led_control_panel_ = nullptr;
 
     /// Built with the widget so its subjects exist before the manager parses
     /// this tile's component; a binding whose subject is missing at parse time

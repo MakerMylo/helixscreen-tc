@@ -39,6 +39,23 @@ settings           navigate settings
 advanced           navigate advanced
 print-select       navigate print-select
 
+# Printer image callouts (home widget, prestonbrown/helixscreen#1397).
+# callouts-2x2 and callouts-untagged just need the widget's natural default
+# span, so --printer selects a tagged vs untagged printer image. callouts-4x2 needs
+# an 8x4-track span, which needs colspan8 free at row0-4 - space the default
+# 800x480 layout has no slack for, since 4 neighboring tiles already fill
+# it. That space is cleared by selecting each blocking tile (a press+release
+# at its centre) and clicking its edit-mode trash pill (an unnamed floating
+# button, hence the literal offsets: BTN_SIZE 32 / OVERHANG 8 at the small
+# breakpoint 800x480 resolves to, src/ui/grid_edit_mode.cpp), before
+# resizing printer_image's right edge the same way HELIXCTL.md's own resize
+# recipes do. Tied to the current default_layout.json small-tier placements;
+# a layout change that moves temperature/bed_temperature/fan_stack/ams
+# needs matching coordinate updates here.
+callouts-2x2       navigate home
+callouts-4x2       navigate home; set settings_long_press_time 10000; long_press 200 111; press 379 63; release 379 63; press 424 5; release 424 5; press 498 63; release 498 63; press 531 5; release 531 5; press 379 181; release 379 181; press 412 123; release 412 123; press 498 181; release 498 181; press 531 123; release 531 123; press 200 111; release 200 111; press 317 111; move 790 111; release 790 111; click nav_btn_edit_done
+callouts-untagged  navigate home
+
 # Control overlays
 motion             navigate controls; click btn_motion
 nozzle-temp        navigate controls; click btn_nozzle_temp

@@ -467,6 +467,7 @@ translations:
     — 使用Z偏移面板进行调整
   Cartographer touch calibrate sent: Cartographer触摸校准已发送
   Category: 类别
+  Center: '中心'
   Center QR code in frame: 将 QR 码对准画面中央
   'Chamb:': '腔:'
   Chamber: 腔体
@@ -1245,6 +1246,7 @@ translations:
   Flying Toasters: 飞行烤面包机
   Follow active tool: 跟随当前工具
   Follow graph screen: 跟随图表屏幕
+  Force/weight sensors: '力/重量传感器'
   Forget: 忘记
   Forget Network?: 忘记网络？
   Forget network '{}'? You will need the password to reconnect.: 忘记网络 '{}'？重新连接时需要密码。
@@ -1260,6 +1262,9 @@ translations:
   : "频率差: 路径 A 与 B 之间的差异。低于 2 Hz 的差异超出此测量的分辨能力，因此视为匹配。\n\n匹配度: 两条皮带的接近程度，以皮带 A 频率的百分比表示。高于 95% 为优秀;低于 90% 则值得调整。"
   From Buffer: 来自缓冲区
   From Version: 起始版本
+  Front: '前'
+  Front Left: '左前'
+  Front Right: '右前'
   Full: 完整
   G-code Console: G-code 控制台
   G-code Preview: G-code 预览
@@ -1500,6 +1505,7 @@ translations:
   It's a new spool: 这是新料盘
   Jammed at the Toolhead: 工具头处堵塞
   Job Queue: 任务队列
+  Jog: '点动'
   Jog Speed XY: XY 移动速度
   Jog Speed Z: Z 移动速度
   Jog Y until the nozzle is centered over the chute opening, then tap Save.: 点动 Y 轴，直到喷嘴位于排料口开口中心，然后点击保存。
@@ -1551,6 +1557,7 @@ translations:
   LED strip available for lighting control: LED 灯带可用于照明控制
   LEDs: LED
   LEDs controlled by the light button: 由灯光按钮控制的 LED
+  LOAD CELLS: '称重传感器'
   LOADED: 已加载
   LOCKED: 已锁定
   LOT-2024-001: LOT-2024-001
@@ -1580,6 +1587,7 @@ translations:
   Layout: 布局
   Learn More: 了解更多
   LedSelect: 选择 LED
+  Left: '左'
   Length of filament to purge: '要排出的耗材长度'
   Length of the cooling tube section: '冷却管段的长度'
   'Length:': 长度：
@@ -1596,6 +1604,8 @@ translations:
   Listening: 正在监听
   Live view from your webcam: 摄像头实时画面
   Load: 加载
+  Load Cell: '称重传感器'
+  Load Cells: '称重传感器'
   Load Failed: '装载失败'
   Load Filament: 加载耗材
   Load a filament first before trying to unload: 请先装载耗材，再尝试卸载
@@ -1675,6 +1685,7 @@ translations:
   Macro to cancel an active print: 取消当前打印的宏
   Macro to clean/wipe the nozzle: 清洁/擦拭喷嘴的宏
   Macro to load filament into extruder: 将耗材加载到挤出机的宏
+  Macro to park the toolhead at a safe position: '将工具头停靠到安全位置的宏'
   Macro to pause an active print: 暂停当前打印的宏
   Macro to purge/prime the nozzle: 排料/预挤喷嘴的宏
   Macro to resume a paused print: 恢复暂停打印的宏
@@ -1772,6 +1783,8 @@ translations:
   Motors Off: 关闭电机
   'Motors disable failed: {}': '禁用电机失败: {}'
   Motors disabled: 电机已禁用
+  Motors off: ''
+  Motors stay on while a print is active: 打印期间电机保持开启
   Mount: 装上
   Move: 移动
   Move out of range: '移动超出范围'
@@ -2057,6 +2070,7 @@ translations:
   Parameters: 参数
   Park: '停放'
   Park the AFC system: '停放 AFC 系统'
+  Park Toolhead: '停放工具头'
   Part: 零件
   Part Cooling Fan: 零件冷却风扇
   Part Fan: 零件风扇
@@ -2340,6 +2354,9 @@ translations:
   Ready to Apply: 准备应用
   Ready to calibrate: 准备校准
   Ready to pluck: 准备拨动
+  Rear: '后'
+  Rear Left: '左后'
+  Rear Right: '右后'
   Reason: 原因
   ? "Reason: {}\n\nThe printer cannot resume this print. Restart from the beginning?"
   : "原因：{}\n\n打印机无法恢复此次打印。要从头重新开始吗？"
@@ -2498,6 +2515,7 @@ translations:
   Review your changes: 查看您的更改
   Review your configuration below, then click Finish to save: 请检查以下配置，然后点击完成以保存
   Rewinding: 回卷中
+  Right: '右'
   'Role:': 角色：
   Rotating tips for using your printer: 轮播的打印机使用提示
   Rotation: 旋转

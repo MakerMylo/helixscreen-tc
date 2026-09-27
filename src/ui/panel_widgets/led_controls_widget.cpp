@@ -4,7 +4,6 @@
 #include "led_controls_widget.h"
 
 #include "ui_event_safety.h"
-#include "ui_nav_manager.h"
 
 #include "led/ui_led_control_overlay.h"
 #include "panel_widget_registry.h"
@@ -49,7 +48,6 @@ void LedControlsWidget::detach() {
     }
     widget_obj_ = nullptr;
     parent_screen_ = nullptr;
-    led_control_panel_ = nullptr;
 }
 
 void LedControlsWidget::on_led_controls_clicked(lv_event_t* e) {
@@ -64,26 +62,7 @@ void LedControlsWidget::on_led_controls_clicked(lv_event_t* e) {
 
 void LedControlsWidget::handle_clicked() {
     spdlog::debug("[LedControlsWidget] Clicked - opening LED control overlay");
-
-    if (!led_control_panel_ && parent_screen_) {
-        auto& overlay = get_led_control_overlay();
-
-        if (!overlay.are_subjects_initialized()) {
-            overlay.init_subjects();
-        }
-        overlay.register_callbacks();
-
-        led_control_panel_ = overlay.create(parent_screen_);
-        if (!led_control_panel_) {
-            spdlog::error("[LedControlsWidget] Failed to create LED control overlay");
-            return;
-        }
-        NavigationManager::instance().register_overlay_instance(led_control_panel_, &overlay);
-    }
-
-    if (led_control_panel_) {
-        NavigationManager::instance().push_overlay(led_control_panel_);
-    }
+    open_led_control_overlay(parent_screen_);
 }
 
 } // namespace helix

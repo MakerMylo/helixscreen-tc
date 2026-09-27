@@ -248,6 +248,8 @@ lv_indev_t* DisplayBackendFbdev::create_input_pointer() {
         return nullptr;
     }
 
+    configure_touch_gestures(touch_);
+
     // Determine if touch calibration is needed using unified logic.
     // Reads device name, phys, and capabilities from sysfs.
     int event_num = -1;

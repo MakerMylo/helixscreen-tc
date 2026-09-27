@@ -138,12 +138,8 @@ inline bool parse_input_prop_direct(const std::string& props_hex) {
     std::string low_word =
         (last_space != std::string::npos) ? props_hex.substr(last_space + 1) : props_hex;
 
-    try {
-        unsigned long long props = std::stoull(low_word, nullptr, 16);
-        return (props & (1ULL << 1)) != 0;
-    } catch (...) {
-        return false;
-    }
+    const auto props = helix::text_io::parse_leading<unsigned long long>(low_word, 16);
+    return props && (*props & (1ULL << 1)) != 0;
 }
 
 struct Point {

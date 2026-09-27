@@ -278,28 +278,7 @@ void PrinterManagerOverlay::on_chip_fans_clicked(lv_event_t* e) {
     (void)e;
     spdlog::debug("[Printer Manager] Fans chip clicked");
 
-    auto& pm = get_printer_manager_overlay();
-    if (!pm.fan_control_panel_) {
-        auto& overlay = get_fan_control_overlay();
-        if (!overlay.are_subjects_initialized()) {
-            overlay.init_subjects();
-        }
-        overlay.register_callbacks();
-        overlay.set_api(get_moonraker_api());
-
-        lv_obj_t* screen = lv_display_get_screen_active(nullptr);
-        pm.fan_control_panel_ = overlay.create(screen);
-        if (!pm.fan_control_panel_) {
-            spdlog::warn("[Printer Manager] Failed to create fan control overlay");
-            return;
-        }
-        NavigationManager::instance().register_overlay_instance(pm.fan_control_panel_, &overlay);
-    }
-
-    if (pm.fan_control_panel_) {
-        get_fan_control_overlay().set_api(get_moonraker_api());
-        NavigationManager::instance().push_overlay(pm.fan_control_panel_);
-    }
+    helix::open_fan_control_overlay(lv_display_get_screen_active(nullptr));
 }
 
 void PrinterManagerOverlay::on_chip_power_clicked(lv_event_t* e) {

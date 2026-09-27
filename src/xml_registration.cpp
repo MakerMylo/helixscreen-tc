@@ -23,6 +23,7 @@
 #include "ui_gcode_viewer.h"
 #include "ui_hsv_picker.h"
 #include "ui_icon_codepoints.h"
+#include "ui_leader_line.h"
 #include "ui_lock_screen.h"
 #include "ui_markdown.h"
 #include "ui_notification_badge.h"
@@ -329,15 +330,16 @@ void register_xml_components() {
 
     // Register semantic text widgets (AFTER theme init, BEFORE components that use them)
     ui_text_init();
-    ui_text_input_init();         // <text_input> with bind_text support
-    ui_spinner_init();            // <spinner> with responsive sizing
-    ui_button_init();             // <ui_button> with variant styles and auto-contrast
-    ui_split_button_init();       // <ui_split_button> with primary action + dropdown
-    ui_markdown_init();           // <ui_markdown> with theme-aware markdown rendering
-    ui_notification_badge_init(); // <notification_badge> with auto-contrast text
-    ui_carousel_init();           // <ui_carousel> horizontal scroll-snap carousel
-    register_xml("carousel.xml"); // <carousel> XML component wrapping ui_carousel
-    ui_confetti_init();           // <ui_confetti> celebration animation canvas
+    ui_text_input_init();                     // <text_input> with bind_text support
+    ui_spinner_init();                        // <spinner> with responsive sizing
+    ui_button_init();                         // <ui_button> with variant styles and auto-contrast
+    ui_split_button_init();                   // <ui_split_button> with primary action + dropdown
+    ui_markdown_init();                       // <ui_markdown> with theme-aware markdown rendering
+    ui_notification_badge_init();             // <notification_badge> with auto-contrast text
+    helix::ui::register_leader_line_widget(); // <leader_line>, a bare lv_line for callouts
+    ui_carousel_init();                       // <ui_carousel> horizontal scroll-snap carousel
+    register_xml("carousel.xml");             // <carousel> XML component wrapping ui_carousel
+    ui_confetti_init();                       // <ui_confetti> celebration animation canvas
 #if HELIX_HAS_BELT_TUNER
     helix::ui::register_belt_trace_widget();      // <belt_trace> waveform/spectrum strip, must
                                                   // precede register_xml("panel_belt_tension.xml")
@@ -432,11 +434,13 @@ void register_xml_components() {
     register_xml("width_indicator.xml");
     register_xml("probe_indicator.xml");
     register_xml("filament_sensor_row.xml");
+    register_xml("load_cell_row.xml");
     register_xml("temp_display.xml");
     register_xml("components/home_action_tile.xml");
     register_xml("components/nozzle_icon.xml");
     register_xml("components/heater_icon.xml");
     register_xml("components/heater_status.xml");
+    register_xml("components/activity_chip.xml");
     // Chamber-heater fault banner - instantiated by both orientation
     // branches of the chamber card inside temp_graph_overlay, so it must
     // load before temp_graph_overlay.xml, later here.
@@ -622,6 +626,11 @@ void register_xml_components() {
     register_xml("components/home_next_page_slot.xml");
     register_xml("home_panel.xml");
     register_xml("controls_panel.xml");
+    // The AMS environment overlay registers zone_tab lazily on first open; the
+    // motion panel's tab rail instantiates it too, so it must be known here,
+    // before motion_panel.xml parses — along with the Move tab's bed grid.
+    register_xml("components/zone_tab.xml");
+    register_xml("components/move_preset_grid.xml");
     register_xml("motion_panel.xml");
     // TempGraphOverlay is the only temperature overlay; there are no per-heater
     // nozzle/bed/chamber_temp_panel.xml components. TemperatureService::setup_panel()

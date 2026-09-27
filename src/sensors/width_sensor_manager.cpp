@@ -6,6 +6,7 @@
 #include "ui_update_queue.h"
 
 #include "config.h"
+#include "json_utils.h"
 #include "spdlog/spdlog.h"
 #include "static_subject_registry.h"
 
@@ -190,15 +191,16 @@ void WidthSensorManager::load_config(const nlohmann::json& config) {
             continue;
         }
 
-        std::string klipper_name = sensor_json["klipper_name"].get<std::string>();
+        std::string klipper_name = helix::json_util::as_string(sensor_json["klipper_name"]);
         auto* sensor = find_config(klipper_name);
 
         if (sensor) {
             if (sensor_json.contains("role")) {
-                sensor->role = width_role_from_string(sensor_json["role"].get<std::string>());
+                sensor->role =
+                    width_role_from_string(helix::json_util::as_string(sensor_json["role"]));
             }
             if (sensor_json.contains("enabled")) {
-                sensor->enabled = sensor_json["enabled"].get<bool>();
+                sensor->enabled = helix::json_util::as_bool(sensor_json["enabled"]);
             }
             spdlog::debug("[WidthSensorManager] Loaded config for {}: role={}, enabled={}",
                           klipper_name, width_role_to_string(sensor->role), sensor->enabled);
@@ -243,15 +245,11 @@ void WidthSensorManager::load_config_from_file() {
 
     // Reuse load_config() to avoid deserialization drift (mirrors save_config_to_file)
     std::string base_path = config->df() + "width_sensors";
-    try {
-        const nlohmann::json* config_json = config->try_get_json(base_path);
-        if (config_json != nullptr) {
-            load_config(*config_json);
-        } else {
-            spdlog::debug("[WidthSensorManager] No saved config found");
-        }
-    } catch (const std::exception& e) {
-        spdlog::debug("[WidthSensorManager] No saved config found: {}", e.what());
+    const nlohmann::json* config_json = config->try_get_json(base_path);
+    if (config_json != nullptr) {
+        load_config(*config_json);
+    } else {
+        spdlog::debug("[WidthSensorManager] No saved config found");
     }
 
     spdlog::info("[WidthSensorManager] Config loaded from file");

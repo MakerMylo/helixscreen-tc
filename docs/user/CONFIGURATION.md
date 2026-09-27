@@ -676,7 +676,8 @@ Located in the `motion` section. These back the jog pad; set them from the scree
     "coarse_inner": 1.0,
     "coarse_outer": 10.0,
     "turbo_inner": 10.0,
-    "turbo_outer": 50.0
+    "turbo_outer": 50.0,
+    "show_actual_position": false
   }
 }
 ```
@@ -697,6 +698,11 @@ Located in the `motion` section. These back the jog pad; set them from the scree
 **Type:** number
 **Range:** `0.01` - `200`
 **Description:** Distance in mm moved per tap, for each jog mode's inner and outer ring. Defaults: Fine 0.1/1, Coarse 1/10, Turbo 10/50. The ring labels on the jog pad show whatever you set.
+
+### `show_actual_position`
+**Type:** boolean
+**Default:** `false`
+**Description:** What the X/Y/Z coordinates on the Motion screen show when it opens: the commanded position (`false`) or the actual measured position (`true`). Tapping the swap icon next to the coordinates flips it, so this is normally set from the screen rather than by hand. Remembered per printer.
 
 ---
 

@@ -5,6 +5,7 @@
 
 #include "ui_nav_manager.h"
 
+#include "exception_policy.h"
 #include "helix-xml/src/xml/lv_xml.h"
 #include "settings_manager.h"
 #include "static_panel_registry.h"
@@ -34,7 +35,7 @@ ConsoleSettingsOverlay& get_global_console_settings() {
     if (!g_console_settings) {
         spdlog::error(
             "[Console Settings] get_global_console_settings() called before initialization!");
-        throw std::runtime_error("ConsoleSettingsOverlay not initialized");
+        helix::throw_or_abort(std::runtime_error("ConsoleSettingsOverlay not initialized"));
     }
     return *g_console_settings;
 }

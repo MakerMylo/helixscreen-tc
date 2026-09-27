@@ -278,7 +278,11 @@ PanelWidgetManager::populate_widgets(const std::string& panel_id, lv_obj_t* cont
         // (or a throwing factory/set_config) must skip only THIS widget, not abort
         // the whole dashboard rebuild. Guard per-iteration so one bad entry never
         // takes the page down with it.
+#if defined(__cpp_exceptions)
         try {
+#else
+        {
+#endif
             // Acquire instance: reuse existing or create via factory
             auto reuse_it = reuse.find(entry.id);
             if (reuse_it != reuse.end()) {
@@ -296,11 +300,15 @@ PanelWidgetManager::populate_widgets(const std::string& panel_id, lv_obj_t* cont
             } else {
                 slot.component_name = "panel_widget_" + entry.id;
             }
+#if defined(__cpp_exceptions)
         } catch (const std::exception& e) {
             spdlog::error("[PanelWidgetManager] Widget '{}' configuration failed: {}", entry.id,
                           e.what());
             continue;
         }
+#else
+        }
+#endif
 
         slot.hardware_gated = gated;
         slot.gate_hint = hint;
@@ -1160,7 +1168,11 @@ PanelWidgetManager::populate_widgets(const std::string& panel_id, lv_obj_t* cont
     std::vector<std::unique_ptr<PanelWidget>> result;
 
     for (const auto& p : placed) {
+#if defined(__cpp_exceptions)
         try {
+#else
+        {
+#endif
             auto& slot = enabled_widgets[p.slot_index];
 
             // Create XML component
@@ -1262,10 +1274,14 @@ PanelWidgetManager::populate_widgets(const std::string& panel_id, lv_obj_t* cont
                                                                       metrics.gutter, p.colspan)));
                 }
             }
+#if defined(__cpp_exceptions)
         } catch (const std::exception& e) {
             spdlog::error("[PanelWidgetManager] Widget '{}' creation failed: {}",
                           enabled_widgets[p.slot_index].widget_id, e.what());
         }
+#else
+        }
+#endif
     }
 
     spdlog::debug("[PanelWidgetManager] Populated {} widgets ({} with factories) via grid for '{}'",

@@ -25,6 +25,9 @@ HttpExecutor::~HttpExecutor() {
 }
 
 void HttpExecutor::start() {
+#if defined(ESP_PLATFORM)
+    return;
+#endif
     if (running_) {
         return;
     }
@@ -187,6 +190,7 @@ void HttpExecutor::loop(std::shared_ptr<SharedState> state, HttpExecutor* owner,
         }
         guard.c = &state->inflight;
 
+#if defined(__cpp_exceptions)
         try {
             item.first();
             item.second.set_value();
@@ -198,6 +202,10 @@ void HttpExecutor::loop(std::shared_ptr<SharedState> state, HttpExecutor* owner,
                 // Promise already satisfied or no shared state — nothing to do.
             }
         }
+#else
+        item.first();
+        item.second.set_value();
+#endif
     }
 
     // NOTE: `owner` may already be destroyed by the time we reach here if

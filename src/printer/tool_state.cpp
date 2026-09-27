@@ -970,8 +970,8 @@ void ToolState::apply_spool_assignments(const nlohmann::json& data) {
         }
 
         const auto& entry = data[key];
-        tool.spoolman_id = entry.value("spoolman_id", 0);
-        tool.spool_name = entry.value("spool_name", std::string{});
+        tool.spoolman_id = json_util::safe_int(entry, "spoolman_id");
+        tool.spool_name = json_util::safe_string(entry, "spool_name");
         tool.remaining_weight_g = json_util::safe_float(entry, "remaining_weight_g", -1.0f);
         tool.total_weight_g = json_util::safe_float(entry, "total_weight_g", -1.0f);
 
@@ -986,24 +986,19 @@ void ToolState::save_spool_json() const {
     auto json_data = spool_assignments_to_json();
     std::string path = hfs::join_path(config_dir_, SPOOL_JSON_FILENAME);
 
-    try {
-        // Ensure directory exists
-        hfs::create_directories(config_dir_);
+    // Ensure directory exists
+    hfs::create_directories(config_dir_);
 
-        // The installer links this file out to printer_data; rename onto the target.
-        path = helix::paths::write_target(path);
+    // The installer links this file out to printer_data; rename onto the target.
+    path = helix::paths::write_target(path);
 
-        // Atomic save: write to temp file, then rename to avoid partial writes on crash/power loss
-        if (!helix::text_io::write_file_atomic(path, helix::json_util::safe_dump(json_data, 2))) {
-            spdlog::error("[ToolState] Failed to write spool JSON to {}: {}", path,
-                          strerror(errno));
-            return;
-        }
-
-        spdlog::debug("[ToolState] Saved spool assignments to {}", path);
-    } catch (const std::exception& e) {
-        spdlog::warn("[ToolState] Error saving spool JSON: {}", e.what());
+    // Atomic save: write to temp file, then rename to avoid partial writes on crash/power loss
+    if (!helix::text_io::write_file_atomic(path, helix::json_util::safe_dump(json_data, 2))) {
+        spdlog::error("[ToolState] Failed to write spool JSON to {}: {}", path, strerror(errno));
+        return;
     }
+
+    spdlog::debug("[ToolState] Saved spool assignments to {}", path);
 }
 
 bool ToolState::load_spool_json() {
@@ -1014,21 +1009,21 @@ bool ToolState::load_spool_json() {
         return false;
     }
 
-    try {
-        auto text = helix::text_io::read_file(path);
-        if (!text) {
-            spdlog::warn("[ToolState] Failed to open {}", path);
-            return false;
-        }
-
-        auto data = nlohmann::json::parse(*text);
-        apply_spool_assignments(data);
-        spdlog::info("[ToolState] Loaded spool assignments from {}", path);
-        return true;
-    } catch (const std::exception& e) {
-        spdlog::warn("[ToolState] Error loading spool JSON: {}", e.what());
+    auto text = helix::text_io::read_file(path);
+    if (!text) {
+        spdlog::warn("[ToolState] Failed to open {}", path);
         return false;
     }
+
+    auto data = nlohmann::json::parse(*text, nullptr, false);
+    if (data.is_discarded()) {
+        spdlog::warn("[ToolState] Spool JSON at {} is not valid JSON", path);
+        return false;
+    }
+
+    apply_spool_assignments(data);
+    spdlog::info("[ToolState] Loaded spool assignments from {}", path);
+    return true;
 }
 
 void ToolState::save_spool_assignments_if_dirty(IMoonrakerAPI* api) {

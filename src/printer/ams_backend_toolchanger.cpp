@@ -9,6 +9,7 @@
 #include "ams_tool_map_sync.h"
 #include "color_utils.h"
 #include "i_moonraker_api.h"
+#include "json_utils.h"
 #include "lane_legacy_migration.h"
 #include "lane_source_store.h"
 #include "lvgl/src/others/translation/lv_translation.h"
@@ -800,7 +801,8 @@ void AmsBackendToolChanger::parse_toolchanger_state(const nlohmann::json& tc_dat
     // Parse tool list: toolchanger.tool_numbers and toolchanger.tool_names
     // This can be used to dynamically update the tool list
     if (tc_data.contains("tool_numbers") && tc_data["tool_numbers"].is_array()) {
-        spdlog::trace("[AMS ToolChanger] Tool numbers: {}", tc_data["tool_numbers"].dump());
+        spdlog::trace("[AMS ToolChanger] Tool numbers: {}",
+                      helix::json_util::safe_dump(tc_data["tool_numbers"]));
     }
 }
 

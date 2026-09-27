@@ -103,6 +103,12 @@
                             description="Macro for chamber/bed heat soak"
                             description_tag="Macro for chamber/bed heat soak" dropdown_width="#macro_dropdown_width"
                             callback="on_heat_soak_changed"/>
+      <!-- Park Toolhead -->
+      <setting_dropdown_row name="row_park_toolhead"
+                            label="Park" label_tag="Park" icon="cursor_move"
+                            description="Macro to park the toolhead at a safe position"
+                            description_tag="Macro to park the toolhead at a safe position"
+                            dropdown_width="#macro_dropdown_width" callback="on_park_toolhead_changed"/>
       <!-- ================================================================== -->
       <!-- INFO NOTE -->
       <!-- ================================================================== -->

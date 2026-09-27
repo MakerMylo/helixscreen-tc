@@ -50,6 +50,7 @@ case "$1" in
     exec)
         case "$*" in
             *pgrep*)
+                [ -n "${MOCK_PGREP_LOG:-}" ] && echo "$*" >> "$MOCK_PGREP_LOG"
                 if [ -n "${MOCK_PGREP_HITS:-}" ]; then
                     n=$(cat "$MOCK_PGREP_HITS" 2>/dev/null || echo 0)
                     n=$((n + 1))
@@ -149,4 +150,14 @@ wait_for_line() { # <substring> <file>
     [ "$(cat "$MOCK_PGREP_HITS")" -eq 2 ]
     # The git sequence ran, and only after the wait cleared.
     grep -qF "git reset" "$MOCK_DOCKER_LOG"
+}
+
+@test "the orphan probe counts only live makes, never a zombie" {
+    # An unreaped zombie make never exits, so a probe that matched it would
+    # block every later run.
+    export MOCK_PGREP_LOG="$BATS_TEST_TMPDIR/pgrep-log"
+
+    run "$SCRIPT" test
+    [ "$status" -eq 0 ]
+    grep -qF "pgrep -x -r R,S,D,T,t make" "$MOCK_PGREP_LOG"
 }

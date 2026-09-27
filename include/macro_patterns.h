@@ -43,6 +43,19 @@ inline const std::vector<std::string>& clean_nozzle() {
 }
 
 /**
+ * @brief Macro names that mean "park the toolhead"
+ *
+ * Read by StandardMacros' ParkToolhead slot detection. Matching is exact-name
+ * everywhere this table is consumed, so an underscore-prefixed form such as
+ * _PARK never matches: the leading underscore is the config author marking a
+ * macro internal, and invoking one is machine motion nobody sanctioned.
+ */
+inline const std::vector<std::string>& park_toolhead() {
+    static const std::vector<std::string> kPatterns = {"PARK", "PARK_TOOLHEAD", "TOOLHEAD_PARK"};
+    return kPatterns;
+}
+
+/**
  * @brief The macro that wraps a multi-head filament feed
  *
  * Named in four places: the discovery scan that sets the capability flag, the

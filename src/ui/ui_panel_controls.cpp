@@ -10,6 +10,7 @@
 #include "ui_fonts.h"
 #include "ui_icon_codepoints.h"
 #include "ui_modal.h"
+#include "ui_motors_off.h"
 #include "ui_nav_manager.h"
 #include "ui_notification.h"
 #include "ui_overlay_temp_graph.h"
@@ -97,7 +98,6 @@ ControlsPanel::~ControlsPanel() {
     // Note: safe_delete_obj handles shutdown guards (lv_is_initialized, is_destroying_all, etc.)
     using helix::ui::safe_delete_obj;
     safe_delete_obj(motion_panel_);
-    safe_delete_obj(fan_control_panel_);
     safe_delete_obj(bed_mesh_panel_);
     safe_delete_obj(pa_cal_panel_);
     safe_delete_obj(zoffset_panel_);
@@ -1334,34 +1334,8 @@ void ControlsPanel::handle_cooling_clicked() {
 void ControlsPanel::handle_secondary_fans_clicked() {
     spdlog::debug("[{}] Secondary fans clicked - opening Fan Control overlay", get_name());
 
-    // Create fan control overlay on first access (lazy initialization)
-    if (!fan_control_panel_ && parent_screen_) {
-        auto& overlay = get_fan_control_overlay();
-
-        // Initialize subjects and callbacks if not already done
-        if (!overlay.are_subjects_initialized()) {
-            overlay.init_subjects();
-        }
-        overlay.register_callbacks();
-
-        // Pass the API reference for fan commands
-        overlay.set_api(api_);
-
-        // Create overlay UI
-        fan_control_panel_ = overlay.create(parent_screen_);
-        if (!fan_control_panel_) {
-            NOTIFY_ERROR(lv_tr("Failed to load fan control overlay"));
-            return;
-        }
-
-        // Register with NavigationManager for lifecycle callbacks
-        NavigationManager::instance().register_overlay_instance(fan_control_panel_, &overlay);
-    }
-
-    if (fan_control_panel_) {
-        // Update API reference in case it changed
-        get_fan_control_overlay().set_api(api_);
-        NavigationManager::instance().push_overlay(fan_control_panel_);
+    if (!helix::open_fan_control_overlay(parent_screen_)) {
+        NOTIFY_ERROR(lv_tr("Failed to load fan control overlay"));
     }
 }
 
@@ -1601,48 +1575,7 @@ void ControlsPanel::handle_fan_slider_changed(int value) {
 
 void ControlsPanel::handle_motors_clicked() {
     spdlog::debug("[{}] Motors Disable card clicked - showing confirmation", get_name());
-
-    helix::ui::ConfirmOptions opts;
-    opts.on_cancel = [this] { handle_motors_cancel(); };
-    opts.on_dismiss = [this] { motors_confirmation_dialog_.release(); }; // drop the handle
-    opts.owner_token = object_lifetime_.token();
-
-    // ModalGuard's operator= hides any previous dialog before assigning new one
-    motors_confirmation_dialog_ = helix::ui::modal_confirm(
-        lv_tr("Disable Motors?"), lv_tr("Release all stepper motors. Position will be lost."),
-        ModalSeverity::Warning, lv_tr("Disable"), [this] { handle_motors_confirm(); }, opts);
-
-    if (!motors_confirmation_dialog_) {
-        LOG_ERROR_INTERNAL("Failed to create motors confirmation dialog");
-        NOTIFY_ERROR(lv_tr("Failed to show confirmation dialog"));
-        return;
-    }
-
-    spdlog::info("[{}] Motors confirmation dialog shown", get_name());
-}
-
-void ControlsPanel::handle_motors_confirm() {
-    spdlog::debug("[{}] Motors disable confirmed", get_name());
-
-    // The dialog closes itself on the button press; just drop the stored handle
-    motors_confirmation_dialog_.release();
-
-    // Send M84 command to disable motors
-    if (api_) {
-        NOTIFY_INFO(lv_tr("Disabling motors..."));
-        api_->execute_gcode(
-            "M84", // Klipper command to disable steppers
-            []() { NOTIFY_SUCCESS(lv_tr("Motors disabled")); },
-            [](const MoonrakerError& err) {
-                NOTIFY_ERROR(lv_tr("Motors disable failed: {}"), err.message);
-            });
-    }
-}
-
-void ControlsPanel::handle_motors_cancel() {
-    spdlog::debug("[{}] Motors disable cancelled", get_name());
-
-    motors_confirmation_dialog_.release();
+    helix::ui::show_motors_off_confirm(api_, motors_confirmation_dialog_, object_lifetime_.token());
 }
 
 void ControlsPanel::handle_calibration_bed_mesh() {

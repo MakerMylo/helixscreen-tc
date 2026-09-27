@@ -36,7 +36,7 @@ The bed mesh rendering system is a **complete 3D graphics pipeline** implemented
 
 1. **Software-only rendering:** No GPU dependencies (works on framebuffer displays)
 2. **Reactive data binding:** Mesh updates trigger automatic re-rendering
-3. **Touch interactivity:** Drag to rotate, pinch to zoom (future)
+3. **Touch interactivity:** Drag to rotate; pinch to zoom and two-finger drag to pan (screen-space magnify, see Projection)
 4. **Declarative XML:** UI layout separate from rendering logic
 
 ---
@@ -237,9 +237,9 @@ renderer->quads.reserve(expected_quads);  // Avoids ~9 reallocations
 4. Translate camera back
    final_z += BED_MESH_CAMERA_DISTANCE
 
-5. Perspective projection (similar triangles)
-   screen_x = (final_x * fov_scale) / final_z
-   screen_y = (final_y * fov_scale) / final_z
+5. Perspective projection (similar triangles), then the two-finger magnify
+   screen_x = ((final_x * fov_scale) / final_z) * zoom + pan_x
+   screen_y = ((final_y * fov_scale) / final_z) * zoom + pan_y
 
 6. Convert to pixel coordinates (centered in canvas)
    pixel_x = canvas_width/2 + screen_x + center_offset_x
@@ -247,6 +247,17 @@ renderer->quads.reserve(expected_quads);  // Avoids ~9 reallocations
 
 7. Cache results in quad.screen_x[], quad.screen_y[], quad.depths[]
 ```
+
+**Two-finger zoom and pan** apply in screen space, after the perspective divide
+(`view_state.zoom` / `pan_x` / `pan_y`;
+`src/rendering/bed_mesh_projection.cpp#bed_mesh_projection_zoom_at` and
+`src/rendering/bed_mesh_projection.cpp#bed_mesh_projection_pan`, driven by
+`src/rendering/bed_mesh_renderer.cpp#bed_mesh_renderer_apply_two_finger`).
+Zoom is clamped to `BED_MESH_ZOOM_MIN`..`BED_MESH_ZOOM_MAX` (1.0-8.0); pan is a no-op at
+the minimum, and reaching it resets pan to zero, so pinching fully out returns the fitted
+view. `bed_mesh_renderer_set_bounds` and `bed_mesh_renderer_set_render_mode` also reset
+zoom and pan via `bed_mesh_projection_reset_zoom` - bounds first, because the auto-fit
+that follows projects through the zoomed function.
 
 **Optimization:** Cache trigonometric values (computed once per frame)
 ```cpp

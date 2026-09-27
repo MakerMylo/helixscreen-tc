@@ -468,6 +468,7 @@ translations:
     — Z-Offsetパネルで調整してください
   Cartographer touch calibrate sent: Cartographerタッチキャリブレーション送信済み
   Category: カテゴリー
+  Center: '中央'
   Center QR code in frame: QR コードをフレームの中央に合わせてください
   'Chamb:': 'チャンバ:'
   Chamber: チャンバー
@@ -1249,6 +1250,7 @@ translations:
   Flying Toasters: フライングトースター
   Follow active tool: アクティブツールに追従
   Follow graph screen: グラフ画面に追従
+  Force/weight sensors: '力/重量センサー'
   Forget: 登録解除
   Forget Network?: ネットワークを登録解除しますか？
   Forget network '{}'? You will need the password to reconnect.: ネットワーク '{}' を登録解除しますか？再接続にはパスワードが必要です。
@@ -1264,6 +1266,9 @@ translations:
   : "周波数差: パス A と B の差。2 Hz 未満はこの測定の分解能を下回るため、一致とみなされます。\n\n一致度: 2つのベルトの周波数がどれだけ近いかを、ベルトAの周波数に対する割合で示したもの。95% を超えれば優秀で、90% を下回ると調整が必要です。"
   From Buffer: バッファから
   From Version: 更新前バージョン
+  Front: '手前'
+  Front Left: '左手前'
+  Front Right: '右手前'
   Full: フル
   G-code Console: G-code コンソール
   G-code Preview: G-code プレビュー
@@ -1505,6 +1510,7 @@ translations:
   It's a new spool: 新しいスプールです
   Jammed at the Toolhead: ツールヘッドで詰まり
   Job Queue: ジョブキュー
+  Jog: 'ジョグ'
   Jog Speed XY: XY ジョグ速度
   Jog Speed Z: Z ジョグ速度
   Jog Y until the nozzle is centered over the chute opening, then tap Save.: Yをジョグしてノズルがシュートの開口部の中心に来たら、保存をタップします。
@@ -1556,6 +1562,7 @@ translations:
   LED strip available for lighting control: 照明制御用の LED ストリップが利用可能です
   LEDs: LED
   LEDs controlled by the light button: ライトボタンで制御される LED
+  LOAD CELLS: 'ロードセル'
   LOADED: 装填済み
   LOCKED: ロック中
   LOT-2024-001: LOT-2024-001
@@ -1586,6 +1593,7 @@ translations:
   Layout: レイアウト
   Learn More: 詳細を見る
   LedSelect: LEDを選択
+  Left: '左'
   Length of filament to purge: 'パージするフィラメントの長さ'
   Length of the cooling tube section: '冷却チューブ区間の長さ'
   'Length:': '長さ:'
@@ -1602,6 +1610,8 @@ translations:
   Listening: 聞き取り中
   Live view from your webcam: ウェブカメラのライブ表示
   Load: 装填
+  Load Cell: 'ロードセル'
+  Load Cells: 'ロードセル'
   Load Failed: '装填に失敗しました'
   Load Filament: フィラメントを装填
   Load a filament first before trying to unload: 排出する前にまずフィラメントを装填してください
@@ -1681,6 +1691,7 @@ translations:
   Macro to cancel an active print: アクティブな印刷をキャンセルするマクロ
   Macro to clean/wipe the nozzle: ノズルを清掃/ワイプするマクロ
   Macro to load filament into extruder: フィラメントをエクストルーダーに装填するマクロ
+  Macro to park the toolhead at a safe position: 'ヘッドを安全な位置へ移動するマクロ'
   Macro to pause an active print: アクティブな印刷を一時停止するマクロ
   Macro to purge/prime the nozzle: ノズルをパージ/プライムするマクロ
   Macro to resume a paused print: 一時停止した印刷を再開するマクロ
@@ -1778,6 +1789,8 @@ translations:
   Motors Off: モーターオフ
   'Motors disable failed: {}': 'モーターの無効化に失敗しました: {}'
   Motors disabled: モーターを無効化しました
+  Motors off: ''
+  Motors stay on while a print is active: 印刷中はモーターを停止できません
   Mount: 装着
   Move: 移動
   Move out of range: '移動範囲外です'
@@ -2064,6 +2077,7 @@ translations:
   Parameters: パラメータ
   Park: 'パーキング'
   Park the AFC system: 'AFCシステムをパーキング'
+  Park Toolhead: 'ツールヘッドをパーキング'
   Part: パーツ
   Part Cooling Fan: パーツ冷却ファン
   Part Fan: パーツファン
@@ -2349,6 +2363,9 @@ translations:
   Ready to Apply: 適用の準備完了
   Ready to calibrate: キャリブレーション準備完了
   Ready to pluck: はじく準備完了
+  Rear: '奥'
+  Rear Left: '左奥'
+  Rear Right: '右奥'
   Reason: 理由
   ? "Reason: {}\n\nThe printer cannot resume this print. Restart from the beginning?"
   : "理由: {}\n\nプリンターはこの印刷を再開できません。最初からやり直しますか？"
@@ -2507,6 +2524,7 @@ translations:
   Review your changes: 変更を確認
   Review your configuration below, then click Finish to save: 以下の設定を確認し、「完了」をクリックして保存してください
   Rewinding: 巻き戻し中
+  Right: '右'
   'Role:': '役割:'
   Rotating tips for using your printer: プリンターの使い方のヒントを順に表示
   Rotation: 回転

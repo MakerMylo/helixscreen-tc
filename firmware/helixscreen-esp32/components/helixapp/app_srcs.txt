@@ -211,6 +211,7 @@ src/printer/tool_state.cpp
 src/printer/tool_offsets.cpp
 src/sensors/accel_sensor_manager.cpp
 src/sensors/humidity_sensor_manager.cpp
+src/sensors/load_cell_manager.cpp
 src/sensors/probe_sensor_manager.cpp
 src/sensors/temperature_sensor_manager.cpp
 src/sensors/width_sensor_manager.cpp
@@ -250,6 +251,7 @@ src/system/preset_materials.cpp
 src/system/prerender_size_class.cpp
 src/system/prerendered_images.cpp
 src/system/printer_image_manager.cpp
+src/system/printer_image_regions.cpp
 src/system/printer_name_sync.cpp
 src/system/runtime_config.cpp
 src/system/safety_settings_manager.cpp
@@ -433,6 +435,7 @@ src/ui/ui_job_queue_modal.cpp
 src/ui/ui_jog_pad.cpp
 src/ui/ui_keyboard_manager.cpp
 src/ui/ui_keycap_style.cpp
+src/ui/ui_leader_line.cpp
 src/ui/ui_led_chip_factory.cpp
 src/ui/ui_led_control_overlay.cpp
 src/ui/ui_lock_screen.cpp
@@ -459,11 +462,13 @@ src/ui/ui_panel_base.cpp
 src/ui/ui_panel_common.cpp
 src/ui/ui_panel_console.cpp
 src/ui/ui_panel_controls.cpp
+src/ui/ui_motors_off.cpp
 src/ui/ui_panel_filament.cpp
 src/ui/ui_panel_history_dashboard.cpp
 src/ui/ui_panel_history_list.cpp
 src/ui/ui_panel_home.cpp
 src/ui/ui_panel_macros.cpp
+src/motion_presets.cpp
 src/ui/ui_panel_motion.cpp
 src/ui/ui_panel_power.cpp
 src/ui/ui_panel_print_select.cpp

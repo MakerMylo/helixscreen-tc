@@ -361,6 +361,14 @@ HeatState classify_heat_state(int current, int target, int tolerance = DEFAULT_A
 HeatState classify_heat_state_with_mode(int current, int target, helix::ChamberMode mode,
                                         int tolerance = DEFAULT_AT_TEMP_TOLERANCE);
 
+/// A heater whose target is off but whose part is still hot enough to burn.
+/// Callers keep showing it (muted) until it cools below this.
+constexpr int RESIDUAL_HEAT_THRESHOLD_DECI = 500;
+
+/// True while `current_deci` is above the residual-heat threshold. Independent
+/// of the target: callers decide whether an "on" heater counts.
+bool is_residual_hot(int current_deci);
+
 /**
  * @brief Get the theme color for an already-classified thermal state.
  *

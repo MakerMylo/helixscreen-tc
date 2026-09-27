@@ -285,7 +285,6 @@ class ControlsPanel : public PanelBase {
     //
 
     lv_obj_t* motion_panel_ = nullptr;
-    lv_obj_t* fan_control_panel_ = nullptr;
     lv_obj_t* bed_mesh_panel_ = nullptr;
     lv_obj_t* zoffset_panel_ = nullptr;
     lv_obj_t* tool_offset_panel_ = nullptr;
@@ -615,8 +614,6 @@ class ControlsPanel : public PanelBase {
     //
 
     void handle_motors_clicked();
-    void handle_motors_confirm();
-    void handle_motors_cancel();
     void handle_calibration_bed_mesh();
     void handle_calibration_zoffset();
     void handle_calibration_pa();

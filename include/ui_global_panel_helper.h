@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #pragma once
+#include "exception_policy.h"
 #include "static_panel_registry.h"
 
 #include <spdlog/spdlog.h>
@@ -40,7 +41,7 @@
     OverlayType& getter_func() {                                                                   \
         if (!global_var) {                                                                         \
             spdlog::error("[" #OverlayType "] Called before initialization!");                     \
-            throw std::runtime_error(#OverlayType " not initialized");                             \
+            helix::throw_or_abort(std::runtime_error(#OverlayType " not initialized"));            \
         }                                                                                          \
         return *global_var;                                                                        \
     }

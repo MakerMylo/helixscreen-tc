@@ -9,6 +9,7 @@
 #include "ui_timer_guard.h"
 
 #include "display_settings_manager.h"
+#include "exception_policy.h"
 #include "panel_widget_registry.h"
 #include "panel_widget_size.h"
 #include "static_subject_registry.h"
@@ -201,10 +202,9 @@ void TipsWidget::update_tip_of_day() {
     // (ad5x, k1) a std::bad_alloc here would otherwise unwind out of a
     // 60-second LVGL timer callback and terminate the process (#771).
     PrintingTip tip;
-    try {
-        tip = TipsManager::get_instance()->get_random_unique_tip();
-    } catch (const std::exception& e) {
-        spdlog::warn("[TipsWidget] get_random_unique_tip threw: {} — skipping rotation", e.what());
+    if (!helix::contain_exceptions("[TipsWidget] get_random_unique_tip, skipping rotation", [&] {
+            tip = TipsManager::get_instance()->get_random_unique_tip();
+        })) {
         return;
     }
 

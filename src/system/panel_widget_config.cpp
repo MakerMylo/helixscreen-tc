@@ -389,12 +389,10 @@ bool PanelWidgetConfig::try_populate_from_preset_seed() {
         return false;
     }
 
-    nlohmann::json seed;
-    try {
-        seed = nlohmann::json::parse(*seed_text);
-    } catch (const std::exception& e) {
-        spdlog::warn("[PanelWidgetConfig] Failed to parse preset seed '{}': {}", seed_path,
-                     e.what());
+    nlohmann::json seed = nlohmann::json::parse(*seed_text, nullptr, false);
+    if (seed.is_discarded()) {
+        spdlog::warn("[PanelWidgetConfig] Failed to parse preset seed '{}': not valid JSON",
+                     seed_path);
         return false;
     }
 
@@ -403,10 +401,9 @@ bool PanelWidgetConfig::try_populate_from_preset_seed() {
         return false;
     }
 
-    // The try above covers only json::parse — these reads were outside it. Same
-    // null/non-object hazard as the settings.json path in load(); see the
-    // comments there. A seed that fails here would otherwise unwind out of
-    // load(), taking dashboard construction with it.
+    // These reads face the same null/non-object hazard as the settings.json
+    // path in load(); see the comments there. A seed that fails here would
+    // otherwise unwind out of load(), taking dashboard construction with it.
     main_page_index_ = static_cast<size_t>(helix::json_util::safe_int(seed, "main_page_index"));
     next_page_id_ = helix::json_util::safe_int(seed, "next_page_id");
 
@@ -589,12 +586,9 @@ std::string PanelWidgetConfig::mint_instance_id(const std::string& base_id) {
         for (const auto& entry : page.widgets) {
             if (entry.id.size() > prefix.size() && entry.id.substr(0, prefix.size()) == prefix) {
                 auto suffix = entry.id.substr(prefix.size());
-                try {
-                    int n = std::stoi(suffix);
-                    if (n > max_n)
-                        max_n = n;
-                } catch (...) {
-                }
+                const auto n = helix::text_io::parse_leading<int>(suffix);
+                if (n && *n > max_n)
+                    max_n = *n;
             }
         }
     }
@@ -938,13 +932,15 @@ std::vector<PanelWidgetEntry> PanelWidgetConfig::build_default_grid(int grid_col
 
     const auto layout_text = helix::text_io::read_file(helix::find_readable("default_layout.json"));
     if (layout_text) {
-        try {
-            nlohmann::json layout = nlohmann::json::parse(*layout_text);
+        nlohmann::json layout = nlohmann::json::parse(*layout_text, nullptr, false);
+        if (layout.is_discarded()) {
+            spdlog::warn("[PanelWidgetConfig] Failed to parse default_layout.json: not valid JSON");
+        } else {
             // find + is_array rather than .value("anchors", array()): default_
             // layout.json is runtime-editable, and .value() throws type_error
-            // .302 on a key present with a null value. The catch below would
-            // turn that into "no anchors at all" — every anchor lost to one bad
-            // key. Each read below degrades to its own default instead.
+            // .302 on a key present with a null value; one failed read would
+            // cost every anchor rather than the one bad key. Each read below
+            // degrades to its own default instead.
             auto anchors_it = layout.is_object() ? layout.find("anchors") : layout.end();
             const nlohmann::json empty_array = nlohmann::json::array();
             const nlohmann::json* anchor_list =
@@ -1047,9 +1043,6 @@ std::vector<PanelWidgetEntry> PanelWidgetConfig::build_default_grid(int grid_col
             spdlog::debug(
                 "[PanelWidgetConfig] Loaded {} anchors from default_layout.json (bp={}, table={})",
                 anchors.size(), bp_name, variant_used);
-        } catch (const std::exception& e) {
-            spdlog::warn("[PanelWidgetConfig] Failed to parse default_layout.json: {}", e.what());
-            anchors.clear();
         }
     }
 

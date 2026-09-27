@@ -617,6 +617,7 @@ void DisplayBackendDRM::open_pointer_devices() {
             pointer_is_evdev_ = true;
             pointer_path_ = device_override;
             spdlog::info("[DRM Backend] Evdev pointer device created on {}", device_override);
+            configure_touch_gestures(pointer_);
             return;
         }
         spdlog::warn("[DRM Backend] Could not open specified touch device: {}", device_override);
@@ -636,11 +637,7 @@ void DisplayBackendDRM::open_pointer_devices() {
             pointer_is_evdev_ = true;
             spdlog::info("[DRM Backend] Evdev touch device created on {} (multi-touch enabled)",
                          touch_path);
-#if LV_USE_GESTURE_RECOGNITION
-            lv_indev_set_pinch_up_threshold(pointer_, 1.15f);
-            lv_indev_set_pinch_down_threshold(pointer_, 0.85f);
-            lv_indev_set_rotation_rad_threshold(pointer_, 3.14f);
-#endif
+            configure_touch_gestures(pointer_);
         } else {
             // Fall back to libinput if evdev fails
             pointer_ = lv_libinput_create(LV_INDEV_TYPE_POINTER, touch_path);
@@ -664,11 +661,7 @@ void DisplayBackendDRM::open_pointer_devices() {
         if (pointer_ != nullptr) {
             pointer_is_evdev_ = true;
             spdlog::info("[DRM Backend] Evdev touch device created on {}", touch_path_str);
-#if LV_USE_GESTURE_RECOGNITION
-            lv_indev_set_pinch_up_threshold(pointer_, 1.15f);
-            lv_indev_set_pinch_down_threshold(pointer_, 0.85f);
-            lv_indev_set_rotation_rad_threshold(pointer_, 3.14f);
-#endif
+            configure_touch_gestures(pointer_);
         }
     }
 #endif
@@ -1058,6 +1051,7 @@ void DisplayBackendDRM::open_pointer_devices() {
             if (pointer_ != nullptr) {
                 pointer_path_ = dev;
                 spdlog::info("[DRM Backend] Evdev pointer device created on {}", dev);
+                configure_touch_gestures(pointer_);
                 break;
             }
         }

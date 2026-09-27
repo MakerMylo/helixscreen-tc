@@ -3,6 +3,7 @@
 #include "preprint_predictor.h"
 
 #include "config.h"
+#include "json_utils.h"
 #include "printer_detector.h"
 #include "printer_state.h"
 #include "wizard_config_paths.h"
@@ -277,65 +278,71 @@ std::vector<PreprintEntry> PreprintPredictor::load_entries_from_config() {
         return {};
     }
 
-    try {
-        auto entries_json =
-            cfg->get<nlohmann::json>("/print_start_history/entries", nlohmann::json::array());
-        if (!entries_json.is_array() || entries_json.empty()) {
-            return {};
-        }
-
-        std::vector<PreprintEntry> entries;
-        int dropped_legacy = 0;
-        int dropped_phases = 0;
-        for (const auto& ej : entries_json) {
-            PreprintEntry entry;
-            entry.total_seconds = ej.value("total", 0);
-            entry.timestamp = ej.value("timestamp", static_cast<int64_t>(0));
-            entry.temp_bucket = ej.value("temp_bucket", 0);
-            const int window_raw = ej.value("window", static_cast<int>(PreprintWindow::Unknown));
-            entry.window = (window_raw == static_cast<int>(PreprintWindow::PrinterEdge) ||
-                            window_raw == static_cast<int>(PreprintWindow::HostPreStart))
-                               ? static_cast<PreprintWindow>(window_raw)
-                               : PreprintWindow::Unknown;
-            // Drop legacy entries that predate the cold/warm bucket scheme.
-            // Older versions stored the raw nozzle target temperature here
-            // (e.g. 200, 225, 250). Only 0 (unknown), 1 (cold), and 2 (warm)
-            // are valid under the current scheme. Dropping at load time
-            // causes the next save_prediction_entry() to persist a clean
-            // list, so this acts as a one-shot migration.
-            if (entry.temp_bucket != 0 && entry.temp_bucket != 1 && entry.temp_bucket != 2) {
-                ++dropped_legacy;
-                continue;
-            }
-            if (ej.contains("phases") && ej["phases"].is_object()) {
-                for (auto& [key, val] : ej["phases"].items()) {
-                    // A name this build does not know belongs to a newer one.
-                    // The rest of the entry is still a real measurement, so the
-                    // key is dropped rather than the entry.
-                    const auto phase = print_start_phase_from_name(key);
-                    if (!phase || !val.is_number()) {
-                        ++dropped_phases;
-                        continue;
-                    }
-                    entry.phase_durations[static_cast<int>(*phase)] = val.get<int>();
-                }
-            }
-            entries.push_back(std::move(entry));
-        }
-        if (dropped_legacy > 0) {
-            spdlog::info("[PreprintPredictor] Dropped {} legacy history entries "
-                         "(pre-cold/warm-bucket scheme)",
-                         dropped_legacy);
-        }
-        if (dropped_phases > 0) {
-            spdlog::info("[PreprintPredictor] Skipped {} history phase durations with an "
-                         "unrecognised name",
-                         dropped_phases);
-        }
-        return entries;
-    } catch (...) {
+    auto entries_json =
+        cfg->get<nlohmann::json>("/print_start_history/entries", nlohmann::json::array());
+    if (!entries_json.is_array() || entries_json.empty()) {
         return {};
     }
+
+    std::vector<PreprintEntry> entries;
+    int dropped_legacy = 0;
+    int dropped_phases = 0;
+    // A record with a wrongly typed field is dropped; the rest of the history
+    // stays, and a zero-filled record never enters a prediction.
+    const auto wrongly_typed = [](const nlohmann::json& ej, const char* key) {
+        return ej.contains(key) && !ej[key].is_number();
+    };
+    for (const auto& ej : entries_json) {
+        if (!ej.is_object() || wrongly_typed(ej, "total") || wrongly_typed(ej, "timestamp") ||
+            wrongly_typed(ej, "temp_bucket") || wrongly_typed(ej, "window")) {
+            continue;
+        }
+        PreprintEntry entry;
+        entry.total_seconds = json_util::safe_int(ej, "total", 0);
+        entry.timestamp = json_util::safe_int64(ej, "timestamp", 0);
+        entry.temp_bucket = json_util::safe_int(ej, "temp_bucket", 0);
+        const int window_raw =
+            json_util::safe_int(ej, "window", static_cast<int>(PreprintWindow::Unknown));
+        entry.window = (window_raw == static_cast<int>(PreprintWindow::PrinterEdge) ||
+                        window_raw == static_cast<int>(PreprintWindow::HostPreStart))
+                           ? static_cast<PreprintWindow>(window_raw)
+                           : PreprintWindow::Unknown;
+        // Drop legacy entries that predate the cold/warm bucket scheme.
+        // Older versions stored the raw nozzle target temperature here
+        // (e.g. 200, 225, 250). Only 0 (unknown), 1 (cold), and 2 (warm)
+        // are valid under the current scheme. Dropping at load time
+        // causes the next save_prediction_entry() to persist a clean
+        // list, so this acts as a one-shot migration.
+        if (entry.temp_bucket != 0 && entry.temp_bucket != 1 && entry.temp_bucket != 2) {
+            ++dropped_legacy;
+            continue;
+        }
+        if (ej.contains("phases") && ej["phases"].is_object()) {
+            for (auto& [key, val] : ej["phases"].items()) {
+                // A name this build does not know belongs to a newer one.
+                // The rest of the entry is still a real measurement, so the
+                // key is dropped rather than the entry.
+                const auto phase = print_start_phase_from_name(key);
+                if (!phase || !val.is_number()) {
+                    ++dropped_phases;
+                    continue;
+                }
+                entry.phase_durations[static_cast<int>(*phase)] = val.get<int>();
+            }
+        }
+        entries.push_back(std::move(entry));
+    }
+    if (dropped_legacy > 0) {
+        spdlog::info("[PreprintPredictor] Dropped {} legacy history entries "
+                     "(pre-cold/warm-bucket scheme)",
+                     dropped_legacy);
+    }
+    if (dropped_phases > 0) {
+        spdlog::info("[PreprintPredictor] Skipped {} history phase durations with an "
+                     "unrecognised name",
+                     dropped_phases);
+    }
+    return entries;
 }
 
 json PreprintPredictor::entries_to_json(const std::vector<PreprintEntry>& entries) {

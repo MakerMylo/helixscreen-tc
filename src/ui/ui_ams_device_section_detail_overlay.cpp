@@ -28,6 +28,7 @@
 #include "ams_types.h"
 #include "lvgl/src/others/translation/lv_translation.h"
 #include "static_panel_registry.h"
+#include "text_io.h"
 #include "theme_manager.h"
 
 #include <spdlog/fmt/fmt.h>
@@ -304,15 +305,13 @@ void AmsDeviceSectionDetailOverlay::create_action_control(
         lv_obj_set_name(sw, action.id.c_str());
 
         // Try to get current value
-        try {
-            if (action.current_value.has_value()) {
-                bool val = std::any_cast<bool>(action.current_value);
-                if (val) {
-                    lv_obj_add_state(sw, LV_STATE_CHECKED);
-                }
+        if (action.current_value.has_value()) {
+            const bool* val = std::any_cast<bool>(&action.current_value);
+            if (!val) {
+                spdlog::warn("[{}] Failed to cast toggle value for {}", get_name(), action.id);
+            } else if (*val) {
+                lv_obj_add_state(sw, LV_STATE_CHECKED);
             }
-        } catch (const std::bad_any_cast&) {
-            spdlog::warn("[{}] Failed to cast toggle value for {}", get_name(), action.id);
         }
 
         // Store action ID in vector, pass index as user_data
@@ -336,17 +335,14 @@ void AmsDeviceSectionDetailOverlay::create_action_control(
         lv_obj_t* value_label = lv_label_create(row);
         lv_obj_set_style_text_color(value_label, theme_manager_get_color("text_muted"), 0);
         lv_obj_set_name(value_label, action.id.c_str());
-        try {
-            if (action.current_value.has_value()) {
-                std::string val = std::any_cast<std::string>(action.current_value);
-                if (!action.unit.empty()) {
-                    val += " " + action.unit;
-                }
-                lv_label_set_text(value_label, val.c_str());
-            } else {
-                lv_label_set_text(value_label, "-");
+        const std::string* current_str = std::any_cast<std::string>(&action.current_value);
+        if (current_str) {
+            std::string val = *current_str;
+            if (!action.unit.empty()) {
+                val += " " + action.unit;
             }
-        } catch (const std::bad_any_cast&) {
+            lv_label_set_text(value_label, val.c_str());
+        } else {
             lv_label_set_text(value_label, "-");
         }
         break;
@@ -373,16 +369,14 @@ void AmsDeviceSectionDetailOverlay::create_action_control(
 
         // Set current value from action.current_value
         int32_t slider_val = static_cast<int32_t>(action.min_value);
-        try {
-            if (action.current_value.has_value()) {
-                try {
-                    slider_val = static_cast<int32_t>(std::any_cast<float>(action.current_value));
-                } catch (const std::bad_any_cast&) {
-                    slider_val = std::any_cast<int>(action.current_value);
-                }
+        if (action.current_value.has_value()) {
+            if (const float* fv = std::any_cast<float>(&action.current_value)) {
+                slider_val = static_cast<int32_t>(*fv);
+            } else if (const int* iv = std::any_cast<int>(&action.current_value)) {
+                slider_val = *iv;
+            } else {
+                spdlog::warn("[{}] Failed to cast slider value for {}", get_name(), action.id);
             }
-        } catch (const std::bad_any_cast&) {
-            spdlog::warn("[{}] Failed to cast slider value for {}", get_name(), action.id);
         }
         lv_slider_set_value(slider, slider_val, LV_ANIM_OFF);
 
@@ -457,17 +451,14 @@ void AmsDeviceSectionDetailOverlay::create_action_control(
         lv_dropdown_set_options(dropdown, options_str.c_str());
 
         // Set selected index from current_value (string matching against options)
-        try {
-            if (action.current_value.has_value()) {
-                std::string current = std::any_cast<std::string>(action.current_value);
-                for (size_t i = 0; i < action.options.size(); i++) {
-                    if (action.options[i] == current) {
-                        lv_dropdown_set_selected(dropdown, static_cast<uint32_t>(i));
-                        break;
-                    }
+        if (const std::string* current = std::any_cast<std::string>(&action.current_value)) {
+            for (size_t i = 0; i < action.options.size(); i++) {
+                if (action.options[i] == *current) {
+                    lv_dropdown_set_selected(dropdown, static_cast<uint32_t>(i));
+                    break;
                 }
             }
-        } catch (const std::bad_any_cast&) {
+        } else if (action.current_value.has_value()) {
             spdlog::warn("[{}] Failed to cast dropdown value for {}", get_name(), action.id);
         }
 
@@ -821,9 +812,10 @@ void AmsDeviceSectionDetailOverlay::on_value_input_ready(lv_event_t* e) {
 
             float val = 0.0f;
             if (valid_input) {
-                try {
-                    val = std::stof(text);
-                } catch (...) {
+                const auto parsed = helix::text_io::parse_leading<float>(text);
+                if (parsed) {
+                    val = *parsed;
+                } else {
                     spdlog::warn("[AmsDeviceSectionDetailOverlay] Invalid numeric input: {}", text);
                     valid_input = false;
                 }

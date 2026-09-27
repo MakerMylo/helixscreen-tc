@@ -141,10 +141,8 @@ parse_filament_temperatures(const std::string& response) {
     replace_all(payload, "True", "true");
     replace_all(payload, "False", "false");
 
-    nlohmann::json root;
-    try {
-        root = nlohmann::json::parse(payload);
-    } catch (const nlohmann::json::exception&) {
+    nlohmann::json root = nlohmann::json::parse(payload, nullptr, false);
+    if (root.is_discarded()) {
         return {};
     }
 
