@@ -30,6 +30,7 @@
 #include "system/crash_handler.h"
 #include "system/telemetry_manager.h"
 #include "theme_manager.h"
+#include "view_gestures.h"
 
 #include <filesystem>
 
@@ -45,7 +46,6 @@ using GCode3DRenderer = helix::gcode::GCodeGLESRenderer;
 constexpr float MIN_ACTUAL_RENDER_MS = 2.0f;        // Minimum render time to count as actual render
 constexpr float FPS_EMA_ALPHA = 0.1f;               // Exponential moving average smoothing factor
 constexpr int FPS_LOG_INTERVAL_FRAMES = 30;         // Log FPS every N frames
-constexpr float ROTATION_DEGREES_PER_PIXEL = 0.5f;  // Camera rotation sensitivity
 constexpr uint32_t DRAG_THROTTLE_MIN_FRAME_MS = 33; // ~30fps throttle during drag
 constexpr int CLICK_DISTANCE_THRESHOLD = 10;        // Pixels: distinguish click from drag
 
@@ -262,9 +262,9 @@ class GCodeViewerState {
     lv_point_t last_drag_pos{0, 0};
     bool gesture_moved{false}; ///< True once movement exceeded threshold anywhere in this touch
 #if LV_USE_GESTURE_RECOGNITION
-    float last_pinch_scale{0.0f}; ///< Previous cumulative pinch scale (0 = no reference yet)
-    bool is_pinching{false};      ///< True during active pinch gesture (suppresses drag rotation)
-    bool pinch_occurred{false};   ///< True if a pinch engaged at any point this touch sequence
+    helix::ui::TwoFingerState two_finger; ///< Pan/zoom totals for the gesture in progress
+    bool two_finger_occurred{
+        false}; ///< Sticky until all fingers lift: gates rotate, tap, long-press
 #endif
 
     // Selection and exclusion state
@@ -1010,16 +1010,15 @@ static void gcode_viewer_press_cb(lv_event_t* e) {
     lv_indev_get_point(indev, &point);
 
     // Fresh interaction (all fingers were up): clear per-sequence gesture state.
-    // The pinch latch is otherwise cleared only by the recognizer's ENDED/CANCELED
-    // event, which is not reliably delivered when both fingers lift in one input
-    // poll (finger_cnt 2->0). Resetting here guarantees a stuck latch can't
-    // permanently suppress single-finger rotation.
+    // The two-finger latch is otherwise cleared only by the recognizer's
+    // ENDED/CANCELED event, which is not reliably delivered when both fingers
+    // lift in one input poll (finger_cnt 2->0). Resetting here guarantees a
+    // stuck latch can't permanently suppress single-finger rotation.
     if (!st->is_dragging) {
         st->gesture_moved = false;
 #if LV_USE_GESTURE_RECOGNITION
-        st->is_pinching = false;
-        st->last_pinch_scale = 0.0f;
-        st->pinch_occurred = false;
+        st->two_finger = {};
+        st->two_finger_occurred = false;
 #endif
     }
 
@@ -1075,9 +1074,9 @@ static void gcode_viewer_pressing_cb(lv_event_t* e) {
         return;
 
 #if LV_USE_GESTURE_RECOGNITION
-    // Suppress drag rotation during pinch-to-zoom to prevent fighting
-    if (st->is_pinching) {
-        spdlog::debug("[GCode Viewer] PRESSING suppressed (pinching)");
+    // No rotation from the first two-finger frame until every finger lifts: a finger
+    // left down after a pinch would otherwise jump the camera from a stale position.
+    if (st->two_finger_occurred) {
         return;
     }
 #endif
@@ -1117,8 +1116,8 @@ static void gcode_viewer_pressing_cb(lv_event_t* e) {
         // Convert pixel movement to rotation angles (~0.5 degrees per pixel)
         // Azimuth: drag right = orbit right
         // Elevation: drag up = tilt up (screen Y is inverted, so positive dy = down)
-        float delta_azimuth = dx * ROTATION_DEGREES_PER_PIXEL;
-        float delta_elevation = dy * ROTATION_DEGREES_PER_PIXEL;
+        float delta_azimuth = dx * helix::ui::kRotateDegreesPerPixel;
+        float delta_elevation = dy * helix::ui::kRotateDegreesPerPixel;
 
         st->camera_->rotate(delta_azimuth, delta_elevation);
 
@@ -1180,21 +1179,18 @@ static void gcode_viewer_release_cb(lv_event_t* e) {
         return;
     }
 
+    bool two_finger = false;
 #if LV_USE_GESTURE_RECOGNITION
-    // Skip tap handling if a pinch occurred at any point this sequence - not just
-    // if one is still active. A pinch that ends as a single-finger lift would
-    // otherwise land as a low-movement release and be misread as an object tap.
-    if (st->is_pinching || st->pinch_occurred) {
-        spdlog::trace("[GCode Viewer] Release after pinch - skipping tap handling");
-        st->is_dragging = false;
-        return;
-    }
+    // A two-finger gesture that ends as a one-finger lift lands as a low-movement
+    // release; it must not read as an object tap.
+    two_finger = st->two_finger_occurred;
 #endif
 
     // If movement was minimal, treat as click and try to pick object.
     // gesture_moved guards against rotate-and-return motions whose net
     // displacement is small but which clearly manipulated the view.
-    if (!st->gesture_moved && dx < CLICK_THRESHOLD && dy < CLICK_THRESHOLD && has_gcode_data(st)) {
+    if (!two_finger && !st->gesture_moved && dx < CLICK_THRESHOLD && dy < CLICK_THRESHOLD &&
+        has_gcode_data(st)) {
         spdlog::debug("[GCode Viewer] Click detected at ({}, {})", point.x, point.y);
         const char* picked = ui_gcode_viewer_pick_object(obj, point.x, point.y);
 
@@ -1248,11 +1244,11 @@ static void gcode_viewer_release_cb(lv_event_t* e) {
 
 #if LV_USE_GESTURE_RECOGNITION
 /**
- * @brief Gesture callback - handle pinch-to-zoom (3D mode only)
+ * @brief Two-finger pan and pinch zoom (3D mode only)
  *
- * ROTATE is disabled at the input-device level (threshold set to ~180°)
- * so PINCH always wins the recognizer race.  We compute a per-frame
- * delta from the cumulative scale to drive smooth, incremental zoom.
+ * A pinch zooms about the fingers and pans with them in the same frame; a
+ * two-finger swipe only pans. Whichever LVGL recognizes first owns the touch
+ * until a finger lifts.
  */
 static void gcode_viewer_gesture_cb(lv_event_t* e) {
     lv_obj_t* obj = lv_event_get_target_obj(e);
@@ -1261,37 +1257,31 @@ static void gcode_viewer_gesture_cb(lv_event_t* e) {
     if (!st || st->is_using_2d_mode())
         return;
 
-    if (lv_event_get_gesture_type(e) != LV_INDEV_GESTURE_PINCH)
+    const auto sample = helix::ui::read_two_finger_sample(e);
+    if (!sample)
         return;
 
-    auto state = lv_event_get_gesture_state(e, LV_INDEV_GESTURE_PINCH);
+    const helix::ui::TwoFingerStep step = helix::ui::two_finger_step(*sample, st->two_finger);
+    if (!step.active)
+        return;
 
-    if (state == LV_INDEV_GESTURE_STATE_ONGOING || state == LV_INDEV_GESTURE_STATE_RECOGNIZED) {
-        st->is_pinching = true;
-        st->pinch_occurred = true; // sticky for this touch sequence; gates tap at release
-    }
-
-    if (state == LV_INDEV_GESTURE_STATE_RECOGNIZED) {
-        float scale = lv_event_get_pinch_scale(e);
-        if (scale > 0.0f && st->last_pinch_scale > 0.0f) {
-            float delta = scale / st->last_pinch_scale;
-            // Normal per-frame deltas are 0.85–1.15. Anything outside
-            // that range is a gesture restart (cumulative scale reset).
-            if (delta > 0.7f && delta < 1.4f) {
-                st->camera_->zoom(delta);
-                lv_obj_invalidate(obj);
-            } else {
-                spdlog::debug("[GCode Viewer] Pinch delta filtered: {:.4f}", delta);
-            }
+    if (!st->two_finger_occurred) {
+        st->two_finger_occurred = true;
+        if (st->long_press_timer_) {
+            lv_timer_delete(st->long_press_timer_);
+            st->long_press_timer_ = nullptr;
         }
-        if (scale > 0.0f)
-            st->last_pinch_scale = scale;
-    } else if (state == LV_INDEV_GESTURE_STATE_ENDED || state == LV_INDEV_GESTURE_STATE_CANCELED) {
-        spdlog::trace("[GCode Viewer] Pinch gesture ended (zoom={:.2f})",
-                      st->camera_->get_zoom_level());
-        st->last_pinch_scale = 0.0f;
-        st->is_pinching = false;
     }
+
+    if (step.pan_dx == 0.0f && step.pan_dy == 0.0f && step.zoom == 1.0f)
+        return;
+
+    lv_area_t coords;
+    lv_obj_get_coords(obj, &coords);
+    st->camera_->pan_pixels(step.pan_dx, step.pan_dy);
+    st->camera_->zoom_at(step.zoom, static_cast<float>(step.anchor_x - coords.x1),
+                         static_cast<float>(step.anchor_y - coords.y1));
+    lv_obj_invalidate(obj);
 }
 #endif
 
