@@ -1579,6 +1579,7 @@ translations:
   Load or unload filament.: フィラメントを装填または排出します。
   Load the required filaments or start anyway?: 必要なフィラメントを装填しますか？それともこのまま開始しますか？
   'Load, unload, and swap spools. View your multi-filament system at a glance, map colors to slots, and monitor runout sensors.': スプールのロード、アンロード、交換を行います。マルチフィラメントシステムを一目で確認し、色をスロットにマッピングし、ランアウトセンサーを監視できます。
+  Load...: 装填...
   Loaded: 装填済み
   Loading: ロード中
   Loading Bed Mesh...: ベッドメッシュ読込中...
@@ -3163,6 +3164,7 @@ translations:
   Unload from toolhead first: '先にツールヘッドから取り出してください'
   Unload macro not configured: アンロードマクロが未設定です
   Unload the CFS filament before enabling bypass: 'バイパスを有効にする前に CFS のフィラメントを取り出してください'
+  Unload...: 排出...
   Unloading: アンロード中
   Unloading Start Speed: 'アンロード開始速度'
   Unloading before bypass...: バイパス前にアンロード中...

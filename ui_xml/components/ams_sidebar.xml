@@ -8,7 +8,7 @@
     Used by both ams_panel.xml and ams_overview_panel.xml.
     Callbacks (registered by AmsOperationSidebar::register_callbacks_static()):
     - ams_sidebar_bypass_toggled: Bypass toggle switch
-    - ams_sidebar_unload_clicked: Unload button
+    - ams_sidebar_unload_clicked: Unload buttons (btn_unload, btn_batch_unload)
     - ams_sidebar_batch_load_clicked: Load button (batch-capable systems only)
     - ams_sidebar_reset_clicked: Reset button
     - ams_sidebar_check_gates_clicked: Check slots button (Happy Hare only)
@@ -71,17 +71,17 @@
            existing nothing_to_feed refusal, and a running op or a print owning
            the toolhead disables it like every other filament op. -->
       <ui_button name="btn_batch_load"
-                 width="100%" variant="secondary" icon="arrow_down" text="Load" translation_tag="Load">
+                 width="100%" variant="secondary" icon="arrow_down" text="Load..." translation_tag="Load...">
         <bind_flag_if_eq subject="ams_sidebar_supports_batch" flag="hidden" ref_value="0"/>
         <bind_state_if_eq subject="ams_sidebar_load_disabled" state="disabled" ref_value="1"/>
         <event_cb trigger="clicked" callback="ams_sidebar_batch_load_clicked"/>
       </ui_button>
-      <!-- Unload Button (full width): on per-toolhead filament systems (AFC,
-           Happy Hare, CFS, tool changer) it unloads the filament in the ACTIVE
-           head; on batch-capable systems it opens the picker in the Unload
-           direction. One button, not two: the capability branch lives with the
-           gating that already keys on it. Gated on ams_is_filament_system,
-           which covers every filament system including the Snapmaker U1. -->
+      <!-- Unload: on per-toolhead filament systems (AFC, Happy Hare, CFS, tool
+           changer) btn_unload unloads the filament in the ACTIVE head. On
+           batch-capable systems btn_batch_unload replaces it and opens the picker
+           in the Unload direction, labelled with an ellipsis like btn_batch_load
+           because it acts on the heads the user ticks, not the active one. Both
+           share one callback, whose capability branch picks the path. -->
       <!-- Disabled state comes from ams_sidebar_unload_disabled, which
            AmsOperationSidebar::refresh_button_gating() computes through the
            shared compute_op_button_gating() rule. On batch backends the
@@ -91,7 +91,13 @@
            a print owning the toolhead. -->
       <ui_button name="btn_unload"
                  width="100%" variant="secondary" icon="tray_arrow_up" text="Unload" translation_tag="Unload">
-        <bind_flag_if_eq subject="ams_is_filament_system" flag="hidden" ref_value="0"/>
+        <bind_flag_if cond="ams_is_filament_system eq 0 or ams_sidebar_supports_batch eq 1" flag="hidden"/>
+        <bind_state_if_eq subject="ams_sidebar_unload_disabled" state="disabled" ref_value="1"/>
+        <event_cb trigger="clicked" callback="ams_sidebar_unload_clicked"/>
+      </ui_button>
+      <ui_button name="btn_batch_unload"
+                 width="100%" variant="secondary" icon="tray_arrow_up" text="Unload..." translation_tag="Unload...">
+        <bind_flag_if_eq subject="ams_sidebar_supports_batch" flag="hidden" ref_value="0"/>
         <bind_state_if_eq subject="ams_sidebar_unload_disabled" state="disabled" ref_value="1"/>
         <event_cb trigger="clicked" callback="ams_sidebar_unload_clicked"/>
       </ui_button>

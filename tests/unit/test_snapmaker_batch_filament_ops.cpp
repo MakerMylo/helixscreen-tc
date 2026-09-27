@@ -888,8 +888,15 @@ TEST_CASE_METHOD(BatchModalFixture,
         }
     };
 
-    lv_obj_t* unload_btn = lv_obj_find_by_name(sidebar_root, "btn_unload");
+    // A batch backend's Unload is the picker button; the active-head one hides.
+    lv_obj_t* active_unload_btn = lv_obj_find_by_name(sidebar_root, "btn_unload");
+    REQUIRE(active_unload_btn != nullptr);
+    CHECK(lv_subject_get_int(lv_xml_get_subject(nullptr, "ams_is_filament_system")) == 1);
+    CHECK(lv_obj_has_flag(active_unload_btn, LV_OBJ_FLAG_HIDDEN));
+
+    lv_obj_t* unload_btn = lv_obj_find_by_name(sidebar_root, "btn_batch_unload");
     REQUIRE(unload_btn != nullptr);
+    CHECK_FALSE(lv_obj_has_flag(unload_btn, LV_OBJ_FLAG_HIDDEN));
     tap_expects_no_picker(unload_btn);
 
     lv_obj_t* load_btn = lv_obj_find_by_name(sidebar_root, "btn_batch_load");

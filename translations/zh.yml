@@ -1573,6 +1573,7 @@ translations:
   Load or unload filament.: 装载或卸载耗材。
   Load the required filaments or start anyway?: 加载所需耗材还是直接开始？
   'Load, unload, and swap spools. View your multi-filament system at a glance, map colors to slots, and monitor runout sensors.': 加载、卸载和更换料盘。一目了然地查看您的多耗材系统、将颜色映射到槽位，并监控耗材用尽传感器。
+  Load...: 加载...
   Loaded: 已加载
   Loading: 加载中
   Loading Bed Mesh...: 正在加载热床网格...
@@ -3153,6 +3154,7 @@ translations:
   Unload from toolhead first: '请先从工具头卸载'
   Unload macro not configured: 卸载宏未配置
   Unload the CFS filament before enabling bypass: '启用旁通前请先卸载 CFS 耗材'
+  Unload...: 卸载...
   Unloading: 卸载中
   Unloading Start Speed: '卸载起始速度'
   Unloading before bypass...: 旁通前正在卸载...

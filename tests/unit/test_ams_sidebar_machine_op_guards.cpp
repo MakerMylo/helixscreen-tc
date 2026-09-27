@@ -204,6 +204,7 @@ TEST_CASE_METHOD(SidebarDirectionGateFixture,
         REQUIRE(lv_subject_get_int(loaded) == 0); // no tool on the carriage
         CHECK(gate_value("ams_sidebar_supports_batch") == 1);
         CHECK_FALSE(lv_obj_has_flag(button("btn_batch_load"), LV_OBJ_FLAG_HIDDEN));
+        CHECK_FALSE(lv_obj_has_flag(button("btn_batch_unload"), LV_OBJ_FLAG_HIDDEN));
         CHECK(gate_value("ams_sidebar_unload_disabled") == 0);
         CHECK(gate_value("ams_sidebar_load_disabled") == 0);
     }
@@ -254,6 +255,8 @@ TEST_CASE_METHOD(SidebarDirectionGateFixture,
         build(std::move(mock));
         CHECK(gate_value("ams_sidebar_supports_batch") == 0);
         CHECK(lv_obj_has_flag(button("btn_batch_load"), LV_OBJ_FLAG_HIDDEN));
+        CHECK(lv_obj_has_flag(button("btn_batch_unload"), LV_OBJ_FLAG_HIDDEN));
+        CHECK_FALSE(lv_obj_has_flag(button("btn_unload"), LV_OBJ_FLAG_HIDDEN));
         lv_subject_t* loaded = helix::AmsState::instance().get_filament_loaded_subject();
         REQUIRE(loaded != nullptr);
         REQUIRE(lv_subject_get_int(loaded) == 1); // something IS loaded
