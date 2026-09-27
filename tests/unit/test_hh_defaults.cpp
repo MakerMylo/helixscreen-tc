@@ -64,7 +64,7 @@ TEST_CASE("HH default sections: unique IDs", "[ams][hh_defaults]") {
 
 TEST_CASE("HH default actions: count", "[ams][hh_defaults]") {
     auto actions = hh_default_actions();
-    REQUIRE(actions.size() == 29);
+    REQUIRE(actions.size() == 32);
 }
 
 TEST_CASE("HH default actions: required fields", "[ams][hh_defaults]") {

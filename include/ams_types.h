@@ -1344,6 +1344,20 @@ struct FlowguardInfo {
 };
 
 /**
+ * @brief The state a user tells the filament system it is really in
+ *
+ * AmsBackend::recover_with_state() re-syncs the firmware's tracking to this.
+ * Anything left unknown is not asserted, so the firmware keeps (or detects)
+ * its own answer for it.
+ */
+struct RecoverStateRequest {
+    int tool = -1;              ///< 0-based tool, -1 = unknown
+    int slot = -1;              ///< 0-based slot, -1 = unknown
+    bool bypass = false;        ///< Bypass is selected; tool and slot are then ignored
+    std::optional<bool> loaded; ///< Filament at the extruder; nullopt = let firmware detect
+};
+
+/**
  * @brief Complete AMS system state
  *
  * This is the top-level structure containing all AMS information.
@@ -2193,6 +2207,7 @@ struct DeviceAction {
     int slot_index = -1;              ///< If action is per-slot (-1 = system-wide)
     bool enabled = true;              ///< Whether action is currently available
     std::string disable_reason;       ///< Why disabled (if applicable)
+    bool needs_hot_nozzle = false;    ///< Extrudes through the hotend; refused on a cold nozzle
 };
 
 } // namespace printer

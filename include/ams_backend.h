@@ -1234,6 +1234,25 @@ class AmsBackend {
     }
 
     /**
+     * @brief Re-sync the firmware's tracked state to what the user says is true
+     *
+     * State-only, like clear_fault(): tells the firmware which tool and slot
+     * are selected and whether filament is loaded, without moving anything.
+     * Fields left unknown in @p request are not asserted.
+     *
+     * Default implementation returns NOT_SUPPORTED.
+     */
+    virtual AmsError recover_with_state(const RecoverStateRequest& request) {
+        (void)request;
+        return AmsErrorHelper::not_supported("Recover with state not supported");
+    }
+
+    /// @return true if recover_with_state() is implemented
+    [[nodiscard]] virtual bool supports_recover_with_state() const {
+        return false;
+    }
+
+    /**
      * @brief Retract a lane's filament back to its lane from the bowden
      *
      * A physical filament move, not a fault clear. Recovers a lane left stranded
@@ -1312,6 +1331,25 @@ class AmsBackend {
      * @return true if eject_lane() is implemented
      */
     [[nodiscard]] virtual bool supports_lane_eject() const {
+        return false;
+    }
+
+    /**
+     * @brief Feed a lane's filament up to its park position (async)
+     *
+     * Parks a freshly inserted spool ready for a later load, without loading
+     * it to the toolhead. Default implementation returns NOT_SUPPORTED.
+     *
+     * @param slot_index Lane to preload (0-based)
+     * @return AmsError indicating if operation was started
+     */
+    virtual AmsError preload_lane(int slot_index) {
+        (void)slot_index;
+        return AmsErrorHelper::not_supported("Lane preload not supported");
+    }
+
+    /// @return true if preload_lane() is implemented
+    [[nodiscard]] virtual bool supports_lane_preload() const {
         return false;
     }
 

@@ -35,7 +35,11 @@ Klipper object `mmu` in `printer.objects.list` sets `AmsType::HAPPY_HARE`.
 | `MMU_SELECT GATE={n}` | Select gate without loading |
 | `T{n}` | Tool change (unload + load) |
 | `MMU_HOME` | Home the selector (reset). Unloads first unless already unloaded — see Reset vs Recover |
-| `MMU_RECOVER` | Attempt error recovery |
+| `MMU_RECOVER [TOOL=t] [GATE=g] [BYPASS=1] [LOADED=0\|1]` | Re-sync HH's tracked state; only what the user asserted is named - see Reset vs Recover |
+| `MMU_PRELOAD GATE={n}` | Park a gate's filament ready for a later load (slot menu **Preload**). HH refuses it while printing, and so does `preload_lane()` |
+| `MMU_LOAD EXTRUDER_ONLY=1` / `MMU_UNLOAD EXTRUDER_ONLY=1` | Load / unload only the extruder (Maintenance **Load Extruder** / **Unload Extruder**). Extrudes through the hotend, so the button is refused below the extrusion floor |
+| `MMU_MOTORS_ON` / `MMU_MOTORS_OFF` | Maintenance **Motors** toggle. Present in v3 and v4 |
+| `MMU_SPOOLMAN REFRESH=1` | Accessories **Refresh Spoolman**. Disabled while `printer.mmu.spoolman_support` is `off`, which HH refuses outright |
 | `MMU_CHECK_GATE` | Probe every gate sensor (sidebar **Check slots**). Physical: parks the toolhead and unloads/reloads each gate, and Happy Hare does not refuse it mid-print, so the sidebar gates it |
 | `MMU_TTG_MAP TOOL={n} GATE={g}` | Set tool-to-gate mapping |
 | `MMU_GATE_MAP GATE={n} [COLOR=..] [MATERIAL=..] [SPOOLID=..]` | Persist a slot edit to the gate map (`mmu_vars.cfg`). Omitted params keep their current value, so a field is only cleared by naming it with an explicit empty value. In Spoolman pull mode nothing is sent - see [Clear Spool](#clear-spool) |
@@ -144,6 +148,14 @@ empty gate stays silent.
   `reset_moves_filament()` true, which is what lets the AMS sidebar grey its Reset button
   while a job owns the machine (`include/filament_op_slot_resolver.h#compute_machine_op_gating`).
 - **Recover** (`recover()`) sends `MMU_RECOVER` to attempt error recovery without full re-homing.
+- **Recover with state** (`recover_with_state(request)`) is what the Recover buttons in Device
+  Operations and the selector menu open: `AmsRecoverStateModal` asks for the true tool, gate
+  (or bypass) and filament position, pre-filled from live state, and
+  `AmsBackendHappyHare::build_recover_command()` names only what the user did not leave
+  unknown. `BYPASS=1` replaces `TOOL`/`GATE` (HH forces both to bypass), and "Detect
+  automatically" omits `LOADED` so HH reads its sensors. All unknown is bare `MMU_RECOVER`.
+  The error popup's Recover action asserts HH's own loaded flag as `LOADED=1` / `LOADED=0`;
+  HH has no `UNLOADED` parameter.
 - **Clear fault** (`clear_fault(slot_index)`) is a third, gate-scoped door onto the same command.
   Happy Hare overrides the base default (which forwards to `cancel()`): `slot_index >= 0` sends
   `MMU_RECOVER GATE=<n>`, and `slot_index < 0` (what both UI callers pass whenever nothing is

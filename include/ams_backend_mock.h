@@ -163,6 +163,14 @@ class AmsBackendMock : public AmsBackend {
     AmsError reset() override;
     AmsError cancel() override;
     AmsError clear_fault(int slot_index) override;
+    AmsError recover_with_state(const RecoverStateRequest& request) override;
+    [[nodiscard]] bool supports_recover_with_state() const override {
+        return system_info_.type == AmsType::HAPPY_HARE;
+    }
+    AmsError preload_lane(int slot_index) override;
+    [[nodiscard]] bool supports_lane_preload() const override {
+        return system_info_.type == AmsType::HAPPY_HARE;
+    }
 
     // Gate select / check (Happy Hare selector-based systems only)
     AmsError select_gate(int slot_index) override;

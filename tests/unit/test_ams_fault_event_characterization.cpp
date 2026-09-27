@@ -24,13 +24,13 @@
  * that does not override.
  */
 
-#include "test_helpers/afc_test_access.h"
 #include "ams_backend_afc.h"
 #include "ams_backend_happy_hare.h"
 #include "ams_backend_mock.h"
 #include "ams_fault_event.h"
 #include "ams_types.h"
 #include "error_event.h"
+#include "test_helpers/afc_test_access.h"
 
 #include <string>
 #include <vector>
@@ -214,11 +214,11 @@ TEST_CASE("Characterization: Happy Hare clog event, nothing at the toolhead",
     // No "runout" in the detail, so the generic title.
     CHECK(e->title == "Filament System Error");
     CHECK(e->detail == "Clog detected on gate 2");
-    // Unload is dropped, and MMU_RECOVER flips to UNLOADED=1.
+    // Unload is dropped, and MMU_RECOVER asserts LOADED=0.
     check_actions(e->recovery_actions,
                   {
                       {"Resume", "RESUME", "hh::resume", "primary", true},
-                      {"Recover", "MMU_RECOVER UNLOADED=1", "hh::recover", "", false},
+                      {"Recover", "MMU_RECOVER LOADED=0", "hh::recover", "", false},
                       {"Unlock", "MMU_UNLOCK", "hh::unlock", "danger", false},
                   });
 }

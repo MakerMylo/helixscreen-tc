@@ -7,6 +7,7 @@
 #if HELIX_HAS_SNAPMAKER
 #include "ams_backend_snapmaker.h"
 #endif
+#include "ams_backend_happy_hare.h"
 #include "ams_bypass_policy.h"
 #include "display_numbering.h"
 #include "filament_database.h"
@@ -1061,6 +1062,26 @@ AmsError AmsBackendMock::move_selector(int delta) {
 
     return simulate_transient_action(AmsAction::SELECTING,
                                      "Selecting slot " + std::to_string(target + 1));
+}
+
+AmsError AmsBackendMock::recover_with_state(const RecoverStateRequest& request) {
+    spdlog::info("[AMS Mock] Executing G-code: {}",
+                 AmsBackendHappyHare::build_recover_command(request));
+    return recover();
+}
+
+AmsError AmsBackendMock::preload_lane(int slot_index) {
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+
+        if (!slots_.is_valid_index(slot_index)) {
+            return AmsErrorHelper::invalid_slot(lane_noun_locked(), slot_index,
+                                                slots_.slot_count() - 1);
+        }
+
+        spdlog::info("[AMS Mock] Executing G-code: MMU_PRELOAD GATE={}", slot_index);
+    }
+    return AmsErrorHelper::success();
 }
 
 AmsError AmsBackendMock::check_gate(int slot_index) {
