@@ -4,12 +4,12 @@
 
 #include "app_constants.h"
 #include "app_globals.h"
+#include "helix_fs.h"
 #include "spdlog/spdlog.h"
 #include "text_io.h"
 
 #include <string>
 #include <sys/stat.h>
-#include <system_error>
 #include <unistd.h>
 #include <vector>
 
@@ -47,9 +47,8 @@ bool dir_locked_to_owner(const std::string& dir) {
 }
 
 std::string real_path(const std::string& path) {
-    std::error_code ec;
-    std::string resolved = std::filesystem::canonical(path, ec).string();
-    return ec ? std::string{} : resolved;
+    auto resolved = helix::fs::canonical(path);
+    return resolved ? *resolved : std::string{};
 }
 
 std::string parent_dir(const std::string& path) {

@@ -32,7 +32,7 @@
 #include "text_io.h"
 #include "theme_manager.h"
 
-#include <filesystem>
+#include <cerrno>
 
 #ifdef ENABLE_GLES_3D
 #include "gcode_gles_renderer.h"
@@ -1617,12 +1617,12 @@ static void ui_gcode_viewer_load_file_async(lv_obj_t* obj, const char* file_path
     // Determine whether to use streaming (layer-by-layer) or full-load mode
     // based on file size and available memory.
     // =========================================================================
-    std::error_code ec;
-    auto file_size = std::filesystem::file_size(file_path, ec);
-    if (ec) {
-        spdlog::warn("[GCode Viewer] Cannot get file size for {}: {}", file_path, ec.message());
-        file_size = 0; // Fall through to full-load mode
+    auto file_size_or = helix::text_io::file_size(file_path);
+    if (!file_size_or) {
+        spdlog::warn("[GCode Viewer] Cannot get file size for {}: {}", file_path,
+                     std::strerror(errno));
     }
+    const auto file_size = file_size_or.value_or(0); // stat failure falls through to full-load
 
 #ifdef ENABLE_3D_RENDERER
     constexpr bool kBuildHas3D = true;
@@ -1905,9 +1905,7 @@ static void ui_gcode_viewer_load_file_async(lv_obj_t* obj, const char* file_path
                 // SIZE_MAX before the first layer; narrowing that to int32_t
                 // lands on -1, the scan's prologue sentinel.
                 helix::gcode::PauseScan pause_scan;
-                std::error_code size_ec;
-                const auto scan_total = std::filesystem::file_size(path, size_ec);
-                pause_scan.begin(size_ec ? 0 : static_cast<size_t>(scan_total));
+                pause_scan.begin(static_cast<size_t>(helix::text_io::file_size(path).value_or(0)));
                 uint64_t line_offset = 0;
 
                 while (file.next(line)) {

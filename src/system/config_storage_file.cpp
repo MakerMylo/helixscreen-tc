@@ -2,6 +2,7 @@
 #include "ui_error_reporting.h"
 
 #include "config_storage.h"
+#include "helix_fs.h"
 #include "system/helix_paths.h"
 #include "text_io.h"
 
@@ -18,12 +19,11 @@
 #include <cstdio>
 #include <cstring>
 #include <fcntl.h>
-#include <filesystem>
 #include <stdexcept>
 #include <sys/stat.h>
 #include <unistd.h>
 
-namespace fs = std::filesystem;
+namespace hfs = helix::fs;
 
 namespace helix {
 
@@ -116,7 +116,7 @@ class FileConfigStorage : public ConfigStorage {
             }
 
             {
-                std::string dir = fs::path(target_path).parent_path().string();
+                std::string dir(hfs::parent_path(target_path));
                 if (!dir.empty()) {
                     int dfd = ::open(dir.c_str(), O_RDONLY | O_DIRECTORY);
                     if (dfd >= 0) {
@@ -147,8 +147,7 @@ class FileConfigStorage : public ConfigStorage {
 
     bool read_only() override {
         // Write-probe, moved verbatim from Config::init() (lines 1340-1359).
-        fs::path config_dir = fs::path(path_).parent_path();
-        std::string probe_path = (config_dir / ".helix-write-probe").string();
+        std::string probe_path = hfs::join_path(hfs::parent_path(path_), ".helix-write-probe");
         helix::text_io::File probe = helix::text_io::open_file(probe_path, "wb");
         if (!probe) {
             int err = errno;

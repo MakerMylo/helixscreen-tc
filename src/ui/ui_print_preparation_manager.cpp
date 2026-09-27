@@ -14,6 +14,7 @@
 #include "active_print_media_manager.h"
 #include "app_globals.h"
 #include "gcode_tool_remapper.h"
+#include "helix_fs.h"
 #include "lvgl/src/others/translation/lv_translation.h"
 #include "macro_modification_manager.h"
 #include "macro_param_cache.h"
@@ -24,13 +25,15 @@
 #include "operation_registry.h"
 #include "print_start_collector.h"
 #include "system/telemetry_manager.h"
+#include "text_io.h"
 
 #include <spdlog/fmt/fmt.h>
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
+#include <cerrno>
 #include <cstdlib>
-#include <filesystem>
+#include <cstring>
 #include <map>
 #include <memory>
 #include <optional>
@@ -40,6 +43,8 @@
 PrintStatusPanel& get_global_print_status_panel();
 
 namespace helix::ui {
+
+namespace hfs = helix::fs;
 
 // Bring helix:: types into scope for cleaner code
 using helix::CapabilityOrigin;
@@ -1567,11 +1572,9 @@ void PrintPreparationManager::modify_and_print_streaming(
 
             // Clean up download file (no longer needed) — bg-safe filesystem op,
             // runs even if owner is destroyed.
-            std::error_code ec;
-            std::filesystem::remove(local_download_path, ec);
-            if (ec) {
+            if (!hfs::remove(local_download_path) && errno != ENOENT) {
                 spdlog::warn("[PrintPreparationManager] Failed to clean up download file: {}",
-                             ec.message());
+                             std::strerror(errno));
             }
 
             if (!result.success) {
@@ -1605,12 +1608,10 @@ void PrintPreparationManager::modify_and_print_streaming(
                     [this, token, modified_path, display_filename, remote_temp_path, file_path,
                      mod_names, on_navigate_to_status, use_plugin]() {
                         // Clean up local modified file (safe - filesystem op, always do it)
-                        std::error_code ec;
-                        std::filesystem::remove(modified_path, ec);
-                        if (ec) {
+                        if (!hfs::remove(modified_path) && errno != ENOENT) {
                             spdlog::warn(
                                 "[PrintPreparationManager] Failed to clean up modified file: {}",
-                                ec.message());
+                                std::strerror(errno));
                         }
 
                         spdlog::info("[PrintPreparationManager] Modified file uploaded, starting "
@@ -1735,8 +1736,7 @@ void PrintPreparationManager::modify_and_print_streaming(
                         helix::ui::async_call([](void*) { BusyOverlay::hide(); }, nullptr);
 
                         // Clean up local file even on error (bg-safe filesystem op)
-                        std::error_code ec;
-                        std::filesystem::remove(modified_path, ec);
+                        hfs::remove(modified_path);
 
                         NOTIFY_ERROR(lv_tr("Failed to upload modified G-code: {}"), error.message);
                         LOG_ERROR_INTERNAL("[PrintPreparationManager] Upload failed: {}",
@@ -1767,8 +1767,7 @@ void PrintPreparationManager::modify_and_print_streaming(
             helix::ui::async_call([](void*) { BusyOverlay::hide(); }, nullptr);
 
             // Clean up partial download if any (bg-safe filesystem op)
-            std::error_code ec;
-            std::filesystem::remove(local_download_path, ec);
+            hfs::remove(local_download_path);
 
             NOTIFY_ERROR(lv_tr("Failed to download G-code for modification: {}"), error.message);
             LOG_ERROR_INTERNAL("[PrintPreparationManager] Download failed for {}: {}", file_path,
@@ -1837,13 +1836,11 @@ void PrintPreparationManager::modify_and_print_with_remap(
         // this->/api_-> access is deferred to the main thread via token.defer.
         [this, token, file_path, display_filename, remap, local_download_path, remote_temp_path,
          on_navigate_to_status](const std::string& /*dest_path*/) {
-            std::error_code ec;
-
             // A download that produced nothing is a failed download, not a file
             // whose every line happens to be unchanged, and the two must not
             // take the same exit.
-            if (std::filesystem::file_size(local_download_path, ec) == 0 || ec) {
-                std::filesystem::remove(local_download_path, ec);
+            if (helix::text_io::file_size(local_download_path).value_or(0) == 0) {
+                hfs::remove(local_download_path);
                 NOTIFY_ERROR(lv_tr("Failed to read G-code for remap"));
                 token.defer("PrintPreparationManager::remap_read_fail", [this]() {
                     BusyOverlay::hide();
@@ -1869,8 +1866,8 @@ void PrintPreparationManager::modify_and_print_with_remap(
             // Identity remap (nothing changes): print the original directly,
             // no temp copy. Clean up both local files and dispatch a plain start.
             if (rewrite_ok && lines_changed == 0) {
-                std::filesystem::remove(modified_path, ec);
-                std::filesystem::remove(local_download_path, ec);
+                hfs::remove(modified_path);
+                hfs::remove(local_download_path);
                 spdlog::info("[PrintPreparationManager] Remap produced no changes; "
                              "printing original {}",
                              file_path);
@@ -1892,10 +1889,10 @@ void PrintPreparationManager::modify_and_print_with_remap(
             }
 
             // Download file no longer needed (bg-safe filesystem op).
-            std::filesystem::remove(local_download_path, ec);
+            hfs::remove(local_download_path);
 
             if (!rewrite_ok) {
-                std::filesystem::remove(modified_path, ec);
+                hfs::remove(modified_path);
                 NOTIFY_ERROR(lv_tr("Failed to remap G-code: {}"),
                              std::string("could not write ") + modified_path);
                 token.defer("PrintPreparationManager::remap_apply_fail", [this]() {
@@ -1928,8 +1925,7 @@ void PrintPreparationManager::modify_and_print_with_remap(
                     // Upload success - runs on HTTP bg thread.
                     [this, token, modified_path, remote_temp_path, file_path, display_filename,
                      mod_names, on_navigate_to_status]() {
-                        std::error_code ec;
-                        std::filesystem::remove(modified_path, ec);
+                        hfs::remove(modified_path);
 
                         spdlog::info("[PrintPreparationManager] Remapped file uploaded, "
                                      "starting print via plugin");
@@ -2002,8 +1998,7 @@ void PrintPreparationManager::modify_and_print_with_remap(
                     // Upload error - runs on HTTP bg thread.
                     [this, token, modified_path](const MoonrakerError& error) {
                         helix::ui::async_call([](void*) { BusyOverlay::hide(); }, nullptr);
-                        std::error_code ec;
-                        std::filesystem::remove(modified_path, ec);
+                        hfs::remove(modified_path);
                         NOTIFY_ERROR(lv_tr("Failed to upload remapped G-code: {}"), error.message);
                         LOG_ERROR_INTERNAL("[PrintPreparationManager] Remap upload failed: {}",
                                            error.message);
@@ -2029,8 +2024,7 @@ void PrintPreparationManager::modify_and_print_with_remap(
         // Download error - runs on HTTP bg thread.
         [this, token, file_path, local_download_path](const MoonrakerError& error) {
             helix::ui::async_call([](void*) { BusyOverlay::hide(); }, nullptr);
-            std::error_code ec;
-            std::filesystem::remove(local_download_path, ec);
+            hfs::remove(local_download_path);
             NOTIFY_ERROR(lv_tr("Failed to download G-code for remap: {}"), error.message);
             LOG_ERROR_INTERNAL("[PrintPreparationManager] Remap download failed for {}: {}",
                                file_path, error.message);

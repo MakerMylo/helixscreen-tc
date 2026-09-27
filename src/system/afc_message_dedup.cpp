@@ -3,12 +3,14 @@
 #include "system/afc_message_dedup.h"
 
 #include "config.h"
+#include "helix_fs.h"
 #include "json_utils.h"
 #include "text_io.h"
 
 #include <spdlog/spdlog.h>
 
-#include <filesystem>
+#include <cerrno>
+#include <cstring>
 
 using json = nlohmann::json;
 
@@ -45,23 +47,29 @@ void AfcMessageDedup::init(const std::string& config_dir) {
             spdlog::debug("[AfcMessageDedup] No seed file at {}", path);
             return;
         }
+        // file_size from stat: a path that is not a readable regular file
+        // reports here rather than as an empty parse.
+        const auto size = tio::file_size(path);
+        if (size && *size > MAX_SEED_BYTES) {
+            spdlog::warn("[AfcMessageDedup] Seed file {} is {} bytes, past the {}-byte "
+                         "cap; ignoring it",
+                         path, *size, MAX_SEED_BYTES);
+            return;
+        }
         try {
-            // Throwing overload: a path that is not a readable regular file
-            // reports here rather than as an empty parse.
-            const auto size = std::filesystem::file_size(path);
-            if (size > MAX_SEED_BYTES) {
-                spdlog::warn("[AfcMessageDedup] Seed file {} is {} bytes, past the {}-byte "
-                             "cap; ignoring it",
-                             path, size, MAX_SEED_BYTES);
-                return;
-            }
-            // Read only after the cap check: the cap exists so an oversized file is
-            // never pulled into memory.
-            json data = json::parse(tio::read_file(path).value_or(""));
-            if (data.contains("printers") && data["printers"].is_object()) {
-                for (const auto& [printer_id, text] : data["printers"].items()) {
-                    if (text.is_string()) {
-                        last_error_by_printer_[printer_id] = text.get<std::string>();
+            if (!size) {
+                spdlog::warn("[AfcMessageDedup] Cannot load seed file {}: {}", path,
+                             std::strerror(errno));
+                last_error_by_printer_.clear();
+            } else {
+                // Read only after the cap check: the cap exists so an oversized file is
+                // never pulled into memory.
+                json data = json::parse(tio::read_file(path).value_or(""));
+                if (data.contains("printers") && data["printers"].is_object()) {
+                    for (const auto& [printer_id, text] : data["printers"].items()) {
+                        if (text.is_string()) {
+                            last_error_by_printer_[printer_id] = text.get<std::string>();
+                        }
                     }
                 }
             }
@@ -138,11 +146,10 @@ void AfcMessageDedup::record_cleared() {
     // file: an absent record is the state every load path fails open on, and
     // an unwritable file in a writable directory can still be removed.
     const std::string path = seed_path_locked();
-    std::error_code ec;
-    if (!std::filesystem::remove(path, ec) && ec) {
+    if (!helix::fs::remove(path) && errno != ENOENT) {
         spdlog::error("[AfcMessageDedup] Cannot clear the seed at {} ({}); a later session "
                       "may not toast this error's first sighting",
-                      path, ec.message());
+                      path, std::strerror(errno));
         return;
     }
     spdlog::warn("[AfcMessageDedup] Could not rewrite the seed at {}; deleted it so a "
