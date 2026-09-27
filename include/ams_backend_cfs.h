@@ -932,6 +932,12 @@ class AmsBackendCfs : public AmsSubscriptionBackend {
     // the override was cleared. Caller must hold mutex_.
     bool note_insert_edge_locked(SlotInfo& slot, int slot_index);
 
+    /// True while this slot's insert probe is parked in deferred_probes_
+    /// waiting for an idle box (unit number and bay mask derived from the
+    /// global slot index the same way collect_insert_probes_locked keys it).
+    /// Caller must hold mutex_.
+    bool insert_probe_deferred_locked(int slot_index) const;
+
     // Applies one classified insert verdict: a different spool drops what
     // described the old one through the Clear Spool funnel, no evidence keeps
     // everything and asks the user, the same spool keeps everything silently.

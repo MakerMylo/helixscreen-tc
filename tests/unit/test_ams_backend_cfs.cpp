@@ -5991,9 +5991,11 @@ TEST_CASE("CFS untagged insert offers Clear (#1710)", "[ams][cfs][1710]") {
     CHECK(toasts.empty());
 
     // A spool goes in that the reader cannot name: the frame restates the
-    // latched material and colour and reports the bay occupied again.
+    // latched material and colour and reports the bay occupied again. The box
+    // is idle so the probe runs and genuinely says nothing.
     json inserted =
         make_single_unit_box({"100003", "-1", "-1", "-1"}, {"0FF5500", "-1", "-1", "-1"});
+    inserted["filament_useup"] = 0;
 
     SECTION("the edge frame is never judged, silence then asks") {
         CfsTestAccess::handle_status(backend, make_cfs_notification(inserted));
@@ -6151,6 +6153,50 @@ TEST_CASE("CFS a re-read identical tag stays silent (#1710)", "[ams][cfs][1710]"
         CHECK(rig.toasts.empty());
     }
     CHECK(CfsTestAccess::get_override(backend, 0).has_value());
+}
+
+TEST_CASE("CFS a deferred probe holds the insert verdict until it runs (#1710)",
+          "[ams][cfs][1710]") {
+    // Mid-operation the box answers an RFID refresh with busy, so the insert
+    // probe parks in deferred_probes_ until an idle poll. The pending
+    // insert's quiet countdown must not expire while the probe still owes
+    // its answer: the verdict waits, and the released probe's answer decides.
+    CfsInsertRuleRig rig;
+    auto& backend = rig.backend;
+
+    // The insert lands while the box reports its runout latch: the probe is
+    // deferred on the very frame that opens the pending insert.
+    json busy = json(rig.reinserted);
+    busy["filament_useup"] = 1;
+    CfsTestAccess::handle_status(backend, make_cfs_notification(busy));
+    rig.drain();
+    CHECK(rig.toasts.empty());
+
+    // Busy frame after busy frame restates the latched spool. The countdown
+    // holds rather than expiring into a notice the probe has not weighed in
+    // on yet.
+    for (int i = 0; i < 6; ++i) {
+        CfsTestAccess::handle_status(backend, make_cfs_notification(busy));
+        rig.drain();
+        CHECK(rig.toasts.empty());
+    }
+    REQUIRE(CfsTestAccess::get_override(backend, 0).has_value());
+
+    // The box goes idle: the deferred probe dispatches on this poll.
+    json idle = json(busy);
+    idle["filament_useup"] = 0;
+    CfsTestAccess::handle_status(backend, make_cfs_notification(idle));
+    rig.drain();
+    CHECK(rig.toasts.empty());
+
+    // The probe's answer lands on a later frame: a different spool's PLA and
+    // white, so the held verdict clears what described the pulled one.
+    json answer = make_single_unit_box({"101001", "-1", "-1", "-1"}, {"0FFFFFF", "-1", "-1", "-1"});
+    answer["filament_useup"] = 0;
+    CfsTestAccess::handle_status(backend, make_cfs_notification(answer));
+    rig.drain();
+    CHECK_FALSE(CfsTestAccess::get_override(backend, 0).has_value());
+    CHECK(rig.toasts.empty());
 }
 
 TEST_CASE("CFS flat insert edge verdicts (#1710)", "[ams][cfs][1710]") {

@@ -4547,6 +4547,11 @@ bool AmsBackendCfs::judge_insert_locked(SlotInfo& slot, int slot_index,
     return false;
 }
 
+bool AmsBackendCfs::insert_probe_deferred_locked(int slot_index) const {
+    const auto it = deferred_probes_.find(slot_index / 4 + 1);
+    return it != deferred_probes_.end() && (it->second & (1 << (slot_index % 4))) != 0;
+}
+
 bool AmsBackendCfs::note_insert_edge_locked(SlotInfo& slot, int slot_index) {
     const auto present = slot_status_reports_filament(slot.status);
     if (!present.has_value()) {
@@ -4590,6 +4595,15 @@ bool AmsBackendCfs::note_insert_edge_locked(SlotInfo& slot, int slot_index) {
                 const PendingInsert pending = pit->second;
                 if (slot.material == pending.edge_material &&
                     stated_color(slot.color_rgb) == pending.edge_color) {
+                    if (insert_probe_deferred_locked(slot_index)) {
+                        // The probe is parked until the box is idle, so its
+                        // answer has not had its chance: the quiet count holds
+                        // at zero rather than expiring into a verdict the
+                        // deferred probe still owes, and the wait restarts
+                        // once the probe is released.
+                        pit->second.quiet_frames = 0;
+                        return false;
+                    }
                     if (++pit->second.quiet_frames < kInsertProbeWaitFrames) {
                         return false;
                     }
