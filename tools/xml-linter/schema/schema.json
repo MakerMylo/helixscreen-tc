@@ -1886,6 +1886,10 @@
       },
       "inherits": "lv_obj"
     },
+    "leader_line": {
+      "attributes": {},
+      "inherits": "lv_obj"
+    },
     "setting_group": {
       "attributes": {},
       "inherits": "lv_obj"
@@ -2868,6 +2872,7 @@
     "ui_split_button",
     "z_offset_indicator",
     "helix_sparkline",
+    "leader_line",
     "setting_group",
     "ams_lane_bar",
     "ams_lane_spool",
