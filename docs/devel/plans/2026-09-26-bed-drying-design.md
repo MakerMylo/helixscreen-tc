@@ -17,8 +17,8 @@ the bottom, spool on the plate under a box, flip it midway, let it cool before r
 On an enclosed printer with a heated bed, **Dry filament** makes sure no filament is
 loaded, homes the printer while the bed is empty, moves the bed as far from the nozzle
 as the printer allows, asks the user to lay the spools on the plate under a cover box
-and close the door, then heats the bed to the drying temperature (the cap is open
-question 1). Midway it asks the user to flip the spools; at the end it waits for the
+and close the door, then heats the bed to the material's drying temperature
+(capped at 90°C). Midway it asks the user to flip the spools; at the end it waits for the
 bed to cool before asking for them to be removed. A chamber appliance with a dryer (stock Panda Breath) runs at the
 same time when one is present. From the moment the user confirms the spools are in
 until the moment they confirm the spools are out, HelixScreen refuses anything that
@@ -181,7 +181,8 @@ All three open the same modal.
 - placement: **On the bed** or **Elsewhere in the chamber** (the second is today's
   chamber dryer with bed assist)
 - for On the bed:
-  - the bed temperature it will use, shown as a number (rule: open question 1)
+  - the bed temperature it will use, shown as a number: the material's value from the
+    table in section 5, capped at 90°C and at the bed's own max
   - the warning text: some spools are not heat-resistant enough and can deform; the
     printer homes and moves the bed away from the nozzle first; nothing may move until
     the spools are out; Mainsail, macros and slicer prints are not blocked
@@ -263,19 +264,13 @@ Decided (Preston, 2026-09-26):
 - The Klipper-side G28 wrapper is deferred (Future work).
 - Dead-man margin: 10 minutes past the planned end.
 
-Open:
-
-1. **Bed temperature rule.** Two candidates:
-   - **Per material, from Bambu's table, capped at 90°C and at the bed max**, with the
-     spool-deformation warning. Bambu's bed temperatures, all for 12 h: PLA 60-70,
-     PLA Silk/CF 65-75, PETG 75-85, TPU 80-90, ABS/ASA/PC/PA 90-100. Its X1C drying
-     mode caps at 90°C. It warns that "some third-party spools may not be
-     heat-resistant enough and could deform".
-   - **A flat 70°C cap**, Preston's first proposal: plastic spool flanges soften around
-     60-70°C. Safer for spools, but PETG and above dry below Bambu's range.
-2. **Cool-down threshold** for the remove prompt: 40°C proposed.
-3. **Loaded-filament detection** on printers without a toolhead sensor: is the prompt
-   line enough?
+- Bed temperature: Bambu's per-material table, capped at 90°C and at the bed max, with
+  the third-party spool warning in the modal. Bambu's figures, all for 12 h: PLA 60-70,
+  PLA Silk/CF 65-75, PETG 75-85, TPU 80-90, ABS/ASA/PC/PA 90-100. The table's upper
+  value is used, then capped.
+- Cool-down: the remove prompt waits for the bed to read below 40°C.
+- Printers that cannot detect loaded filament get a "make sure no filament is loaded"
+  line in the place prompt.
 
 ## Future work
 
