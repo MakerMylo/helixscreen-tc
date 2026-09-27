@@ -6058,6 +6058,101 @@ TEST_CASE("CFS untagged insert offers Clear (#1710)", "[ams][cfs][1710]") {
     helix::ui::set_test_toast_hook(nullptr);
 }
 
+namespace {
+
+// Shared rig for the stock-schema insert-rule cases: a registered backend
+// with an override store, one tagged PETG spool seated and given a user
+// assignment, then pulled, so each case drives its own re-insert.
+struct CfsInsertRuleRig {
+    CfsInsertRuleRig() : client(MoonrakerClientMock::PrinterType::VORON_24), api(client, state) {
+        state.init_subjects(false);
+
+        auto store = std::make_unique<helix::ams::FilamentSlotOverrideStore>(&api, "cfs");
+        FilamentSlotOverrideStoreTestAccess::set_cache_directory(*store, tmp.path);
+        CfsTestAccess::inject_override_store(backend, std::move(store));
+
+        helix::ui::set_test_toast_hook([this](ToastSeverity severity, const std::string& msg,
+                                              uint32_t) { toasts.emplace_back(severity, msg); });
+
+        // Boot with a tagged PETG spool seated and the box idle: the first
+        // occupancy observation is the session's baseline, never an edge.
+        json seated =
+            make_single_unit_box({"100003", "-1", "-1", "-1"}, {"0FF5500", "-1", "-1", "-1"});
+        seated["filament_useup"] = 0;
+        CfsTestAccess::handle_status(backend, make_cfs_notification(seated));
+        drain();
+        REQUIRE(toasts.empty());
+
+        // The lane carries a user assignment for the spool; that is what the
+        // notice asks about.
+        SlotInfo edit = backend.get_slot_info(0);
+        edit.color_rgb = 0x7EC8E3;
+        helix::test::edit_slot_as_user(backend, 0, edit);
+
+        // Pulling the spool is not an insert: the tag's material and colour
+        // stay latched, only the occupancy fields drop.
+        json pulled = json(seated);
+        pulled["T1"]["vender"][0] = "none";
+        pulled["T1"]["remain_len"][0] = "-1";
+        CfsTestAccess::handle_status(backend, make_cfs_notification(pulled));
+        drain();
+        REQUIRE(toasts.empty());
+
+        // The frames every insert scenario starts from: the latched PETG
+        // reading, an idle box, and the bay reporting occupied again.
+        reinserted = json(seated);
+        reinserted["filament_useup"] = 0;
+    }
+
+    ~CfsInsertRuleRig() {
+        helix::ui::set_test_toast_hook(nullptr);
+    }
+
+    void drain() {
+        helix::ui::UpdateQueue::instance().drain();
+    }
+
+    CfsTmpCacheDir tmp{"cfs_insert_rule"};
+    MoonrakerClientMock client;
+    helix::PrinterState state;
+    MoonrakerAPIMock api;
+    helix::test::RegisteredBackend<AmsBackendCfs> backend_reg{&api, nullptr};
+    AmsBackendCfs& backend = *backend_reg;
+    std::vector<std::pair<ToastSeverity, std::string>> toasts;
+    json reinserted;
+};
+
+} // namespace
+
+TEST_CASE("CFS a re-read identical tag stays silent (#1710)", "[ams][cfs][1710]") {
+    // The stock arrays latch the pulled spool's colour and material, and a
+    // re-inserted tagged spool re-reads IDENTICAL values, so the probe's
+    // answer never states anything different from the latch. What separates
+    // a completed read from the latch is `vender`: "unknown" while the seated
+    // tag is unread, a real vendor name once the probe has read it. A
+    // completed read restating the before-insert evidence is the same spool:
+    // keep everything and say nothing.
+    CfsInsertRuleRig rig;
+    auto& backend = rig.backend;
+
+    // The same spool goes back in: the edge frame restates the latched values
+    // with the tag still unread.
+    CfsTestAccess::handle_status(backend, make_cfs_notification(rig.reinserted));
+    rig.drain();
+    CHECK(rig.toasts.empty());
+
+    // The probe completes on later frames: vender resolves to the tag's
+    // vendor while material and colour repeat the latched pair exactly.
+    json reread = json(rig.reinserted);
+    reread["T1"]["vender"][0] = "Creality";
+    for (int i = 0; i < 4; ++i) {
+        CfsTestAccess::handle_status(backend, make_cfs_notification(reread));
+        rig.drain();
+        CHECK(rig.toasts.empty());
+    }
+    CHECK(CfsTestAccess::get_override(backend, 0).has_value());
+}
+
 TEST_CASE("CFS flat insert edge verdicts (#1710)", "[ams][cfs][1710]") {
     // The fork reports each seated spool's identity fresh in every frame, so
     // the edge itself is the reading, minus the fields that restate our own

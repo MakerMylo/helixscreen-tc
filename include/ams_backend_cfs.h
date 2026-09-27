@@ -971,6 +971,15 @@ class AmsBackendCfs : public AmsSubscriptionBackend {
     /// is the only moment we get to ask for one.
     std::unordered_map<int, bool> bay_occupied_;
 
+    /// Whether the bay's RFID reader has finished with the seated spool, from
+    /// the same `vender` walk that tracks occupancy: "unknown" is a spool
+    /// seated whose tag has not been read, a real vendor name the read having
+    /// landed (it drops back to a sentinel the moment the spool is pulled).
+    /// The insert rule reads it to tell a completed read that restated the
+    /// latched values from a reader that said nothing at all. All access
+    /// under mutex_.
+    std::unordered_map<int, bool> bay_tag_resolved_;
+
     /// Insert probes blocked by the busy gate in handle_status_update
     /// (#1387): unit number -> bay bitmask, OR-merged so a bay re-inserted
     /// while still deferred keeps one entry. Entries leave the set on the
