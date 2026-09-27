@@ -41,6 +41,16 @@ TEST_CASE("hold repeat cadence after the first fire", "[hold_repeat]") {
     CHECK(hr.on_elapsed(HoldRepeat::DELAY_MS + 2 * HoldRepeat::INTERVAL_MS));
 }
 
+TEST_CASE("a late poll fires once and skips the missed intervals", "[hold_repeat]") {
+    HoldRepeat hr;
+    hr.press();
+    // A stalled main loop: several interval boundaries went by unanswered.
+    REQUIRE(hr.on_elapsed(HoldRepeat::DELAY_MS + 600));
+    // The next poll, one period later, must not repay the missed intervals.
+    CHECK_FALSE(hr.on_elapsed(HoldRepeat::DELAY_MS + 650));
+    CHECK(hr.on_elapsed(HoldRepeat::DELAY_MS + 600 + HoldRepeat::INTERVAL_MS));
+}
+
 TEST_CASE("a tap with no repeat jogs once via the click path", "[hold_repeat]") {
     HoldRepeat hr;
     hr.press();
@@ -173,8 +183,11 @@ TEST_CASE_METHOD(LVGLTestFixture, "HoldRepeatTimer release stops ticks and keeps
 #include "ui_update_queue.h"
 
 #include "../lvgl_ui_test_fixture.h"
+#include "../test_helpers/log_capture.h"
 #include "../ui_test_utils.h"
 #include "app_globals.h"
+#include "moonraker_api.h"
+#include "moonraker_client_mock.h"
 #include "static_panel_registry.h"
 #include "ui/ui_lazy_panel_helper.h"
 
@@ -241,6 +254,85 @@ TEST_CASE_METHOD(LVGLUITestFixture, "a Z jog blocked at the ceiling cancels the 
     CHECK_FALSE(panel.z_hold_timer().ticking());
 
     helix::ui::set_test_notification_warning_hook(nullptr);
+    StaticPanelRegistry::instance().destroy_all();
+    helix::ui::UpdateQueue::instance().drain();
+}
+
+TEST_CASE_METHOD(LVGLUITestFixture, "a hold that repeated jogs exactly once on release",
+                 "[motion][hold_repeat][xml]") {
+    std::array<lv_obj_t*, UI_PANEL_COUNT> panels{};
+    for (auto& p : panels)
+        p = lv_obj_create(lv_screen_active());
+    NavigationManager::instance().set_panels(panels.data());
+
+    lv_obj_t* cached = nullptr;
+    REQUIRE(helix::ui::lazy_create_and_push_overlay<MotionPanel>(
+        get_global_motion_panel, cached, lv_screen_active(), "Motion", "test"));
+    helix::ui::UpdateQueue::instance().drain();
+
+    MotionPanel& panel = get_global_motion_panel();
+    lv_obj_t* root = panel.get_root();
+    lv_obj_t* z_up = lv_obj_find_by_name(root, "z_up_large");
+    REQUIRE(z_up != nullptr);
+
+    // Known envelope (Z 0..250), homed, toolhead mid-range: every z_up jog
+    // moves, so how many jogs the gesture dispatched is observable.
+    get_printer_state().update_from_status({{"toolhead",
+                                             {{"homed_axes", "xyz"},
+                                              {"axis_minimum", {0.0, 0.0, 0.0, 0.0}},
+                                              {"axis_maximum", {235.0, 235.0, 250.0, 0.0}}}}});
+    get_printer_state().set_klippy_state_sync(helix::KlippyState::READY);
+    lv_subject_set_int(get_printer_state().get_print_state_enum_subject(),
+                       static_cast<int>(helix::PrintJobState::STANDBY));
+    lv_subject_set_int(get_printer_state().get_gcode_position_z_subject(), 10'000); // 100.00mm
+    helix::ui::UpdateQueue::instance().drain();
+
+    // A real API over a mock client: every dispatched jog lands in the mock's
+    // gcode history as one relative-move script.
+    MoonrakerClientMock client{MoonrakerClientMock::PrinterType::VORON_24};
+    MoonrakerAPI api{client, get_printer_state()};
+    IMoonrakerAPI* previous_api = get_moonraker_api();
+    set_moonraker_api(&api);
+    client.clear_gcode_script_history();
+
+    // handle_z_button() logs one line per accepted jog decision, before any
+    // coalescing: the count stays honest whether or not the move acked yet.
+    helix::TextLogCapture log;
+    const auto jog_decisions = [&log] {
+        int n = 0;
+        const std::string blob = log.get_captured();
+        for (size_t pos = blob.find("Z jog:"); pos != std::string::npos;
+             pos = blob.find("Z jog:", pos + 1)) {
+            ++n;
+        }
+        return n;
+    };
+    const auto jog_scripts = [&client] {
+        int n = 0;
+        for (const auto& script : client.gcode_script_history()) {
+            if (script.find("G91") != std::string::npos) {
+                ++n;
+            }
+        }
+        return n;
+    };
+
+    lv_obj_send_event(z_up, LV_EVENT_PRESSED, nullptr);
+    REQUIRE(panel.z_hold_timer().ticking());
+    // Exactly one repeat fires inside the delay window, and it dispatches.
+    REQUIRE(panel.z_hold_timer().poll(HoldRepeat::DELAY_MS));
+    REQUIRE(jog_decisions() == 1);
+
+    // Release after a repeated hold: the CLICKED must be swallowed, adding
+    // neither a jog decision nor a second move.
+    lv_obj_send_event(z_up, LV_EVENT_RELEASED, nullptr);
+    lv_obj_send_event(z_up, LV_EVENT_CLICKED, nullptr);
+    CHECK(jog_decisions() == 1);
+    CHECK(jog_scripts() == 1);
+    CHECK_FALSE(panel.z_hold_timer().ticking());
+
+    set_moonraker_api(previous_api);
+    helix::ui::UpdateQueue::instance().drain();
     StaticPanelRegistry::instance().destroy_all();
     helix::ui::UpdateQueue::instance().drain();
 }

@@ -47,7 +47,11 @@ class HoldRepeat {
             return false;
         }
         fired_ = true;
-        next_ms_ += INTERVAL_MS;
+        // A late poll (stalled main loop) fires once and resumes on the grid
+        // at the first boundary after now; repaying every missed interval
+        // would burst the head forward one repeat per poll.
+        const uint32_t phase = (ms_since_press - DELAY_MS) % INTERVAL_MS;
+        next_ms_ = ms_since_press + (INTERVAL_MS - phase);
         return true;
     }
 

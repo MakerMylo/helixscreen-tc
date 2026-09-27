@@ -597,8 +597,12 @@ static void jog_pad_press_cb(lv_event_t* e) {
 
     const JogPadZone zone = jog_pad_zone_at(obj, state, point);
     state->is_pressed = zone.on_pad;
-    if (!zone.on_pad)
+    if (!zone.on_pad) {
+        // This press starts no hold, and the previous hold's swallow state
+        // must not survive into it: only begin() resets fired_.
+        state->hold_timer.cancel();
         return;
+    }
 
     state->pressed_is_home = zone.home;
     state->pressed_is_inner = zone.inner;
@@ -610,6 +614,10 @@ static void jog_pad_press_cb(lv_event_t* e) {
         const auto& mode_dist = get_jog_mode_distances(state->current_mode);
         state->hold_distance_mm = zone.inner ? mode_dist.inner : mode_dist.outer;
         state->hold_timer.begin(&jog_pad_repeat_fire, obj);
+    } else {
+        // A home tap never repeats; an earlier hold whose click was dropped
+        // must not swallow it.
+        state->hold_timer.cancel();
     }
 
     lv_obj_invalidate(obj); // Trigger redraw
