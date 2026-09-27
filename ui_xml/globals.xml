@@ -243,20 +243,20 @@
     <string name="calib_cell_width_large" value="48%"/>
     <string name="calib_cell_width_xlarge" value="32%"/>
     <percentage name="calib_cell_height" value="48%"/>
-    <!-- Motors Off / Light beside Motion on the Controls position card: the row
-         is one button tall, so the glyph steps down where that is short -->
+    <!-- Motors Off beside Motion on the Controls position card: at least 40px
+         wide to tap, with the glyph sized to the one-button-tall row -->
     <string name="controls_toggle_icon_size_micro" value="xs"/>
-    <string name="controls_toggle_icon_size_tiny" value="xs"/>
+    <string name="controls_toggle_icon_size_tiny" value="sm"/>
     <string name="controls_toggle_icon_size_small" value="sm"/>
     <string name="controls_toggle_icon_size_medium" value="sm"/>
     <string name="controls_toggle_icon_size_large" value="md"/>
     <string name="controls_toggle_icon_size_xlarge" value="md"/>
-    <px name="controls_toggle_width_micro" value="20"/>
-    <px name="controls_toggle_width_tiny" value="22"/>
-    <px name="controls_toggle_width_small" value="40"/>
-    <px name="controls_toggle_width_medium" value="48"/>
-    <px name="controls_toggle_width_large" value="64"/>
-    <px name="controls_toggle_width_xlarge" value="72"/>
+    <px name="controls_toggle_width_micro" value="40"/>
+    <px name="controls_toggle_width_tiny" value="40"/>
+    <px name="controls_toggle_width_small" value="64"/>
+    <px name="controls_toggle_width_medium" value="80"/>
+    <px name="controls_toggle_width_large" value="96"/>
+    <px name="controls_toggle_width_xlarge" value="112"/>
     <!-- Calibration tiles: the glyph a tile's share of the card holds above a
          one-line label -->
     <string name="calib_icon_size_micro" value="sm"/>

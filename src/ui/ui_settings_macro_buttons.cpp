@@ -10,6 +10,7 @@
 #include "app_globals.h"
 #include "config.h"
 #include "i_moonraker_api.h"
+#include "quick_action_slots.h"
 #include "standard_macros.h"
 #include "static_panel_registry.h"
 
@@ -167,6 +168,8 @@ void MacroButtonsOverlay::populate_dropdowns() {
     for (const auto& slot : StandardMacros::instance().all()) {
         quick_button_options += "\n" + slot.display_name;
     }
+    // The light toggle comes last, after every standard macro slot
+    quick_button_options += std::string("\n") + lv_tr("Light");
 
     // Get current quick button config
     Config* config = Config::get_instance();
@@ -186,6 +189,8 @@ void MacroButtonsOverlay::populate_dropdowns() {
         if (slot_name.empty())
             return 0; // (Empty)
         const auto& slots = StandardMacros::instance().all();
+        if (slot_name == helix::kQuickSlotLight)
+            return static_cast<int>(slots.size()) + 1;
         for (size_t i = 0; i < slots.size(); ++i) {
             if (slots[i].slot_name == slot_name) {
                 return static_cast<int>(i) + 1; // +1 because 0 is "(Empty)"
@@ -316,6 +321,9 @@ std::string MacroButtonsOverlay::quick_button_index_to_slot_name(int index) {
     const auto& slots = StandardMacros::instance().all();
     if (index - 1 < static_cast<int>(slots.size())) {
         return slots[index - 1].slot_name;
+    }
+    if (index - 1 == static_cast<int>(slots.size())) {
+        return std::string(helix::kQuickSlotLight);
     }
     return "";
 }

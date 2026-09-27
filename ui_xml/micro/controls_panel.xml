@@ -93,9 +93,9 @@
           <bind_flag_if_eq subject="z_offset_save_available" flag="hidden" ref_value="0"/>
           <event_cb trigger="clicked" callback="on_controls_save_z_offset"/>
         </ui_button>
-        <!-- Motion | Motors Off | Light. The toggles keep a fixed icon-sized width
-             and Motion takes the rest, so its icon and label stay whole down to
-             480x320; the toggles drop their labels where the row is too short. -->
+        <!-- Motion | Motors Off. Motors Off keeps a fixed tappable width and
+             Motion takes the rest; Motors Off drops its label where the row is
+             too short for one. -->
         <lv_obj name="position_action_row"
                 width="100%" height="#button_height_sm" style_pad_all="0" flex_flow="row"
                 style_flex_cross_place="center" style_pad_gap="#space_xs" scrollable="false">
@@ -108,17 +108,9 @@
                             width="#controls_toggle_width" height="100%" flex_grow="0" icon="engine"
                             icon_variant="warning" alt_icon="engine_off" alt_icon_variant="secondary"
                             icon_swap_subject="motors_enabled" icon_size="#controls_toggle_icon_size" label="Motors Off"
-                            label_tag="Motors Off" label_hidden_cond="ui_breakpoint le 3"
+                            label_tag="Motors Off" label_hidden_cond="ui_breakpoint le 1"
                             callback="on_calibration_motors" button_name="btn_motors" icon_name="btn_motors_icon"
                             moves_machine="true" disabled_cond="motors_enabled eq 0"/>
-          <home_action_tile name="controls_led_cell"
-                            width="#controls_toggle_width" height="100%" flex_grow="0" icon="lightbulb_outline"
-                            icon_variant="muted" icon_size="#controls_toggle_icon_size" label="Light" label_tag="Light"
-                            label_hidden_cond="ui_breakpoint le 3" callback="light_toggle_cb" button_name="light_button"
-                            icon_name="light_icon"
-                            disabled_cond="printer_connection_state ne 2 or led_command_in_flight eq 1" hidden="true">
-            <bind_flag_if_eq subject="led_controllable" flag="hidden" ref_value="0"/>
-          </home_action_tile>
         </lv_obj>
       </ui_card>
       <!-- Right section: E-Stop banner + Temps + Cooling -->
@@ -424,6 +416,22 @@
               <bind_state_if cond="macro_1_available eq 0" state="disabled"/>
               <event_cb trigger="clicked" callback="on_controls_macro" user_data="0"/>
             </ui_button>
+            <!-- The light toggle, when this slot holds it (see resolve_quick_slots) -->
+            <lv_obj name="macro_1_light_cell"
+                    width="0" height="#button_height_sm" flex_grow="1" style_pad_all="0" scrollable="false"
+                    hidden="true">
+              <bind_flag_if cond="macro_1_light eq 0 or led_controllable eq 0" flag="hidden"/>
+              <!-- DUPLICATE_NAME_OK: each slot cell hands itself to its own LedWidget, which finds light_button inside that cell -->
+              <ui_button name="light_button"
+                         width="100%" height="100%" variant="secondary" flex_flow="row" style_flex_main_place="center"
+                         style_flex_cross_place="center" style_pad_gap="#space_xs" focusable="false">
+                <bind_state_if cond="printer_connection_state ne 2 or led_command_in_flight eq 1" state="disabled"/>
+                <!-- DUPLICATE_NAME_OK: found per cell by that cell\'s LedWidget -->
+                <icon name="light_icon"
+                      src="lightbulb_outline" size="sm" variant="muted" clickable="false" event_bubble="true"/>
+                <text_small text="Light" translation_tag="Light" clickable="false" event_bubble="true"/>
+              </ui_button>
+            </lv_obj>
           </lv_obj>
           <!-- Macro row 2 -->
           <lv_obj width="100%"
@@ -437,6 +445,22 @@
               <bind_state_if cond="macro_2_available eq 0" state="disabled"/>
               <event_cb trigger="clicked" callback="on_controls_macro" user_data="1"/>
             </ui_button>
+            <!-- The light toggle, when this slot holds it (see resolve_quick_slots) -->
+            <lv_obj name="macro_2_light_cell"
+                    width="0" height="#button_height_sm" flex_grow="1" style_pad_all="0" scrollable="false"
+                    hidden="true">
+              <bind_flag_if cond="macro_2_light eq 0 or led_controllable eq 0" flag="hidden"/>
+              <!-- DUPLICATE_NAME_OK: each slot cell hands itself to its own LedWidget, which finds light_button inside that cell -->
+              <ui_button name="light_button"
+                         width="100%" height="100%" variant="secondary" flex_flow="row" style_flex_main_place="center"
+                         style_flex_cross_place="center" style_pad_gap="#space_xs" focusable="false">
+                <bind_state_if cond="printer_connection_state ne 2 or led_command_in_flight eq 1" state="disabled"/>
+                <!-- DUPLICATE_NAME_OK: found per cell by that cell\'s LedWidget -->
+                <icon name="light_icon"
+                      src="lightbulb_outline" size="sm" variant="muted" clickable="false" event_bubble="true"/>
+                <text_small text="Light" translation_tag="Light" clickable="false" event_bubble="true"/>
+              </ui_button>
+            </lv_obj>
             <ui_button name="btn_macro_3"
                        width="0" height="#button_height_sm" flex_grow="1" bind_text="macro_3_name" variant="secondary"
                        moves_machine="true">
@@ -446,6 +470,22 @@
               <bind_state_if cond="macro_3_available eq 0" state="disabled"/>
               <event_cb trigger="clicked" callback="on_controls_macro" user_data="2"/>
             </ui_button>
+            <!-- The light toggle, when this slot holds it (see resolve_quick_slots) -->
+            <lv_obj name="macro_3_light_cell"
+                    width="0" height="#button_height_sm" flex_grow="1" style_pad_all="0" scrollable="false"
+                    hidden="true">
+              <bind_flag_if cond="macro_3_light eq 0 or led_controllable eq 0" flag="hidden"/>
+              <!-- DUPLICATE_NAME_OK: each slot cell hands itself to its own LedWidget, which finds light_button inside that cell -->
+              <ui_button name="light_button"
+                         width="100%" height="100%" variant="secondary" flex_flow="row" style_flex_main_place="center"
+                         style_flex_cross_place="center" style_pad_gap="#space_xs" focusable="false">
+                <bind_state_if cond="printer_connection_state ne 2 or led_command_in_flight eq 1" state="disabled"/>
+                <!-- DUPLICATE_NAME_OK: found per cell by that cell\'s LedWidget -->
+                <icon name="light_icon"
+                      src="lightbulb_outline" size="sm" variant="muted" clickable="false" event_bubble="true"/>
+                <text_small text="Light" translation_tag="Light" clickable="false" event_bubble="true"/>
+              </ui_button>
+            </lv_obj>
             <ui_button name="btn_macro_4"
                        width="0" height="#button_height_sm" flex_grow="1" bind_text="macro_4_name" variant="secondary"
                        moves_machine="true">
@@ -455,6 +495,22 @@
               <bind_state_if cond="macro_4_available eq 0" state="disabled"/>
               <event_cb trigger="clicked" callback="on_controls_macro" user_data="3"/>
             </ui_button>
+            <!-- The light toggle, when this slot holds it (see resolve_quick_slots) -->
+            <lv_obj name="macro_4_light_cell"
+                    width="0" height="#button_height_sm" flex_grow="1" style_pad_all="0" scrollable="false"
+                    hidden="true">
+              <bind_flag_if cond="macro_4_light eq 0 or led_controllable eq 0" flag="hidden"/>
+              <!-- DUPLICATE_NAME_OK: each slot cell hands itself to its own LedWidget, which finds light_button inside that cell -->
+              <ui_button name="light_button"
+                         width="100%" height="100%" variant="secondary" flex_flow="row" style_flex_main_place="center"
+                         style_flex_cross_place="center" style_pad_gap="#space_xs" focusable="false">
+                <bind_state_if cond="printer_connection_state ne 2 or led_command_in_flight eq 1" state="disabled"/>
+                <!-- DUPLICATE_NAME_OK: found per cell by that cell\'s LedWidget -->
+                <icon name="light_icon"
+                      src="lightbulb_outline" size="sm" variant="muted" clickable="false" event_bubble="true"/>
+                <text_small text="Light" translation_tag="Light" clickable="false" event_bubble="true"/>
+              </ui_button>
+            </lv_obj>
           </lv_obj>
         </lv_obj>
       </ui_card>
