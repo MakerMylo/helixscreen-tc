@@ -96,3 +96,28 @@ TEST_CASE_METHOD(MotorsOffFixture, "motors off cancel moves nothing", "[controls
     CHECK(client.gcode_script_history().empty());
     CHECK(guard.get() == nullptr);
 }
+
+TEST_CASE_METHOD(MotorsOffFixture, "motors off refuses a confirm made after a print started",
+                 "[controls][motors]") {
+    auto& ps = get_printer_state();
+    ps.update_from_status({{"print_stats", {{"state", "standby"}}}});
+    settle();
+
+    helix::ui::ModalGuard guard;
+    helix::ui::show_motors_off_confirm(&api, guard);
+    REQUIRE(guard.get() != nullptr);
+
+    // A print starts from elsewhere while the dialog is open.
+    ps.update_from_status({{"print_stats", {{"state", "printing"}}}});
+    settle();
+    REQUIRE(lv_subject_get_int(ps.get_machine_motion_blocked_subject()) == 1);
+
+    press(guard.get(), "btn_primary");
+    settle();
+
+    CHECK_FALSE(sent_m84());
+    CHECK(guard.get() == nullptr);
+
+    ps.update_from_status({{"print_stats", {{"state", "standby"}}}});
+    settle();
+}

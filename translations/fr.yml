@@ -1934,6 +1934,7 @@ translations:
   'Motors disable failed: {}': 'Échec de la désactivation des moteurs : {}'
   Motors disabled: Moteurs désactivés
   Motors off: ''
+  Motors stay on while a print is active: Les moteurs restent actifs pendant une impression
   Mount: Monter
   Move: Déplacer
   Move out of range: 'Déplacement hors limites'

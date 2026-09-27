@@ -1919,6 +1919,7 @@ translations:
   'Motors disable failed: {}': 'Error al desactivar motores: {}'
   Motors disabled: Motores desactivados
   Motors off: ''
+  Motors stay on while a print is active: Los motores siguen activos durante una impresión
   Mount: Montar
   Move: Mover
   Move out of range: 'Movimiento fuera de rango'

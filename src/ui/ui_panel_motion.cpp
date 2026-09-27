@@ -27,6 +27,7 @@
 #include "settings_manager.h"
 #include "standard_macros.h"
 #include "subject_managed_panel.h"
+#include "system_settings_manager.h"
 #include "theme_manager.h"
 #include "toolhead_homing.h"
 #include "unit_conversions.h"
@@ -122,7 +123,7 @@ static std::string clean_gcode_error(const std::string& msg) {
         cleaned = cleaned.substr(3);
     }
 
-    // Parse JSON error objects — extract the "msg" field; anything that does
+    // Parse JSON error objects - extract the "msg" field; anything that does
     // not parse or lacks a string "msg" is used as-is
     if (!cleaned.empty() && cleaned[0] == '{') {
         auto j = nlohmann::json::parse(cleaned, nullptr, false);
@@ -272,11 +273,8 @@ void MotionPanel::init_subjects() {
     // Content tab (0=Jog, 1=Move, 2=Bed) plus the strip state the shared
     // zone_tab component binds: one active flag per tab, one label each.
     UI_MANAGED_SUBJECT_INT(motion_tab_subject_, motion_tab_, "motion_tab", subjects_);
-    // Literal lv_tr calls, not an array: the translation extractor only sees
-    // string literals inside lv_tr().
-    const char* const tab_labels[] = {lv_tr("Jog"), lv_tr("Move"), lv_tr("Bed")};
+    refresh_tab_labels(); // fills the buffers the label subjects start from
     for (int i = 0; i < 3; ++i) {
-        snprintf(motion_tab_label_buf_[i], sizeof(motion_tab_label_buf_[i]), "%s", tab_labels[i]);
         char subject_name[32];
         snprintf(subject_name, sizeof(subject_name), "motion_tab_label_%d", i);
         UI_MANAGED_SUBJECT_STRING(motion_tab_label_[i], motion_tab_label_buf_[i],
@@ -664,6 +662,13 @@ void MotionPanel::register_position_observers() {
 
     // Coordinate source preference: commanded (default) or actual (live).
     // Flipping the persisted setting re-renders the readouts.
+    // Tab labels are translated into subject buffers, so a live language
+    // switch has to re-fill them; XML text around them re-translates itself.
+    language_observer_ = observe_int_sync<MotionPanel>(
+        SystemSettingsManager::instance().subject_language(), this,
+        [](MotionPanel* self, int) { self->refresh_tab_labels(); },
+        SystemSettingsManager::instance().get_subjects_lifetime());
+
     coordinate_mode_observer_ = observe_int_sync<MotionPanel>(
         SettingsManager::instance().subject_motion_show_actual_position(), this,
         [](MotionPanel* self, int show_actual) {
@@ -1225,9 +1230,9 @@ bool MotionPanel::moves_allowed() const {
            lv_subject_get_int(ps.get_machine_motion_blocked_subject()) == 0;
 }
 
-/// Run `then` on a homed machine: X and Y homed runs it directly, anything
-/// else homes first and the move/macro only fires once homing succeeded.
-/// Presets and Park both move XY, so both share this gate.
+/// Run `then` once X and Y are homed: homed runs it directly, anything else
+/// homes first and the move only fires once homing succeeded. Presets move XY
+/// only; Park needs every axis and uses ensure_homed_then directly.
 static void ensure_xy_homed_then(AsyncLifetimeGuard& lifetime, std::function<void()> then) {
     auto& ps = get_printer_state();
     if (helix::axis_is_homed(ps, helix::Axis::X) && helix::axis_is_homed(ps, helix::Axis::Y)) {
@@ -1239,6 +1244,18 @@ static void ensure_xy_homed_then(AsyncLifetimeGuard& lifetime, std::function<voi
         lifetime.bg_cb("MotionPanel::xy_home_failed", [](const MoonrakerError& err) {
             NOTIFY_ERROR(lv_tr("Homing failed: {}"), clean_gcode_error(err.user_message()));
         }));
+}
+
+void MotionPanel::refresh_tab_labels() {
+    // Literal lv_tr calls, not an array of keys: the translation extractor
+    // only sees string literals inside lv_tr().
+    const char* const tab_labels[] = {lv_tr("Jog"), lv_tr("Move"), lv_tr("Bed")};
+    for (int i = 0; i < 3; ++i) {
+        snprintf(motion_tab_label_buf_[i], sizeof(motion_tab_label_buf_[i]), "%s", tab_labels[i]);
+        if (subjects_initialized_) {
+            lv_subject_copy_string(&motion_tab_label_[i], motion_tab_label_buf_[i]);
+        }
+    }
 }
 
 void MotionPanel::handle_preset(helix::MotionPreset preset) {
@@ -1269,20 +1286,25 @@ void MotionPanel::handle_park() {
         handle_preset(helix::MotionPreset::Front);
         return;
     }
-    // A park macro may move every axis, so it needs a homed machine exactly
-    // like a preset does.
+    // A park macro commonly lifts Z too, so it needs every axis homed.
     const std::string name = info.translated_name();
-    ensure_xy_homed_then(lifetime_, [this, name]() {
-        NOTIFY_INFO(lv_tr("Running {}..."), name.c_str());
-        if (!StandardMacros::instance().execute(
-                StandardMacroSlot::ParkToolhead, get_moonraker_api(), {},
-                [name]() { NOTIFY_SUCCESS(lv_tr("{} complete"), name.c_str()); },
-                lifetime_.bg_cb("MotionPanel::park_failed", [name](const MoonrakerError& err) {
-                    NOTIFY_ERROR(lv_tr("Macro failed: {}"), err.user_message());
-                }))) {
-            NOTIFY_WARNING(lv_tr("{} macro not configured"), name.c_str());
-        }
-    });
+    helix::ensure_homed_then(
+        api, lifetime_,
+        [this, name]() {
+            NOTIFY_INFO(lv_tr("Running {}..."), name.c_str());
+            if (!StandardMacros::instance().execute(
+                    StandardMacroSlot::ParkToolhead, get_moonraker_api(), {},
+                    [name]() { NOTIFY_SUCCESS(lv_tr("{} complete"), name.c_str()); },
+                    lifetime_.bg_cb("MotionPanel::park_failed", [name](const MoonrakerError& err) {
+                        NOTIFY_ERROR(lv_tr("Macro failed: {}"),
+                                     clean_gcode_error(err.user_message()));
+                    }))) {
+                NOTIFY_WARNING(lv_tr("{} macro not configured"), name.c_str());
+            }
+        },
+        lifetime_.bg_cb("MotionPanel::park_home_failed", [](const MoonrakerError& err) {
+            NOTIFY_ERROR(lv_tr("Homing failed: {}"), clean_gcode_error(err.user_message()));
+        }));
 }
 
 void MotionPanel::handle_motors_off() {

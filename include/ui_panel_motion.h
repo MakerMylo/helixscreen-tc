@@ -211,7 +211,10 @@ class MotionPanel : public OverlayBase {
     lv_subject_t motion_tab_subject_;
     lv_subject_t motion_tab_active_[3];
     lv_subject_t motion_tab_label_[3];
-    char motion_tab_label_buf_[3][16];
+    char motion_tab_label_buf_[3][32];
+    /// Fill the tab label buffers (and subjects, once they exist) in the
+    /// current language.
+    void refresh_tab_labels();
     int motion_tab_ = 0;
     char pos_x_buf_[32];
     char pos_y_buf_[32];
@@ -288,6 +291,7 @@ class MotionPanel : public OverlayBase {
     ObserverGuard live_position_observer_y_;
     ObserverGuard live_position_observer_z_;
     ObserverGuard coordinate_mode_observer_;
+    ObserverGuard language_observer_;
     ObserverGuard bed_moves_observer_;
     ObserverGuard homed_axes_observer_;
     ObserverGuard jog_ready_observer_;

@@ -136,6 +136,11 @@ class SystemSettingsManager {
         return &language_subject_;
     }
 
+    /// Death signal for this manager's subjects, for observers of them.
+    [[nodiscard]] SubjectLifetime get_subjects_lifetime() const {
+        return subjects_.get_subjects_lifetime();
+    }
+
     /** @brief Update channel subject (integer: 0=Stable, 1=Beta, 2=Dev) */
     lv_subject_t* subject_update_channel() {
         return &update_channel_subject_;

@@ -1789,6 +1789,7 @@ translations:
   'Motors disable failed: {}': 'モーターの無効化に失敗しました: {}'
   Motors disabled: モーターを無効化しました
   Motors off: ''
+  Motors stay on while a print is active: 印刷中はモーターを停止できません
   Mount: 装着
   Move: 移動
   Move out of range: '移動範囲外です'

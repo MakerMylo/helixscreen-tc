@@ -1723,6 +1723,7 @@
   <translation tag="Motors disable failed: {}" en="Motors disable failed: {}"/>
   <translation tag="Motors disabled" en="Motors disabled"/>
   <translation tag="Motors off" en="Motors off"/>
+  <translation tag="Motors stay on while a print is active" en="Motors stay on while a print is active"/>
   <translation tag="Mount" en="Mount"/>
   <translation tag="Move" en="Move"/>
   <translation tag="Move out of range" en="Move out of range"/>

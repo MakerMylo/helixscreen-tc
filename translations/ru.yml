@@ -1899,6 +1899,7 @@ translations:
   'Motors disable failed: {}': 'Ошибка отключения моторов: {}'
   Motors disabled: Моторы отключены
   Motors off: ''
+  Motors stay on while a print is active: Моторы остаются включены во время печати
   Mount: Установить
   Move: Двигать
   Move out of range: 'Движение за пределами диапазона'
