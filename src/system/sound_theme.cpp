@@ -3,11 +3,12 @@
 
 #include "sound_theme.h"
 
+#include "text_io.h"
+
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <cmath>
-#include <fstream>
 #include <unordered_map>
 
 #include "hv/json.hpp"
@@ -301,15 +302,15 @@ static std::optional<SoundTheme> parse_theme(const json& j) {
 // ============================================================================
 
 std::optional<SoundTheme> SoundThemeParser::load_from_file(const std::string& path) {
-    std::ifstream file(path);
-    if (!file.is_open()) {
+    const auto text = helix::text_io::read_file(path);
+    if (!text) {
         spdlog::warn("[SoundTheme] Could not open '{}'", path);
         return std::nullopt;
     }
 
     json j;
     try {
-        j = json::parse(file);
+        j = json::parse(*text);
     } catch (const json::parse_error& e) {
         spdlog::warn("[SoundTheme] JSON parse error in '{}': {}", path, e.what());
         return std::nullopt;

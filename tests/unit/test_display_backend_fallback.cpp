@@ -19,7 +19,9 @@
  * init() cannot be called directly: it initializes LVGL and opens real devices.
  */
 
+#include "../test_helpers/config_dir_guard.h"
 #include "display_backend.h"
+#include "text_io.h"
 
 #include "../catch_amalgamated.hpp"
 
@@ -399,4 +401,26 @@ TEST_CASE("Backend fallback: all backends exhausted returns failure",
 
     // Both exhausted — this is the "all backends exhausted" path
     REQUIRE(display == nullptr);
+}
+
+TEST_CASE("read_config_rotation takes the first \"rotate\": <digits> in settings.json",
+          "[display][rotation]") {
+    helix::ConfigDirGuard guard("rotation_scan");
+    const std::string settings = (guard.dir / "settings.json").string();
+    auto rotation_for = [&](const std::string& json) {
+        REQUIRE(helix::text_io::write_file(settings, json));
+        return read_config_rotation(-1);
+    };
+
+    CHECK(rotation_for(R"({"display": {"rotate": 90}})") == 90);
+    CHECK(rotation_for(R"({"display":{"rotate":180}})") == 180);
+    CHECK(rotation_for("{\"display\": {\"rotate\"\n :\t270}}") == 270);
+    // A "rotate" key without a number does not stop the search.
+    CHECK(rotation_for(R"({"a": {"rotate": "x"}, "display": {"rotate": 90}})") == 90);
+    // Digits with no colon before them are not a value.
+    CHECK(rotation_for(R"({"rotate" 45, "display": {"rotate": 180}})") == 180);
+    // A number that is not a quarter turn means no rotation.
+    CHECK(rotation_for(R"({"display": {"rotate": 45}})") == 0);
+    // No key: the caller's default.
+    CHECK(rotation_for(R"({"display": {}})") == -1);
 }

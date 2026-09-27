@@ -3,16 +3,20 @@
 #include "system/afc_message_dedup.h"
 
 #include "config.h"
+#include "helix_fs.h"
 #include "json_utils.h"
+#include "text_io.h"
 
 #include <spdlog/spdlog.h>
 
-#include <filesystem>
-#include <fstream>
+#include <cerrno>
+#include <cstring>
 
 using json = nlohmann::json;
 
 namespace helix {
+
+namespace tio = ::helix::text_io;
 
 AfcMessageDedup& AfcMessageDedup::instance() {
     static AfcMessageDedup instance;
@@ -38,27 +42,34 @@ void AfcMessageDedup::init(const std::string& config_dir) {
 
     const std::string path = seed_path_locked();
     {
-        std::ifstream in(path);
-        if (!in) {
+        if (!tio::open_file(path, "rb")) {
             // Absent is the common first-boot case, not an error.
             spdlog::debug("[AfcMessageDedup] No seed file at {}", path);
             return;
         }
+        // file_size from stat: a path that is not a readable regular file
+        // reports here rather than as an empty parse.
+        const auto size = tio::file_size(path);
+        if (size && *size > MAX_SEED_BYTES) {
+            spdlog::warn("[AfcMessageDedup] Seed file {} is {} bytes, past the {}-byte "
+                         "cap; ignoring it",
+                         path, *size, MAX_SEED_BYTES);
+            return;
+        }
         try {
-            // Throwing overload: a path that is not a readable regular file
-            // reports here rather than as an empty parse.
-            const auto size = std::filesystem::file_size(path);
-            if (size > MAX_SEED_BYTES) {
-                spdlog::warn("[AfcMessageDedup] Seed file {} is {} bytes, past the {}-byte "
-                             "cap; ignoring it",
-                             path, size, MAX_SEED_BYTES);
-                return;
-            }
-            json data = json::parse(in);
-            if (data.contains("printers") && data["printers"].is_object()) {
-                for (const auto& [printer_id, text] : data["printers"].items()) {
-                    if (text.is_string()) {
-                        last_error_by_printer_[printer_id] = text.get<std::string>();
+            if (!size) {
+                spdlog::warn("[AfcMessageDedup] Cannot load seed file {}: {}", path,
+                             std::strerror(errno));
+                last_error_by_printer_.clear();
+            } else {
+                // Read only after the cap check: the cap exists so an oversized file is
+                // never pulled into memory.
+                json data = json::parse(tio::read_file(path).value_or(""));
+                if (data.contains("printers") && data["printers"].is_object()) {
+                    for (const auto& [printer_id, text] : data["printers"].items()) {
+                        if (text.is_string()) {
+                            last_error_by_printer_[printer_id] = text.get<std::string>();
+                        }
                     }
                 }
             }
@@ -135,11 +146,10 @@ void AfcMessageDedup::record_cleared() {
     // file: an absent record is the state every load path fails open on, and
     // an unwritable file in a writable directory can still be removed.
     const std::string path = seed_path_locked();
-    std::error_code ec;
-    if (!std::filesystem::remove(path, ec) && ec) {
+    if (!helix::fs::remove(path) && errno != ENOENT) {
         spdlog::error("[AfcMessageDedup] Cannot clear the seed at {} ({}); a later session "
                       "may not toast this error's first sighting",
-                      path, ec.message());
+                      path, std::strerror(errno));
         return;
     }
     spdlog::warn("[AfcMessageDedup] Could not rewrite the seed at {}; deleted it so a "
@@ -149,11 +159,7 @@ void AfcMessageDedup::record_cleared() {
 
 bool AfcMessageDedup::save_locked() {
     const std::string path = seed_path_locked();
-    std::ofstream out(path, std::ios::trunc);
-    if (!out) {
-        spdlog::warn("[AfcMessageDedup] Cannot write {}", path);
-        return false;
-    }
+    std::string data;
     try {
         json printers = json::object();
         for (const auto& [printer_id, text] : last_error_by_printer_) {
@@ -161,7 +167,7 @@ bool AfcMessageDedup::save_locked() {
         }
         // safe_dump: message text carries whatever the printer printed, and
         // strict-mode dump would throw on invalid UTF-8 and cost the file.
-        out << helix::json_util::safe_dump(json{{"printers", printers}}) << "\n";
+        data = helix::json_util::safe_dump(json{{"printers", printers}}) + "\n";
     } catch (const json::exception& e) {
         spdlog::warn("[AfcMessageDedup] Cannot serialize seed for {}: {}", path, e.what());
         return false;
@@ -169,13 +175,15 @@ bool AfcMessageDedup::save_locked() {
         spdlog::warn("[AfcMessageDedup] Out of memory serializing seed for {}", path);
         return false;
     }
-    out.flush();
-    return static_cast<bool>(out);
+    if (!tio::write_file(path, data)) {
+        spdlog::warn("[AfcMessageDedup] Cannot write {}", path);
+        return false;
+    }
+    return true;
 }
 
 bool AfcMessageDedup::can_write_locked() const {
-    std::ofstream probe(seed_path_locked(), std::ios::app);
-    return static_cast<bool>(probe);
+    return static_cast<bool>(tio::open_file(seed_path_locked(), "ab"));
 }
 
 bool AfcMessageDedup::warn_uninitialized_locked(const char* op) const {

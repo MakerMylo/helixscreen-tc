@@ -5,6 +5,7 @@
 
 #include "ui_event_safety.h"
 
+#include "helix_regex.h"
 #include "lvgl/src/others/translation/lv_translation.h"
 #include "static_subject_registry.h"
 
@@ -13,7 +14,6 @@
 #include <algorithm>
 #include <cctype>
 #include <optional>
-#include <regex>
 #include <set>
 #include <string_view>
 
@@ -98,12 +98,11 @@ bool is_quoted_string(std::string_view text) {
 }
 
 MacroDefaultKind classify_default(std::string_view text) {
-    static const std::regex number_re(R"(^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$)");
+    static const helix::Regex number_re(R"(^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$)");
     static constexpr std::string_view KEYWORDS[] = {"true",  "True", "false",
                                                     "False", "none", "None"};
 
-    if (text.empty() || is_quoted_string(text) ||
-        std::regex_match(text.begin(), text.end(), number_re)) {
+    if (text.empty() || is_quoted_string(text) || helix::regex_match(text, number_re)) {
         return MacroDefaultKind::Literal;
     }
     for (std::string_view keyword : KEYWORDS) {
@@ -126,11 +125,11 @@ std::vector<MacroParam> helix::parse_macro_params(const std::string& gcode_templ
 
     // Match params.NAME, params['NAME'], params["NAME"]
     // Optional trailing |default(VALUE) or | default(VALUE)
-    std::regex param_re(
+    helix::Regex param_re(
         R"RE(params\.([A-Za-z_][A-Za-z0-9_]*)|params\['([A-Za-z_][A-Za-z0-9_]*)'\]|params\["([A-Za-z_][A-Za-z0-9_]*)"\])RE");
 
-    auto it = std::sregex_iterator(gcode_template.begin(), gcode_template.end(), param_re);
-    auto end = std::sregex_iterator();
+    auto it = helix::RegexIterator(gcode_template, param_re);
+    auto end = helix::RegexIterator();
 
     for (; it != end; ++it) {
         const auto& match = *it;
@@ -156,9 +155,7 @@ std::vector<MacroParam> helix::parse_macro_params(const std::string& gcode_templ
 
         MacroParam param;
         param.name = name;
-        const std::string_view rest =
-            std::string_view(gcode_template)
-                .substr(static_cast<size_t>(match.position(0) + match.length(0)));
+        const std::string_view rest = std::string_view(gcode_template).substr(match.end());
         if (auto argument = default_filter_argument(rest)) {
             std::string_view text = trim(*argument);
             param.default_kind = classify_default(text);
@@ -173,10 +170,10 @@ std::vector<MacroParam> helix::parse_macro_params(const std::string& gcode_templ
 
     // Second pass: catch {% if 'NAME' in params %} / {% if "NAME" in params %}
     // Also matches 'not in params'. Skips names already found by dot/bracket access.
-    std::regex in_params_re(
+    helix::Regex in_params_re(
         R"RE((?:'([A-Za-z_][A-Za-z0-9_]*)'|"([A-Za-z_][A-Za-z0-9_]*)")\s+(?:not\s+)?in\s+params)RE");
 
-    auto it2 = std::sregex_iterator(gcode_template.begin(), gcode_template.end(), in_params_re);
+    auto it2 = helix::RegexIterator(gcode_template, in_params_re);
     for (; it2 != end; ++it2) {
         const auto& match = *it2;
 

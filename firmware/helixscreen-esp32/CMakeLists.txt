@@ -11,4 +11,8 @@ if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/sdkconfig.local")
 endif()
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+# fmt's locale support references std::locale from every object that formats a
+# float, and one reference links all of libstdc++'s facets. No format string here
+# uses {:L}.
+idf_build_set_property(COMPILE_DEFINITIONS "FMT_USE_LOCALE=0" APPEND)
 project(helixscreen_esp32)

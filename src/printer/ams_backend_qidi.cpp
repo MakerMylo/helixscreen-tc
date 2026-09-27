@@ -16,6 +16,7 @@
 #include "macro_param_cache.h"
 #include "settings_manager.h"
 #include "slot_registry.h"
+#include "text_io.h"
 
 #include <spdlog/fmt/fmt.h>
 #include <spdlog/spdlog.h>
@@ -26,7 +27,6 @@
 #include <cstdlib>
 #include <ctime>
 #include <optional>
-#include <sstream>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -42,6 +42,8 @@
 // The QIDI wordmark / box silhouette is fine — no in-app scaling required.
 
 namespace helix {
+
+namespace tio = helix::text_io;
 
 namespace {
 // Parse `"slot<N>"` into N when valid and within [0, slot_count).
@@ -1077,9 +1079,8 @@ void AmsBackendQidi::apply_filas_list(const std::string& content) {
         current = FilaProfile{};
     };
 
-    std::istringstream iss(content);
-    std::string line;
-    while (std::getline(iss, line)) {
+    for (std::string_view sv : tio::lines(content)) {
+        std::string line(sv);
         std::string t = trim(line);
         if (t.empty() || t.front() == '#' || t.front() == ';') {
             continue;

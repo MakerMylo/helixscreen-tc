@@ -5,7 +5,6 @@
 
 #include "gcode_ops_detector.h"
 
-#include <filesystem>
 #include <functional>
 #include <string>
 #include <unordered_map>
@@ -190,7 +189,7 @@ class GCodeFileModifier {
      * @param filepath Path to the source G-code file
      * @return ModificationResult with success status and modified file path
      */
-    [[nodiscard]] ModificationResult apply(const std::filesystem::path& filepath);
+    [[nodiscard]] ModificationResult apply(const std::string& filepath);
 
     /**
      * @brief Apply modifications to G-code content string (for testing)
@@ -221,7 +220,7 @@ class GCodeFileModifier {
      * @note This method is automatically called by apply() for files larger
      *       than MAX_BUFFERED_FILE_SIZE.
      */
-    [[nodiscard]] ModificationResult apply_streaming(const std::filesystem::path& filepath);
+    [[nodiscard]] ModificationResult apply_streaming(const std::string& filepath);
 
     // =========================================================================
     // Convenience methods for common operations
@@ -283,7 +282,7 @@ class GCodeFileModifier {
      * @param original_path The original file path
      * @return Unique temp path like /tmp/helixscreen_mod_XXXXXX.gcode
      */
-    [[nodiscard]] static std::string generate_temp_path(const std::filesystem::path& original_path);
+    [[nodiscard]] static std::string generate_temp_path(const std::string& original_path);
 
     /**
      * @brief Clean up temp files created by this modifier
@@ -330,7 +329,7 @@ class GCodeFileModifier {
      *
      * The original implementation, now factored out for clarity.
      */
-    [[nodiscard]] ModificationResult apply_buffered(const std::filesystem::path& filepath);
+    [[nodiscard]] ModificationResult apply_buffered(const std::string& filepath);
 
     std::vector<Modification> modifications_;
 };

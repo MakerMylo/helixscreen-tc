@@ -93,6 +93,15 @@ CMAKE_MANIFEST_LINE = re.compile(r"^[^#\s].*\.(?:cpp|c)$")
 
 DEFAULT_FILE_REASON = "not in the v1 Core+AMS cut"
 
+# Each of these in a compiled file links libstdc++'s std::locale machinery (~150K of
+# facets, built all at once on first use) into the image: iostreams and <regex>
+# directly, <filesystem> through path's wide codecvt. text_io.h, helix_regex.h and
+# helix_fs.h replace them. Headers reached indirectly are caught by the map check
+# in scripts/check_esp32_size.py.
+LOCALE_INCLUDE = re.compile(
+    r"^\s*#\s*include\s*<(sstream|fstream|iostream|istream|ostream|iomanip|regex|filesystem|locale)>",
+    re.M)
+
 EXCLUSIONS_HEADER = [
     "# ESP32 firmware app_srcs exclusion baseline.",
     "#",
@@ -136,11 +145,12 @@ class Findings:
     stale_manifest: list[str] = field(default_factory=list)
     stale_exclusions: list[tuple[int, str, str]] = field(default_factory=list)  # (lineno, path, why)
     overlap: list[tuple[str, str]] = field(default_factory=list)  # (file, exclusion entry)
+    locale_includes: list[tuple[str, int, str]] = field(default_factory=list)  # (file, lineno, header)
     universe: set[str] = field(default_factory=set)
 
     def any(self) -> bool:
         return bool(self.undecided or self.malformed or self.stale_manifest
-                    or self.stale_exclusions or self.overlap)
+                    or self.stale_exclusions or self.overlap or self.locale_includes)
 
 
 def why_cmake_drops(line: str) -> str:
@@ -278,9 +288,17 @@ def compute(manifest: Path, exclusions: Path, src_root: Path) -> Findings:
         if cover is not None:
             overlap.append((f, cover))
 
+    locale_includes: list[tuple[str, int, str]] = []
+    for f in sorted(included):
+        if not f.startswith("src/") or f not in universe:
+            continue
+        text = (src_root.parent / f).read_text(errors="replace")
+        for m in LOCALE_INCLUDE.finditer(text):
+            locale_includes.append((f, text.count("\n", 0, m.start()) + 1, m.group(1)))
+
     return Findings(undecided=undecided, malformed=malformed,
                     stale_manifest=stale_manifest, stale_exclusions=stale_exclusions,
-                    overlap=overlap, universe=universe)
+                    overlap=overlap, locale_includes=locale_includes, universe=universe)
 
 
 def compress_dirs(undecided_set: set[str], universe: set[str]) -> dict[str, list[str]]:
@@ -378,6 +396,14 @@ def report(f: Findings) -> None:
               "      file at once, which is the wrong answer for a file you just added.",
               file=sys.stderr)
 
+    if f.locale_includes:
+        print(f"FAIL: {len(f.locale_includes)} std::locale-pulling include(s) in firmware-compiled "
+              "files.\n      Any one links ~150K of libstdc++ locale facets into the ESP32 image.",
+              file=sys.stderr)
+        for path, lineno, header in f.locale_includes:
+            print(f"        {path}:{lineno}: <{header}>", file=sys.stderr)
+        print("\n      Use text_io.h (streams), helix_regex.h (<regex>) or helix_fs.h "
+              "(<filesystem>).", file=sys.stderr)
     if f.overlap:
         print(f"FAIL: {len(f.overlap)} file(s) in BOTH app_srcs.txt and app_srcs_excluded.txt.\n"
               "      CMake compiles them; the exclusion baseline says it does not. Remove\n"

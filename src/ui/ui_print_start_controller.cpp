@@ -25,22 +25,27 @@
 #include "app_globals.h"
 #include "data_root_resolver.h"
 #include "filament_sensor_manager.h"
+#include "helix_fs.h"
 #include "i_moonraker_api.h"
 #include "json_utils.h"
 #include "lvgl/src/others/translation/lv_translation.h"
 #include "observer_factory.h"
 #include "print_job_ref.h"
 #include "printer_state.h"
+#include "text_io.h"
 
 #include <spdlog/spdlog.h>
 
+#include <cerrno>
 #include <chrono>
-#include <filesystem>
-#include <fstream>
+#include <cstring>
 
 #include "hv/json.hpp"
 
 namespace helix::ui {
+
+namespace tio = helix::text_io;
+namespace hfs = helix::fs;
 
 // ============================================================================
 // Constructor / Destructor
@@ -1056,13 +1061,11 @@ void PrintStartController::check_restore_confirmed() {
 
 static constexpr const char* PENDING_REMAP_FILENAME = "pending_remap.json";
 
-static std::filesystem::path pending_remap_path() {
-    return std::filesystem::path(helix::get_user_config_dir()) / PENDING_REMAP_FILENAME;
+static std::string pending_remap_path() {
+    return hfs::join_path(helix::get_user_config_dir(), PENDING_REMAP_FILENAME);
 }
 
 void PrintStartController::persist_remap_state() {
-    namespace fs = std::filesystem;
-
     if (saved_tool_mapping_.empty() || saved_backend_index_ < 0) {
         return;
     }
@@ -1071,13 +1074,15 @@ void PrintStartController::persist_remap_state() {
     j["backend_index"] = saved_backend_index_;
     j["tool_mapping"] = saved_tool_mapping_;
 
-    auto path = pending_remap_path();
+    const std::string path = pending_remap_path();
+    if (!hfs::create_directories(std::string(hfs::parent_path(path)))) {
+        spdlog::warn("[PrintStartController] Failed to persist remap state: {}",
+                     std::strerror(errno));
+        return;
+    }
     try {
-        fs::create_directories(path.parent_path());
-        std::ofstream ofs(path);
-        if (ofs.is_open()) {
-            ofs << helix::json_util::safe_dump(j, 2);
-            spdlog::debug("[PrintStartController] Persisted remap state to {}", path.string());
+        if (tio::write_file(path, helix::json_util::safe_dump(j, 2))) {
+            spdlog::debug("[PrintStartController] Persisted remap state to {}", path);
         }
     } catch (const std::exception& e) {
         spdlog::warn("[PrintStartController] Failed to persist remap state: {}", e.what());
@@ -1085,34 +1090,31 @@ void PrintStartController::persist_remap_state() {
 }
 
 void PrintStartController::clear_persisted_remap_state() {
-    namespace fs = std::filesystem;
-
-    auto path = pending_remap_path();
-    try {
-        if (fs::exists(path)) {
-            fs::remove(path);
-            spdlog::debug("[PrintStartController] Cleared persisted remap state");
-        }
-    } catch (const std::exception& e) {
-        spdlog::warn("[PrintStartController] Failed to clear remap state: {}", e.what());
+    const std::string path = pending_remap_path();
+    if (!hfs::exists(path)) {
+        return;
     }
+    if (!hfs::remove(path)) {
+        spdlog::warn("[PrintStartController] Failed to clear remap state: {}",
+                     std::strerror(errno));
+        return;
+    }
+    spdlog::debug("[PrintStartController] Cleared persisted remap state");
 }
 
 void PrintStartController::recover_pending_remap() {
-    namespace fs = std::filesystem;
-
-    auto path = pending_remap_path();
-    if (!fs::exists(path)) {
+    const std::string path = pending_remap_path();
+    if (!hfs::exists(path)) {
         return;
     }
 
     try {
-        std::ifstream ifs(path);
-        if (!ifs.is_open()) {
+        auto text = tio::read_file(path);
+        if (!text) {
             return;
         }
 
-        auto j = nlohmann::json::parse(ifs);
+        auto j = nlohmann::json::parse(*text);
         int backend_idx = j.value("backend_index", -1);
         auto mapping = j.value("tool_mapping", std::vector<int>{});
 

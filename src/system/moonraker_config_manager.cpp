@@ -1,13 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "moonraker_config_manager.h"
 
+#include "text_io.h"
+
 #include <algorithm>
 #include <cstddef>
-#include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace helix {
+
+namespace tio = ::helix::text_io;
 
 // Trim leading and trailing whitespace (spaces, tabs, carriage returns)
 static std::string trim(const std::string& s) {
@@ -21,9 +25,8 @@ static std::string trim(const std::string& s) {
 bool MoonrakerConfigManager::has_section(const std::string& content,
                                          const std::string& section_name) {
     const std::string target = "[" + section_name + "]";
-    std::istringstream stream(content);
-    std::string line;
-    while (std::getline(stream, line)) {
+    for (std::string_view sv : tio::lines(content)) {
+        std::string line(sv);
         std::string t = trim(line);
         if (t.empty() || t[0] == '#')
             continue;
@@ -35,9 +38,8 @@ bool MoonrakerConfigManager::has_section(const std::string& content,
 
 std::vector<std::string> MoonrakerConfigManager::list_sections(const std::string& content) {
     std::vector<std::string> sections;
-    std::istringstream stream(content);
-    std::string line;
-    while (std::getline(stream, line)) {
+    for (std::string_view sv : tio::lines(content)) {
+        std::string line(sv);
         std::string t = trim(line);
         if (t.size() < 2 || t[0] != '[' || t.back() != ']')
             continue;
@@ -333,9 +335,6 @@ std::string MoonrakerConfigManager::upsert_section(
         return add_section(content, section_name, entries, comment);
 
     const std::string target = "[" + section_name + "]";
-    std::istringstream stream(content);
-    std::string line;
-
     std::vector<std::string> out;
     std::vector<bool> applied(entries.size(), false);
 
@@ -358,7 +357,8 @@ std::string MoonrakerConfigManager::upsert_section(
         }
     };
 
-    while (std::getline(stream, line)) {
+    for (std::string_view sv : tio::lines(content)) {
+        std::string line(sv);
         std::string t = trim(line);
 
         if (!in_section && !section_done && t == target) {
@@ -479,8 +479,6 @@ std::string MoonrakerConfigManager::remove_section(const std::string& content,
         return content;
 
     const std::string target = "[" + section_name + "]";
-    std::istringstream stream(content);
-    std::string line;
 
     // Lines before target section (excluding its preceding comment block)
     std::vector<std::string> result_lines;
@@ -488,7 +486,8 @@ std::string MoonrakerConfigManager::remove_section(const std::string& content,
     std::vector<std::string> pending_comment;
     bool in_target = false;
 
-    while (std::getline(stream, line)) {
+    for (std::string_view sv : tio::lines(content)) {
+        std::string line(sv);
         std::string t = trim(line);
 
         if (in_target) {
@@ -556,10 +555,9 @@ std::string MoonrakerConfigManager::add_include_line(const std::string& moonrake
     const std::string include_block = "[include " + include_target + "]\n\n";
 
     // Find the first non-comment section header and insert before it
-    std::istringstream stream(moonraker_content);
-    std::string line;
     size_t pos = 0;
-    while (std::getline(stream, line)) {
+    for (std::string_view sv : tio::lines(moonraker_content)) {
+        std::string line(sv);
         std::string t = trim(line);
         if (!t.empty() && t[0] == '[') {
             // Insert before this section header
@@ -583,11 +581,10 @@ std::string MoonrakerConfigManager::get_section_value(const std::string& content
                                                       const std::string& section_name,
                                                       const std::string& key) {
     const std::string target_section = "[" + section_name + "]";
-    std::istringstream stream(content);
-    std::string line;
     bool in_section = false;
 
-    while (std::getline(stream, line)) {
+    for (std::string_view sv : tio::lines(content)) {
+        std::string line(sv);
         std::string t = trim(line);
         if (t.empty() || t[0] == '#')
             continue;
