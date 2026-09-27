@@ -12,6 +12,7 @@
 #include "subject_managed_panel.h"
 
 #include <array>
+#include <optional>
 
 /**
  * @file ui_panel_motion.h
@@ -23,6 +24,22 @@
 
 // Jog mode: determines inner/outer ring distances for XY pad and Z buttons
 namespace helix {
+
+struct AxisBounds;
+
+/// Keypad parameters for tapping one axis readout in the motion header.
+struct AxisKeypadParams {
+    float min_value;     ///< Axis envelope minimum (mm)
+    float max_value;     ///< Axis envelope maximum (mm)
+    float seed;          ///< COMMANDED position (mm); always commanded, even in actual mode
+    bool allow_negative; ///< True only when the axis minimum is below zero
+};
+
+/// Seed and bounds for one axis' coordinate keypad. Empty when the axis
+/// envelope is unknown: an absolute move would have nothing to clamp against.
+std::optional<AxisKeypadParams> keypad_params_for_axis(const AxisBounds& bounds, Axis axis,
+                                                       double commanded_mm);
+
 enum class JogMode { Fine = 0, Coarse = 1, Turbo = 2 };
 constexpr int JOG_MODE_COUNT = 3;
 
@@ -108,6 +125,19 @@ class MotionPanel : public OverlayBase {
     /// Arm the Z hold repeat for a named button press (the XML pressed event).
     void begin_z_hold(const char* button_name);
 
+    /// Flip the persisted commanded/actual coordinate preference. The panel's
+    /// observer on the settings subject re-renders the readouts.
+    void toggle_coordinate_source();
+
+    /// Open the coordinate keypad for one axis ('x'/'y'/'z'), seeded with the
+    /// COMMANDED position and bounded by the axis envelope. Refuses (no-op)
+    /// while jogging is gated off (not connected or klippy not ready).
+    void open_axis_keypad(char axis);
+
+    /// Keypad confirm: home the axis if needed, then dispatch the absolute
+    /// target for that one axis.
+    void request_axis_target(char axis, double mm);
+
     /// Clamp one axis against its bounds, raising at most one warning per
     /// approach. Returns the permitted delta, 0.0 when fully blocked.
     double clamp_axis_and_warn(helix::Axis axis, double current, double uncommitted, double delta,
@@ -187,9 +217,30 @@ class MotionPanel : public OverlayBase {
     ObserverGuard position_x_observer_;
     ObserverGuard position_y_observer_;
     ObserverGuard gcode_z_observer_;
+    ObserverGuard live_position_observer_x_;
+    ObserverGuard live_position_observer_y_;
+    ObserverGuard live_position_observer_z_;
+    ObserverGuard coordinate_mode_observer_;
     ObserverGuard bed_moves_observer_;
     ObserverGuard homed_axes_observer_;
     ObserverGuard jog_ready_observer_;
+
+    // Actual (live) positions in mm; the readouts show these when the
+    // coordinate preference is "actual", the commanded current_x_/y_/z_
+    // otherwise. Keypad seed and jog math always use the commanded values.
+    float live_x_ = 0.0f;
+    float live_y_ = 0.0f;
+    float live_z_ = 0.0f;
+
+    /// Axis whose keypad is open ('x'/'y'/'z'); the keypad callback is a bare
+    /// function pointer, so the axis travels through the panel.
+    char keypad_axis_ = 'x';
+
+    /// Re-render all three readout subjects from the selected source.
+    void refresh_position_display();
+
+    /// ui_keypad_show() confirm callback.
+    static void on_axis_keypad_value(float value, void* user_data);
 
     void setup_jog_pad();
     void register_position_observers();
@@ -204,8 +255,11 @@ class MotionPanel : public OverlayBase {
     // Position observers use lambda-based observer factory (no static callbacks needed)
 
     void update_z_axis_label(bool bed_moves);
-    void update_z_display();       // Updates Z label with actual in brackets when different
     void update_z_button_labels(); // Update Z button text for current mode
+
+    /// Which source the readouts render: 1 = actual (live) position,
+    /// 0 = commanded. Mirrors the persisted preference subject.
+    bool show_actual_ = false;
 };
 
 MotionPanel& get_global_motion_panel();

@@ -3,6 +3,7 @@
 
 #include "ui_panel_motion.h"
 
+#include "ui_component_keypad.h"
 #include "ui_error_reporting.h"
 #include "ui_event_safety.h"
 #include "ui_jog_pad.h"
@@ -66,6 +67,32 @@ helix::JogModeDistances helix::get_jog_mode_distances(JogMode mode) {
     return d;
 }
 
+std::optional<helix::AxisKeypadParams>
+helix::keypad_params_for_axis(const AxisBounds& bounds, Axis axis, double commanded_mm) {
+    float min = 0.0f, max = 0.0f;
+    switch (axis) {
+    case Axis::X:
+        if (!bounds.has_x)
+            return std::nullopt;
+        min = bounds.x_min;
+        max = bounds.x_max;
+        break;
+    case Axis::Y:
+        if (!bounds.has_y)
+            return std::nullopt;
+        min = bounds.y_min;
+        max = bounds.y_max;
+        break;
+    case Axis::Z:
+        if (!bounds.has_z)
+            return std::nullopt;
+        min = bounds.z_min;
+        max = bounds.z_max;
+        break;
+    }
+    return AxisKeypadParams{min, max, static_cast<float>(commanded_mm), min < 0.0f};
+}
+
 // Strip Klipper error prefixes, parse JSON error objects, and truncate for toast display.
 // Some Klipper builds (e.g. K1C) send errors as JSON:
 //   {"code":"key585","msg":"Move out of range: ...","values":[...]}
@@ -116,6 +143,8 @@ static void on_jog_mode_fine(lv_event_t* e);
 static void on_jog_mode_coarse(lv_event_t* e);
 static void on_jog_mode_turbo(lv_event_t* e);
 static void on_motion_header_settings_clicked(lv_event_t* e);
+static void on_motion_pos_clicked(lv_event_t* e);
+static void on_motion_swap_coords_clicked(lv_event_t* e);
 
 // ============================================================================
 // Global Instance (via DEFINE_GLOBAL_PANEL macro)
@@ -223,26 +252,22 @@ void MotionPanel::init_subjects() {
 
     // Sync initial position values (observers only fire on change, not on subscribe)
     // Without this, panel shows dashes until next position update even if printer is homed
-    int x_centimm = lv_subject_get_int(get_printer_state().get_gcode_position_x_subject());
-    int y_centimm = lv_subject_get_int(get_printer_state().get_gcode_position_y_subject());
+    current_x_ = static_cast<float>(helix::units::from_centimm(
+        lv_subject_get_int(get_printer_state().get_gcode_position_x_subject())));
+    current_y_ = static_cast<float>(helix::units::from_centimm(
+        lv_subject_get_int(get_printer_state().get_gcode_position_y_subject())));
     gcode_z_centimm_ = lv_subject_get_int(get_printer_state().get_gcode_position_z_subject());
-    int bed_moves = lv_subject_get_int(get_printer_state().get_printer_bed_moves_subject());
-
-    // Update X position display
-    float x = static_cast<float>(helix::units::from_centimm(x_centimm));
-    current_x_ = x;
-    format_axis_value(pos_x_buf_, sizeof(pos_x_buf_), x);
-    lv_subject_copy_string(&pos_x_subject_, pos_x_buf_);
-
-    // Update Y position display
-    float y = static_cast<float>(helix::units::from_centimm(y_centimm));
-    current_y_ = y;
-    format_axis_value(pos_y_buf_, sizeof(pos_y_buf_), y);
-    lv_subject_copy_string(&pos_y_subject_, pos_y_buf_);
-
-    // Update Z position display
     current_z_ = static_cast<float>(helix::units::from_centimm(gcode_z_centimm_));
-    update_z_display();
+    live_x_ = static_cast<float>(helix::units::from_centimm(
+        lv_subject_get_int(get_printer_state().get_live_position_x_subject())));
+    live_y_ = static_cast<float>(helix::units::from_centimm(
+        lv_subject_get_int(get_printer_state().get_live_position_y_subject())));
+    live_z_ = static_cast<float>(helix::units::from_centimm(
+        lv_subject_get_int(get_printer_state().get_live_position_z_subject())));
+    show_actual_ = SettingsManager::instance().get_motion_show_actual_position();
+    refresh_position_display();
+
+    int bed_moves = lv_subject_get_int(get_printer_state().get_printer_bed_moves_subject());
 
     // Update Z axis label
     update_z_axis_label(bed_moves != 0);
@@ -301,6 +326,12 @@ void MotionPanel::register_callbacks() {
     // Header cog: opens the Motion settings overlay through its single opener
     lv_xml_register_event_cb(nullptr, "on_motion_header_settings_clicked",
                              on_motion_header_settings_clicked);
+
+    // Coordinate readouts: tap an axis pair for the keypad, tap the swap icon
+    // to flip commanded/actual display.
+    lv_xml_register_event_cb(nullptr, "on_motion_pos_clicked", on_motion_pos_clicked);
+    lv_xml_register_event_cb(nullptr, "on_motion_swap_coords_clicked",
+                             on_motion_swap_coords_clicked);
 
     callbacks_registered_ = true;
     spdlog::debug("[{}] Event callbacks registered", get_name());
@@ -473,10 +504,8 @@ void MotionPanel::register_position_observers() {
         [](MotionPanel* self, int centimm) {
             if (!self->subjects_initialized_)
                 return;
-            float x = static_cast<float>(helix::units::from_centimm(centimm));
-            self->current_x_ = x;
-            format_axis_value(self->pos_x_buf_, sizeof(self->pos_x_buf_), x);
-            lv_subject_copy_string(&self->pos_x_subject_, self->pos_x_buf_);
+            self->current_x_ = static_cast<float>(helix::units::from_centimm(centimm));
+            self->refresh_position_display();
         },
         get_printer_state().get_subjects_lifetime());
 
@@ -485,10 +514,8 @@ void MotionPanel::register_position_observers() {
         [](MotionPanel* self, int centimm) {
             if (!self->subjects_initialized_)
                 return;
-            float y = static_cast<float>(helix::units::from_centimm(centimm));
-            self->current_y_ = y;
-            format_axis_value(self->pos_y_buf_, sizeof(self->pos_y_buf_), y);
-            lv_subject_copy_string(&self->pos_y_subject_, self->pos_y_buf_);
+            self->current_y_ = static_cast<float>(helix::units::from_centimm(centimm));
+            self->refresh_position_display();
         },
         get_printer_state().get_subjects_lifetime());
 
@@ -501,9 +528,49 @@ void MotionPanel::register_position_observers() {
                 return;
             self->gcode_z_centimm_ = centimm;
             self->current_z_ = static_cast<float>(helix::units::from_centimm(centimm));
-            self->update_z_display();
+            self->refresh_position_display();
         },
         get_printer_state().get_subjects_lifetime());
+
+    // Actual (live) positions from motion_report.live_position; the readouts
+    // show these while the coordinate preference is "actual".
+    live_position_observer_x_ = observe_int_sync<MotionPanel>(
+        get_printer_state().get_live_position_x_subject(), this,
+        [](MotionPanel* self, int centimm) {
+            if (!self->subjects_initialized_)
+                return;
+            self->live_x_ = static_cast<float>(helix::units::from_centimm(centimm));
+            self->refresh_position_display();
+        },
+        get_printer_state().get_subjects_lifetime());
+    live_position_observer_y_ = observe_int_sync<MotionPanel>(
+        get_printer_state().get_live_position_y_subject(), this,
+        [](MotionPanel* self, int centimm) {
+            if (!self->subjects_initialized_)
+                return;
+            self->live_y_ = static_cast<float>(helix::units::from_centimm(centimm));
+            self->refresh_position_display();
+        },
+        get_printer_state().get_subjects_lifetime());
+    live_position_observer_z_ = observe_int_sync<MotionPanel>(
+        get_printer_state().get_live_position_z_subject(), this,
+        [](MotionPanel* self, int centimm) {
+            if (!self->subjects_initialized_)
+                return;
+            self->live_z_ = static_cast<float>(helix::units::from_centimm(centimm));
+            self->refresh_position_display();
+        },
+        get_printer_state().get_subjects_lifetime());
+
+    // Coordinate source preference: commanded (default) or actual (live).
+    // Flipping the persisted setting re-renders the readouts.
+    coordinate_mode_observer_ = observe_int_sync<MotionPanel>(
+        SettingsManager::instance().subject_motion_show_actual_position(), this,
+        [](MotionPanel* self, int show_actual) {
+            self->show_actual_ = show_actual != 0;
+            self->refresh_position_display();
+        },
+        SettingsManager::instance().get_subjects_lifetime());
 
     // Watch for kinematics changes to update Z-axis label ("Bed" vs "Print Head")
     // Use observe_int_immediate — label/icon updates are safe to do immediately,
@@ -586,9 +653,17 @@ void MotionPanel::update_z_axis_label(bool bed_moves) {
                   up_icon, down_icon, bed_moves);
 }
 
-void MotionPanel::update_z_display() {
-    float gcode_z = static_cast<float>(helix::units::from_centimm(gcode_z_centimm_));
-    format_axis_value(pos_z_buf_, sizeof(pos_z_buf_), gcode_z);
+void MotionPanel::refresh_position_display() {
+    if (!subjects_initialized_)
+        return;
+    const float x = show_actual_ ? live_x_ : current_x_;
+    const float y = show_actual_ ? live_y_ : current_y_;
+    const float z = show_actual_ ? live_z_ : current_z_;
+    format_axis_value(pos_x_buf_, sizeof(pos_x_buf_), x);
+    format_axis_value(pos_y_buf_, sizeof(pos_y_buf_), y);
+    format_axis_value(pos_z_buf_, sizeof(pos_z_buf_), z);
+    lv_subject_copy_string(&pos_x_subject_, pos_x_buf_);
+    lv_subject_copy_string(&pos_y_subject_, pos_y_buf_);
     lv_subject_copy_string(&pos_z_subject_, pos_z_buf_);
 }
 
@@ -683,12 +758,7 @@ void MotionPanel::set_position(float x, float y, float z) {
         return;
 
     // Update subjects (will automatically update bound UI elements)
-    format_axis_value(pos_x_buf_, sizeof(pos_x_buf_), x);
-    format_axis_value(pos_y_buf_, sizeof(pos_y_buf_), y);
-
-    lv_subject_copy_string(&pos_x_subject_, pos_x_buf_);
-    lv_subject_copy_string(&pos_y_subject_, pos_y_buf_);
-    update_z_display(); // Also copies to pos_z_subject_
+    refresh_position_display();
 }
 
 bool MotionPanel::jog(JogDirection direction, float distance_mm) {
@@ -889,6 +959,96 @@ void MotionPanel::home(char axis) {
 }
 
 // ============================================================================
+// Coordinate Source Preference + Axis Keypad
+// ============================================================================
+
+void MotionPanel::toggle_coordinate_source() {
+    auto& settings = SettingsManager::instance();
+    settings.set_motion_show_actual_position(!settings.get_motion_show_actual_position());
+    // The settings-subject observer re-renders; refresh here too so the panel
+    // is correct even where that subject was never initialized (unit tests).
+    show_actual_ = settings.get_motion_show_actual_position();
+    refresh_position_display();
+}
+
+void MotionPanel::open_axis_keypad(char axis) {
+    // Same gate as the jog controls: while the printer is not connected or
+    // klippy is not ready, a jog would be refused, so the keypad must not
+    // open either.
+    if (lv_subject_get_int(get_printer_state().get_nav_buttons_enabled_subject()) == 0) {
+        spdlog::debug("[{}] Axis keypad refused: printer not ready", get_name());
+        return;
+    }
+
+    const helix::Axis axis_enum = axis == 'x'   ? helix::Axis::X
+                                  : axis == 'y' ? helix::Axis::Y
+                                                : helix::Axis::Z;
+    const double commanded = axis == 'x' ? current_x_ : axis == 'y' ? current_y_ : current_z_;
+    const auto params =
+        helix::keypad_params_for_axis(get_printer_state().get_axis_bounds(), axis_enum, commanded);
+    if (!params) {
+        NOTIFY_INFO(lv_tr("Toolhead position unknown"));
+        return;
+    }
+
+    keypad_axis_ = axis;
+    ui_keypad_config_t config = {};
+    config.initial_value = params->seed;
+    config.min_value = params->min_value;
+    config.max_value = params->max_value;
+    config.allow_decimal = true;
+    config.allow_negative = params->allow_negative;
+    config.unit_label = "mm";
+    // Three literals rather than an assembled string: the translation
+    // extractor scans for lv_tr() literals and cannot see a runtime key.
+    config.title_label = axis == 'x'   ? lv_tr("X position")
+                         : axis == 'y' ? lv_tr("Y position")
+                                       : lv_tr("Z position");
+    config.callback = &MotionPanel::on_axis_keypad_value;
+    config.user_data = this;
+    spdlog::debug("[{}] Axis keypad for {} ({}-{}, seed {:.2f})", get_name(), axis,
+                  config.min_value, config.max_value, config.initial_value);
+    ui_keypad_show(&config);
+}
+
+void MotionPanel::on_axis_keypad_value(float value, void* user_data) {
+    auto* self = static_cast<MotionPanel*>(user_data);
+    if (self) {
+        self->request_axis_target(self->keypad_axis_, static_cast<double>(value));
+    }
+}
+
+void MotionPanel::request_axis_target(char axis, double mm) {
+    helix::AxisTarget target;
+    switch (axis) {
+    case 'x':
+        target.x = mm;
+        break;
+    case 'y':
+        target.y = mm;
+        break;
+    default:
+        target.z = mm;
+        break;
+    }
+
+    const helix::Axis axis_enum = axis == 'x'   ? helix::Axis::X
+                                  : axis == 'y' ? helix::Axis::Y
+                                                : helix::Axis::Z;
+    if (helix::axis_is_homed(get_printer_state(), axis_enum)) {
+        dispatch_target(target);
+        return;
+    }
+
+    // Unhomed: offer homing instead of letting Klipper refuse the move.
+    helix::ensure_homed_then(
+        get_moonraker_api(), lifetime_, [this, target]() { dispatch_target(target); },
+        lifetime_.bg_cb("MotionPanel::coord_home_failed", [](const MoonrakerError& err) {
+            NOTIFY_ERROR(lv_tr("Homing failed: {}"), clean_gcode_error(err.user_message()));
+        }));
+}
+
+// ============================================================================
 // Static Callback for XML event_cb (Z-axis buttons)
 // ============================================================================
 
@@ -972,6 +1132,23 @@ static void on_motion_header_settings_clicked(lv_event_t* e) {
     LVGL_SAFE_EVENT_CB_BEGIN("[MotionPanel] on_motion_header_settings_clicked");
     (void)e;
     helix::settings::show_motion_settings_overlay();
+    LVGL_SAFE_EVENT_CB_END();
+}
+
+static void on_motion_pos_clicked(lv_event_t* e) {
+    LVGL_SAFE_EVENT_CB_BEGIN("[MotionPanel] on_motion_pos_clicked");
+    // user_data from XML is the axis letter ("x", "y" or "z")
+    const char* axis = static_cast<const char*>(lv_event_get_user_data(e));
+    if (axis && axis[0]) {
+        get_global_motion_panel().open_axis_keypad(axis[0]);
+    }
+    LVGL_SAFE_EVENT_CB_END();
+}
+
+static void on_motion_swap_coords_clicked(lv_event_t* e) {
+    LVGL_SAFE_EVENT_CB_BEGIN("[MotionPanel] on_motion_swap_coords_clicked");
+    (void)e;
+    get_global_motion_panel().toggle_coordinate_source();
     LVGL_SAFE_EVENT_CB_END();
 }
 
