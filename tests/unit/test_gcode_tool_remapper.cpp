@@ -1,11 +1,14 @@
 // Copyright (C) 2025-2026 356C LLC
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "gcode_tool_remapper.h"
+#include "test_helpers/unique_temp_dir.h"
+#include "text_io.h"
 
 #include <cctype>
 #include <filesystem>
 #include <fstream>
 #include <map>
+#include <optional>
 #include <sstream>
 #include <vector>
 
@@ -124,45 +127,48 @@ TEST_CASE("comment lines containing tool tokens are not rewritten", "[remap][gco
 }
 
 // ---------------------------------------------------------------------------
-// Streaming form: the production rewrite path. Peak memory is one line, so the
+// File form: the production rewrite path. Peak memory is one line, so the
 // oracle below is what guarantees a 400MB job gets the same bytes a 4KB one does.
 // ---------------------------------------------------------------------------
 
 namespace {
+// Runs `in_text` through apply_to_file() via real files, and checks the
+// whole-content form gives the same bytes.
 std::string stream_remap(const std::string& in_text, const std::map<int, int>& remap,
                          size_t* changed_out = nullptr) {
-    std::istringstream in(in_text);
-    std::ostringstream out;
-    size_t changed = helix::GcodeToolRemapper::apply_to_stream(in, out, remap);
+    const std::string in_path = helix::test::unique_temp_file("helix_remap_in", "gcode");
+    const std::string out_path = helix::test::unique_temp_file("helix_remap_out", "gcode");
+    REQUIRE(helix::text_io::write_file(in_path, in_text));
+    std::optional<size_t> changed =
+        helix::GcodeToolRemapper::apply_to_file(in_path, out_path, remap);
+    std::string out = helix::text_io::read_file(out_path).value_or("<unreadable>");
+    std::error_code ec;
+    std::filesystem::remove(in_path, ec);
+    std::filesystem::remove(out_path, ec);
+    REQUIRE(changed.has_value());
     if (changed_out != nullptr) {
-        *changed_out = changed;
+        *changed_out = *changed;
     }
-    return out.str();
+    CHECK(helix::GcodeToolRemapper::apply_to_string(in_text, remap) == out);
+    return out;
 }
 } // namespace
 
 TEST_CASE("streaming a real file on disk rewrites every changed line and nothing else",
           "[remap][gcode][stream]") {
-    // Through std::ifstream/std::ofstream, not stringstreams: the print path
-    // rewrites file-to-file, and a real file is where binary mode, buffering
-    // and the final-line EOF differ from an in-memory stream.
     std::map<int, int> remap = {{1, 2}};
     const std::string src = "assets/test_gcodes/u1_4color_ring.gcode";
     std::string original = slurp(src);
     REQUIRE(!original.empty());
 
-    const auto out_path = std::filesystem::temp_directory_path() / "helix_stream_remap_test.gcode";
-    size_t changed = 0;
-    {
-        std::ifstream in(src, std::ios::binary);
-        std::ofstream out(out_path, std::ios::binary);
-        REQUIRE(in);
-        REQUIRE(out);
-        changed = helix::GcodeToolRemapper::apply_to_stream(in, out, remap);
-    }
-    std::string rewritten = slurp(out_path.string());
+    const std::string out_path = helix::test::unique_temp_file("helix_stream_remap", "gcode");
+    std::optional<size_t> result = helix::GcodeToolRemapper::apply_to_file(src, out_path, remap);
+    REQUIRE(result.has_value());
+    const size_t changed = *result;
+    std::string rewritten = slurp(out_path);
     std::error_code ec;
     std::filesystem::remove(out_path, ec);
+    CHECK(rewritten == helix::GcodeToolRemapper::apply_to_string(original, remap));
 
     // The rewrite is line-for-line, so the file keeps its shape whatever else
     // changed. A count that drifts from the line count means a line was
@@ -198,6 +204,21 @@ TEST_CASE("streaming rewrite preserves a missing final newline", "[remap][gcode]
     CHECK(stream_remap("T1", remap) == "T2");
     CHECK(stream_remap("", remap).empty());
     CHECK(stream_remap("\n", remap) == "\n");
+}
+
+TEST_CASE("file rewrite reports failure instead of a partial file", "[remap][gcode][stream]") {
+    std::map<int, int> remap = {{1, 2}};
+    const std::string missing_dir = helix::test::unique_temp_dir("helix_remap_nodir");
+    CHECK_FALSE(helix::GcodeToolRemapper::apply_to_file(missing_dir + "/in.gcode",
+                                                        missing_dir + "/out.gcode", remap)
+                    .has_value());
+
+    const std::string in_path = helix::test::unique_temp_file("helix_remap_in", "gcode");
+    REQUIRE(helix::text_io::write_file(in_path, "T1\n"));
+    CHECK_FALSE(helix::GcodeToolRemapper::apply_to_file(in_path, missing_dir + "/out.gcode", remap)
+                    .has_value());
+    std::error_code ec;
+    std::filesystem::remove(in_path, ec);
 }
 
 TEST_CASE("streaming rewrite preserves CRLF line endings", "[remap][gcode][stream]") {

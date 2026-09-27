@@ -10,9 +10,29 @@
 #include <cstring>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
+// Built with -D_FILE_OFFSET_BITS=64 (mk/rules.mk), so fopen, stat and the seek
+// offsets here are 64-bit even on 32-bit glibc; no off_t crosses the API.
+
 namespace helix::text_io {
+
+File open_file(const std::string& path, const char* mode) {
+    return File(std::fopen(path.c_str(), mode));
+}
+
+bool seek(std::FILE* f, std::int64_t offset, int whence) {
+    return ::fseeko(f, static_cast<off_t>(offset), whence) == 0;
+}
+
+std::optional<std::int64_t> tell(std::FILE* f) {
+    const off_t pos = ::ftello(f);
+    if (pos < 0) {
+        return std::nullopt;
+    }
+    return static_cast<std::int64_t>(pos);
+}
 
 std::optional<std::string> read_file(const std::string& path) {
     File f = open_file(path, "rb");

@@ -18,10 +18,10 @@
 
 #include "gcode_tool_remapper.h"
 
+#include "text_io.h"
+
 #include <cctype>
-#include <istream>
-#include <ostream>
-#include <sstream>
+#include <string_view>
 
 namespace helix {
 
@@ -161,45 +161,86 @@ std::string transform_line(const std::string& line, const std::map<int, int>& re
     return line;
 }
 
-} // namespace
-
-size_t GcodeToolRemapper::apply_to_stream(std::istream& in, std::ostream& out,
-                                          const std::map<int, int>& remap) {
+// Rewrites each record `next` yields and hands the output to `emit`. A newline
+// is emitted BEFORE every line but the first, so the final one is written only
+// when the source's last record carried its delimiter.
+template <typename NextLine, typename Emit>
+size_t remap_lines(NextLine&& next, Emit&& emit, const std::map<int, int>& remap) {
     size_t changed = 0;
     std::string line;
     bool first = true;
+    bool had_delim = false;
     bool source_ended_with_newline = false;
-
-    while (std::getline(in, line)) {
-        // getline sets eofbit only when it ran out of input instead of stopping
-        // at a delimiter, which is exactly "this line carried no trailing \n".
-        // Reading it per line is what lets the newline be emitted BEFORE the
-        // next line, so the final one is written only if the source had it.
-        source_ended_with_newline = !in.eof();
-
+    while (next(line, had_delim)) {
+        source_ended_with_newline = had_delim;
         if (!first) {
-            out << '\n';
+            emit(std::string_view("\n"));
         }
         std::string rewritten = transform_line(line, remap);
         if (rewritten != line) {
             ++changed;
         }
-        out << rewritten;
+        emit(std::string_view(rewritten));
         first = false;
     }
-
     if (source_ended_with_newline) {
-        out << '\n';
+        emit(std::string_view("\n"));
+    }
+    return changed;
+}
+
+} // namespace
+
+std::optional<size_t> GcodeToolRemapper::apply_to_file(const std::string& in_path,
+                                                       const std::string& out_path,
+                                                       const std::map<int, int>& remap) {
+    text_io::LineReader in(in_path);
+    if (!in) {
+        return std::nullopt;
+    }
+    text_io::File out = text_io::open_file(out_path, "wb");
+    if (!out) {
+        return std::nullopt;
+    }
+    bool write_ok = true;
+    const size_t changed = remap_lines(
+        [&](std::string& line, bool& had_delim) {
+            if (!in.next(line)) {
+                return false;
+            }
+            had_delim = in.last_had_delimiter();
+            return true;
+        },
+        [&](std::string_view piece) {
+            write_ok = text_io::write_all(out.get(), piece) && write_ok;
+        },
+        remap);
+    if (!text_io::close(out) || !write_ok) {
+        return std::nullopt;
     }
     return changed;
 }
 
 std::string GcodeToolRemapper::apply_to_string(const std::string& gcode,
                                                const std::map<int, int>& remap) {
-    std::istringstream in(gcode);
-    std::ostringstream out;
-    apply_to_stream(in, out, remap);
-    return out.str();
+    const std::string_view text(gcode);
+    auto records = text_io::lines(text);
+    auto it = records.begin();
+    std::string out;
+    out.reserve(gcode.size());
+    remap_lines(
+        [&](std::string& line, bool& had_delim) {
+            if (it == records.end()) {
+                return false;
+            }
+            const std::string_view rec = *it;
+            line.assign(rec);
+            had_delim = rec.data() + rec.size() < text.data() + text.size();
+            ++it;
+            return true;
+        },
+        [&](std::string_view piece) { out.append(piece); }, remap);
+    return out;
 }
 
 } // namespace helix

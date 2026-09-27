@@ -90,6 +90,7 @@ WATCHDOG_EXTRA_OBJS := $(BUILD_DIR)/watchdog/config.o \
                        $(BUILD_DIR)/watchdog/backlight_backend.o \
                        $(BUILD_DIR)/watchdog/data_root_resolver.o \
                        $(BUILD_DIR)/watchdog/helix_paths.o \
+                       $(BUILD_DIR)/watchdog/text_io.o \
                        $(BUILD_DIR)/watchdog/logging_init.o \
                        $(BUILD_DIR)/watchdog/platform_capabilities.o \
                        $(BUILD_DIR)/watchdog/ui_notification_stub.o \
@@ -131,6 +132,12 @@ $(BUILD_DIR)/watchdog/data_root_resolver.o: src/application/data_root_resolver.c
 $(BUILD_DIR)/watchdog/helix_paths.o: src/system/helix_paths.cpp $(ABI_STAMP) | $(BUILD_DIR)/watchdog
 	@echo "[CXX] $< (watchdog)"
 	$(Q)$(CXX) $(WATCHDOG_CXXFLAGS) $(DEPFLAGS) -c $< -o $@
+
+# Compile text_io for watchdog (config_storage_file.cpp reads and writes through it).
+# Large-file offsets, as in the app build (mk/rules.mk).
+$(BUILD_DIR)/watchdog/text_io.o: src/system/text_io.cpp $(ABI_STAMP) | $(BUILD_DIR)/watchdog
+	@echo "[CXX] $< (watchdog)"
+	$(Q)$(CXX) $(WATCHDOG_CXXFLAGS) -D_FILE_OFFSET_BITS=64 $(DEPFLAGS) -c $< -o $@
 
 # Compile logging_init for watchdog
 $(BUILD_DIR)/watchdog/logging_init.o: src/system/logging_init.cpp $(LIBHV_LIB) $(LIBHV_JSON_HEADER) $(ABI_STAMP) | $(BUILD_DIR)/watchdog

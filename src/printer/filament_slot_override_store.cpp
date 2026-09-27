@@ -11,23 +11,23 @@
 #include "lane_source_store.h"
 #include "lane_translation.h"
 #include "moonraker_error.h"
+#include "text_io.h"
 
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <cctype>
+#include <cerrno>
 #include <chrono>
 #include <condition_variable>
 #include <cstdio>
+#include <cstring>
 #include <ctime>
 #include <filesystem>
-#include <fstream>
-#include <iomanip>
 #include <map>
 #include <memory>
 #include <mutex>
 #include <optional>
-#include <sstream>
 #include <system_error>
 #include <utility>
 #include <vector>
@@ -52,9 +52,9 @@ std::string format_iso8601(std::chrono::system_clock::time_point tp) {
     auto t = std::chrono::system_clock::to_time_t(tp);
     std::tm tm{};
     gmtime_r(&t, &tm);
-    std::ostringstream os;
-    os << std::put_time(&tm, "%Y-%m-%dT%H:%M:%SZ");
-    return os.str();
+    char buf[32];
+    const size_t n = std::strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%SZ", &tm);
+    return std::string(buf, n);
 }
 
 // Read `primary`, falling back to `alias` when primary is absent or JSON null.
@@ -79,19 +79,46 @@ std::string string_with_alias(const nlohmann::json& j, const char* primary, cons
 // ("...12:00:00.123Z", "...14:00:00+02:00"). A zoneless wall time names no
 // instant and parses as unstamped.
 std::chrono::system_clock::time_point parse_iso8601(const std::string& s) {
+    size_t pos = 0;
+    auto peek = [&]() -> int { return pos < s.size() ? static_cast<unsigned char>(s[pos]) : -1; };
+    // A number of 1..max_digits digits within [lo, hi], as strptime's
+    // conversions read one.
+    auto number = [&](int max_digits, int lo, int hi, int& out) {
+        int value = 0;
+        int digits = 0;
+        while (digits < max_digits && std::isdigit(peek()) != 0) {
+            value = value * 10 + (s[pos++] - '0');
+            ++digits;
+        }
+        if (digits == 0 || value < lo || value > hi)
+            return false;
+        out = value;
+        return true;
+    };
+    auto literal = [&](char c) {
+        if (peek() != c)
+            return false;
+        ++pos;
+        return true;
+    };
+
     std::tm tm{};
-    std::istringstream is(s);
-    is >> std::get_time(&tm, "%Y-%m-%dT%H:%M:%S");
-    if (is.fail())
+    int year = 0, month = 0;
+    if (!number(4, 0, 9999, year) || !literal('-') || !number(2, 1, 12, month) || !literal('-') ||
+        !number(2, 1, 31, tm.tm_mday) || !literal('T') || !number(2, 0, 23, tm.tm_hour) ||
+        !literal(':') || !number(2, 0, 59, tm.tm_min) || !literal(':') ||
+        !number(2, 0, 60, tm.tm_sec))
         return {};
+    tm.tm_year = year - 1900;
+    tm.tm_mon = month - 1;
     // Fractional seconds: at most six digits become microseconds, the rest
     // are consumed so the zone still parses.
     long micros = 0;
     int seen = 0;
-    if (is.peek() == '.') {
-        is.get();
-        while (std::isdigit(static_cast<unsigned char>(is.peek())) != 0) {
-            const int digit = is.get() - '0';
+    if (peek() == '.') {
+        ++pos;
+        while (std::isdigit(peek()) != 0) {
+            const int digit = s[pos++] - '0';
             if (seen < 6)
                 micros = micros * 10 + digit;
             ++seen;
@@ -102,15 +129,15 @@ std::chrono::system_clock::time_point parse_iso8601(const std::string& s) {
     // The zone. 'Z' is UTC itself; a numeric offset is subtracted from the
     // wall time to reach UTC, the direction POSIX offsets read.
     long offset_sec = 0;
-    const int zone = is.get();
+    const int zone = peek();
+    ++pos;
     if (zone != 'Z' && zone != 'z') {
         if (zone != '+' && zone != '-')
             return {};
-        std::tm off{};
-        is >> std::get_time(&off, "%H:%M");
-        if (is.fail() || off.tm_hour > 23 || off.tm_min > 59)
+        int off_h = 0, off_m = 0;
+        if (!number(2, 0, 23, off_h) || !literal(':') || !number(2, 0, 59, off_m))
             return {};
-        offset_sec = 3600L * off.tm_hour + 60L * off.tm_min;
+        offset_sec = 3600L * off_h + 60L * off_m;
         if (zone == '-')
             offset_sec = -offset_sec;
     }
@@ -156,10 +183,9 @@ void write_cache_slot(const std::filesystem::path& cache_path, const std::string
     nlohmann::json doc = nlohmann::json::object();
     std::error_code ec;
     if (std::filesystem::exists(cache_path, ec)) {
-        std::ifstream in(cache_path);
-        if (in) {
+        if (auto text = helix::text_io::read_file(cache_path.string())) {
             try {
-                doc = nlohmann::json::parse(in);
+                doc = nlohmann::json::parse(*text);
                 if (!doc.is_object())
                     doc = nlohmann::json::object();
             } catch (const std::exception& e) {
@@ -191,32 +217,10 @@ void write_cache_slot(const std::filesystem::path& cache_path, const std::string
     }
 
     // Atomic write: tmp file + rename. POSIX rename is atomic within a fs.
-    std::filesystem::path tmp = cache_path;
-    tmp += ".tmp";
-    {
-        std::ofstream out(tmp, std::ios::trunc);
-        if (!out) {
-            spdlog::warn("[FilamentSlotOverrideStore] cache write failed: "
-                         "cannot open {} for writing",
-                         tmp.string());
-            return;
-        }
-        out << helix::json_util::safe_dump(doc, 2);
-        if (!out) {
-            spdlog::warn("[FilamentSlotOverrideStore] cache write failed: "
-                         "error writing to {}",
-                         tmp.string());
-            return;
-        }
-    } // ofstream closed here, buffers flushed, before rename
-
-    std::filesystem::rename(tmp, cache_path, ec);
-    if (ec) {
-        spdlog::warn("[FilamentSlotOverrideStore] cache rename failed ({} -> {}): {}", tmp.string(),
-                     cache_path.string(), ec.message());
-        // Best-effort cleanup of the orphan tmp — ignore errors.
-        std::error_code rm_ec;
-        std::filesystem::remove(tmp, rm_ec);
+    if (!helix::text_io::write_file_atomic(cache_path.string(),
+                                           helix::json_util::safe_dump(doc, 2))) {
+        spdlog::warn("[FilamentSlotOverrideStore] cache write failed ({}): {}", cache_path.string(),
+                     std::strerror(errno));
     }
 }
 
@@ -255,13 +259,13 @@ std::unordered_map<int, FilamentSlotOverride> read_cache(const std::filesystem::
     if (!std::filesystem::exists(cache_path, ec))
         return result;
 
-    std::ifstream in(cache_path);
-    if (!in)
+    auto text = helix::text_io::read_file(cache_path.string());
+    if (!text)
         return result;
 
     nlohmann::json doc;
     try {
-        doc = nlohmann::json::parse(in);
+        doc = nlohmann::json::parse(*text);
     } catch (const std::exception& e) {
         spdlog::warn("[FilamentSlotOverrideStore] cache parse failed ({}): {}", cache_path.string(),
                      e.what());

@@ -31,9 +31,9 @@
 #include <algorithm>
 #include <cstdlib>
 #include <filesystem>
-#include <fstream>
 #include <map>
 #include <memory>
+#include <optional>
 #include <set>
 
 // Forward declaration for global print status panel (declared in ui_panel_print_status.h)
@@ -1858,20 +1858,13 @@ void PrintPreparationManager::modify_and_print_with_remap(
             // has none to spare.
             const std::string modified_path =
                 gcode::GCodeFileModifier::generate_temp_path(local_download_path);
-            size_t lines_changed = 0;
-            bool rewrite_ok = false;
-            {
-                std::ifstream in(local_download_path, std::ios::binary);
-                std::ofstream out(modified_path, std::ios::binary);
-                if (in && out) {
-                    lines_changed = helix::GcodeToolRemapper::apply_to_stream(in, out, remap);
-                    out.flush();
-                    // good() after the flush, not is_open() before it: a volume
-                    // that fills mid-write opens fine and yields a truncated
-                    // file that would otherwise upload and print as if whole.
-                    rewrite_ok = out.good();
-                }
-            }
+            // nullopt covers a failed flush too: a volume that fills mid-write
+            // opens fine and yields a truncated file that would otherwise upload
+            // and print as if whole.
+            const std::optional<size_t> rewrite =
+                helix::GcodeToolRemapper::apply_to_file(local_download_path, modified_path, remap);
+            const bool rewrite_ok = rewrite.has_value();
+            const size_t lines_changed = rewrite.value_or(0);
 
             // Identity remap (nothing changes): print the original directly,
             // no temp copy. Clean up both local files and dispatch a plain start.
