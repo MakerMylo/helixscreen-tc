@@ -54,6 +54,7 @@
                   style_border_width="0" scrollable="false" flex_flow="row" style_pad_gap="#space_xs"
                   style_flex_cross_place="center">
             <event_cb trigger="clicked" callback="on_motion_pos_clicked" user_data="x"/>
+            <bind_state_if_not_eq subject="nav_buttons_enabled" state="disabled" ref_value="1"/>
             <lv_label name="header_pos_x_letter" text="X" style_text_font="#font_body_bold">
               <bind_style name="axis_letter_homed" subject="motion_x_homed" ref_value="1"/>
               <bind_style name="axis_unhomed" subject="motion_x_homed" ref_value="0"/>
@@ -68,6 +69,7 @@
                   style_border_width="0" scrollable="false" flex_flow="row" style_pad_gap="#space_xs"
                   style_flex_cross_place="center">
             <event_cb trigger="clicked" callback="on_motion_pos_clicked" user_data="y"/>
+            <bind_state_if_not_eq subject="nav_buttons_enabled" state="disabled" ref_value="1"/>
             <lv_label name="header_pos_y_letter" text="Y" style_text_font="#font_body_bold">
               <bind_style name="axis_letter_homed" subject="motion_y_homed" ref_value="1"/>
               <bind_style name="axis_unhomed" subject="motion_y_homed" ref_value="0"/>
@@ -82,6 +84,7 @@
                   style_border_width="0" scrollable="false" flex_flow="row" style_pad_gap="#space_xs"
                   style_flex_cross_place="center">
             <event_cb trigger="clicked" callback="on_motion_pos_clicked" user_data="z"/>
+            <bind_state_if_not_eq subject="nav_buttons_enabled" state="disabled" ref_value="1"/>
             <lv_label name="header_pos_z_letter" text="Z" style_text_font="#font_body_bold">
               <bind_style name="axis_letter_homed" subject="motion_z_homed" ref_value="1"/>
               <bind_style name="axis_unhomed" subject="motion_z_homed" ref_value="0"/>
@@ -115,10 +118,11 @@
               style_border_width="0" scrollable="false" clickable="false" flex_flow="row"
               style_flex_main_place="space_evenly" style_flex_cross_place="center" style_flex_track_place="center">
         <lv_obj name="row_pos_x_group"
-                width="content" height="content" clickable="true" style_pad_all="#space_xs" style_bg_opa="0"
-                style_border_width="0" scrollable="false" flex_flow="row" style_pad_gap="#space_xs"
-                style_flex_cross_place="center">
+                width="content" height="content" style_min_height="#icon_button_size" clickable="true"
+                style_pad_all="#space_xs" style_bg_opa="0" style_border_width="0" scrollable="false" flex_flow="row"
+                style_pad_gap="#space_xs" style_flex_cross_place="center">
           <event_cb trigger="clicked" callback="on_motion_pos_clicked" user_data="x"/>
+          <bind_state_if_not_eq subject="nav_buttons_enabled" state="disabled" ref_value="1"/>
           <lv_label name="row_pos_x_letter" text="X" style_text_font="#font_body_bold">
             <bind_style name="axis_letter_homed" subject="motion_x_homed" ref_value="1"/>
             <bind_style name="axis_unhomed" subject="motion_x_homed" ref_value="0"/>
@@ -129,10 +133,11 @@
           </lv_label>
         </lv_obj>
         <lv_obj name="row_pos_y_group"
-                width="content" height="content" clickable="true" style_pad_all="#space_xs" style_bg_opa="0"
-                style_border_width="0" scrollable="false" flex_flow="row" style_pad_gap="#space_xs"
-                style_flex_cross_place="center">
+                width="content" height="content" style_min_height="#icon_button_size" clickable="true"
+                style_pad_all="#space_xs" style_bg_opa="0" style_border_width="0" scrollable="false" flex_flow="row"
+                style_pad_gap="#space_xs" style_flex_cross_place="center">
           <event_cb trigger="clicked" callback="on_motion_pos_clicked" user_data="y"/>
+          <bind_state_if_not_eq subject="nav_buttons_enabled" state="disabled" ref_value="1"/>
           <lv_label name="row_pos_y_letter" text="Y" style_text_font="#font_body_bold">
             <bind_style name="axis_letter_homed" subject="motion_y_homed" ref_value="1"/>
             <bind_style name="axis_unhomed" subject="motion_y_homed" ref_value="0"/>
@@ -143,10 +148,11 @@
           </lv_label>
         </lv_obj>
         <lv_obj name="row_pos_z_group"
-                width="content" height="content" clickable="true" style_pad_all="#space_xs" style_bg_opa="0"
-                style_border_width="0" scrollable="false" flex_flow="row" style_pad_gap="#space_xs"
-                style_flex_cross_place="center">
+                width="content" height="content" style_min_height="#icon_button_size" clickable="true"
+                style_pad_all="#space_xs" style_bg_opa="0" style_border_width="0" scrollable="false" flex_flow="row"
+                style_pad_gap="#space_xs" style_flex_cross_place="center">
           <event_cb trigger="clicked" callback="on_motion_pos_clicked" user_data="z"/>
+          <bind_state_if_not_eq subject="nav_buttons_enabled" state="disabled" ref_value="1"/>
           <lv_label name="row_pos_z_letter" text="Z" style_text_font="#font_body_bold">
             <bind_style name="axis_letter_homed" subject="motion_z_homed" ref_value="1"/>
             <bind_style name="axis_unhomed" subject="motion_z_homed" ref_value="0"/>

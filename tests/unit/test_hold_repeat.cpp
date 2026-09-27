@@ -190,6 +190,7 @@ TEST_CASE_METHOD(LVGLTestFixture, "HoldRepeatTimer release stops ticks and keeps
 #include "moonraker_client_mock.h"
 #include "settings_manager.h"
 #include "static_panel_registry.h"
+#include "toolhead_homing.h"
 #include "ui/ui_lazy_panel_helper.h"
 
 #include <array>
@@ -520,6 +521,134 @@ TEST_CASE_METHOD(LVGLUITestFixture, "Z buttons disable at the ceiling and swap u
     CHECK_FALSE(lv_obj_has_state(up_large, LV_STATE_DISABLED));
     CHECK(lv_obj_has_state(down_large, LV_STATE_DISABLED));
 
+    StaticPanelRegistry::instance().destroy_all();
+    helix::ui::UpdateQueue::instance().drain();
+}
+
+TEST_CASE_METHOD(LVGLUITestFixture, "a coordinate tap sends one absolute single-axis move",
+                 "[motion][coords][xml]") {
+    SettingsManager::instance().init_subjects();
+
+    std::array<lv_obj_t*, UI_PANEL_COUNT> panels{};
+    for (auto& p : panels)
+        p = lv_obj_create(lv_screen_active());
+    NavigationManager::instance().set_panels(panels.data());
+
+    lv_obj_t* cached = nullptr;
+    REQUIRE(helix::ui::lazy_create_and_push_overlay<MotionPanel>(
+        get_global_motion_panel, cached, lv_screen_active(), "Motion", "test"));
+    helix::ui::UpdateQueue::instance().drain();
+
+    MotionPanel& panel = get_global_motion_panel();
+    get_printer_state().update_from_status({{"toolhead",
+                                             {{"homed_axes", "xyz"},
+                                              {"axis_minimum", {0.0, 0.0, 0.0, 0.0}},
+                                              {"axis_maximum", {235.0, 235.0, 250.0, 0.0}}}}});
+    get_printer_state().set_klippy_state_sync(helix::KlippyState::READY);
+    lv_subject_set_int(get_printer_state().get_print_state_enum_subject(),
+                       static_cast<int>(helix::PrintJobState::STANDBY));
+    helix::ui::UpdateQueue::instance().drain();
+
+    MoonrakerClientMock client{MoonrakerClientMock::PrinterType::VORON_24};
+    MoonrakerAPI api{client, get_printer_state()};
+    IMoonrakerAPI* previous_api = get_moonraker_api();
+    set_moonraker_api(&api);
+    client.clear_gcode_script_history();
+
+    // The setup reached the branch under test: Y homed with a known envelope,
+    // so the tap dispatches immediately with no homing detour.
+    REQUIRE(get_printer_state().get_axis_bounds().has_y);
+    REQUIRE(helix::axis_is_homed(get_printer_state(), helix::Axis::Y));
+
+    panel.request_axis_target('y', 100.0);
+    helix::ui::UpdateQueue::instance().drain();
+
+    const auto& history = client.gcode_script_history();
+    int move_lines = 0;
+    std::string move;
+    int homing_lines = 0;
+    for (const auto& script : history) {
+        if (script.find("G0 Y100") != std::string::npos) {
+            ++move_lines;
+            move = script;
+        }
+        if (script.find("G28") != std::string::npos) {
+            ++homing_lines;
+        }
+    }
+    REQUIRE(move_lines == 1);
+    CHECK(homing_lines == 0);
+    // Only Y is commanded: the other axes must not appear as G0 terms.
+    CHECK(move.find(" X") == std::string::npos);
+    CHECK(move.find(" Z") == std::string::npos);
+
+    set_moonraker_api(previous_api);
+    helix::ui::UpdateQueue::instance().drain();
+    StaticPanelRegistry::instance().destroy_all();
+    helix::ui::UpdateQueue::instance().drain();
+}
+
+TEST_CASE_METHOD(LVGLUITestFixture, "an unhomed coordinate tap homes first then moves",
+                 "[motion][coords][xml]") {
+    SettingsManager::instance().init_subjects();
+
+    std::array<lv_obj_t*, UI_PANEL_COUNT> panels{};
+    for (auto& p : panels)
+        p = lv_obj_create(lv_screen_active());
+    NavigationManager::instance().set_panels(panels.data());
+
+    lv_obj_t* cached = nullptr;
+    REQUIRE(helix::ui::lazy_create_and_push_overlay<MotionPanel>(
+        get_global_motion_panel, cached, lv_screen_active(), "Motion", "test"));
+    helix::ui::UpdateQueue::instance().drain();
+
+    MotionPanel& panel = get_global_motion_panel();
+    get_printer_state().update_from_status({{"toolhead",
+                                             {{"homed_axes", ""},
+                                              {"axis_minimum", {0.0, 0.0, 0.0, 0.0}},
+                                              {"axis_maximum", {235.0, 235.0, 250.0, 0.0}}}}});
+    get_printer_state().set_klippy_state_sync(helix::KlippyState::READY);
+    lv_subject_set_int(get_printer_state().get_print_state_enum_subject(),
+                       static_cast<int>(helix::PrintJobState::STANDBY));
+    helix::ui::UpdateQueue::instance().drain();
+
+    MoonrakerClientMock client{MoonrakerClientMock::PrinterType::VORON_24};
+    MoonrakerAPI api{client, get_printer_state()};
+    IMoonrakerAPI* previous_api = get_moonraker_api();
+    set_moonraker_api(&api);
+    client.clear_gcode_script_history();
+
+    // Unhomed with a known envelope: the move must wait for a full G28.
+    REQUIRE(get_printer_state().get_axis_bounds().has_y);
+    REQUIRE_FALSE(helix::axis_is_homed(get_printer_state(), helix::Axis::Y));
+
+    panel.request_axis_target('y', 100.0);
+    helix::ui::UpdateQueue::instance().drain();
+
+    const auto& history = client.gcode_script_history();
+    size_t home_at = std::string::npos;
+    size_t move_at = std::string::npos;
+    int homing_lines = 0;
+    std::string move;
+    for (size_t i = 0; i < history.size(); ++i) {
+        if (history[i].find("G28") != std::string::npos) {
+            if (home_at == std::string::npos)
+                home_at = i;
+            ++homing_lines;
+        }
+        if (history[i].find("G0 Y100") != std::string::npos) {
+            move_at = i;
+            move = history[i];
+        }
+    }
+    REQUIRE(homing_lines == 1);
+    REQUIRE(move_at != std::string::npos);
+    CHECK(home_at < move_at); // the move only goes out after G28 completes
+    CHECK(move.find(" X") == std::string::npos);
+    CHECK(move.find(" Z") == std::string::npos);
+
+    set_moonraker_api(previous_api);
+    helix::ui::UpdateQueue::instance().drain();
     StaticPanelRegistry::instance().destroy_all();
     helix::ui::UpdateQueue::instance().drain();
 }

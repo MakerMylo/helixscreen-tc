@@ -923,7 +923,7 @@ bool MotionPanel::dispatch_target(const helix::AxisTarget& target) {
     // unclamped would trust exactly the value that is missing.
     const auto bounds = get_printer_state().get_axis_bounds();
     if ((target.x && !bounds.has_x) || (target.y && !bounds.has_y) || (target.z && !bounds.has_z)) {
-        NOTIFY_INFO(lv_tr("Toolhead position unknown"));
+        NOTIFY_INFO(lv_tr("Axis limits unknown"));
         return false;
     }
     std::optional<std::pair<double, double>> z_range;
@@ -1040,7 +1040,7 @@ void MotionPanel::open_axis_keypad(char axis) {
     const auto params =
         helix::keypad_params_for_axis(get_printer_state().get_axis_bounds(), axis_enum, commanded);
     if (!params) {
-        NOTIFY_INFO(lv_tr("Toolhead position unknown"));
+        NOTIFY_INFO(lv_tr("Axis limits unknown"));
         return;
     }
 
