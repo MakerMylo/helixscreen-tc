@@ -53,6 +53,15 @@ TEST_CASE("lookup_image_regions: override map is what lookup reads", "[printer_i
     set_image_regions_for_testing({});
 }
 
+TEST_CASE("lookup_image_regions: reads the shipped regions.json on first lookup",
+          "[printer_image][regions]") {
+    reset_image_regions_for_testing();
+    const auto* regions = lookup_image_regions("creality-k1c");
+    REQUIRE(regions != nullptr);
+    CHECK(regions->src_w == 1601);
+    reset_image_regions_for_testing();
+}
+
 // A re-cropped PNG silently shifts every tagged point; this names the image to re-tag.
 TEST_CASE("regions.json: every entry's size matches its source PNG", "[printer_image][regions]") {
     std::ifstream f("assets/images/printers/regions.json");

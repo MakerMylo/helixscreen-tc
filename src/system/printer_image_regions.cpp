@@ -28,6 +28,7 @@ std::unordered_map<std::string, ImageRegions>& table() {
     return t;
 }
 
+// Main-thread only; loaded flag gates the one-time file read.
 bool& loaded() {
     static bool l = false;
     return l;
@@ -77,17 +78,29 @@ const ImageRegions* lookup_image_regions(std::string_view basename) {
         const std::string path = asset_path("assets/images/printers/regions.json");
         std::FILE* f = std::fopen(path.c_str(), "rb");
         if (f) {
-            std::fseek(f, 0, SEEK_END);
-            long size = std::ftell(f);
-            std::fseek(f, 0, SEEK_SET);
-            std::string text(size, '\0');
-            std::size_t bytes_read = std::fread(text.data(), 1, size, f);
-            std::fclose(f);
-            if (bytes_read == static_cast<std::size_t>(size)) {
-                table() = parse_image_regions(text);
-                spdlog::debug("[PrinterImageRegions] {} tagged images", table().size());
-            } else {
+            if (std::fseek(f, 0, SEEK_END) != 0) {
+                std::fclose(f);
                 spdlog::debug("[PrinterImageRegions] no regions.json; every image is untagged");
+            } else {
+                const long size = std::ftell(f);
+                if (size < 0) {
+                    std::fclose(f);
+                    spdlog::debug("[PrinterImageRegions] no regions.json; every image is untagged");
+                } else if (std::fseek(f, 0, SEEK_SET) != 0) {
+                    std::fclose(f);
+                    spdlog::debug("[PrinterImageRegions] no regions.json; every image is untagged");
+                } else {
+                    std::string text(size, '\0');
+                    std::size_t bytes_read = std::fread(text.data(), 1, size, f);
+                    std::fclose(f);
+                    if (bytes_read == static_cast<std::size_t>(size)) {
+                        table() = parse_image_regions(text);
+                        spdlog::debug("[PrinterImageRegions] {} tagged images", table().size());
+                    } else {
+                        spdlog::debug(
+                            "[PrinterImageRegions] no regions.json; every image is untagged");
+                    }
+                }
             }
         } else {
             spdlog::debug("[PrinterImageRegions] no regions.json; every image is untagged");
@@ -100,6 +113,11 @@ const ImageRegions* lookup_image_regions(std::string_view basename) {
 void set_image_regions_for_testing(std::unordered_map<std::string, ImageRegions> regions) {
     table() = std::move(regions);
     loaded() = true;
+}
+
+void reset_image_regions_for_testing() {
+    table().clear();
+    loaded() = false;
 }
 
 std::string printer_image_basename(std::string_view path) {
