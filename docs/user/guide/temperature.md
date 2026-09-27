@@ -23,7 +23,7 @@ Same layout as nozzle control:
 
 ### Drying Filament on the Bed
 
-On an enclosed printer with a heated bed, HelixScreen can dry filament on the build plate. Tap **Dry Filament** on the bed card (or **Advanced > Dry Filament**), pick the material and tap **Start** once you have ticked **I understand**. The material list shows the bed temperature and time each one uses: bed temperatures follow Bambu Lab's heated-bed drying guide, capped at 90°C and at your bed's maximum, for 12 hours. If a chamber heater that can dry filament is fitted, you can run it at the same time.
+On an enclosed printer with a heated bed, HelixScreen can dry filament on the build plate. Tap **Dry Filament** on the bed card (or **Advanced > Dry Filament**), pick the material and tap **Start** once you have ticked **I understand**. The material list shows the bed temperature and time each one uses: bed temperatures are capped at 90°C and at your bed's maximum, for 12 hours. If a chamber heater that can dry filament is fitted, you can run it at the same time.
 
 What happens next:
 

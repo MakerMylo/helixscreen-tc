@@ -11,7 +11,7 @@
 namespace helix::ui {
 
 /// Starts drying filament on the heated bed (prestonbrown/helixscreen#1730):
-/// a material from Bambu's heated-bed table, capped for this printer, an
+/// a material from the heated-bed table, capped for this printer, an
 /// optional chamber dryer alongside, and an acknowledgement before Start. The
 /// rest of the flow (unload offer, clearance move, place prompt) follows from
 /// on_ok() through BedDryingController.

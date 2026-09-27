@@ -13,7 +13,7 @@
  * @brief The decisions behind drying filament on the heated bed, as pure
  *        functions (prestonbrown/helixscreen#1730)
  *
- * The flow follows Bambu Lab's heated-bed procedure: unload, clear the plate,
+ * The flow is the usual heated-bed procedure: unload, clear the plate,
  * move it as far from the nozzle as the printer allows, spools on the plate
  * under a box, flip them midway, let the bed cool before removing them.
  */
@@ -43,7 +43,7 @@ enum class EnclosureStyle { AUTO = 0, ENCLOSED = 1, OPEN = 2 };
 inline constexpr double kMinZTravelMm = 130.0;
 /// How far short of the end of Z travel the clearance move stops.
 inline constexpr double kClearanceMarginMm = 10.0;
-/// Bambu's firmware drying mode caps the bed here.
+/// Beyond this, spools and filament deform faster than a bed dries them.
 inline constexpr int kMaxBedC = 90;
 /// The remove prompt waits for the bed to read below this.
 inline constexpr double kCoolDownC = 40.0;
@@ -75,12 +75,12 @@ inline constexpr int kKlipperDefaultIdleS = 600;
 
 struct Material {
     std::string_view name;
-    int bed_c; ///< upper end of Bambu's heated-bed range
-    int air_c; ///< drying air temperature for a chamber appliance, Bambu's AMS HT / oven column
+    int bed_c; ///< upper end of the heated-bed drying range
+    int air_c; ///< drying air temperature for a chamber appliance, a dryer-box figure
     int hours;
 };
 
-/// Bambu's drying tables, all 12 h. The bed value is the upper end of its
+/// Drying values, all 12 h. The bed value is the upper end of the
 /// heated-bed range; the air value is what a chamber dryer should hold, far
 /// below the bed's, since the air around PLA must stay under its softening point.
 inline constexpr std::array<Material, 5> kMaterials = {{

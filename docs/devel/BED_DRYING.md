@@ -2,8 +2,7 @@
 
 Spools lie on the build plate under a cover box while the bed heats, optionally with a
 chamber appliance dryer running alongside (prestonbrown/helixscreen#1730). The procedure
-follows Bambu Lab's heated-bed drying guide,
-https://wiki.bambulab.com/en/filament-acc/filament/dry-filament (section 2): unload,
+is the usual one for heated-bed drying: unload,
 clear the plate, move it as far from the nozzle as the printer allows, spools on the
 plate under a box, flip them midway, let the bed cool before removing them.
 
@@ -51,9 +50,9 @@ the **Dry Filament** row in Advanced. Both carry `moves_machine="true"`.
    and asks for the removal confirmation. The idle timeout is held from here on.
 5. **Start** (`confirm_placed`): the run is saved before any heat; a failed save
    refuses to heat, with a toast.
-6. **Heat**: the bed at the material's value from Bambu's heated-bed table capped at 90°C
+6. **Heat**: the bed at the material's value from the heated-bed table in `bed_drying.h`, capped at 90°C
    and at the bed max (`bed_drying::bed_temp_c`); the chamber dryer too when chosen, at
-   the material's **air** temperature from Bambu's AMS HT / oven column (PLA 50°C, not
+   the material's **air** temperature, a dryer-box figure (PLA 50°C, not
    the bed's 70), clamped by the dryer and started with `hold_idle=false`; Klipper's idle
    timeout held to the planned end plus 10 minutes.
 7. **Run**: HelixScreen's 1 s timer. At the midpoint a "flip the spools" notification.
@@ -72,8 +71,8 @@ the **Dry Filament** row in Advanced. Both carry `moves_machine="true"`.
 10. **Remove**: only its confirm clears the latch and the persisted run, and restores the
     configured idle timeout.
 
-Running the bed and a chamber appliance together is deliberate; Bambu's X1E does the
-opposite and resets its chamber heater to 0 during its own drying mode.
+Running the bed and a chamber appliance together is deliberate: the appliance adds
+chamber heat the bed alone cannot.
 
 ## The latch
 

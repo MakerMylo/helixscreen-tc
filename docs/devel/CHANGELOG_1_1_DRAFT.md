@@ -42,7 +42,7 @@ what gets saved.
 - **Dry filament on the heated bed (#1730)** - on an enclosed printer, Dry Filament on the
   bed card (or in Advanced) offers to unload the toolhead, homes, moves the plate as far from
   the nozzle as it goes, and asks you to lay the spools on the plate under a box. The bed
-  then holds the material's temperature from Bambu Lab's heated-bed drying guide, capped at
+  then holds a drying temperature for the material, capped at
   90°C, for 12 hours, with a chamber dryer alongside when one is fitted. You are reminded to
   flip the spools halfway, and asked to take them off once the bed is below 40°C. Until you
   confirm the spools are off, HelixScreen will not home, move or start a print, and a banner
