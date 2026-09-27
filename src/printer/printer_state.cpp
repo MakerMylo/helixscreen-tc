@@ -34,6 +34,7 @@
 #include "lvgl/src/display/lv_display_private.h" // For rendering_in_progress check
 #include "lvgl_debug_invalidate.h"
 #include "macro_manager.h"
+#include "motion_presets.h"
 #include "plr_backend.h"
 #include "pre_print_preferences.h"
 #include "printer_cache_registry.h"
@@ -1139,8 +1140,7 @@ void PrinterState::set_kinematics(const std::string& kinematics) {
     last_kinematics_ = kinematics;
 
     // On delta printers, axes cannot be homed individually.
-    capabilities_state_.set_has_individual_xyz_homing(kinematics != "delta" &&
-                                                      kinematics != "rotary_delta");
+    capabilities_state_.set_has_individual_xyz_homing(!circular_bed_kinematics(kinematics));
 
     // Determine if the bed moves on Z based on kinematics type:
     // - CoreXY: bed typically moves on Z (Voron 0/Trident, Bambu, AD5M, etc.)

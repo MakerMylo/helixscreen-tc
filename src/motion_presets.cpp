@@ -1,0 +1,95 @@
+// Copyright (C) 2025-2026 356C LLC
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+#include "motion_presets.h"
+
+#include "belt_gating.h"
+
+#include <algorithm>
+#include <cmath>
+
+namespace helix {
+
+namespace {
+
+/// Rectangular beds: an edge preset sits this fraction of the axis's span
+/// in from the edge, i.e. half-span minus 10% leaves 40% of reach.
+constexpr double PRESET_INSET_FRACTION = 0.1;
+
+/// Circular beds: rim presets sit at this fraction of the inscribed radius.
+constexpr double PRESET_RADIUS_FRACTION = 0.9;
+
+/// Where a preset sits on the grid: -1 min side, 0 centre, 1 max side.
+struct GridPosition {
+    int x;
+    int y;
+};
+
+constexpr GridPosition grid_position(MotionPreset preset) {
+    switch (preset) {
+    case MotionPreset::BackLeft:
+        return {-1, 1};
+    case MotionPreset::Back:
+        return {0, 1};
+    case MotionPreset::BackRight:
+        return {1, 1};
+    case MotionPreset::Left:
+        return {-1, 0};
+    case MotionPreset::Center:
+        return {0, 0};
+    case MotionPreset::Right:
+        return {1, 0};
+    case MotionPreset::FrontLeft:
+        return {-1, -1};
+    case MotionPreset::Front:
+        return {0, -1};
+    case MotionPreset::FrontRight:
+        return {1, -1};
+    }
+    return {0, 0};
+}
+
+} // namespace
+
+std::optional<AxisTarget> motion_preset_target(MotionPreset preset, const AxisBounds& gcode_bounds,
+                                               bool circular_bed) {
+    const auto center_x =
+        calibration::axis_center(gcode_bounds.has_x, gcode_bounds.x_min, gcode_bounds.x_max);
+    const auto center_y =
+        calibration::axis_center(gcode_bounds.has_y, gcode_bounds.y_min, gcode_bounds.y_max);
+    if (!center_x || !center_y) {
+        return std::nullopt;
+    }
+
+    const auto [col, row] = grid_position(preset);
+    AxisTarget target;
+
+    if (col == 0 && row == 0) {
+        target.x = *center_x;
+        target.y = *center_y;
+        return target;
+    }
+
+    if (circular_bed) {
+        // Inscribed circle of the bounding square: 90% of the radius in the
+        // preset's direction, so diagonals land at 45 degrees, not on the
+        // square's corners where the round bed ends.
+        const double radius = std::min(gcode_bounds.x_max - gcode_bounds.x_min,
+                                       gcode_bounds.y_max - gcode_bounds.y_min) /
+                              2.0;
+        const double diagonal = std::sqrt(static_cast<double>(col) * col + row * row);
+        const double reach = PRESET_RADIUS_FRACTION * radius / diagonal;
+        target.x = *center_x + col * reach;
+        target.y = *center_y + row * reach;
+    } else {
+        const double reach_x =
+            (gcode_bounds.x_max - gcode_bounds.x_min) * (0.5 - PRESET_INSET_FRACTION);
+        const double reach_y =
+            (gcode_bounds.y_max - gcode_bounds.y_min) * (0.5 - PRESET_INSET_FRACTION);
+        target.x = *center_x + col * reach_x;
+        target.y = *center_y + row * reach_y;
+    }
+    return target;
+}
+
+} // namespace helix
