@@ -824,9 +824,6 @@ class PrintStatusPanel : public OverlayBase {
     /// any other lane reaches the live preview through here alone.
     ObserverGuard scoped_runout_slots_observer_;
 
-    // Lazy fan control overlay (created on first click; Task 9 wires the push).
-    lv_obj_t* fan_control_panel_ = nullptr;
-
     //
     // === Exclude Object Manager ===
     //

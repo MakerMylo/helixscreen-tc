@@ -93,7 +93,6 @@ ControlsPanel::~ControlsPanel() {
     // Note: safe_delete_obj handles shutdown guards (lv_is_initialized, is_destroying_all, etc.)
     using helix::ui::safe_delete_obj;
     safe_delete_obj(motion_panel_);
-    safe_delete_obj(fan_control_panel_);
     safe_delete_obj(bed_mesh_panel_);
     safe_delete_obj(pa_cal_panel_);
     safe_delete_obj(zoffset_panel_);
@@ -1316,34 +1315,8 @@ void ControlsPanel::handle_cooling_clicked() {
 void ControlsPanel::handle_secondary_fans_clicked() {
     spdlog::debug("[{}] Secondary fans clicked - opening Fan Control overlay", get_name());
 
-    // Create fan control overlay on first access (lazy initialization)
-    if (!fan_control_panel_ && parent_screen_) {
-        auto& overlay = get_fan_control_overlay();
-
-        // Initialize subjects and callbacks if not already done
-        if (!overlay.are_subjects_initialized()) {
-            overlay.init_subjects();
-        }
-        overlay.register_callbacks();
-
-        // Pass the API reference for fan commands
-        overlay.set_api(api_);
-
-        // Create overlay UI
-        fan_control_panel_ = overlay.create(parent_screen_);
-        if (!fan_control_panel_) {
-            NOTIFY_ERROR(lv_tr("Failed to load fan control overlay"));
-            return;
-        }
-
-        // Register with NavigationManager for lifecycle callbacks
-        NavigationManager::instance().register_overlay_instance(fan_control_panel_, &overlay);
-    }
-
-    if (fan_control_panel_) {
-        // Update API reference in case it changed
-        get_fan_control_overlay().set_api(api_);
-        NavigationManager::instance().push_overlay(fan_control_panel_);
+    if (!helix::open_fan_control_overlay(parent_screen_)) {
+        NOTIFY_ERROR(lv_tr("Failed to load fan control overlay"));
     }
 }
 

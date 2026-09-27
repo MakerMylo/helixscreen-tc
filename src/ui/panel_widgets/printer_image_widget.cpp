@@ -717,10 +717,10 @@ void PrinterImageWidget::handle_callout_clicked(CalloutKind kind) {
         get_global_temp_graph_overlay().open(TempGraphOverlay::Mode::Chamber, parent_screen_);
         break;
     case CalloutKind::Fan:
-        fan_control_panel_ = open_fan_control_overlay(parent_screen_, fan_control_panel_);
+        open_fan_control_overlay(parent_screen_);
         break;
     case CalloutKind::Light:
-        led_control_panel_ = open_led_control_overlay(parent_screen_, led_control_panel_);
+        open_led_control_overlay(parent_screen_);
         break;
     }
 }

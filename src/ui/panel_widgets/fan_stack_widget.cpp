@@ -229,7 +229,6 @@ void FanStackWidget::detach() {
         lv_obj_set_user_data(widget_obj_, nullptr);
     widget_obj_ = nullptr;
     parent_screen_ = nullptr;
-    fan_control_panel_ = nullptr;
     part_label_ = nullptr;
     hotend_label_ = nullptr;
     aux_label_ = nullptr;
@@ -941,7 +940,7 @@ void FanStackWidget::send_carousel_fan_speed(const std::string& object_name, int
 
 void FanStackWidget::handle_clicked() {
     spdlog::debug("[FanStackWidget] Clicked - opening fan control overlay");
-    fan_control_panel_ = helix::open_fan_control_overlay(parent_screen_, fan_control_panel_);
+    helix::open_fan_control_overlay(parent_screen_);
 }
 
 void FanStackWidget::on_fan_stack_clicked(lv_event_t* e) {

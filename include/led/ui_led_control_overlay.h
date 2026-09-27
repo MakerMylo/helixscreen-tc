@@ -67,6 +67,12 @@ class LedControlOverlay : public OverlayBase {
     void cleanup() override;
 
   private:
+    /// LV_EVENT_DELETE on the root: a tree deleted by anyone else leaves no
+    /// pointer into it, and the next open recreates it.
+    static void on_root_deleted(lv_event_t* e);
+
+    void forget_widget_pointers();
+
     // Section population
     void populate_sections();
     void populate_strip_selector();
@@ -187,12 +193,14 @@ helix::led::LedControlOverlay& get_led_control_overlay();
 
 namespace helix {
 /**
- * @brief Push the LED control overlay, creating it under @p parent_screen on first use
- * @param parent_screen Screen to create the overlay on when @p panel is null
- * @param panel The caller's panel from a previous open, or nullptr
- * @return The pushed panel for the caller to keep, or nullptr if it could not be created
+ * @brief Push the LED control overlay, creating it under @p parent_screen when it has no live tree
+ *
+ * The overlay singleton owns its one widget tree; every caller opens through
+ * here and none keeps or deletes the root.
+ * @param parent_screen Screen to create the overlay on when it has no live tree
+ * @return The pushed root, or nullptr if it could not be created
  */
-lv_obj_t* open_led_control_overlay(lv_obj_t* parent_screen, lv_obj_t* panel);
+lv_obj_t* open_led_control_overlay(lv_obj_t* parent_screen);
 } // namespace helix
 
 /**

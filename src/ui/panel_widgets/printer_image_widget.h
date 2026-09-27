@@ -5,7 +5,6 @@
 
 #include "ui_heater_icon_binder.h"
 #include "ui_observer_guard.h"
-#include "ui_widget_ref.h"
 
 #include "async_lifetime_guard.h"
 #include "callout_layout.h"
@@ -134,8 +133,6 @@ class PrinterImageWidget : public PanelWidget {
     std::vector<ObserverGuard> callout_observers_;
     SubjectLifetime bed_temp_lt_, bed_target_lt_, chamber_temp_lt_, chamber_target_lt_;
     helix::ui::HeaterIconBinder nozzle_binder_, bed_binder_, chamber_binder_, toolhead_binder_;
-    helix::ui::WidgetRef fan_control_panel_;
-    helix::ui::WidgetRef led_control_panel_;
 };
 
 } // namespace helix

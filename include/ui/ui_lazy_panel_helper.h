@@ -23,6 +23,7 @@
 #include "ui_nav_manager.h"
 #include "ui_toast_manager.h"
 #include "ui_utils.h"
+#include "ui_widget_ref.h"
 
 #include <spdlog/spdlog.h>
 
@@ -97,6 +98,18 @@ bool lazy_create_and_push_overlay(Getter getter, lv_obj_t*& cached_panel, lv_obj
                      panel_display_name);
     }
 
+    // A caller opening for the first time adopts the tree another caller
+    // created here: the panel holds one set of widget pointers, so a second
+    // create() would leave that tree pushed with nothing updating it.
+    // get_root() alone cannot say the tree is alive (a root freed with its
+    // screen still reads non-null, and lv_obj_is_valid() is fooled when a new
+    // widget reuses the address), so adoption keys on a handle LVGL nulls when
+    // the widget is deleted.
+    static WidgetRef created_root;
+    if (!cached_panel && created_root && created_root == panel.get_root()) {
+        cached_panel = created_root;
+    }
+
     // Create panel on first access (lazy initialization)
     if (!cached_panel && parent_screen) {
         // Initialize subjects and callbacks if not already done
@@ -115,6 +128,7 @@ bool lazy_create_and_push_overlay(Getter getter, lv_obj_t*& cached_panel, lv_obj
                 2000);
             return false;
         }
+        created_root = cached_panel;
 
         // Register close callback to destroy widget tree when overlay closes.
         // Frees 400-800KB per overlay. Subjects survive; next open re-creates widgets.
