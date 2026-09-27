@@ -18,8 +18,6 @@
 #include <algorithm>
 #include <cctype>
 #include <cmath>
-#include <iomanip>
-#include <sstream>
 
 #include "hv/json.hpp"
 
@@ -48,21 +46,19 @@ bool is_safe_feedrate(double feedrate, const SafetyLimits& limits) {
 /**
  * Format a numeric value for G-code without ever emitting scientific notation.
  *
- * A bare `ostringstream << double` uses defaultfloat: roughly 6 significant
- * digits, switching to scientific notation for small magnitudes. Klipper
- * tolerates "X1e-17", but it is unreadable in logs and one clamp change away
- * from a genuinely odd command — clamp_jog_delta can return a real sub-micron
- * residual (predicted=199.9999995, +1, max=200 -> ~5e-7).
+ * %g-style formatting keeps 6 significant digits and switches to scientific
+ * notation for small magnitudes. Klipper tolerates "X1e-17", but it is
+ * unreadable in logs and one clamp change away from a genuinely odd command —
+ * clamp_jog_delta can return a real sub-micron residual (predicted=199.9999995,
+ * +1, max=200 -> ~5e-7).
  *
- * Fixed notation with trailing zeros trimmed keeps ordinary values byte-identical
- * to the old defaultfloat output ("4", "0.5", "-2", "6000") while making
- * scientific output unrepresentable for anything that survives the epsilon gate.
+ * Fixed notation with trailing zeros trimmed prints ordinary values exactly as
+ * %g does ("4", "0.5", "-2", "6000") while making scientific output
+ * unrepresentable for anything that survives the epsilon gate.
  */
 std::string format_gcode_value(double v) {
-    std::ostringstream ss;
-    ss << std::fixed << std::setprecision(6) << v;
-    std::string s = ss.str();
-    // std::fixed always emits a decimal point for finite values (NaN/Inf are
+    std::string s = fmt::format("{:.6f}", v);
+    // Fixed notation always emits a decimal point for finite values (NaN/Inf are
     // rejected upstream), so the trim is unconditional.
     s.erase(s.find_last_not_of('0') + 1);
     if (!s.empty() && s.back() == '.') {
@@ -358,12 +354,12 @@ std::string MoonrakerMotionAPI::generate_home_gcode(const std::string& axes) {
     if (axes.empty()) {
         return "G28"; // Home all axes
     } else {
-        std::ostringstream gcode;
-        gcode << "G28";
+        std::string gcode = "G28";
         for (char axis : axes) {
-            gcode << " " << static_cast<char>(std::toupper(axis));
+            gcode += ' ';
+            gcode += static_cast<char>(std::toupper(axis));
         }
-        return gcode.str();
+        return gcode;
     }
 }
 
@@ -375,14 +371,13 @@ std::string MoonrakerMotionAPI::generate_move_gcode(char axis, double distance, 
         return "";
     }
 
-    std::ostringstream gcode;
-    gcode << "G91\n"; // Relative positioning
-    gcode << "G0 " << static_cast<char>(std::toupper(axis)) << distance;
+    std::string gcode = fmt::format("G91\nG0 {}{:g}", static_cast<char>(std::toupper(axis)),
+                                    distance); // Relative positioning
     if (feedrate > 0) {
-        gcode << " F" << feedrate;
+        gcode += fmt::format(" F{:g}", feedrate);
     }
-    gcode << "\nG90"; // Back to absolute positioning
-    return gcode.str();
+    gcode += "\nG90"; // Back to absolute positioning
+    return gcode;
 }
 
 std::string MoonrakerMotionAPI::generate_relative_move_gcode(double dx, double dy, double dz,
@@ -408,28 +403,27 @@ std::string MoonrakerMotionAPI::generate_relative_move_gcode(double dx, double d
         return ""; // includes the all-zero case
     }
 
-    std::ostringstream gcode;
-    gcode << "G91";
+    std::string gcode = "G91";
     if (move_x || move_y) {
-        gcode << "\nG0";
+        gcode += "\nG0";
         if (move_x) {
-            gcode << " X" << format_gcode_value(dx);
+            gcode += " X" + format_gcode_value(dx);
         }
         if (move_y) {
-            gcode << " Y" << format_gcode_value(dy);
+            gcode += " Y" + format_gcode_value(dy);
         }
         if (xy_feedrate > 0) {
-            gcode << " F" << format_gcode_value(xy_feedrate);
+            gcode += " F" + format_gcode_value(xy_feedrate);
         }
     }
     if (move_z) {
-        gcode << "\nG0 Z" << format_gcode_value(dz);
+        gcode += "\nG0 Z" + format_gcode_value(dz);
         if (z_feedrate > 0) {
-            gcode << " F" << format_gcode_value(z_feedrate);
+            gcode += " F" + format_gcode_value(z_feedrate);
         }
     }
-    gcode << "\nG90";
-    return gcode.str();
+    gcode += "\nG90";
+    return gcode;
 }
 
 std::string MoonrakerMotionAPI::generate_absolute_move_gcode(const helix::AxisTarget& target,
@@ -448,24 +442,24 @@ std::string MoonrakerMotionAPI::generate_absolute_move_gcode(const helix::AxisTa
         return "";
     }
 
-    std::ostringstream z_block;
+    std::string z_block;
     if (target.z) {
-        z_block << "\nG0 Z" << format_gcode_value(*target.z);
+        z_block += "\nG0 Z" + format_gcode_value(*target.z);
         if (z_feedrate > 0) {
-            z_block << " F" << format_gcode_value(z_feedrate);
+            z_block += " F" + format_gcode_value(z_feedrate);
         }
     }
-    std::ostringstream xy_block;
+    std::string xy_block;
     if (target.x || target.y) {
-        xy_block << "\nG0";
+        xy_block += "\nG0";
         if (target.x) {
-            xy_block << " X" << format_gcode_value(*target.x);
+            xy_block += " X" + format_gcode_value(*target.x);
         }
         if (target.y) {
-            xy_block << " Y" << format_gcode_value(*target.y);
+            xy_block += " Y" + format_gcode_value(*target.y);
         }
         if (xy_feedrate > 0) {
-            xy_block << " F" << format_gcode_value(xy_feedrate);
+            xy_block += " F" + format_gcode_value(xy_feedrate);
         }
     }
 
@@ -475,14 +469,7 @@ std::string MoonrakerMotionAPI::generate_absolute_move_gcode(const helix::AxisTa
     const bool descend_last =
         target.z && (target.x || target.y) && current_z && *target.z < *current_z;
 
-    std::ostringstream gcode;
-    gcode << "G90";
-    if (descend_last) {
-        gcode << xy_block.str() << z_block.str();
-    } else {
-        gcode << z_block.str() << xy_block.str();
-    }
-    return gcode.str();
+    return descend_last ? "G90" + xy_block + z_block : "G90" + z_block + xy_block;
 }
 
 std::string MoonrakerMotionAPI::generate_absolute_move_gcode(char axis, double position,
@@ -494,13 +481,12 @@ std::string MoonrakerMotionAPI::generate_absolute_move_gcode(char axis, double p
         return "";
     }
 
-    std::ostringstream gcode;
-    gcode << "G90\n"; // Absolute positioning
-    gcode << "G0 " << static_cast<char>(std::toupper(axis)) << position;
+    std::string gcode = fmt::format("G90\nG0 {}{:g}", static_cast<char>(std::toupper(axis)),
+                                    position); // Absolute positioning
     if (feedrate > 0) {
-        gcode << " F" << feedrate;
+        gcode += fmt::format(" F{:g}", feedrate);
     }
-    return gcode.str();
+    return gcode;
 }
 
 // ============================================================================

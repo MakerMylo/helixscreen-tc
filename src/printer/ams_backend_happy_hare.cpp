@@ -22,6 +22,7 @@
 #include "print_lifecycle_state.h" // job_holds_machine
 #include "printer_state.h"         // PrinterState: mid-print clear guard
 #include "settings_manager.h"
+#include "text_io.h"
 
 #include <spdlog/fmt/fmt.h>
 #include <spdlog/spdlog.h>
@@ -29,9 +30,10 @@
 #include <algorithm>
 #include <cctype>
 #include <map>
-#include <sstream>
 
 namespace helix {
+
+namespace tio = ::helix::text_io;
 
 namespace {
 
@@ -587,9 +589,8 @@ void AmsBackendHappyHare::parse_mmu_state(const nlohmann::json& mmu_data) {
             // Parse comma-separated per-unit gate counts (v4 dissimilar multi-MMU)
             std::string ng_str = ng.get<std::string>();
             std::vector<int> counts;
-            std::istringstream iss(ng_str);
-            std::string token;
-            while (std::getline(iss, token, ',')) {
+            for (std::string_view sv : tio::lines(ng_str, ',')) {
+                std::string token(sv);
                 try {
                     int count = std::stoi(token);
                     if (count > 0) {
@@ -2452,11 +2453,10 @@ AmsError AmsBackendHappyHare::do_load_filament(int slot_index) {
     }
 
     // Send MMU_LOAD GATE={n} command (Happy Hare uses "gate" in its API)
-    std::ostringstream cmd;
-    cmd << "MMU_LOAD GATE=" << slot_index;
+    const std::string cmd = fmt::format("MMU_LOAD GATE={}", slot_index);
 
     spdlog::info("[AMS HappyHare] Loading from slot {}", slot_index);
-    return ensure_homed_then(cmd.str());
+    return ensure_homed_then(cmd);
 }
 
 AmsError AmsBackendHappyHare::do_unload_filament(int /*slot_index*/) {
@@ -2483,11 +2483,10 @@ AmsError AmsBackendHappyHare::do_select_slot(int slot_index) {
     }
 
     // Send MMU_SELECT GATE={n} command (Happy Hare uses "gate" in its API)
-    std::ostringstream cmd;
-    cmd << "MMU_SELECT GATE=" << slot_index;
+    const std::string cmd = fmt::format("MMU_SELECT GATE={}", slot_index);
 
     spdlog::info("[AMS HappyHare] Selecting slot {}", slot_index);
-    return execute_gcode(cmd.str());
+    return execute_gcode(cmd);
 }
 
 AmsError AmsBackendHappyHare::do_change_tool(int tool_number) {
@@ -2501,11 +2500,10 @@ AmsError AmsBackendHappyHare::do_change_tool(int tool_number) {
     }
 
     // Send T{n} command for standard tool change
-    std::ostringstream cmd;
-    cmd << "T" << tool_number;
+    const std::string cmd = fmt::format("T{}", tool_number);
 
     spdlog::info("[AMS HappyHare] Tool change to T{}", tool_number);
-    return ensure_homed_then(cmd.str());
+    return ensure_homed_then(cmd);
 }
 
 // ============================================================================
@@ -3150,11 +3148,10 @@ AmsError AmsBackendHappyHare::set_tool_mapping_impl(int tool_number, int slot_in
     }
 
     // Send MMU_TTG_MAP command to update tool-to-gate mapping (Happy Hare uses "gate" in its API)
-    std::ostringstream cmd;
-    cmd << "MMU_TTG_MAP TOOL=" << tool_number << " GATE=" << slot_index;
+    const std::string cmd = fmt::format("MMU_TTG_MAP TOOL={} GATE={}", tool_number, slot_index);
 
     spdlog::info("[AMS HappyHare] Mapping T{} to slot {}", tool_number, slot_index);
-    return execute_gcode(cmd.str());
+    return execute_gcode(cmd);
 }
 
 // ============================================================================

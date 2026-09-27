@@ -3275,7 +3275,7 @@ translations:
   VM Peak: 虚拟内存峰值
   VM Size: 虚拟内存大小
   Validating bed mesh...: 正在验证热床网格...
-  Value must be between {:.0f} and {:.0f}: 值必须在 {:.0f} 到 {:.0f} 之间
+  Value must be between {} and {}: 值必须在 {} 到 {} 之间
   Values must not be negative: 值不能为负数
   Velocity and acceleration limits: 速度和加速度限制
   Vendor: 供应商
@@ -3383,7 +3383,6 @@ translations:
   X axis applied, but Y axis failed: X 轴已应用，但 Y 轴失败
   X axis done, starting Y...: 'X 轴完成，开始 Y 轴...'
   X is at its limit ({}mm): X 轴已到达限位 ({}mm)
-  X position: 'X位置'
   'X:': X：
   XY: XY
   Y: Y
@@ -3391,7 +3390,6 @@ translations:
   Y Offset: Y 偏移
   Y axis limit reached: 已到达 Y 轴限位
   Y is at its limit ({}mm): Y 轴已到达限位 ({}mm)
-  Y position: 'Y位置'
   'Y:': Y：
   ? "YOU WIN!\nScore: {}\nTap to play again"
   : "你赢了！\n得分：{}\n点按再玩一次"
@@ -3417,7 +3415,6 @@ translations:
   Z is at its limit ({}mm): Z 轴已到达限位 ({}mm)
   Z jog feedrate: Z 轴移动速度
   Z motor calibration failed: Z 电机校准失败
-  Z position: 'Z位置'
   Z probes for bed leveling and mesh generation: 用于热床调平和网格生成的 Z 探针
   'Z-Off:': Z 偏移：
   Z-Offset: Z 偏移

@@ -23,6 +23,7 @@
 #include "lvgl/lvgl.h"
 #include "lvgl/src/themes/lv_theme_private.h"
 #include "settings_manager.h"
+#include "text_io.h"
 #include "theme_loader.h"
 #include "theme_token_table.h"
 
@@ -101,8 +102,6 @@ int32_t responsive_vertical_dimension(lv_display_t* display) {
 #include <cstdlib>
 #include <cstring>
 #include <dirent.h>
-#include <fstream>
-#include <sstream>
 #include <string>
 #include <tuple>
 #include <unordered_map>
@@ -3187,13 +3186,7 @@ static std::string tm_read_xml_file(const char* filepath) {
         return cached->second;
     }
 #endif
-    std::string content;
-    std::ifstream file(filepath);
-    if (file.is_open()) {
-        std::stringstream buffer;
-        buffer << file.rdbuf();
-        content = buffer.str();
-    }
+    std::string content = helix::text_io::read_file(filepath).value_or("");
 #if defined(HELIX_PLATFORM_ESP32)
     cache.emplace(filepath, content);
 #endif

@@ -18,6 +18,7 @@
 #include "observer_factory.h"
 #include "printer_state.h"
 #include "static_panel_registry.h"
+#include "text_io.h"
 #include "theme_manager.h"
 
 #include <spdlog/spdlog.h>
@@ -26,7 +27,6 @@
 #include <cmath>
 #include <ctime>
 #include <map>
-#include <sstream>
 
 using namespace helix;
 
@@ -794,14 +794,12 @@ void HistoryDashboardPanel::update_filament_chart(const std::vector<PrintHistory
 
         // Split semicolon-separated filament types (OrcaSlicer multi-extruder format)
         std::vector<std::string> types;
-        std::stringstream ss(job.filament_type);
-        std::string item;
-        while (std::getline(ss, item, ';')) {
+        for (std::string_view sv : helix::text_io::lines(job.filament_type, ';')) {
             // Trim whitespace
-            size_t start = item.find_first_not_of(" \t");
-            size_t end = item.find_last_not_of(" \t");
-            if (start != std::string::npos) {
-                types.push_back(item.substr(start, end - start + 1));
+            size_t start = sv.find_first_not_of(" \t");
+            size_t end = sv.find_last_not_of(" \t");
+            if (start != std::string_view::npos) {
+                types.emplace_back(sv.substr(start, end - start + 1));
             }
         }
 

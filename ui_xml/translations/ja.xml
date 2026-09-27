@@ -3126,7 +3126,7 @@
   <translation tag="VM Peak" ja="VM ピーク"/>
   <translation tag="VM Size" ja="VM サイズ"/>
   <translation tag="Validating bed mesh..." ja="ベッドメッシュを検証中..."/>
-  <translation tag="Value must be between {:.0f} and {:.0f}" ja="値は {:.0f} から {:.0f} の間で入力してください"/>
+  <translation tag="Value must be between {} and {}" ja="値は {} から {} の間で入力してください"/>
   <translation tag="Values must not be negative" ja="値は負の数にできません"/>
   <translation tag="Velocity and acceleration limits" ja="速度と加速度の制限"/>
   <translation tag="Vendor" ja="ベンダー"/>
@@ -3228,7 +3228,6 @@
   <translation tag="X axis applied, but Y axis failed" ja="X軸は適用されましたが、Y軸は失敗しました"/>
   <translation tag="X axis done, starting Y..." ja="X軸が完了しました。Y軸を開始します..."/>
   <translation tag="X is at its limit ({}mm)" ja="X軸は限界に達しています ({}mm)"/>
-  <translation tag="X position" ja="X位置"/>
   <translation tag="X:" ja="X:"/>
   <translation tag="XY" ja="XY"/>
   <translation tag="Y" ja="Y"/>
@@ -3236,7 +3235,6 @@
   <translation tag="Y Offset" ja="Yオフセット"/>
   <translation tag="Y axis limit reached" ja="Y軸のリミットに達しました"/>
   <translation tag="Y is at its limit ({}mm)" ja="Y軸は限界に達しています ({}mm)"/>
-  <translation tag="Y position" ja="Y位置"/>
   <translation tag="Y:" ja="Y:"/>
   <translation tag="YOU WIN!&#10;Score: {}&#10;Tap to play again" ja="クリア！&#10;スコア: {}&#10;タップでもう一度"/>
   <translation tag="Year" ja="年"/>
@@ -3259,7 +3257,6 @@
   <translation tag="Z is at its limit ({}mm)" ja="Z軸は限界に達しています ({}mm)"/>
   <translation tag="Z jog feedrate" ja="Z軸のジョグ移動速度"/>
   <translation tag="Z motor calibration failed" ja="Z モーターの校正に失敗しました"/>
-  <translation tag="Z position" ja="Z位置"/>
   <translation tag="Z probes for bed leveling and mesh generation" ja="ベッドレベリングとメッシュ生成用 Z プローブ"/>
   <translation tag="Z-Off:" ja="Z-Off:"/>
   <translation tag="Z-Offset" ja="Z-Offset"/>

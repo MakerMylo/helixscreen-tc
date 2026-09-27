@@ -287,10 +287,10 @@ TEST_CASE("is_filled_grade identifies the abrasive side", "[filament][family][gr
 }
 
 TEST_CASE("every filled database material reads as filled", "[filament][family][grade]") {
-    // The affix table and MATERIALS[] are edited independently. Any row whose
+    // The affix table and the `types` table are edited independently. Any row whose
     // NAME advertises a filler must be visible to is_filled_grade(), or the
     // warning silently skips that material.
-    for (const auto& mat : filament::MATERIALS) {
+    for (const auto& mat : *filament::shipped_materials()) {
         std::string name = mat.name;
         const bool advertises_filler =
             name.find("-CF") != std::string::npos || name.find("-GF") != std::string::npos ||
@@ -320,7 +320,7 @@ TEST_CASE("materials_compatible reduces before comparing groups", "[filament][fa
 TEST_CASE("materials_compatible sees through a decorated product name",
           "[filament][family][compat]") {
     // The bug this function exists to close: are_materials_compatible() looks a
-    // name up in MATERIALS[] and reads a miss as "unknown, compatible with
+    // name up in the `types` table and reads a miss as "unknown, compatible with
     // everything". A name the family reducer CAN read must never reach that
     // fallback, or a lane the user labelled from a spool database silently
     // pairs with any other lane.
@@ -355,7 +355,7 @@ TEST_CASE("base extraction preserves compat group for every database material",
     // to its base kept the same compat group, every materials_match() outcome
     // is provably unchanged by the affix table. This guards the whole
     // endless-spool / preflight / slot-picker surface at once.
-    for (const auto& mat : filament::MATERIALS) {
+    for (const auto& mat : *filament::shipped_materials()) {
         std::string base = filament::extract_base_material(mat.name);
         const char* g_orig = filament::get_compatibility_group(mat.name);
         const char* g_base = filament::get_compatibility_group(base);

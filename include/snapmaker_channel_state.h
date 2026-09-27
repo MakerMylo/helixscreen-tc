@@ -57,6 +57,13 @@ struct ChannelStateInfo {
 /// True when a channel_state names a load or unload under way.
 [[nodiscard]] bool channel_state_in_progress(const std::string& state);
 
+/// Whether a channel field moved from a value already observed. The first value
+/// a channel reports belongs to whatever ran before anyone was watching, and a
+/// repeat is the same fact again, so neither is an event.
+[[nodiscard]] inline bool observed_change(const std::string& prev, const std::string& cur) {
+    return !prev.empty() && !cur.empty() && cur != prev;
+}
+
 /// The op outcome a resting channel reports only through channel_action_state.
 ///
 /// The firmware sets an op's terminal and its resting state (wait_insert,

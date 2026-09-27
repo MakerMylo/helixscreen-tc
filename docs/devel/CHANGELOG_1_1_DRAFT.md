@@ -172,6 +172,14 @@ what gets saved.
 
 ### Changed
 
+- **Material types and your Material Temperatures changes live in one editable file** - the
+  built-in material table (PLA, PETG, ABS and the rest) now ships in the filament catalog, and your
+  per-material temperatures and preheat macros move out of `settings.json` into
+  user_filaments.json, next to any brands and products you added. You can edit it from Mainsail or
+  Fluidd, change a built-in material, or add a material type of your own. Existing changes move over
+  automatically on the first start. **Downgrading to an earlier version loses your Material
+  Temperatures changes**, because the older version only reads them from `settings.json`; note them
+  down first if you might go back.
 - **The filament panel fits small and portrait screens** - the Load/Unload/Purge and
   Extrude/Retract buttons grow into the space the right column used to leave empty, and a divider
   separates the material presets from the operations. Cool Down is now a fixed cell in the preset

@@ -1,12 +1,17 @@
 // Copyright (C) 2025-2026 356C LLC
 // SPDX-License-Identifier: GPL-3.0-or-later
 // tests/unit/test_move_relative_gcode.cpp
+#include "../../include/axis_move.h"
 #include "../../include/moonraker_client.h"
 #include "../../include/moonraker_motion_api.h"
 #include "../../include/printer_state.h"
 #include "../ui_test_utils.h"
 
+#include <cmath>
+#include <iomanip>
 #include <limits>
+#include <sstream>
+#include <vector>
 
 #include "../catch_amalgamated.hpp"
 
@@ -271,4 +276,58 @@ TEST_CASE_METHOD(MoveToTestFixture, "move_to: a used feedrate is validated, both
         CHECK(err.type == MoonrakerErrorType::VALIDATION_ERROR);
     });
     CHECK(too_slow);
+}
+
+namespace {
+
+std::vector<double> gcode_format_values() {
+    std::vector<double> v = {0.0,      -0.0,     1.0,        -1.0,     0.1,       0.05,
+                             -10.0,    1234.5,   6000.0,     0.123456, 0.1234567, 1e-5,
+                             1e-4,     123456.0, 1234567.0,  1e7,      -1e-5,     99.99999,
+                             250.0004, 0.000002, 199.9999995};
+    for (double x = -300.0; x <= 300.0; x += 1.7317) {
+        v.push_back(x);
+    }
+    return v;
+}
+
+} // namespace
+
+// The single-axis generators print numbers the way ostream's default (%g, 6
+// significant digits) does, including the switch to exponent form.
+TEST_CASE("generate_absolute_move_gcode(axis): %g number bytes", "[motion][gcode]") {
+    CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode('z', 1e-5, 0.0) == "G90\nG0 Z1e-05");
+    CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode('x', 1234567.0, 6000.0) ==
+          "G90\nG0 X1.23457e+06 F6000");
+    CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode('y', -0.5, 1500.5) ==
+          "G90\nG0 Y-0.5 F1500.5");
+
+    for (double v : gcode_format_values()) {
+        std::ostringstream ref;
+        ref << "G90\nG0 X" << v << " F" << 3000.25;
+        INFO("value=" << v);
+        CHECK(MoonrakerMotionAPI::generate_absolute_move_gcode('x', v, 3000.25) == ref.str());
+    }
+}
+
+// The multi-axis generators print fixed six decimals with trailing zeros trimmed.
+TEST_CASE("generate_relative_move_gcode: fixed-trimmed number bytes", "[motion][gcode]") {
+    auto fixed_trimmed = [](double v) {
+        std::ostringstream ss;
+        ss << std::fixed << std::setprecision(6) << v;
+        std::string s = ss.str();
+        s.erase(s.find_last_not_of('0') + 1);
+        if (!s.empty() && s.back() == '.') {
+            s.pop_back();
+        }
+        return s;
+    };
+    for (double v : gcode_format_values()) {
+        if (std::abs(v) <= helix::AxisMove::EPSILON_MM) {
+            continue;
+        }
+        INFO("value=" << v);
+        CHECK(MoonrakerMotionAPI::generate_relative_move_gcode(v, 0.0, 0.0, 6000.0, 600.0) ==
+              "G91\nG0 X" + fixed_trimmed(v) + " F6000\nG90");
+    }
 }

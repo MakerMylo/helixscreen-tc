@@ -151,6 +151,7 @@ src/printer/chamber_heater_backend_panda_breath.cpp
 src/printer/consumption_sink.cpp
 src/printer/filament_catalog.cpp
 src/printer/filament_consumption_tracker.cpp
+src/printer/filament_database.cpp
 src/printer/filament_display_name.cpp
 src/printer/filament_macro_profiles.cpp
 src/printer/filament_mapper.cpp
@@ -228,6 +229,7 @@ src/system/filament_favorites.cpp
 src/system/helix_plugin_installer.cpp
 src/system/http_executor.cpp
 src/system/input_settings_manager.cpp
+src/system/helix_regex.cpp
 src/system/klipper_config_editor.cpp
 src/system/klipper_config_includes.cpp
 src/system/klipper_config_parser.cpp
@@ -259,6 +261,8 @@ src/system/sound_theme.cpp
 src/system/subject_debug_registry.cpp
 src/system/system_power.cpp
 src/system/system_settings_manager.cpp
+src/system/text_io.cpp
+src/system/helix_fs.cpp
 src/system/timezone_env.cpp
 src/system/tips_manager.cpp
 src/system/tools_used_cache.cpp

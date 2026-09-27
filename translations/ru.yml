@@ -3496,7 +3496,7 @@ translations:
   VM Peak: Пик VM
   VM Size: Размер VM
   Validating bed mesh...: Валидация сетки стола...
-  Value must be between {:.0f} and {:.0f}: Значение должно быть от {:.0f} до {:.0f}
+  Value must be between {} and {}: Значение должно быть от {} до {}
   Values must not be negative: Значения не должны быть отрицательными
   Velocity and acceleration limits: Ограничения скорости и ускорения
   Vendor: Производитель
@@ -3609,7 +3609,6 @@ translations:
   X axis applied, but Y axis failed: Ось X применена, но ось Y не удалась
   X axis done, starting Y...: 'Ось X готова, запуск Y...'
   X is at its limit ({}mm): X на пределе ({}mm)
-  X position: 'Позиция X'
   'X:': 'X:'
   XY: XY
   Y: Y
@@ -3617,7 +3616,6 @@ translations:
   Y Offset: Смещение Y
   Y axis limit reached: Достигнут предел оси Y
   Y is at its limit ({}mm): Y на пределе ({}mm)
-  Y position: 'Позиция Y'
   'Y:': 'Y:'
   ? "YOU WIN!\nScore: {}\nTap to play again"
   : "ПОБЕДА!\nСчёт: {}\nНажмите, чтобы сыграть снова"
@@ -3646,7 +3644,6 @@ translations:
   Z is at its limit ({}mm): Z на пределе ({}mm)
   Z jog feedrate: Скорость перемещения по оси Z
   Z motor calibration failed: Не удалась калибровка двигателя Z
-  Z position: 'Позиция Z'
   Z probes for bed leveling and mesh generation: Z-зонды для выравнивания стола и
     создания сетки
   'Z-Off:': 'Z-Off:'

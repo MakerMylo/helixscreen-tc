@@ -4,6 +4,7 @@
 #include "macro_manager.h"
 
 #include "data_root_resolver.h"
+#include "helix_regex.h"
 
 #include <spdlog/spdlog.h>
 
@@ -11,7 +12,6 @@
 #include <chrono>
 #include <ctime>
 #include <fstream>
-#include <regex>
 #include <sstream>
 
 namespace helix {
@@ -58,9 +58,9 @@ std::string load_macro_file() {
  * Looks for pattern: # helix_macros v<version>
  */
 std::string parse_file_version(const std::string& content) {
-    static const std::regex version_pattern(R"(#\s*helix_macros\s+v(\d+\.\d+\.\d+))");
-    std::smatch match;
-    if (std::regex_search(content, match, version_pattern)) {
+    static const helix::Regex version_pattern(R"(#\s*helix_macros\s+v(\d+\.\d+\.\d+))");
+    helix::RegexMatch match;
+    if (helix::regex_search(content, match, version_pattern)) {
         return match[1].str();
     }
     return "";
@@ -75,13 +75,13 @@ std::vector<std::string> parse_macro_names(const std::string& content) {
     std::vector<std::string> names;
     // Anchored to line start: a real Klipper section header always starts in
     // column 0, so this does not also match one quoted inside a comment.
-    static const std::regex macro_pattern(R"(^\[gcode_macro\s+(\w+)\])");
+    static const helix::Regex macro_pattern(R"(^\[gcode_macro\s+(\w+)\])");
 
     std::istringstream stream(content);
     std::string line;
     while (std::getline(stream, line)) {
-        std::smatch match;
-        if (std::regex_search(line, match, macro_pattern)) {
+        helix::RegexMatch match;
+        if (helix::regex_search(line, match, macro_pattern)) {
             std::string name = match[1].str();
             // Skip internal state macros
             if (!name.empty() && name[0] != '_') {

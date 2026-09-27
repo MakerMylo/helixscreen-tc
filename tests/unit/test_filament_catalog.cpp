@@ -11,6 +11,7 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <unistd.h>
 
 #include "../catch_amalgamated.hpp"
@@ -740,17 +741,22 @@ struct ScratchDir {
 };
 
 /// Point HELIX_CONFIG_DIR at @p dir for one scope, restoring the previous value.
+/// The test sandbox's overlay-dir override is lifted for the same scope, since
+/// it outranks HELIX_CONFIG_DIR and the resolution is what these cases test.
 struct ConfigDirGuard {
     std::string prev;
     bool had = false;
+    std::string sandbox_dir;
     explicit ConfigDirGuard(const std::string& dir) {
         if (const char* old = std::getenv("HELIX_CONFIG_DIR")) {
             prev = old;
             had = true;
         }
         setenv("HELIX_CONFIG_DIR", dir.c_str(), 1);
+        sandbox_dir = std::exchange(helix::printer::detail::user_overlay_dir_ref(), "");
     }
     ~ConfigDirGuard() {
+        helix::printer::detail::user_overlay_dir_ref() = sandbox_dir;
         if (had)
             setenv("HELIX_CONFIG_DIR", prev.c_str(), 1);
         else

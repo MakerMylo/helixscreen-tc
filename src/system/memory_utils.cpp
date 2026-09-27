@@ -7,13 +7,13 @@
 #include "gcode_layer_cache.h"
 #include "gcode_layer_index.h"
 #include "system/helix_paths.h"
+#include "text_io.h"
 
 #include <lvgl/lvgl.h>
 #include <spdlog/spdlog.h>
 
 #include <cerrno>
 #include <cstdlib>
-#include <fstream>
 #include <string>
 
 #ifdef __APPLE__
@@ -23,6 +23,8 @@
 #include <sys/sysctl.h>
 #include <sys/types.h>
 #endif
+
+namespace tio = helix::text_io;
 
 namespace helix {
 
@@ -36,12 +38,12 @@ bool read_memory_stats(int64_t& rss_kb, int64_t& hwm_kb) {
     hwm_kb = 0;
 
 #ifdef __linux__
-    std::ifstream status("/proc/self/status");
-    if (!status.is_open())
+    tio::LineReader status("/proc/self/status");
+    if (!status)
         return false;
 
     std::string line;
-    while (std::getline(status, line)) {
+    while (status.next(line)) {
         if (line.compare(0, 6, "VmRSS:") == 0) {
             rss_kb = std::stoll(line.substr(6));
         } else if (line.compare(0, 6, "VmHWM:") == 0) {
@@ -74,12 +76,12 @@ bool read_private_dirty(int64_t& private_dirty_kb) {
     private_dirty_kb = 0;
 
 #ifdef __linux__
-    std::ifstream smaps("/proc/self/smaps_rollup");
-    if (!smaps.is_open())
+    tio::LineReader smaps("/proc/self/smaps_rollup");
+    if (!smaps)
         return false;
 
     std::string line;
-    while (std::getline(smaps, line)) {
+    while (smaps.next(line)) {
         if (line.compare(0, 14, "Private_Dirty:") == 0) {
             private_dirty_kb = std::stoll(line.substr(14));
             return true;
@@ -94,13 +96,13 @@ bool read_smaps_rollup(SmapsRollup& rollup) {
     rollup = {};
 
 #ifdef __linux__
-    std::ifstream smaps("/proc/self/smaps_rollup");
-    if (!smaps.is_open())
+    tio::LineReader smaps("/proc/self/smaps_rollup");
+    if (!smaps)
         return false;
 
     int fields_found = 0;
     std::string line;
-    while (std::getline(smaps, line)) {
+    while (smaps.next(line)) {
         // Fields in smaps_rollup: "FieldName:     1234 kB"
         if (line.compare(0, 4, "Rss:") == 0) {
             rollup.rss_kb = std::stoll(line.substr(4));
@@ -139,12 +141,12 @@ MemoryInfo get_system_memory_info() {
     MemoryInfo info;
 
 #ifdef __linux__
-    std::ifstream meminfo("/proc/meminfo");
-    if (!meminfo.is_open())
+    tio::LineReader meminfo("/proc/meminfo");
+    if (!meminfo)
         return info;
 
     std::string line;
-    while (std::getline(meminfo, line)) {
+    while (meminfo.next(line)) {
         // Parse lines like "MemTotal:       1234567 kB"
         if (line.compare(0, 9, "MemTotal:") == 0) {
             info.total_kb = static_cast<size_t>(std::stoll(line.substr(9)));
@@ -327,12 +329,7 @@ bool parse_oom_score_adj(const char* value, int& out) {
 }
 
 bool write_oom_score_adj(int adj, const char* path) {
-    std::ofstream f(path);
-    if (!f.is_open())
-        return false;
-    f << adj;
-    f.flush();
-    return f.good();
+    return tio::write_file(path, fmt::format("{}", adj));
 }
 
 bool apply_oom_score_adj_from_env() {

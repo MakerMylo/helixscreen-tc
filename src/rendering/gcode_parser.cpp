@@ -4,6 +4,7 @@
 #include "gcode_parser.h"
 
 #include "gcode_color_metadata.h"
+#include "text_io.h"
 #include "utils/decimal_parse.h"
 
 #include <spdlog/spdlog.h>
@@ -11,8 +12,8 @@
 #include <algorithm>
 #include <cctype>
 #include <cmath>
-#include <fstream>
-#include <sstream>
+#include <cstdint>
+#include <cstdio>
 #include <string_view>
 #include <sys/stat.h>
 #include <system_error>
@@ -1436,8 +1437,8 @@ std::vector<uint8_t> base64_decode(const std::string& encoded) {
 std::vector<GCodeThumbnail> extract_thumbnails(const std::string& filepath) {
     std::vector<GCodeThumbnail> thumbnails;
 
-    std::ifstream file(filepath);
-    if (!file.is_open()) {
+    helix::text_io::LineReader file(filepath);
+    if (!file) {
         spdlog::warn("[GCode Parser] Cannot open G-code file for thumbnail extraction: {}",
                      filepath);
         return thumbnails;
@@ -1450,7 +1451,7 @@ std::vector<GCodeThumbnail> extract_thumbnails(const std::string& filepath) {
     int lines_read = 0;
     constexpr int max_header_lines = 2000; // Thumbnails should be in first ~2000 lines
 
-    while (std::getline(file, line) && lines_read < max_header_lines) {
+    while (file.next(line) && lines_read < max_header_lines) {
         lines_read++;
 
         // Look for thumbnail begin marker
@@ -1549,11 +1550,11 @@ std::vector<GCodeThumbnail> extract_thumbnails_from_content(const std::string& c
     int lines_read = 0;
     constexpr int max_header_lines = 2000; // Thumbnails should be in first ~2000 lines
 
-    // Parse content line by line using string stream
-    std::istringstream stream(content);
-    std::string line;
-
-    while (std::getline(stream, line) && lines_read < max_header_lines) {
+    for (std::string_view line_view : helix::text_io::lines(content)) {
+        if (lines_read >= max_header_lines) {
+            break;
+        }
+        const std::string line(line_view);
         lines_read++;
 
         // Look for thumbnail begin marker
@@ -1658,14 +1659,12 @@ bool save_thumbnail_to_file(const std::string& gcode_path, const std::string& ou
         return false;
     }
 
-    std::ofstream out(output_path, std::ios::binary);
-    if (!out.is_open()) {
+    if (!helix::text_io::write_file(
+            output_path, std::string_view(reinterpret_cast<const char*>(thumb.png_data.data()),
+                                          thumb.png_data.size()))) {
         spdlog::error("[GCode Parser] Cannot write thumbnail to {}", output_path);
         return false;
     }
-
-    out.write(reinterpret_cast<const char*>(thumb.png_data.data()),
-              static_cast<std::streamsize>(thumb.png_data.size()));
     spdlog::debug("[GCode Parser] Saved {}x{} thumbnail to {}", thumb.width, thumb.height,
                   output_path);
     return true;
@@ -2012,36 +2011,33 @@ bool parse_metadata_line(const std::string& line, GCodeHeaderMetadata& metadata)
 std::vector<std::string> read_file_footer(const std::string& filepath, size_t bytes_to_read) {
     std::vector<std::string> lines;
 
-    std::ifstream file(filepath, std::ios::ate | std::ios::binary);
-    if (!file.is_open()) {
+    namespace tio = helix::text_io;
+    tio::File file = tio::open_file(filepath, "rb");
+    if (!file || !tio::seek(file.get(), 0, SEEK_END)) {
         return lines;
     }
 
-    // Get file size
-    std::streampos file_size = file.tellg();
+    const std::int64_t file_size = tio::tell(file.get()).value_or(0);
     if (file_size <= 0) {
         return lines;
     }
 
     // Calculate start position
-    size_t actual_size = static_cast<size_t>(file_size);
-    size_t start_pos = (actual_size > bytes_to_read) ? (actual_size - bytes_to_read) : 0;
-
-    // Seek and read
-    file.seekg(static_cast<std::streamoff>(start_pos));
-    std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-
-    // Split into lines
-    std::istringstream stream(content);
-    std::string line;
-
-    // Skip first partial line if we didn't start at beginning
-    if (start_pos > 0 && std::getline(stream, line)) {
-        // Discard partial first line
+    const auto want = static_cast<std::int64_t>(bytes_to_read);
+    const std::int64_t start_pos = file_size > want ? file_size - want : 0;
+    if (!tio::seek(file.get(), start_pos, SEEK_SET)) {
+        return lines;
     }
+    std::string content(static_cast<size_t>(file_size - start_pos), '\0');
+    content.resize(std::fread(content.data(), 1, content.size(), file.get()));
 
-    while (std::getline(stream, line)) {
-        lines.push_back(line);
+    bool skip_partial_first = start_pos > 0;
+    for (std::string_view line : helix::text_io::lines(content)) {
+        if (skip_partial_first) {
+            skip_partial_first = false;
+            continue;
+        }
+        lines.emplace_back(line);
     }
 
     return lines;
@@ -2060,8 +2056,8 @@ GCodeHeaderMetadata extract_header_metadata(const std::string& filepath) {
         metadata.modified_time = static_cast<double>(file_stat.st_mtime);
     }
 
-    std::ifstream file(filepath);
-    if (!file.is_open()) {
+    helix::text_io::LineReader file(filepath);
+    if (!file) {
         return metadata;
     }
 
@@ -2070,7 +2066,7 @@ GCodeHeaderMetadata extract_header_metadata(const std::string& filepath) {
     int lines_read = 0;
     constexpr int max_header_lines = 500;
 
-    while (std::getline(file, line) && lines_read < max_header_lines) {
+    while (file.next(line) && lines_read < max_header_lines) {
         lines_read++;
 
         // Skip non-comment lines
@@ -2090,8 +2086,6 @@ GCodeHeaderMetadata extract_header_metadata(const std::string& filepath) {
         parse_metadata_line(line, metadata);
     }
 
-    file.close();
-
     // Phase 2: Scan footer for print time and filament usage
     // OrcaSlicer/PrusaSlicer place these computed values at the end of the file
     constexpr size_t footer_bytes = 64 * 1024; // Read last 64KB
@@ -2110,12 +2104,14 @@ GCodeHeaderMetadata extract_header_metadata(const std::string& filepath) {
 GCodeHeaderMetadata extract_header_metadata_from_content(const std::string& content) {
     GCodeHeaderMetadata metadata;
 
-    std::istringstream stream(content);
-    std::string line;
     int lines_read = 0;
     constexpr int max_header_lines = 500;
 
-    while (std::getline(stream, line) && lines_read < max_header_lines) {
+    for (std::string_view line_view : helix::text_io::lines(content)) {
+        if (lines_read >= max_header_lines) {
+            break;
+        }
+        const std::string line(line_view);
         lines_read++;
 
         if (line.empty() || line[0] != ';') {
@@ -2229,13 +2225,13 @@ std::set<int> scan_tools_used_from_content(const std::string& content,
 std::set<int> scan_tools_used_from_file(const std::string& filepath,
                                         std::set<int> early_exit_full_set) {
     std::set<int> tools;
-    std::ifstream in(filepath, std::ios::binary);
-    if (!in.is_open()) {
+    helix::text_io::LineReader in(filepath);
+    if (!in) {
         return tools;
     }
     std::string line;
-    while (std::getline(in, line)) {
-        // std::getline strips the '\n' but leaves a trailing '\r' on CRLF files;
+    while (in.next(line)) {
+        // next() strips the '\n' but leaves a trailing '\r' on CRLF files;
         // tool_index_for_line() trims it as whitespace.
         int t = tool_index_for_line(line);
         if (t >= 0) {

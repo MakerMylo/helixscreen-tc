@@ -16,6 +16,8 @@
 #include "config.h"
 #include "display_settings_manager.h"
 #include "fault_surface_correlation.h"
+#include "filament_catalog.h"
+#include "filament_database.h"
 #include "filament_slot_override_store.h"
 #include "helix-xml/src/xml/lv_xml.h"
 #include "lane_source_store.h"
@@ -135,6 +137,10 @@ struct ConfigSandbox {
         // and before any backend thread exists. Per-instance dirs still win.
         helix::ams::detail::slot_override_cache_dir_ref() = dir;
 
+        // The user filament overlay resolves to the same relative "config" dir.
+        // MaterialSettingsManager writes it on every override change.
+        helix::printer::detail::user_overlay_dir_ref() = dir;
+
         apply();
     }
 
@@ -173,6 +179,14 @@ void reset_config_singleton() {
     // spool assignments. set_config_dir() is the supported override.
     helix::ToolState::instance().set_config_dir(config_sandbox_dir());
 
+    // A test that wrote the overlay leaves its types merged into the material
+    // table; drop both so the next test sees only the shipped types.
+    helix::printer::detail::user_overlay_dir_ref() = config_sandbox_dir();
+    std::error_code overlay_ec;
+    if (std::filesystem::remove(config_sandbox_dir() + "/user_filaments.json", overlay_ec)) {
+        filament::reload_materials();
+    }
+
     helix::Config* cfg = helix::Config::get_instance();
     if (cfg == nullptr) {
         return;
@@ -185,7 +199,7 @@ void reset_config_singleton() {
     // Drop any file a previous test's save() left behind, so a test that
     // re-init()s the singleton at this path sees a fresh install.
     std::error_code ec;
-    fs::remove(helix::ConfigTestAccess::path(*cfg), ec);
+    std::filesystem::remove(helix::ConfigTestAccess::path(*cfg), ec);
 }
 
 } // namespace helix::test

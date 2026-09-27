@@ -50,6 +50,7 @@
 #include "bed_drying_controller.h"
 #include "color_sensor_manager.h"
 #include "filament_catalog.h"
+#include "filament_database.h"
 #include "filament_op_router.h"
 #include "filament_sensor_manager.h"
 #include "filament_variants.h"
@@ -244,6 +245,10 @@ void SubjectInitializer::init_core_and_state() {
     // assets/filaments.json under g_orca_mutex on a WebSocket background
     // thread (see filament_variants.h warm_orca_tables()).
     filament::warm_orca_tables();
+
+    // Same reason for the material-type table: its first use would otherwise
+    // parse the asset and the user overlay on whichever thread got there first.
+    filament::materials();
 
     // Merge user-contributed Orca type overrides from config/user_filaments.json
     // (object form, `orca_type_map` key). User entries win over shipped entries

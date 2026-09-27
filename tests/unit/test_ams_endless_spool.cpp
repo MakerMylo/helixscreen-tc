@@ -437,7 +437,7 @@ TEST_CASE("Backup eligibility separates a grade change from a material mismatch"
 
     SECTION("a decorated product name is not a free pass") {
         // are_materials_compatible() would call this pair compatible, because
-        // "PLA SnapSpeed" is not a row in MATERIALS[].
+        // "PLA SnapSpeed" is not a row in the material-type table.
         set_material(0, "PLA SnapSpeed");
         CHECK(backend.endless_spool_backup_eligibility(0, 3) == BackupEligibility::Incompatible);
         CHECK(backend.endless_spool_backup_eligibility(0, 1) == BackupEligibility::Eligible);

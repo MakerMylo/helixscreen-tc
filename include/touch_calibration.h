@@ -3,12 +3,14 @@
 
 #pragma once
 
+#include "text_io.h"
+
 #include <algorithm>
 #include <climits>
 #include <cstdlib>
 #include <cstring>
-#include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace helix {
@@ -65,14 +67,12 @@ inline AbsCapabilities parse_abs_capabilities(const std::string& caps_hex) {
 
     // Split on spaces into tokens and parse hex values
     std::vector<unsigned long long> words;
-    std::istringstream iss(caps_hex);
-    std::string token;
-    while (iss >> token) {
-        try {
-            words.push_back(std::stoull(token, nullptr, 16));
-        } catch (...) {
+    for (std::string_view token : helix::text_io::split_ws(caps_hex)) {
+        auto word = helix::text_io::parse_int<unsigned long long>(token, 16);
+        if (!word) {
             return result;
         }
+        words.push_back(*word);
     }
 
     if (words.empty()) {

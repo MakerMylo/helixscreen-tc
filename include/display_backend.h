@@ -14,13 +14,14 @@
 #pragma once
 
 #include "data_root_resolver.h"
+#include "text_io.h"
 #include "touch_calibration.h"
 
-#include <fstream>
 #include <lvgl.h>
 #include <memory>
-#include <regex>
+#include <optional>
 #include <string>
+#include <string_view>
 
 /**
  * @brief Display backend types supported by HelixScreen
@@ -117,13 +118,11 @@ inline lv_display_rotation_t degrees_to_lv_rotation(int degrees) {
  * @return Rotation in degrees (0, 90, 180, 270), or -1 if not detected
  */
 inline int detect_panel_orientation_from_cmdline() {
-    std::ifstream cmdline("/proc/cmdline");
-    if (!cmdline.is_open()) {
+    const std::optional<std::string> first = helix::text_io::read_first_line("/proc/cmdline");
+    if (!first) {
         return -1;
     }
-
-    std::string line;
-    std::getline(cmdline, line);
+    const std::string& line = *first;
 
     const std::string needle = "panel_orientation=";
     auto pos = line.find(needle);
@@ -163,20 +162,34 @@ inline int read_config_rotation(int default_value = 0) {
                                  "/opt/helixscreen/helixconfig.json"};
 
     for (const auto& path : paths) {
-        std::ifstream file(path);
-        if (!file.is_open()) {
+        const std::optional<std::string> content = helix::text_io::read_file(path);
+        if (!content) {
             continue;
         }
 
-        std::string content((std::istreambuf_iterator<char>(file)),
-                            std::istreambuf_iterator<char>());
-
-        // Look for "rotate" inside "display" section
-        // Simple regex approach matching existing pattern (read_config_brightness)
-        std::regex rotate_regex(R"("rotate"\s*:\s*(\d+))");
-        std::smatch match;
-        if (std::regex_search(content, match, rotate_regex) && match.size() > 1) {
-            int rotation = std::stoi(match[1].str());
+        // The first `"rotate" : <digits>` anywhere in the file, the key the
+        // "display" section carries. A plain scan, not a JSON parse: splash and
+        // watchdog link no JSON or regex code.
+        auto is_space = [](char c) { return c == ' ' || (c >= '\t' && c <= '\r'); };
+        const std::string_view text(*content);
+        const std::string_view key = "\"rotate\"";
+        for (size_t at = text.find(key); at != std::string_view::npos;
+             at = text.find(key, at + 1)) {
+            size_t i = at + key.size();
+            while (i < text.size() && is_space(text[i]))
+                ++i;
+            if (i >= text.size() || text[i] != ':')
+                continue;
+            ++i;
+            while (i < text.size() && is_space(text[i]))
+                ++i;
+            size_t digits_end = i;
+            while (digits_end < text.size() && text[digits_end] >= '0' && text[digits_end] <= '9')
+                ++digits_end;
+            if (digits_end == i)
+                continue;
+            const int rotation =
+                helix::text_io::parse_int<int>(text.substr(i, digits_end - i)).value_or(0);
             // Validate: only 0, 90, 180, 270 are valid
             if (rotation == 90 || rotation == 180 || rotation == 270) {
                 return rotation;

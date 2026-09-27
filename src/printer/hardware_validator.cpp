@@ -19,8 +19,6 @@
 #include <algorithm>
 #include <chrono>
 #include <ctime>
-#include <iomanip>
-#include <sstream>
 
 using namespace helix;
 
@@ -297,11 +295,11 @@ void HardwareValidator::save_session_snapshot(Config* config,
     // Generate ISO 8601 timestamp
     auto now = std::chrono::system_clock::now();
     auto time_t_now = std::chrono::system_clock::to_time_t(now);
-    std::stringstream ss;
     std::tm tm_buf{};
     gmtime_r(&time_t_now, &tm_buf);
-    ss << std::put_time(&tm_buf, "%Y-%m-%dT%H:%M:%SZ");
-    snapshot.timestamp = ss.str();
+    char ts_buf[32];
+    std::strftime(ts_buf, sizeof(ts_buf), "%Y-%m-%dT%H:%M:%SZ", &tm_buf);
+    snapshot.timestamp = ts_buf;
 
     // Save to config
     try {
@@ -872,13 +870,13 @@ void HardwareValidator::log_ignored_hardware(Config* config) {
         return;
     }
 
-    std::stringstream joined;
+    std::string joined;
     for (size_t i = 0; i < names.size(); ++i) {
         if (i > 0) {
-            joined << ", ";
+            joined += ", ";
         }
-        joined << names[i];
+        joined += names[i];
     }
     spdlog::info("[HardwareValidator] {} hardware item(s) silenced (ignored): {}", names.size(),
-                 joined.str());
+                 joined);
 }

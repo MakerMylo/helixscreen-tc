@@ -1403,6 +1403,13 @@ class PrinterState {
         return motion_state_.get_axis_bounds();
     }
 
+    /// The envelope in G-code coordinates: machine bounds shifted by minus
+    /// gcode_move.homing_origin. Motion-panel clamps compare against
+    /// gcode_move.gcode_position, so they use these.
+    [[nodiscard]] AxisBounds get_gcode_axis_bounds() const {
+        return motion_state_.get_gcode_axis_bounds();
+    }
+
     // Printer connection state subjects (Moonraker WebSocket) - delegated to PrinterNetworkState
     lv_subject_t* get_printer_connection_state_subject() {
         return network_state_.get_printer_connection_state_subject();

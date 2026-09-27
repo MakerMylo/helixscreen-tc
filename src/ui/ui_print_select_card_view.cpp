@@ -7,6 +7,7 @@
 #include "ui_gradient_canvas.h"
 #include "ui_panel_print_select.h" // For PrintFileData, CardDimensions
 
+#include "helix_fs.h"
 #include "lv_draw_buf_guard.h"
 #include "sound_manager.h"
 #include "theme_manager.h"
@@ -15,7 +16,6 @@
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
-#include <filesystem>
 
 using helix::gcode::strip_gcode_extension;
 
@@ -41,7 +41,7 @@ bool PrintSelectCardView::has_real_thumbnail(const std::string& path) {
     std::string_view fs_path = path;
     if (fs_path.substr(0, 2) == "A:")
         fs_path.remove_prefix(2);
-    return std::filesystem::exists(fs_path);
+    return helix::fs::exists(std::string(fs_path));
 }
 
 // ============================================================================
@@ -407,7 +407,7 @@ void PrintSelectCardView::configure_card(lv_obj_t* card, size_t pool_index, size
 #if defined(HELIX_PLATFORM_ESP32)
         // No disk thumbnail cache on this platform (Task 10 R6) — a fetched
         // thumbnail lives in file.esp_thumbnail (PSRAM) instead of a file at
-        // file.thumbnail_path, so has_real_thumbnail()'s std::filesystem::exists
+        // file.thumbnail_path, so has_real_thumbnail()'s on-disk exists
         // check alone would always report false here.
         bool has_psram_thumb = static_cast<bool>(file.esp_thumbnail);
         has_real_thumb = has_real_thumb || has_psram_thumb;

@@ -268,7 +268,7 @@ static void handle_confirm() {
 
     // Validate range - show error if out of bounds
     if (value < current_config.min_value || value > current_config.max_value) {
-        NOTIFY_ERROR(lv_tr("Value must be between {:.0f} and {:.0f}"), current_config.min_value,
+        NOTIFY_ERROR(lv_tr("Value must be between {} and {}"), current_config.min_value,
                      current_config.max_value);
         return; // Don't close keypad, let user correct the value
     }

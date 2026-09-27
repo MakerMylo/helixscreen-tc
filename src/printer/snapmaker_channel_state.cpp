@@ -131,7 +131,7 @@ bool channel_state_in_progress(const std::string& state) {
 std::optional<std::string> settled_op_outcome(const std::string& channel_state,
                                               const std::string& prev_action_state,
                                               const std::string& action_state) {
-    if (channel_state.empty() || prev_action_state.empty() || action_state == prev_action_state) {
+    if (channel_state.empty() || !observed_change(prev_action_state, action_state)) {
         return std::nullopt;
     }
     const ChannelStateInfo resting = classify_channel_state(channel_state);

@@ -96,7 +96,10 @@ jobs:
           /tmp/frogfs-test-venv/bin/python -m pytest tests/python/test_esp32_pack_assets.py -v --tb=short
 
       - name: Size budget gate
+        # The map argument also fails the job if the link pulled libstdc++'s
+        # std::locale machinery back in, naming the object that did.
         run: |
           python3 scripts/check_esp32_size.py \
             firmware/helixscreen-esp32/build/helixscreen_esp32.bin \
-            firmware/helixscreen-esp32/size_budget.json
+            firmware/helixscreen-esp32/size_budget.json \
+            firmware/helixscreen-esp32/build/helixscreen_esp32.map
