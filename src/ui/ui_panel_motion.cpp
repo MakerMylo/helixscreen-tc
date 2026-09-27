@@ -563,6 +563,19 @@ void MotionPanel::register_position_observers() {
         },
         get_printer_state().get_subjects_lifetime());
 
+    // A G-code offset change (SET_GCODE_OFFSET, saved Z offset, toolchanger
+    // tool offsets) shifts the G-code envelope the Z buttons clamp against,
+    // while the commanded position can round to the same centimillimeter and
+    // fire nothing: this subject is homing_origin[2] and moves with it.
+    gcode_z_offset_observer_ = observe_int_sync<MotionPanel>(
+        get_printer_state().get_gcode_z_offset_subject(), this,
+        [](MotionPanel* self, int) {
+            if (!self->subjects_initialized_)
+                return;
+            self->update_z_button_blocked();
+        },
+        get_printer_state().get_subjects_lifetime());
+
     // Actual (live) positions from motion_report.live_position; the readouts
     // show these while the coordinate preference is "actual".
     live_position_observer_x_ = observe_int_sync<MotionPanel>(
@@ -667,7 +680,7 @@ void MotionPanel::update_jog_pad_enabled() {
 void MotionPanel::update_z_button_blocked() {
     if (!subjects_initialized_)
         return;
-    const auto bounds = get_printer_state().get_axis_bounds();
+    const auto bounds = get_printer_state().get_gcode_axis_bounds();
     const bool z_homed = helix::axis_is_homed(get_printer_state(), helix::Axis::Z);
     // Commanded, not predicted: an in-flight move leaves no recompute trigger
     // when it acks, so a prediction here could disable a button for good.
@@ -765,7 +778,7 @@ bool MotionPanel::handle_z_button(const char* name, bool is_repeat) {
     }
 
     // Bounds are in gcode space, so this must follow the inversion above.
-    const auto bounds = get_printer_state().get_axis_bounds();
+    const auto bounds = get_printer_state().get_gcode_axis_bounds();
     if (bounds.has_z && helix::axis_is_homed(get_printer_state(), helix::Axis::Z)) {
         distance = clamp_axis_delta(helix::Axis::Z, current_z_,
                                     jog_coalescer_.predicted_z(current_z_) - current_z_, distance,
@@ -863,7 +876,7 @@ bool MotionPanel::jog(JogDirection direction, float distance_mm, bool is_repeat)
     // Soft-stop: clamp against the PREDICTED position (current + uncommitted
     // coalescer travel) so queued taps can't walk past the envelope. Skip when
     // bounds aren't known yet (fresh connect) or the axis isn't homed.
-    const auto bounds = get_printer_state().get_axis_bounds();
+    const auto bounds = get_printer_state().get_gcode_axis_bounds();
 
     double ddx = static_cast<double>(dx);
     double ddy = static_cast<double>(dy);
@@ -942,7 +955,7 @@ bool MotionPanel::dispatch_target(const helix::AxisTarget& target) {
     // Soft-stop for absolute moves, same bounds source the jog clamp uses: a
     // set axis without a known envelope cannot be clamped, and sending it
     // unclamped would trust exactly the value that is missing.
-    const auto bounds = get_printer_state().get_axis_bounds();
+    const auto bounds = get_printer_state().get_gcode_axis_bounds();
     if ((target.x && !bounds.has_x) || (target.y && !bounds.has_y) || (target.z && !bounds.has_z)) {
         NOTIFY_INFO(lv_tr("Axis limits unknown"));
         return false;
@@ -1058,8 +1071,8 @@ void MotionPanel::open_axis_keypad(char axis) {
                                   : axis == 'y' ? helix::Axis::Y
                                                 : helix::Axis::Z;
     const double commanded = axis == 'x' ? current_x_ : axis == 'y' ? current_y_ : current_z_;
-    const auto params =
-        helix::keypad_params_for_axis(get_printer_state().get_axis_bounds(), axis_enum, commanded);
+    const auto params = helix::keypad_params_for_axis(get_printer_state().get_gcode_axis_bounds(),
+                                                      axis_enum, commanded);
     if (!params) {
         NOTIFY_INFO(lv_tr("Axis limits unknown"));
         return;

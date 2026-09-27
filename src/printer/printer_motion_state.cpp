@@ -76,6 +76,7 @@ void PrinterMotionState::deinit_subjects() {
     subjects_.deinit_all();
     subjects_initialized_ = false;
     axis_bounds_ = AxisBounds{};
+    homing_origin_x_ = homing_origin_y_ = homing_origin_z_ = 0.0;
 }
 
 void PrinterMotionState::update_from_status(const nlohmann::json& status) {
@@ -193,6 +194,15 @@ void PrinterMotionState::update_from_status(const nlohmann::json& status) {
         // Parse Z-offset from homing_origin[2] (baby stepping / SET_GCODE_OFFSET Z=)
         if (gcode_move.contains("homing_origin") && gcode_move["homing_origin"].is_array()) {
             const auto& origin = gcode_move["homing_origin"];
+            // Full origin per axis (mm): machine = gcode + homing_origin, so the
+            // G-code envelope the motion panel clamps against is the machine
+            // one shifted by minus each component (see to_gcode_space()).
+            if (origin.size() >= 3 && origin[0].is_number() && origin[1].is_number() &&
+                origin[2].is_number()) {
+                homing_origin_x_ = origin[0].get<double>();
+                homing_origin_y_ = origin[1].get<double>();
+                homing_origin_z_ = origin[2].get<double>();
+            }
             if (origin.size() >= 3 && origin[2].is_number()) {
                 // Round (not truncate) so Klipper's float accumulation of relative
                 // Z_ADJUST deltas (0.04 - 0.01 -> 0.0299999) snaps back to a clean

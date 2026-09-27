@@ -21,8 +21,13 @@
 #include "ui_update_queue.h"
 
 #include "../lvgl_ui_test_fixture.h"
+#include "../test_helpers/log_capture.h"
 #include "app_globals.h"
+#include "hold_repeat.h"
+#include "moonraker_api.h"
+#include "moonraker_client_mock.h"
 #include "printer_motion_state.h"
+#include "printer_state.h"
 #include "settings_manager.h"
 #include "static_panel_registry.h"
 #include "theme_manager.h"
@@ -141,6 +146,104 @@ TEST_CASE_METHOD(LVGLUITestFixture, "coordinate readouts follow the commanded/ac
     helix::ui::UpdateQueue::instance().drain();
     check_header_text(root, "header_pos_x", "13.00");
 
+    StaticPanelRegistry::instance().destroy_all();
+    helix::ui::UpdateQueue::instance().drain();
+}
+
+// ============================================================================
+// G-code space: the panel clamps against machine bounds shifted by
+// gcode_move.homing_origin, because every position it shows and every value
+// it types is gcode_move.gcode_position.
+// ============================================================================
+
+TEST_CASE_METHOD(LVGLUITestFixture, "motion bounds follow the gcode origin, not the machine",
+                 "[motion][coords][xml]") {
+    std::array<lv_obj_t*, UI_PANEL_COUNT> panels{};
+    for (auto& p : panels)
+        p = lv_obj_create(lv_screen_active());
+    NavigationManager::instance().set_panels(panels.data());
+
+    auto& settings = helix::SettingsManager::instance();
+    settings.init_subjects();
+    settings.set_motion_show_actual_position(false);
+    // Pin the jog distance the press dispatches so the clamp result is exact.
+    settings.set_jog_distance(helix::JogMode::Coarse, /*outer=*/false, 1.0f);
+
+    lv_obj_t* cached = nullptr;
+    REQUIRE(helix::ui::lazy_create_and_push_overlay<MotionPanel>(
+        get_global_motion_panel, cached, lv_screen_active(), "Motion", "test"));
+    helix::ui::UpdateQueue::instance().drain();
+
+    MotionPanel& panel = get_global_motion_panel();
+    lv_obj_t* root = panel.get_root();
+    REQUIRE(root != nullptr);
+    lv_obj_t* z_up_large = lv_obj_find_by_name(root, "z_up_large");
+    lv_obj_t* z_up_small = lv_obj_find_by_name(root, "z_up_small");
+    lv_obj_t* z_down = lv_obj_find_by_name(root, "z_down_large");
+    REQUIRE(z_up_large != nullptr);
+    REQUIRE(z_up_small != nullptr);
+    REQUIRE(z_down != nullptr);
+
+    // Machine envelope Z 0..275 with a G-code origin of 0.06 (the U1 numbers):
+    // the valid gcode range is Z -0.06..274.94.
+    get_printer_state().update_from_status({{"toolhead",
+                                             {{"homed_axes", "xyz"},
+                                              {"axis_minimum", {0.0, 0.0, 0.0, 0.0}},
+                                              {"axis_maximum", {235.0, 235.0, 275.0, 0.0}}}},
+                                            {"gcode_move",
+                                             {{"homing_origin", {-0.0889, -0.016, 0.06, 0.0}},
+                                              {"gcode_position", {10.0, 10.0, 274.94, 0.0}}}}});
+    get_printer_state().set_klippy_state_sync(helix::KlippyState::READY);
+    lv_subject_set_int(get_printer_state().get_print_state_enum_subject(),
+                       static_cast<int>(helix::PrintJobState::STANDBY));
+    helix::ui::UpdateQueue::instance().drain();
+
+    // At the gcode ceiling the up buttons disable and down stays enabled.
+    CHECK(lv_obj_has_state(z_up_large, LV_STATE_DISABLED));
+    CHECK(lv_obj_has_state(z_up_small, LV_STATE_DISABLED));
+    CHECK_FALSE(lv_obj_has_state(z_down, LV_STATE_DISABLED));
+
+    // The keypad bounds the same envelope: Z tops out at 274.94, not 275.
+    const auto params = helix::keypad_params_for_axis(get_printer_state().get_gcode_axis_bounds(),
+                                                      helix::Axis::Z, 274.94);
+    REQUIRE(params.has_value());
+    CHECK(params->max_value == Catch::Approx(274.94f));
+    CHECK(params->min_value == Catch::Approx(-0.06f));
+
+    // A +1 jog from 274.5 clamps to the 0.44 left before the ceiling.
+    MoonrakerClientMock client{MoonrakerClientMock::PrinterType::VORON_24};
+    MoonrakerAPI api{client, get_printer_state()};
+    IMoonrakerAPI* previous_api = get_moonraker_api();
+    set_moonraker_api(&api);
+    client.clear_gcode_script_history();
+
+    get_printer_state().update_from_status(
+        {{"gcode_move", {{"gcode_position", {10.0, 10.0, 274.5, 0.0}}}}});
+    helix::ui::UpdateQueue::instance().drain();
+    CHECK_FALSE(lv_obj_has_state(z_up_small, LV_STATE_DISABLED));
+
+    helix::TextLogCapture log;
+    lv_obj_send_event(z_up_small, LV_EVENT_PRESSED, nullptr);
+    REQUIRE(panel.z_hold_timer().poll(helix::HoldRepeat::DELAY_MS));
+    const std::string blob = log.get_captured();
+    CHECK(blob.find("Z jog: +0.44mm") != std::string::npos);
+
+    lv_obj_send_event(z_up_small, LV_EVENT_RELEASED, nullptr);
+    lv_obj_send_event(z_up_small, LV_EVENT_CLICKED, nullptr);
+
+    // The dispatched relative move carries the clamped travel: the mock
+    // records one history entry per gcode line, so join before matching.
+    std::string all_scripts;
+    for (const auto& script : client.gcode_script_history()) {
+        all_scripts += script;
+        all_scripts += "\n";
+    }
+    CHECK(all_scripts.find("G91") != std::string::npos);
+    CHECK(all_scripts.find("Z0.44") != std::string::npos);
+    CHECK(all_scripts.find("Z1") == std::string::npos);
+
+    set_moonraker_api(previous_api);
+    helix::ui::UpdateQueue::instance().drain();
     StaticPanelRegistry::instance().destroy_all();
     helix::ui::UpdateQueue::instance().drain();
 }

@@ -239,6 +239,7 @@ class MotionPanel : public OverlayBase {
     ObserverGuard position_x_observer_;
     ObserverGuard position_y_observer_;
     ObserverGuard gcode_z_observer_;
+    ObserverGuard gcode_z_offset_observer_;
     ObserverGuard live_position_observer_x_;
     ObserverGuard live_position_observer_y_;
     ObserverGuard live_position_observer_z_;
