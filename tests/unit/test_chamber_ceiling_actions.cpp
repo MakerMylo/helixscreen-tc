@@ -51,6 +51,8 @@ class ConfigfileMockClient : public MoonrakerClientMock {
     /// Sections returned for a configfile query. Empty object = silent
     /// configfile (no max_temp anywhere).
     nlohmann::json config_sections = nlohmann::json::object();
+    /// Answer the configfile query with an error instead.
+    bool fail_configfile = false;
 
     helix::RequestId send_jsonrpc(
         const std::string& method, const nlohmann::json& params,
@@ -60,6 +62,15 @@ class ConfigfileMockClient : public MoonrakerClientMock {
         std::optional<helix::rpc_error_policy::CallerIntent> intent = std::nullopt) override {
         if (method == "printer.objects.query" && params.contains("objects") &&
             params["objects"].contains("configfile")) {
+            if (fail_configfile) {
+                if (error_cb) {
+                    MoonrakerError err;
+                    err.type = MoonrakerErrorType::JSON_RPC_ERROR;
+                    err.message = "configfile unavailable";
+                    error_cb(err);
+                }
+                return 0;
+            }
             if (success_cb) {
                 success_cb(
                     {{"result", {{"status", {{"configfile", {{"config", config_sections}}}}}}}});
@@ -189,6 +200,7 @@ TEST_CASE("chamber dryer start and stop send backend gcode", "[chamber][actions]
         f.controller.set_chamber_dryer(helix::chamber::backend_by_id("panda_breath"));
         REQUIRE(f.controller.chamber_dryer().supported);
 
+        f.client.fail_configfile = true; // no idle-timeout hold in this case
         f.client.clear_gcode_script_history();
         f.controller.start_chamber_drying(55.0f, 240);
         f.controller.start_chamber_drying(80.0f, 90); // above the cycle's ceiling
@@ -215,7 +227,7 @@ TEST_CASE("chamber dryer start and stop send backend gcode", "[chamber][actions]
 
 namespace {
 
-constexpr const char* kBedOn = "SET_HEATER_TEMPERATURE HEATER=heater_bed TARGET=80";
+constexpr const char* kBedOn = "SET_HEATER_TEMPERATURE HEATER=heater_bed TARGET=70";
 constexpr const char* kBedOff = "SET_HEATER_TEMPERATURE HEATER=heater_bed TARGET=0";
 
 /// The dryer's running state as the printer reports it, delivered the way
@@ -241,7 +253,7 @@ TEST_CASE("chamber dryer bed assist turns the bed off however the cycle ends",
     ChamberFixture f;
     f.controller.set_chamber_dryer(helix::chamber::backend_by_id("panda_breath"),
                                    /*has_heated_bed=*/true);
-    REQUIRE(f.controller.chamber_dryer_bed_assist_c() == 80);
+    REQUIRE(f.controller.chamber_dryer_bed_assist_c() == 70);
     report_drying(f, false);
     f.client.clear_gcode_script_history();
 
@@ -278,7 +290,7 @@ TEST_CASE("chamber dryer bed assist turns the bed off however the cycle ends",
     SECTION("a target set by hand since") {
         f.controller.start_chamber_drying(55.0f, 240, true);
         report_drying(f, true);
-        lv_subject_set_int(f.state.get_bed_target_subject(), 600);
+        lv_subject_set_int(f.state.get_bed_target_subject(), 500);
         f.controller.stop_chamber_drying();
         CHECK(count(f.client.gcode_script_history(), kBedOff) == 0);
     }
@@ -372,4 +384,108 @@ TEST_CASE("set_hardware wires backend actions into the controller", "[chamber][a
     helix::PanelWidgetManager::instance().register_shared_resource<helix::TemperatureController>(
         std::shared_ptr<helix::TemperatureController>{});
     helix::SettingsManager::instance().set_chamber_heater_assignment("auto");
+}
+
+namespace {
+
+void drain() {
+    helix::ui::UpdateQueueTestAccess::drain_all(helix::ui::UpdateQueue::instance());
+}
+
+std::vector<std::string> idle_lines(ChamberFixture& f) {
+    std::vector<std::string> out;
+    for (const auto& line : f.client.gcode_script_history()) {
+        if (line.rfind("SET_IDLE_TIMEOUT", 0) == 0) {
+            out.push_back(line);
+        }
+    }
+    return out;
+}
+
+} // namespace
+
+// A dry run moves nothing, so Klipper's idle_timeout would fire mid-run and run
+// its gcode (TURN_OFF_HEATERS on most printers), zeroing the bed assist and the
+// appliance's own heater. The run holds the timeout off for its length plus a
+// margin and puts the configured value back however it ends.
+TEST_CASE("chamber dryer holds Klipper's idle timeout for the run",
+          "[chamber][actions][dryer][1299]") {
+    ChamberFixture f;
+    f.controller.set_chamber_dryer(helix::chamber::backend_by_id("panda_breath"),
+                                   /*has_heated_bed=*/true);
+    f.client.config_sections = {{"idle_timeout", {{"timeout", "300"}}}};
+    report_drying(f, false);
+    f.client.clear_gcode_script_history();
+
+    // 240 min = 4 h run, plus the 30 min margin.
+    const std::string hold = "SET_IDLE_TIMEOUT TIMEOUT=16200";
+    const std::string restore = "SET_IDLE_TIMEOUT TIMEOUT=300";
+
+    SECTION("our Stop restores it") {
+        f.controller.start_chamber_drying(55.0f, 240);
+        drain();
+        CHECK(idle_lines(f) == std::vector<std::string>{hold});
+        f.controller.stop_chamber_drying();
+        CHECK(idle_lines(f) == std::vector<std::string>{hold, restore});
+    }
+
+    SECTION("the appliance ending the cycle restores it, once") {
+        f.controller.start_chamber_drying(55.0f, 240);
+        drain();
+        report_drying(f, true);
+        report_drying(f, false);
+        CHECK(idle_lines(f) == std::vector<std::string>{hold, restore});
+        f.controller.stop_chamber_drying();
+        CHECK(idle_lines(f) == std::vector<std::string>{hold, restore});
+    }
+
+    SECTION("a refused start restores it") {
+        f.client.force_next_gcode_error(MoonrakerErrorType::JSON_RPC_ERROR, "Unknown command",
+                                        "PANDA_BREATH_DRY_START");
+        f.controller.start_chamber_drying(55.0f, 240);
+        drain();
+        const auto lines = idle_lines(f);
+        CHECK(std::count(lines.begin(), lines.end(), restore) ==
+              std::count(lines.begin(), lines.end(), hold));
+    }
+
+    SECTION("a print running at the end owns the timeout") {
+        f.controller.start_chamber_drying(55.0f, 240);
+        drain();
+        report_drying(f, true);
+        lv_subject_set_int(f.state.get_job_holds_machine_subject(), 1);
+        report_drying(f, false);
+        CHECK(idle_lines(f) == std::vector<std::string>{hold});
+        lv_subject_set_int(f.state.get_job_holds_machine_subject(), 0);
+    }
+
+    SECTION("without a bed assist the hold still applies") {
+        f.controller.set_chamber_dryer(helix::chamber::backend_by_id("panda_breath"), false);
+        f.controller.start_chamber_drying(55.0f, 240, true);
+        drain();
+        CHECK(idle_lines(f) == std::vector<std::string>{hold});
+    }
+
+    SECTION("no configured section: Klipper's default 600 is restored") {
+        f.client.config_sections = nlohmann::json::object();
+        f.controller.start_chamber_drying(55.0f, 240);
+        drain();
+        f.controller.stop_chamber_drying();
+        CHECK(idle_lines(f) == std::vector<std::string>{hold, "SET_IDLE_TIMEOUT TIMEOUT=600"});
+    }
+
+    SECTION("no readable configfile: nothing is held, so nothing needs restoring") {
+        f.client.fail_configfile = true;
+        f.controller.start_chamber_drying(55.0f, 240);
+        drain();
+        f.controller.stop_chamber_drying();
+        CHECK(idle_lines(f).empty());
+    }
+
+    SECTION("a run that ends before the configfile answer arrives holds nothing") {
+        f.controller.start_chamber_drying(55.0f, 240);
+        f.controller.stop_chamber_drying();
+        drain();
+        CHECK(idle_lines(f).empty());
+    }
 }

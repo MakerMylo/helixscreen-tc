@@ -302,14 +302,14 @@ DryerInfo TemperatureController::chamber_dryer() const {
     return chamber_dryer_backend_ ? chamber_dryer_backend_->dryer_capabilities() : DryerInfo{};
 }
 
-// 80 C is the bed temperature the stock appliance's own auto mode keys on
-// (auto_hotbedtemp), the vendor's figure for a bed that is helping the
-// chamber; a bed that cannot reach it gets its own ceiling.
+// Spools may sit on the bed during a run, and plastic spool flanges soften
+// around 60-70 C, so the assist stays at 70 C; a bed that cannot reach it gets
+// its own ceiling.
 int TemperatureController::chamber_dryer_bed_assist_c() const {
     if (!chamber_dryer_has_bed_) {
         return 0;
     }
-    constexpr int kBedAssistC = 80;
+    constexpr int kBedAssistC = 70;
     const int bed_max = static_cast<int>(keypad_range(HeaterType::Bed).max);
     return bed_max > 0 ? std::min(kBedAssistC, bed_max) : kBedAssistC;
 }
@@ -328,14 +328,20 @@ void TemperatureController::start_chamber_drying(float temp_c, int duration_min,
     const std::string gcode = chamber_dryer_backend_->dryer_start_gcode(
         dryer.clamp_temp(temp_c), dryer.clamp_duration(duration_min));
     spdlog::info("[TemperatureController] Chamber drying start: {}", gcode);
+    const uint32_t run_id = ++next_dry_run_id_;
+    dry_run_ = {true, false, 0, 0, run_id};
     auto tok = lifetime_.token();
-    api_->execute_gcode(gcode, nullptr, [this, tok](const MoonrakerError&) {
+    api_->execute_gcode(gcode, nullptr, [this, tok, run_id](const MoonrakerError&) {
         if (tok.expired()) {
             return;
         }
-        tok.defer("TemperatureController::drying_refused",
-                  [this]() { end_bed_assist("drying start refused"); });
+        tok.defer("TemperatureController::drying_refused", [this, run_id]() {
+            if (dry_run_.id == run_id) {
+                end_dry_run("drying start refused");
+            }
+        });
     });
+    hold_idle_timeout(run_id, dryer.clamp_duration(duration_min) * 60);
 
     const int bed_c = chamber_dryer_bed_assist_c();
     if (!heat_bed || bed_c <= 0) {
@@ -345,8 +351,46 @@ void TemperatureController::start_chamber_drying(float temp_c, int duration_min,
         spdlog::info("[TemperatureController] Bed assist refused: a job holds the machine");
         return;
     }
-    bed_assist_ = {true, false, bed_c};
+    dry_run_.bed_c = bed_c;
     set_target(HeaterType::Bed, bed_c);
+}
+
+// A dry run moves nothing, so Klipper's idle_timeout would fire mid-run and run
+// its gcode, TURN_OFF_HEATERS on most printers, zeroing the bed assist and the
+// appliance's own heater. Hold it off for the run plus a margin, but only once
+// the configured value is known: without it there is nothing to restore, so
+// nothing is held.
+void TemperatureController::hold_idle_timeout(uint32_t run_id, int run_s) {
+    constexpr int kMarginS = 30 * 60;
+    constexpr int kKlipperDefaultS = 600;
+    auto tok = lifetime_.token();
+    api_->query_configfile(
+        [this, tok, run_id, run_s](const nlohmann::json& config) {
+            // Background (WS) thread: parse only.
+            int configured_s = kKlipperDefaultS;
+            if (config.contains("idle_timeout") && config["idle_timeout"].contains("timeout")) {
+                const auto& t = config["idle_timeout"]["timeout"];
+                try {
+                    configured_s = t.is_string() ? static_cast<int>(std::stof(t.get<std::string>()))
+                                                 : static_cast<int>(t.get<double>());
+                } catch (const std::exception&) {
+                    return;
+                }
+            }
+            if (configured_s <= 0) {
+                return;
+            }
+            tok.defer("TemperatureController::hold_idle_timeout", [this, run_id, run_s,
+                                                                   configured_s]() {
+                if (!dry_run_.armed || dry_run_.id != run_id || !api_) {
+                    return;
+                }
+                dry_run_.idle_restore_s = configured_s;
+                api_->execute_gcode(fmt::format("SET_IDLE_TIMEOUT TIMEOUT={}", run_s + kMarginS),
+                                    nullptr, nullptr);
+            });
+        },
+        [](const MoonrakerError&) {});
 }
 
 void TemperatureController::stop_chamber_drying() {
@@ -355,33 +399,42 @@ void TemperatureController::stop_chamber_drying() {
     }
     spdlog::info("[TemperatureController] Chamber drying stop");
     api_->execute_gcode(std::string(chamber_dryer_backend_->dryer_stop_gcode()), nullptr, nullptr);
-    end_bed_assist("drying stopped");
+    end_dry_run("drying stopped");
 }
 
 void TemperatureController::on_chamber_dryer_active(bool running) {
-    if (!bed_assist_.armed) {
+    if (!dry_run_.armed) {
         return;
     }
     if (running) {
-        bed_assist_.seen_running = true;
-    } else if (bed_assist_.seen_running) {
-        end_bed_assist("drying cycle ended");
+        dry_run_.seen_running = true;
+    } else if (dry_run_.seen_running) {
+        end_dry_run("drying cycle ended");
     }
 }
 
-// The bed goes off only while it is still ours: a print that started since, or
-// a different target someone set by hand, owns the bed now. A target still
-// reading 0 is ours too: the confirming frame may not have arrived yet, and an
-// off sent to a cold bed costs nothing.
-void TemperatureController::end_bed_assist(const char* why) {
-    if (!bed_assist_.armed) {
+// A print that started since owns both the bed and the idle timeout, so neither
+// is touched then. Otherwise the held timeout goes back to its configured value,
+// and the bed goes off only while it is still ours: a different target someone
+// set by hand owns it now. A target still reading 0 is ours too: the confirming
+// frame may not have arrived yet, and an off sent to a cold bed costs nothing.
+void TemperatureController::end_dry_run(const char* why) {
+    if (!dry_run_.armed) {
         return;
     }
-    const int target_c = bed_assist_.target_c;
-    bed_assist_ = {};
+    const int target_c = dry_run_.bed_c;
+    const int restore_s = dry_run_.idle_restore_s;
+    dry_run_ = {};
     lv_subject_t* job = state_.get_job_holds_machine_subject();
     if (job && lv_subject_get_int(job) != 0) {
-        spdlog::info("[TemperatureController] Bed assist ended ({}): a job owns the bed", why);
+        spdlog::info("[TemperatureController] Drying ended ({}): a job owns the machine", why);
+        return;
+    }
+    if (restore_s > 0 && api_) {
+        api_->execute_gcode(fmt::format("SET_IDLE_TIMEOUT TIMEOUT={}", restore_s), nullptr,
+                            nullptr);
+    }
+    if (target_c <= 0) {
         return;
     }
     lv_subject_t* bed_target = state_.get_bed_target_subject();

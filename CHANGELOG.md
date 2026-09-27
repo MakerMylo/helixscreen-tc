@@ -255,8 +255,9 @@ No widget types were added or removed; most of the existing ones changed.
 - **Dry filament with the chamber heater** (#1299) - a Panda Breath on stock firmware can
   run its filament-drying cycle from the chamber card: pick a material preset, and the card
   shows the chamber temperature against the drying target and the time left, with a Stop
-  button. An optional bed assist heats the bed to 80°C for the run and turns it back off
-  when the run ends, however it ends. The chamber levelling off below the target is shown
+  button. An optional bed assist heats the bed to 70°C for the run and turns it back off
+  when the run ends, however it ends, and Klipper's idle timeout is held off for the run
+  so it cannot switch the heaters off partway through. The chamber levelling off below the target is shown
   as a number rather than treated as a fault.
 
 **Printing**
