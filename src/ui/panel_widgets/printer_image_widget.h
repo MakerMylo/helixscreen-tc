@@ -3,12 +3,16 @@
 
 #pragma once
 
+#include "ui_heater_icon_binder.h"
 #include "ui_observer_guard.h"
+#include "ui_widget_ref.h"
 
 #include "async_lifetime_guard.h"
+#include "callout_layout.h"
 #include "panel_widget.h"
 
 #include <string>
+#include <vector>
 
 namespace helix {
 
@@ -19,6 +23,9 @@ class PrinterImageWidget : public PanelWidget {
 
     void attach(lv_obj_t* widget_obj, lv_obj_t* parent_screen) override;
     void detach() override;
+    /// Records the granted cell span (a single cell draws no callouts) and
+    /// schedules a relayout of the chips.
+    void on_size_changed(int colspan, int rowspan, int width_px, int height_px) override;
     /// Factory-registration key. Exposed so callers scanning a heterogeneous
     /// widget list can match on id() and static_cast, instead of dynamic_cast —
     /// the firmware builds -fno-rtti.
@@ -94,6 +101,28 @@ class PrinterImageWidget : public PanelWidget {
     void check_or_generate_cache();
 
     void handle_printer_manager_clicked();
+
+    /// Live callouts: PrinterState -> chip subjects -> measured layout.
+    void arm_callout_observers();
+    void update_callouts();         ///< subjects -> chip text/shown; relayout on change
+    void schedule_callout_layout(); ///< one-shot deferred apply_callout_layout()
+    void cancel_callout_timer();
+    void apply_callout_layout(); ///< measure, decide, position
+    void handle_callout_clicked(CalloutKind kind);
+    /// Recovers the widget from a chip's click (chip -> callout_layer -> printer_container).
+    static void route_callout_click(lv_event_t* e, CalloutKind kind);
+
+    lv_timer_t* callout_timer_ = nullptr;
+    // Own copies of the granted span: on_size_changed() may be reached directly,
+    // which leaves the base class's recorded size at zero.
+    int callout_colspan_ = 0;
+    int callout_rowspan_ = 0;
+    int callout_spin_pct_ = -1; ///< speed the fan icons spin at; -1 = not yet applied
+    std::vector<ObserverGuard> callout_observers_;
+    SubjectLifetime bed_temp_lt_, bed_target_lt_, chamber_temp_lt_, chamber_target_lt_;
+    helix::ui::HeaterIconBinder nozzle_binder_, bed_binder_, chamber_binder_, toolhead_binder_;
+    helix::ui::WidgetRef fan_control_panel_;
+    helix::ui::WidgetRef led_control_panel_;
 };
 
 } // namespace helix

@@ -137,6 +137,33 @@ void init_fan_control_overlay(PrinterState& printer_state) {
     INIT_GLOBAL_OVERLAY(FanControlOverlay, g_fan_control_overlay, printer_state);
 }
 
+namespace helix {
+lv_obj_t* open_fan_control_overlay(lv_obj_t* parent_screen, lv_obj_t* panel) {
+    auto& overlay = get_fan_control_overlay();
+    if (!panel && parent_screen) {
+        if (!overlay.are_subjects_initialized()) {
+            overlay.init_subjects();
+        }
+        overlay.register_callbacks();
+        overlay.set_api(get_moonraker_api());
+
+        panel = overlay.create(parent_screen);
+        if (!panel) {
+            spdlog::error("[FanControlOverlay] Failed to create fan control overlay");
+            return nullptr;
+        }
+    }
+    if (panel) {
+        overlay.set_api(get_moonraker_api());
+        // Registered before every push: navbar switches clear the registrations,
+        // so a cached panel loses its own. Registering is idempotent.
+        NavigationManager::instance().register_overlay_instance(panel, &overlay);
+        NavigationManager::instance().push_overlay(panel);
+    }
+    return panel;
+}
+} // namespace helix
+
 // ============================================================================
 // CONSTRUCTOR / DESTRUCTOR
 // ============================================================================

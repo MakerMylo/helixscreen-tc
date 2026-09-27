@@ -1,9 +1,19 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+#include "ui_nav_manager.h"
+#include "ui_overlay_temp_graph.h"
+#include "ui_printer_manager_overlay.h"
+#include "ui_temperature_utils.h"
+
 #include "../lvgl_ui_test_fixture.h"
 #include "../test_helpers/panel_widget_size_harness.h"
+#include "../test_helpers/process_async_timers.h"
+#include "../test_helpers/update_queue_test_access.h"
+#include "app_globals.h"
 #include "helix-xml/src/xml/lv_xml.h"
 #include "panel_widget_manager.h"
 #include "panel_widget_registry.h"
+#include "printer_image_regions.h"
+#include "printer_state.h"
 #include "src/ui/panel_widgets/printer_image_widget.h"
 
 #include "../catch_amalgamated.hpp"
@@ -65,4 +75,242 @@ TEST_CASE_METHOD(LVGLUITestFixture, "printer image: the light chip has no text l
     // theme-token defaults a bare lv_obj would already carry).
     CHECK(lv_obj_get_style_bg_opa(light, LV_PART_MAIN) == 220);
     CHECK(lv_obj_get_style_border_width(light, LV_PART_MAIN) == 1);
+}
+
+// ---------------------------------------------------------------------------
+// Live data: PrinterState -> chip shown/text, layout, taps
+// ---------------------------------------------------------------------------
+
+namespace {
+
+/// Registers the widget's subjects and tags the fallback image (the widget shows
+/// generic-corexy with no printer type) with the K1C's points, so the widget
+/// under test is "tagged". Pair with set_image_regions_for_testing({}).
+void prepare_tagged_widget() {
+    helix::init_widget_registrations();
+    helix::PanelWidgetManager::instance().init_widget_subjects();
+    ImageRegions r;
+    r.src_w = 1601;
+    r.src_h = 1204;
+    r.nozzle = {0.513f, 0.279f};
+    r.part_fan = NormPoint{0.488f, 0.206f};
+    r.chamber = NormPoint{0.313f, 0.379f};
+    r.light = NormPoint{0.321f, 0.164f};
+    r.bed_left = {0.308f, 0.571f};
+    r.bed_right = {0.611f, 0.573f};
+    set_image_regions_for_testing({{"generic-corexy", r}});
+}
+
+/// Observer handlers run from the UpdateQueue, and the layout from a one-shot
+/// timer they schedule; drain both until nothing is left.
+void settle() {
+    for (int i = 0; i < 4; ++i) {
+        helix::ui::UpdateQueueTestAccess::drain_all(helix::ui::UpdateQueue::instance());
+        process_async_timers();
+    }
+}
+
+std::string text_of(PanelWidgetHarness<PrinterImageWidget>& h, const char* chip) {
+    return lv_label_get_text(lv_obj_find_by_name(h.child(chip), "chip_text"));
+}
+bool shown(PanelWidgetHarness<PrinterImageWidget>& h, const char* chip) {
+    return !lv_obj_has_flag(h.child(chip), LV_OBJ_FLAG_HIDDEN);
+}
+
+} // namespace
+
+TEST_CASE_METHOD(LVGLUITestFixture,
+                 "callouts: bed heating shows the bed chip with heater_display text",
+                 "[printer_image][callouts]") {
+    prepare_tagged_widget();
+    PanelWidgetHarness<PrinterImageWidget> h(test_screen());
+    h.resize(4, 4, 160, 160);
+    lv_subject_set_int(state().get_bed_temp_subject(), 400);
+    lv_subject_set_int(state().get_bed_target_subject(), 600);
+    settle();
+    CHECK_FALSE(lv_obj_has_flag(h.child("callout_layer"), LV_OBJ_FLAG_HIDDEN));
+    CHECK(shown(h, "callout_chip_bed"));
+    CHECK(text_of(h, "callout_chip_bed") == helix::ui::temperature::heater_display(400, 600).temp);
+    CHECK(lv_subject_get_int(lv_xml_get_subject(nullptr, "callout_bed_heating")) == 1);
+    set_image_regions_for_testing({});
+}
+
+TEST_CASE_METHOD(LVGLUITestFixture, "callouts: idle cold printer shows no chips",
+                 "[printer_image][callouts]") {
+    prepare_tagged_widget();
+    PanelWidgetHarness<PrinterImageWidget> h(test_screen());
+    h.resize(4, 4, 160, 160);
+    lv_subject_set_int(state().get_bed_temp_subject(), 250);
+    lv_subject_set_int(state().get_bed_target_subject(), 0);
+    lv_subject_set_int(state().get_active_extruder_temp_subject(), 250);
+    lv_subject_set_int(state().get_active_extruder_target_subject(), 0);
+    lv_subject_set_int(state().get_fan_speed_subject(), 0);
+    settle();
+    CHECK_FALSE(shown(h, "callout_chip_bed"));
+    CHECK_FALSE(shown(h, "callout_chip_nozzle"));
+    CHECK_FALSE(shown(h, "callout_chip_fan"));
+    CHECK_FALSE(shown(h, "callout_chip_toolhead"));
+    set_image_regions_for_testing({});
+}
+
+TEST_CASE_METHOD(LVGLUITestFixture, "callouts: heater off but hot keeps the chip until 50C",
+                 "[printer_image][callouts]") {
+    prepare_tagged_widget();
+    PanelWidgetHarness<PrinterImageWidget> h(test_screen());
+    h.resize(4, 4, 160, 160);
+    lv_subject_set_int(state().get_bed_target_subject(), 0);
+    lv_subject_set_int(state().get_bed_temp_subject(), 640);
+    settle();
+    CHECK(shown(h, "callout_chip_bed"));
+    CHECK(text_of(h, "callout_chip_bed") == helix::ui::temperature::heater_display(640, 0).temp);
+    lv_subject_set_int(state().get_bed_temp_subject(), 500);
+    settle();
+    CHECK_FALSE(shown(h, "callout_chip_bed"));
+    set_image_regions_for_testing({});
+}
+
+TEST_CASE_METHOD(LVGLUITestFixture,
+                 "callouts: fan on shows percent; light needs the LED capability",
+                 "[printer_image][callouts]") {
+    prepare_tagged_widget();
+    PanelWidgetHarness<PrinterImageWidget> h(test_screen());
+    h.resize(4, 4, 160, 160);
+    lv_subject_t* has_led = lv_xml_get_subject(nullptr, "printer_has_led");
+    REQUIRE(has_led);
+    lv_subject_set_int(state().get_active_extruder_target_subject(), 0);
+    lv_subject_set_int(state().get_active_extruder_temp_subject(), 250);
+    lv_subject_set_int(state().get_fan_speed_subject(), 80);
+    lv_subject_set_int(state().get_led_state_subject(), 1);
+    lv_subject_set_int(has_led, 0);
+    settle();
+    CHECK(shown(h, "callout_chip_fan"));
+    CHECK(text_of(h, "callout_chip_fan") == "80%");
+    CHECK_FALSE(shown(h, "callout_chip_light"));
+    lv_subject_set_int(has_led, 1);
+    settle();
+    CHECK(shown(h, "callout_chip_light"));
+    set_image_regions_for_testing({});
+}
+
+TEST_CASE_METHOD(LVGLUITestFixture,
+                 "callouts: a heating nozzle with the fan on merges into the toolhead chip",
+                 "[printer_image][callouts]") {
+    prepare_tagged_widget();
+    PanelWidgetHarness<PrinterImageWidget> h(test_screen());
+    h.resize(4, 4, 160, 160);
+    lv_subject_set_int(state().get_active_extruder_temp_subject(), 1800);
+    lv_subject_set_int(state().get_active_extruder_target_subject(), 2200);
+    lv_subject_set_int(state().get_fan_speed_subject(), 50);
+    settle();
+    CHECK(shown(h, "callout_chip_toolhead"));
+    CHECK_FALSE(shown(h, "callout_chip_nozzle"));
+    CHECK_FALSE(shown(h, "callout_chip_fan"));
+    const std::string nozzle = helix::ui::temperature::heater_display(1800, 2200).temp;
+    CHECK(text_of(h, "callout_chip_toolhead") == nozzle + "  50%");
+    set_image_regions_for_testing({});
+}
+
+TEST_CASE_METHOD(LVGLUITestFixture, "callouts: single cell hides the whole layer",
+                 "[printer_image][callouts]") {
+    prepare_tagged_widget();
+    PanelWidgetHarness<PrinterImageWidget> h(test_screen());
+    h.resize(4, 4, 160, 160);
+    lv_subject_set_int(state().get_bed_target_subject(), 600);
+    settle();
+    REQUIRE_FALSE(lv_obj_has_flag(h.child("callout_layer"), LV_OBJ_FLAG_HIDDEN));
+    h.resize(2, 2, 80, 80);
+    settle();
+    CHECK(lv_obj_has_flag(h.child("callout_layer"), LV_OBJ_FLAG_HIDDEN));
+    set_image_regions_for_testing({});
+}
+
+TEST_CASE_METHOD(LVGLUITestFixture, "callouts: a chip sits inside the image container",
+                 "[printer_image][callouts]") {
+    prepare_tagged_widget();
+    PanelWidgetHarness<PrinterImageWidget> h(test_screen());
+    h.resize(4, 4, 160, 160);
+    lv_subject_set_int(state().get_bed_target_subject(), 600);
+    settle();
+    lv_obj_update_layout(h.root());
+    lv_obj_t* chip = h.child("callout_chip_bed");
+    lv_obj_t* layer = h.child("callout_layer");
+    CHECK(lv_obj_get_x(chip) > 0);
+    CHECK(lv_obj_get_y(chip) > 0);
+    CHECK(lv_obj_get_x(chip) + lv_obj_get_width(chip) <= lv_obj_get_width(layer));
+    CHECK(lv_obj_get_y(chip) + lv_obj_get_height(chip) <= lv_obj_get_height(layer));
+    set_image_regions_for_testing({});
+}
+
+TEST_CASE_METHOD(LVGLUITestFixture, "callouts: a detached widget stops publishing",
+                 "[printer_image][callouts]") {
+    prepare_tagged_widget();
+    PanelWidgetHarness<PrinterImageWidget> h(test_screen());
+    h.resize(4, 4, 160, 160);
+    lv_subject_set_int(state().get_bed_target_subject(), 0);
+    lv_subject_set_int(state().get_bed_temp_subject(), 250);
+    settle();
+    lv_subject_t* bed_shown = lv_xml_get_subject(nullptr, "callout_bed_shown");
+    REQUIRE(lv_subject_get_int(bed_shown) == 0);
+    h.widget().detach();
+    lv_subject_set_int(state().get_bed_target_subject(), 600);
+    settle();
+    CHECK(lv_subject_get_int(bed_shown) == 0);
+    set_image_regions_for_testing({});
+}
+
+// The populate_widgets reuse path: the old component is deleted under the widget,
+// then the SAME instance is attached to a fresh one (#1109 shape).
+TEST_CASE_METHOD(LVGLUITestFixture, "callouts: a recycled instance drives its new tree",
+                 "[printer_image][callouts]") {
+    prepare_tagged_widget();
+    PrinterImageWidget widget;
+    auto* comp1 =
+        static_cast<lv_obj_t*>(lv_xml_create(test_screen(), "panel_widget_printer_image", nullptr));
+    REQUIRE(comp1);
+    widget.attach(comp1, test_screen());
+    lv_obj_update_layout(comp1);
+    widget.on_size_changed(4, 4, 160, 160);
+    lv_subject_set_int(get_printer_state().get_bed_target_subject(), 600);
+    lv_subject_set_int(get_printer_state().get_fan_speed_subject(), 60);
+    settle();
+
+    lv_obj_delete(comp1);
+    settle();
+    auto* comp2 =
+        static_cast<lv_obj_t*>(lv_xml_create(test_screen(), "panel_widget_printer_image", nullptr));
+    REQUIRE(comp2);
+    widget.attach(comp2, test_screen());
+    lv_obj_update_layout(comp2);
+    widget.on_size_changed(4, 4, 160, 160);
+    lv_subject_set_int(get_printer_state().get_bed_target_subject(), 650);
+    settle();
+    lv_obj_update_layout(comp2);
+    lv_obj_t* bed = lv_obj_find_by_name(comp2, "callout_chip_bed");
+    CHECK_FALSE(lv_obj_has_flag(bed, LV_OBJ_FLAG_HIDDEN));
+    CHECK(lv_obj_get_x(bed) > 0);
+    widget.detach();
+    lv_obj_delete(comp2);
+    set_image_regions_for_testing({});
+}
+
+TEST_CASE_METHOD(LVGLUITestFixture,
+                 "callouts: tapping the bed chip opens the bed temperature graph, not the "
+                 "printer manager",
+                 "[printer_image][callouts]") {
+    prepare_tagged_widget();
+    PanelWidgetHarness<PrinterImageWidget> h(test_screen());
+    h.resize(4, 4, 160, 160);
+    lv_subject_set_int(state().get_bed_target_subject(), 600);
+    settle();
+
+    get_global_temp_graph_overlay().init_subjects();
+    lv_subject_t* mode = lv_xml_get_subject(nullptr, "temp_graph_mode");
+    REQUIRE(mode);
+    lv_subject_set_int(mode, static_cast<int>(TempGraphOverlay::Mode::GraphOnly));
+    lv_obj_send_event(h.child("callout_chip_bed"), LV_EVENT_CLICKED, nullptr);
+    process_lvgl(30);
+    CHECK(lv_subject_get_int(mode) == static_cast<int>(TempGraphOverlay::Mode::Bed));
+    CHECK_FALSE(
+        NavigationManager::instance().is_panel_in_stack(get_printer_manager_overlay().get_root()));
+    set_image_regions_for_testing({});
 }
