@@ -29,6 +29,7 @@
 #include "print_status_preview_decision.h"
 #include "system/crash_handler.h"
 #include "system/telemetry_manager.h"
+#include "text_io.h"
 #include "theme_manager.h"
 
 #include <filesystem>
@@ -66,7 +67,6 @@ using namespace helix;
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <fstream>
 #include <memory>
 #include <optional>
 #include <thread>
@@ -1882,8 +1882,8 @@ static void ui_gcode_viewer_load_file_async(lv_obj_t* obj, const char* file_path
 
         try {
             // PHASE 1: Parse G-code file (fast, ~100ms)
-            std::ifstream file(path);
-            if (!file.is_open()) {
+            helix::text_io::LineReader file(path);
+            if (!file) {
                 result->success = false;
                 result->error_msg = "Failed to open file: " + path;
             } else {
@@ -1910,7 +1910,7 @@ static void ui_gcode_viewer_load_file_async(lv_obj_t* obj, const char* file_path
                 pause_scan.begin(size_ec ? 0 : static_cast<size_t>(scan_total));
                 uint64_t line_offset = 0;
 
-                while (std::getline(file, line)) {
+                while (file.next(line)) {
                     parser.parse_line(line);
                     pause_scan.feed_line(line, line_offset,
                                          static_cast<int32_t>(parser.current_layer()));
@@ -1925,7 +1925,6 @@ static void ui_gcode_viewer_load_file_async(lv_obj_t* obj, const char* file_path
                     }
                 }
 
-                file.close();
                 result->scheduled_pauses = pause_scan.pauses();
                 result->scheduled_pauses_axis = pause_scan.axis();
 

@@ -5,8 +5,8 @@
 #include "app_constants.h"
 #include "app_globals.h"
 #include "spdlog/spdlog.h"
+#include "text_io.h"
 
-#include <fstream>
 #include <string>
 #include <sys/stat.h>
 #include <system_error>
@@ -105,9 +105,9 @@ UpdateUrls read_update_urls() {
         return urls;
     }
 
-    std::ifstream file(path);
-    json j = json::parse(file, nullptr, /*allow_exceptions=*/false);
-    if (file.bad() || j.is_discarded() || !j.is_object()) {
+    auto text = helix::text_io::read_file(path);
+    json j = json::parse(text.value_or(""), nullptr, /*allow_exceptions=*/false);
+    if (!text || j.is_discarded() || !j.is_object()) {
         spdlog::warn("[ConfigTrust] {} is not a valid JSON object - ignoring", path);
         return urls;
     }

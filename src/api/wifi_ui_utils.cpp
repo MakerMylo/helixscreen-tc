@@ -4,6 +4,7 @@
 #include "wifi_ui_utils.h"
 
 #include "log_redact.h"
+#include "text_io.h"
 
 #include <spdlog/spdlog.h>
 
@@ -11,7 +12,6 @@
 #include <cctype>
 #include <cstdio>
 #include <filesystem>
-#include <fstream>
 #include <vector>
 
 #ifdef __APPLE__
@@ -34,15 +34,12 @@ namespace {
 
 namespace fs = std::filesystem;
 
+namespace tio = helix::text_io;
+
 // Read the first line of a small sysfs file, trimmed of trailing whitespace.
 // Returns empty string if the file is missing or unreadable.
 std::string read_trimmed_line(const std::string& path) {
-    std::ifstream file(path);
-    if (!file.is_open()) {
-        return "";
-    }
-    std::string line;
-    std::getline(file, line);
+    std::string line = tio::read_first_line(path).value_or("");
     line.erase(
         std::find_if(line.rbegin(), line.rend(), [](unsigned char ch) { return !std::isspace(ch); })
             .base(),
@@ -68,12 +65,12 @@ bool sysfs_iface_is_wireless(const fs::path& iface_dir) {
 // lines, then one line per wireless iface of the form "  wlan0: 0000 ...".
 std::vector<std::string> proc_wireless_ifaces(const std::string& proc_root) {
     std::vector<std::string> result;
-    std::ifstream file(proc_root + "/net/wireless");
-    if (!file.is_open()) {
+    tio::LineReader file(proc_root + "/net/wireless");
+    if (!file) {
         return result;
     }
     std::string line;
-    while (std::getline(file, line)) {
+    while (file.next(line)) {
         auto colon = line.find(':');
         if (colon == std::string::npos) {
             continue; // header lines have no colon
@@ -229,15 +226,14 @@ std::string wifi_get_device_mac(const std::string& interface) {
 #else
     // Linux: Read from /sys/class/net/{interface}/address
     std::string path = "/sys/class/net/" + interface + "/address";
-    std::ifstream file(path);
+    auto first_line = tio::read_first_line(path);
 
-    if (!file.is_open()) {
+    if (!first_line) {
         spdlog::debug("[wifi_ui] Failed to open {} (interface may not exist)", path);
         return "";
     }
 
-    std::string mac;
-    std::getline(file, mac);
+    std::string mac = *first_line;
 
     // Remove trailing newline/whitespace
     mac.erase(

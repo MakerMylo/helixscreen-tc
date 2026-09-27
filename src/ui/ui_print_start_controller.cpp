@@ -31,16 +31,18 @@
 #include "observer_factory.h"
 #include "print_job_ref.h"
 #include "printer_state.h"
+#include "text_io.h"
 
 #include <spdlog/spdlog.h>
 
 #include <chrono>
 #include <filesystem>
-#include <fstream>
 
 #include "hv/json.hpp"
 
 namespace helix::ui {
+
+namespace tio = helix::text_io;
 
 // ============================================================================
 // Constructor / Destructor
@@ -1074,9 +1076,7 @@ void PrintStartController::persist_remap_state() {
     auto path = pending_remap_path();
     try {
         fs::create_directories(path.parent_path());
-        std::ofstream ofs(path);
-        if (ofs.is_open()) {
-            ofs << helix::json_util::safe_dump(j, 2);
+        if (tio::write_file(path.string(), helix::json_util::safe_dump(j, 2))) {
             spdlog::debug("[PrintStartController] Persisted remap state to {}", path.string());
         }
     } catch (const std::exception& e) {
@@ -1107,12 +1107,12 @@ void PrintStartController::recover_pending_remap() {
     }
 
     try {
-        std::ifstream ifs(path);
-        if (!ifs.is_open()) {
+        auto text = tio::read_file(path.string());
+        if (!text) {
             return;
         }
 
-        auto j = nlohmann::json::parse(ifs);
+        auto j = nlohmann::json::parse(*text);
         int backend_idx = j.value("backend_index", -1);
         auto mapping = j.value("tool_mapping", std::vector<int>{});
 
