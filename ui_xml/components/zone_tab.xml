@@ -23,6 +23,8 @@
          style table, so callers can only pick styles declared here. -->
     <prop name="selected_style" type="string" default="zone_tab_selected"/>
     <prop name="idle_style" type="string" default="zone_tab_idle"/>
+    <!-- Icon-only tabs (the portrait motion header) hide the label. -->
+    <prop name="hide_label" type="boolean" default="false"/>
   </api>
   <styles>
     <!-- Two styles, not one plus an inline attribute: an inline `style_bg_opa` would
@@ -67,7 +69,7 @@
           <bind_flag_if_not_eq subject="$state_subject" flag="hidden" ref_value="4"/>
         </icon>
       </lv_obj>
-      <text_body name="tab_label" width="content" bind_text="$label_subject"/>
+      <text_body name="tab_label" width="content" bind_text="$label_subject" hidden="$hide_label"/>
     </lv_obj>
     <event_cb trigger="clicked" callback="$callback" user_data="$tab_index"/>
   </view>

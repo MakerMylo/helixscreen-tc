@@ -43,9 +43,9 @@ _LANDSCAPE = [
 
 _PORTRAIT = [
     # Height-bound square after the Z column takes its floor width first;
-    # the tab strip and the coordinate row claim the rest of the column.
-    ("272x480", 198),
-    ("320x480", 192),
+    # the coordinate row claims the rest of the column; the tabs sit in the header.
+    ("272x480", 204),
+    ("320x480", 232),
 ]
 
 # 1/100 mm: the widest realistic readout, 3 digits + 2 decimals per axis.
