@@ -158,6 +158,11 @@ void SettingsManager::init_subjects() {
         get_printer_state().apply_effective_bed_moves();
     }
 
+    // Enclosure override (default: 0 = Auto)
+    int enclosure_style = std::clamp(config->get<int>(config->df() + "enclosure_style", 0), 0, 2);
+    UI_MANAGED_SUBJECT_INT(enclosure_style_subject_, enclosure_style, "settings_enclosure_style",
+                           subjects_);
+
     // Extrude/retract speed (default: 5 mm/s, range 1-50)
     int extrude_speed = config->get<int>(config->df() + "filament/extrude_speed", 5);
     extrude_speed = std::clamp(extrude_speed, 1, 50);
@@ -425,6 +430,68 @@ void SettingsManager::set_z_movement_style(ZMovementStyle style) {
 
     // 3. Apply override to printer state
     get_printer_state().apply_effective_bed_moves();
+}
+
+// =============================================================================
+// BED DRYING
+// =============================================================================
+
+helix::bed_drying::EnclosureStyle SettingsManager::get_enclosure_style() const {
+    int val = lv_subject_get_int(const_cast<lv_subject_t*>(&enclosure_style_subject_));
+    return static_cast<helix::bed_drying::EnclosureStyle>(std::clamp(val, 0, 2));
+}
+
+void SettingsManager::set_enclosure_style(helix::bed_drying::EnclosureStyle style) {
+    const int val = std::clamp(static_cast<int>(style), 0, 2);
+    spdlog::info("[SettingsManager] set_enclosure_style({})", val);
+    lv_subject_set_int(&enclosure_style_subject_, val);
+    Config* config = Config::get_instance();
+    config->set<int>(config->df() + "enclosure_style", val);
+    config->save();
+    get_printer_state().refresh_bed_drying_capability();
+}
+
+helix::bed_drying::RunRecord SettingsManager::get_bed_drying_record() const {
+    helix::bed_drying::RunRecord r;
+    Config* config = Config::get_instance();
+    const json j = config->get<json>(config->df() + "bed_drying", json::object());
+    if (!j.is_object()) {
+        return r;
+    }
+    r.latched = j.value("latched", false);
+    r.start_s = j.value("start_s", 0LL);
+    r.end_s = j.value("end_s", 0LL);
+    r.bed_c = j.value("bed_c", 0);
+    r.idle_restore_s = j.value("idle_restore_s", 0);
+    r.appliance = j.value("appliance", false);
+    r.ended = j.value("ended", false);
+    r.flip_notified = j.value("flip_notified", false);
+    r.placing = j.value("placing", false);
+    r.material = j.value("material", -1);
+    return r;
+}
+
+bool SettingsManager::set_bed_drying_record(const helix::bed_drying::RunRecord& r) {
+    Config* config = Config::get_instance();
+    config->set<json>(config->df() + "bed_drying", json{{"latched", r.latched},
+                                                        {"start_s", r.start_s},
+                                                        {"end_s", r.end_s},
+                                                        {"bed_c", r.bed_c},
+                                                        {"idle_restore_s", r.idle_restore_s},
+                                                        {"appliance", r.appliance},
+                                                        {"ended", r.ended},
+                                                        {"flip_notified", r.flip_notified},
+                                                        {"placing", r.placing},
+                                                        {"material", r.material}});
+    if (!config->save()) {
+        spdlog::error("[SettingsManager] Could not save the bed drying record");
+        return false;
+    }
+    return true;
+}
+
+bool SettingsManager::clear_bed_drying_record() {
+    return set_bed_drying_record(helix::bed_drying::RunRecord{});
 }
 
 // =============================================================================

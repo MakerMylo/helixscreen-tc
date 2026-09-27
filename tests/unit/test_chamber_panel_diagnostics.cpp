@@ -1088,7 +1088,7 @@ TEST_CASE_METHOD(ChamberOverlayFixture, "chamber dryer row follows the cycle",
     set_xml_int("chamber_heater_offline", 0);
     set_xml_int("chamber_heater_fault", 0);
     set_xml_int("chamber_heater_inhibited", 0);
-    set_xml_int("job_holds_machine", 0);
+    set_xml_int("machine_motion_blocked", 0);
 
     lv_obj_t* row = lv_obj_find_by_name(overlay_, "dryer_row");
     lv_obj_t* start = lv_obj_find_by_name(overlay_, "dryer_start_button");
@@ -1120,12 +1120,12 @@ TEST_CASE_METHOD(ChamberOverlayFixture, "chamber dryer row follows the cycle",
         CHECK(std::string(lv_label_get_text(text)) == "41/55°C  3:12 left");
     }
 
-    SECTION("Start is disabled while a job holds the machine or the appliance is offline") {
+    SECTION("Start is disabled while the machine may not move or the appliance is offline") {
         set_xml_int("chamber_dryer_active", 0);
-        set_xml_int("job_holds_machine", 1);
+        set_xml_int("machine_motion_blocked", 1);
         helix::ui::UpdateQueue::instance().drain();
         CHECK(lv_obj_has_state(start, LV_STATE_DISABLED));
-        set_xml_int("job_holds_machine", 0);
+        set_xml_int("machine_motion_blocked", 0);
         set_xml_int("chamber_heater_offline", 1);
         helix::ui::UpdateQueue::instance().drain();
         CHECK(lv_obj_has_state(start, LV_STATE_DISABLED));

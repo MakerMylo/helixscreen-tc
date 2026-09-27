@@ -48,6 +48,8 @@ void PrinterCapabilitiesState::init_subjects(bool register_xml) {
     INIT_SUBJECT_INT(printer_has_firmware_retraction, 0, subjects_, register_xml);
     INIT_SUBJECT_INT(printer_has_individual_xyz_homing, 1, subjects_, register_xml);
     INIT_SUBJECT_INT(printer_bed_moves, 0, subjects_, register_xml); // 0=gantry moves, 1=bed moves
+    INIT_SUBJECT_INT(printer_is_enclosed, 0, subjects_, register_xml);
+    INIT_SUBJECT_INT(printer_can_bed_dry, 0, subjects_, register_xml);
     INIT_SUBJECT_INT(printer_has_chamber_sensor, 0, subjects_, register_xml);
     INIT_SUBJECT_INT(printer_has_chamber_heater, 0, subjects_, register_xml);
     INIT_SUBJECT_INT(printer_has_chamber_heater_diagnostics, 0, subjects_, register_xml);
@@ -309,6 +311,17 @@ void PrinterCapabilitiesState::set_bed_moves(bool bed_moves) {
     if (lv_subject_get_int(&printer_bed_moves_) != new_value) {
         set_capability_int(printer_bed_moves_, new_value);
         spdlog::info("[PrinterCapabilitiesState] Bed moves on Z: {}", bed_moves);
+    }
+}
+
+void PrinterCapabilitiesState::set_bed_drying(bool enclosed, bool can_bed_dry) {
+    if (lv_subject_get_int(&printer_is_enclosed_) != (enclosed ? 1 : 0)) {
+        set_capability_int(printer_is_enclosed_, enclosed ? 1 : 0);
+        spdlog::info("[PrinterCapabilitiesState] Enclosed: {}", enclosed);
+    }
+    if (lv_subject_get_int(&printer_can_bed_dry_) != (can_bed_dry ? 1 : 0)) {
+        set_capability_int(printer_can_bed_dry_, can_bed_dry ? 1 : 0);
+        spdlog::info("[PrinterCapabilitiesState] Bed drying available: {}", can_bed_dry);
     }
 }
 

@@ -326,6 +326,8 @@ translations:
   Bed Screws: Bettschrauben
   Bed Temp: Betttemperatur
   Bed Temperature: Betttemperatur
+  'Bed cooling, spools still on the bed:': 'Heizbett kühlt ab, Spulen liegen noch darauf:'
+
   Bed is Level!: Bett ist nivelliert!
   Bed mesh operation timed out: Bettnetz-Vorgang Zeitüberschreitung
   Bed mesh...: Bettnetz...
@@ -616,6 +618,10 @@ translations:
   Clear Spool: Spule entfernen
   Clear all spool failover assignments: 'Alle Ersatzspulen-Zuordnungen löschen'
   Clear failed: Löschen fehlgeschlagen
+  ? Clear the area above and below the plate. Lay the spools on the plate, cover them with a box (a printed lid or the filament's packaging) and close the door.
+
+  : Räume den Bereich über und unter dem Heizbett frei. Lege die Spulen auf das Heizbett, decke sie mit einer Kiste ab (einem gedruckten Deckel oder der Filamentverpackung) und schließe die Tür.
+
   Cleared from settings — system unpair failed, may need OS Bluetooth: Aus Einstellungen
     entfernt – System-Entkopplung fehlgeschlagen, ggf. OS-Bluetooth nötig
   Clipboard unavailable - use SSH: Zwischenablage nicht verfügbar - verwenden Sie
@@ -764,6 +770,8 @@ translations:
   Could not confirm cancel: Abbruch konnte nicht bestätigt werden
   Could not forget device: Gerät konnte nicht vergessen werden
   Could not load printer database: Druckerdatenbank konnte nicht geladen werden
+  Could not move the plate: Heizbett konnte nicht bewegt werden
+
   Could not open Klipper's accelerometer stream. Check that Klipper is running, then retry.: Der Beschleunigungssensor-Stream von Klipper konnte nicht geöffnet werden. Prüfen Sie, ob Klipper läuft, und versuchen Sie es erneut.
   Could not parse tips database: Tipps-Datenbank konnte nicht ausgelesen werden
   Could not reach Spoolman at: 'Spoolman nicht erreichbar unter:'
@@ -772,6 +780,10 @@ translations:
   Could not resolve printer RFCOMM channel: RFCOMM-Kanal des Druckers konnte nicht
     ermittelt werden
   Could not save filament: Filament konnte nicht gespeichert werden
+  Could not save the drying state: Trocknungsstatus konnte nicht gespeichert werden
+
+  'Could not save the drying state: nothing was heated': 'Trocknungsstatus konnte nicht gespeichert werden: Es wurde nichts geheizt'
+
   "Could not save the mesh as '{}': {}": "Netz konnte nicht als '{}' gespeichert werden: {}"
   Could not start Bluetooth discovery: Bluetooth-Erkennung konnte nicht gestartet
     werden
@@ -925,7 +937,17 @@ translations:
     Effekt zeichnen — hilft beim Diagnostizieren von Versätzen
   Drive Cal: Antriebs-Kal.
   Drop shadow strength (0 = disabled): Schattenstärke (0 = deaktiviert)
+  Dry Filament: Filament trocknen
+
+  Dry Filament on the Bed: Filament auf dem Heizbett trocknen
+
+  Dry spools on the heated bed: Spulen auf dem Heizbett trocknen
+
   Drying: Trocknen
+  Drying is already running: Trocknung läuft bereits
+
+  Drying on the bed: Trocknung auf dem Heizbett
+
   Drying started: Trocknung gestartet
   Drying stopped: Trocknung gestoppt
   Duplicate: Duplizieren
@@ -986,6 +1008,10 @@ translations:
   Enable/disable automatic backup spool switching: 'Automatischen Wechsel zur Ersatzspule aktivieren/deaktivieren'
   Enable/disable quiet operation mode: 'Leisen Betriebsmodus aktivieren/deaktivieren'
   Enabled: Aktiviert
+  Enclosed: Geschlossen
+
+  Enclosure: Gehäuse
+
   Encoder: Encoder
   Encoder Error: 'Encoder-Fehler'
   Ended: Beendet
@@ -1254,6 +1280,8 @@ translations:
   Filament is clear of the toolhead. Pull it out the rest of the way.: Das Filament ist frei vom Werkzeugkopf. Ziehen Sie es ganz heraus.
   Filament is dragging: Filament läuft schwergängig
   Filament is loaded at the toolhead. Unload it before enabling bypass.: 'Filament ist im Werkzeugkopf geladen. Entladen Sie es, bevor Sie den Bypass aktivieren.'
+  Filament is loaded at the toolhead. Unload it first, so it does not soften in the extruder while the bed heats.: Im Werkzeugkopf ist Filament geladen. Entlade es zuerst, damit es im Extruder nicht weich wird, während das Heizbett heizt.
+
   Filament is loose: Filament ist locker
   Filament is pulling tight: Filament zieht straff
   ? Filament is still at the nozzle after unloading. The cut or retract may not have completed. Clear the toolhead before loading another spool.
@@ -1312,6 +1340,8 @@ translations:
   FlashForge Adventurer 5X: FlashForge Adventurer 5X
   FlashForge IFS: FlashForge IFS
   Flip: Spiegeln
+  Flip the spools: Spulen wenden
+
   Flow: Fluss
   Flow Compensation: 'Durchflusskompensation'
   Flow Rate: Flussrate
@@ -1365,6 +1395,8 @@ translations:
   HTTP Code: HTTP-Code
   'HTTP error: {} {}': 'HTTP-Fehler: {} {}'
   HUMIDITY SENSORS: FEUCHTIGKEITSSENSOREN
+  'Halfway through drying: flip the spools over. Use gloves, the plate is hot.': 'Halbzeit der Trocknung: Wende die Spulen. Trage Handschuhe, das Heizbett ist heiß.'
+
   Hang on, we'll be right back!: Einen Moment, wir sind gleich wieder da!
   Happy Hare MMU: Happy Hare MMU
   Hardware: Hardware
@@ -1493,6 +1525,8 @@ translations:
   Hyperlapse: Hyperlapse
   Hyperlapse captures frames at fixed time intervals. Good for very long prints.: Hyperlapse
     erfasst Bilder in festen Zeitintervallen. Gut für sehr lange Drucke.
+  I understand: Ich habe verstanden
+
   ID (optional): ID (optional)
   IMPORT FROM USB: VON USB IMPORTIEREN
   IP Address / Hostname: IP-Adresse / Hostname
@@ -1800,6 +1834,8 @@ translations:
   Make Optional: Optional machen
   Make bed mesh and QGL skippable: Bettnetz und QGL überspringbar machen
   Make sure every nozzle is clean.: Stelle sicher, dass alle Düsen sauber sind.
+  'Make sure no filament is loaded at the toolhead: it can soften in the extruder while the bed heats.': 'Stelle sicher, dass kein Filament im Werkzeugkopf geladen ist: Es kann im Extruder weich werden, während das Heizbett heizt.'
+
   MakeID (Bluetooth): MakeID (Bluetooth)
   Manage: Verwalten
   Manage Printers: Drucker verwalten
@@ -1816,6 +1852,8 @@ translations:
     zuordnen
   Mapping Error: 'Zuordnungsfehler'
   Marginal: Grenzwertig
+  Mark a printer you enclosed yourself: Einen selbst eingehausten Drucker markieren
+
   Master volume level: Hauptlautstärke
   Match: Übereinstimmung
   Match to belt A: An Riemen A angleichen
@@ -1893,6 +1931,8 @@ translations:
     2-3 Minuten. Der Drucker wird Geräusche machen — das ist normal.
   Moving gantry: Gantry bewegen
   Moving lane: Spur bewegen
+  Moving the plate...: Heizbett wird bewegt...
+
   Multi-Filament: Multi-Filament
   Multi-Filament Overview: Multi-Filament-Übersicht
   Multi-Filament System: Multi-Filament
@@ -2016,11 +2056,15 @@ translations:
   No spool assigned: Keine Spule zugewiesen
   No spools found — tap to retry: Keine Spulen gefunden — tippen zum Wiederholen
   No spools match your search: Keine Spulen entsprechen Ihrer Suche
+  No spools placed: Keine Spulen eingelegt
+
   No tape detected in printer: Kein Band im Drucker erkannt
   No target printer configured: Kein Zieldrucker konfiguriert
   No temperature sensors detected: 'Keine Temperatursensoren erkannt'
   No timelapse videos found: Keine Zeitraffer-Videos gefunden
   No tools to calibrate: Keine Werkzeuge zum Kalibrieren
+  'No unload macro found: unload by hand, then start again': 'Kein Entlade-Makro gefunden: Entlade von Hand und starte dann erneut'
+
   No vendors found: Keine Hersteller gefunden
   No verified bypass command for this CFS firmware: 'Kein verifizierter Bypass-Befehl für diese CFS-Firmware'
   No video player installed - showing the timelapse library: 'Kein Videoplayer installiert – Zeitraffer-Bibliothek wird angezeigt'
@@ -2109,6 +2153,8 @@ translations:
   Open color and brightness controls: Farb- und Helligkeitsregler öffnen
   Open feeder macro: Makro zum Öffnen der Zuführung
   Open feeder: Zuführung öffnen
+  Open frame: Offener Rahmen
+
   Open motion controls for jogging: Bewegungssteuerung öffnen
   Open the CFS unit and remove the broken filament from the slot: CFS-Einheit öffnen und das gebrochene Filament aus dem Slot entfernen
   Operation already in progress: Vorgang läuft bereits
@@ -2201,6 +2247,8 @@ translations:
   'Place image files (PNG, JPEG, BMP, GIF) in config/custom_images/. Max size: 2048×2048 pixels.': 'Bilddateien
     (PNG, JPEG, BMP, GIF) in config/custom_images/ ablegen. Max. Größe: 2048×2048
     Pixel.'
+  Place the spools: Spulen einlegen
+
   Placed: Platziert
   Platform: Plattform
   'Platform: ': 'Plattform: '
@@ -2522,6 +2570,12 @@ translations:
   Remove plugin from printer: Plugin vom Drucker entfernen
   'Remove the PEI sheet from the bed, then start again: probing through the sheet gives wrong results': 'Entferne die PEI-Platte vom Bett und starte erneut: Messungen durch die Platte liefern falsche Ergebnisse'
   Remove the bypass spool from the toolhead first: 'Zuerst die Bypass-Spule aus dem Werkzeugkopf entfernen'
+  Remove the spools: Spulen entnehmen
+
+  Remove the spools from the bed: Spulen vom Heizbett nehmen
+
+  Remove the spools now?: Spulen jetzt entnehmen?
+
   Rename: Umbenennen
   Rename Fan: Lüfter umbenennen
   Rename Mesh Profile: Netzprofil umbenennen
@@ -2650,6 +2704,8 @@ translations:
   Run stopped: 'Durchlauf gestoppt'
   Run test sequence on all lanes: 'Testsequenz auf allen Spuren ausführen'
   Run the HelixScreen installer with --update from a terminal on this printer. Scan for the command for your platform.: HelixScreen-Installer mit --update in einem Terminal auf diesem Drucker ausführen. Für den passenden Befehl den Code scannen.
+  Run the chamber dryer too: Kammertrockner ebenfalls betreiben
+
   Run {}?: '{} ausführen?'
   Running {}...: '{} wird ausgeführt...'
   Runout: 'Auslauf'
@@ -2957,6 +3013,12 @@ translations:
   Spoolman was not configured.: Spoolman war nicht konfiguriert.
   'Spoolman: %zu Spool%s': 'Spoolman: %zu Spule%s'
   'Spoolman: %zu/%zu Spool%s': 'Spoolman: %zu/%zu Spule%s'
+  'Spools are on the bed: tap the drying banner to confirm they are off, then restart.': 'Spulen liegen auf dem Heizbett: Tippe auf das Trocknungsbanner, um zu bestätigen, dass sie entnommen sind, und starte dann neu.'
+
+  'Spools on the bed: start drying, or confirm none were placed': 'Spulen auf dem Heizbett: Trocknung starten oder bestätigen, dass keine eingelegt wurden'
+
+  Spools removed: Spulen entnommen
+
   Square Corner Velocity: Eckgeschwindigkeit
   Stable: Stabil
   Stall detection setup failed for the Z motor — power-cycle to retry: Einrichten der Blockiererkennung für den Z-Motor fehlgeschlagen. Zum erneuten Versuch aus- und einschalten
@@ -2974,6 +3036,8 @@ translations:
   Start Probing: Abtasten starten
   Start anyway?: 'Trotzdem starten?'
   Start at: Beginnen bei
+  Start drying: Trocknung starten
+
   Start failed: Start fehlgeschlagen
   'Start next: {}': 'Nächstes starten: {}'
   Start over: Von vorne beginnen
@@ -2997,6 +3061,8 @@ translations:
   Stop: Stoppen
   Stop Drying: Trocknen stoppen
   Stop Print?: Druck stoppen?
+  Stop drying?: Trocknung stoppen?
+
   Stop failed: Stopp fehlgeschlagen
   ? "Stop printing \"{}\"?\n\nThis cannot be undone after 5 seconds."
   : "Druck von \"{}\" stoppen?\n\nDies kann nach 5 Sekunden nicht rückgängig gemacht werden."
@@ -3125,6 +3191,10 @@ translations:
     interfering with prints. You can re-enable it in Settings > Display.
   : Der animierte Bildschirmschoner wurde auf diesem Gerät ausgeschaltet, um zu verhindern,
     dass er Drucke stört. Sie können ihn unter Einstellungen > Anzeige wieder aktivieren.
+  The bed has cooled. Take the spools off the plate, then confirm.: Das Heizbett ist abgekühlt. Nimm die Spulen vom Heizbett und bestätige dann.
+
+  The bed turns off. The spools stay latched on the bed until you confirm they are off.: Das Heizbett schaltet ab. Die Spulen bleiben als auf dem Heizbett liegend gesperrt, bis du bestätigst, dass sie entnommen sind.
+
   The bed was reported dirty, so this print cannot resume.: 'Das Heizbett wurde als verschmutzt gemeldet, daher kann dieser Druck nicht fortgesetzt werden.'
   The buffer may be disconnected, stuck, or faulty. Check it before retrying: Der Puffer ist möglicherweise nicht angeschlossen, klemmt oder ist defekt. Vor dem erneuten Versuch prüfen
   The buffer saw no movement for 16 seconds. Check for a blockage between the CFS and the extruder, or a stuck buffer: Der Puffer hat 16 Sekunden lang keine Bewegung erkannt. Auf eine Blockade zwischen CFS und Extruder oder einen klemmenden Puffer prüfen
@@ -3142,6 +3212,8 @@ translations:
   ? The loaded spool is {}, but this file was sliced for {}. Filled filament runs at a lower flow rate and needs a hardened nozzle.
   : Die geladene Spule ist {}, aber diese Datei wurde für {} gesliced. Gefülltes Filament läuft mit einer niedrigeren Flussrate und erfordert eine gehärtete Düse.
   The nozzle extrudes a few short test moves in a corner, away from the print area, and repeats until it agrees with itself.: 'Die Düse macht ein paar kurze Testbewegungen in einer Ecke, abseits des Druckbereichs, und wiederholt sie, bis die Werte übereinstimmen.'
+  The plate and the spools are still hot. Use gloves.: Heizbett und Spulen sind noch heiß. Trage Handschuhe.
+
   ? The print is paused. Changing tools now moves the toolhead and swaps the filament at the nozzle. Resume the print once the change finishes.
   : Der Druck ist pausiert. Ein Werkzeugwechsel bewegt jetzt den Werkzeugkopf und
     tauscht das Filament an der Düse. Setzen Sie den Druck fort, sobald der Wechsel
@@ -3155,6 +3227,10 @@ translations:
   ? The printer heats the nozzle, extrudes a few short test moves in a corner of the plate, and measures them itself. It repeats until the readings agree, then reports one number.
   : 'Der Drucker heizt die Düse, macht ein paar kurze Testbewegungen in einer Ecke der Platte und misst sie selbst. Er wiederholt, bis die Messwerte übereinstimmen, und meldet dann eine Zahl.'
   The printer homes and sweeps the cutter (about 1 minute). Keep the filament path clear.: Der Drucker referenziert und vermisst den Schneider (ca. 1 Minute). Halten Sie den Filamentweg frei.
+  ? The printer homes, then moves the plate as far from the nozzle as it goes. Some spools are not heat-resistant enough and can deform. Nothing moves from this screen until you confirm the spools are off the bed; Mainsail, macros and prints sent from a slicer are not blocked.
+
+  : Der Drucker referenziert und fährt das Heizbett dann so weit wie möglich von der Düse weg. Manche Spulen sind nicht hitzebeständig genug und können sich verformen. Von diesem Bildschirm aus bewegt sich nichts, bis du bestätigst, dass die Spulen vom Heizbett sind; Mainsail, Makros und von einem Slicer gesendete Drucke werden nicht blockiert.
+
   The printer is not homed. Continuing will home all axes, moving the toolhead. Make sure the bed is clear.: Der Drucker ist nicht referenziert. Wenn Sie fortfahren, werden alle Achsen referenziert und der Werkzeugkopf bewegt sich. Stellen Sie sicher, dass das Heizbett frei ist.
   The printer lost power during a print. It can resume where it left off.: Der Drucker
     hatte während eines Drucks einen Stromausfall. Er kann dort fortsetzen, wo er aufgehört
@@ -3418,6 +3494,8 @@ translations:
   'Unload at end': 'Am Ende entladen'
   Unload failed: Entladen fehlgeschlagen
   Unload filament: 'Filament entladen'
+  Unload filament?: Filament entladen?
+
   Unload from toolhead first: 'Entladen Sie zuerst aus dem Werkzeugkopf'
   Unload macro not configured: Entlade-Makro nicht konfiguriert
   Unload the CFS filament before enabling bypass: 'Entladen Sie das CFS-Filament, bevor Sie den Bypass aktivieren'

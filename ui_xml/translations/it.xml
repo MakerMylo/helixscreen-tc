@@ -291,6 +291,7 @@
   <translation tag="Bed Screws" it="Viti piano"/>
   <translation tag="Bed Temp" it="Temp. piatto"/>
   <translation tag="Bed Temperature" it="Temperatura del piano"/>
+  <translation tag="Bed cooling, spools still on the bed:" it="Il piano si sta raffreddando, le bobine sono ancora sopra:"/>
   <translation tag="Bed is Level!" it="Piano livellato!"/>
   <translation tag="Bed mesh operation timed out" it="Mesh piano — tempo scaduto"/>
   <translation tag="Bed mesh..." it="Mesh piano..."/>
@@ -545,6 +546,7 @@
   <translation tag="Clear Spool" it="Rimuovi bobina"/>
   <translation tag="Clear all spool failover assignments" it="Cancella tutte le assegnazioni di bobina di riserva"/>
   <translation tag="Clear failed" it="Cancellazione fallita"/>
+  <translation tag="Clear the area above and below the plate. Lay the spools on the plate, cover them with a box (a printed lid or the filament&apos;s packaging) and close the door." it="Libera lo spazio sopra e sotto il piano. Appoggia le bobine sul piano, coprile con una scatola (un coperchio stampato o la confezione del filamento) e chiudi lo sportello."/>
   <translation tag="Cleared from settings — system unpair failed, may need OS Bluetooth" it="Rimosso dalle impostazioni; disaccoppiamento di sistema fallito, potrebbe servire il Bluetooth del sistema operativo"/>
   <translation tag="Clipboard unavailable - use SSH" it="Appunti non disponibili - usare SSH"/>
   <translation tag="Clog" it="Intasamento"/>
@@ -677,6 +679,7 @@
   <translation tag="Could not confirm cancel" it="Impossibile confermare l&apos;annullamento"/>
   <translation tag="Could not forget device" it="Impossibile dimenticare il dispositivo"/>
   <translation tag="Could not load printer database" it="Impossibile caricare il database della stampante"/>
+  <translation tag="Could not move the plate" it="Impossibile spostare il piano"/>
   <translation tag="Could not open Klipper&apos;s accelerometer stream. Check that Klipper is running, then retry." it="Impossibile aprire lo stream dell&apos;accelerometro di Klipper. Verifica che Klipper sia in esecuzione, poi riprova."/>
   <translation tag="Could not parse tips database" it="Impossibile analizzare il database dei suggerimenti"/>
   <translation tag="Could not reach Spoolman at" it="Impossibile raggiungere Spoolman a"/>
@@ -684,6 +687,8 @@
   <translation tag="Could not remove the job from the queue" it="Impossibile rimuovere il lavoro dalla coda"/>
   <translation tag="Could not resolve printer RFCOMM channel" it="Impossibile risolvere il canale RFCOMM della stampante"/>
   <translation tag="Could not save filament" it="Impossibile salvare il filamento"/>
+  <translation tag="Could not save the drying state" it="Impossibile salvare lo stato dell&apos;essiccazione"/>
+  <translation tag="Could not save the drying state: nothing was heated" it="Impossibile salvare lo stato dell&apos;essiccazione: non è stato riscaldato nulla"/>
   <translation tag="Could not save the mesh as &apos;{}&apos;: {}" it="Impossibile salvare la mesh come &apos;{}&apos;: {}"/>
   <translation tag="Could not start Bluetooth discovery" it="Impossibile avviare la ricerca Bluetooth"/>
   <translation tag="Could not update filaments" it="Impossibile aggiornare i filamenti"/>
@@ -830,7 +835,12 @@
   <translation tag="Draw a ripple at each touch — helps diagnose offsets" it="Disegna un&apos;onda a ogni tocco — aiuta a diagnosticare gli scostamenti"/>
   <translation tag="Drive Cal" it="Cal. drive"/>
   <translation tag="Drop shadow strength (0 = disabled)" it="Intensità ombra (0 = disabilitata)"/>
+  <translation tag="Dry Filament" it="Essicca filamento"/>
+  <translation tag="Dry Filament on the Bed" it="Essicca il filamento sul piano"/>
+  <translation tag="Dry spools on the heated bed" it="Essicca le bobine sul piano riscaldato"/>
   <translation tag="Drying" it="Essiccazione"/>
+  <translation tag="Drying is already running" it="Un&apos;essiccazione è già in corso"/>
+  <translation tag="Drying on the bed" it="Essiccazione sul piano"/>
   <translation tag="Drying started" it="Essiccazione avviata"/>
   <translation tag="Drying stopped" it="Essiccazione interrotta"/>
   <translation tag="Duplicate" it="Duplica"/>
@@ -889,6 +899,8 @@
   <translation tag="Enable/disable automatic backup spool switching" it="Abilita/disabilita il passaggio automatico alla bobina di riserva"/>
   <translation tag="Enable/disable quiet operation mode" it="Abilita/disabilita la modalità di funzionamento silenziosa"/>
   <translation tag="Enabled" it="Abilitato"/>
+  <translation tag="Enclosed" it="Chiusa"/>
+  <translation tag="Enclosure" it="Chiusura"/>
   <translation tag="Encoder" it="Encoder"/>
   <translation tag="Encoder Error" it="Errore dell&apos;encoder"/>
   <translation tag="Ended" it="Terminato"/>
@@ -1130,6 +1142,7 @@
   <translation tag="Filament is clear of the toolhead. Pull it out the rest of the way." it="Il filamento non è più nella testina. Estrailo del tutto."/>
   <translation tag="Filament is dragging" it="Il filamento oppone resistenza"/>
   <translation tag="Filament is loaded at the toolhead. Unload it before enabling bypass." it="Il filamento è caricato nella testina. Scaricalo prima di attivare il bypass."/>
+  <translation tag="Filament is loaded at the toolhead. Unload it first, so it does not soften in the extruder while the bed heats." it="C&apos;è filamento caricato nella testina. Scaricalo prima, così non si ammorbidisce nell&apos;estrusore mentre il piano si scalda."/>
   <translation tag="Filament is loose" it="Il filamento è allentato"/>
   <translation tag="Filament is pulling tight" it="Il filamento è in tensione"/>
   <translation tag="Filament is still at the nozzle after unloading. The cut or retract may not have completed. Clear the toolhead before loading another spool." it="Dopo lo scaricamento il filamento è ancora all&apos;ugello. Il taglio o la retrazione potrebbe non essere completato. Libera la testina prima di caricare un&apos;altra bobina."/>
@@ -1185,6 +1198,7 @@
   <translation tag="FlashForge Adventurer 5X" it="FlashForge Adventurer 5X"/>
   <translation tag="FlashForge IFS" it="FlashForge IFS"/>
   <translation tag="Flip" it="Capovolgi"/>
+  <translation tag="Flip the spools" it="Gira le bobine"/>
   <translation tag="Flow" it="Flusso"/>
   <translation tag="Flow Compensation" it="Compensazione di flusso"/>
   <translation tag="Flow Rate" it="Flusso"/>
@@ -1236,6 +1250,7 @@
   <translation tag="HTTP Code" it="Codice HTTP"/>
   <translation tag="HTTP error: {} {}" it="Errore HTTP: {} {}"/>
   <translation tag="HUMIDITY SENSORS" it="SENSORI DI UMIDITÀ"/>
+  <translation tag="Halfway through drying: flip the spools over. Use gloves, the plate is hot." it="Metà essiccazione: gira le bobine. Usa i guanti, il piano è caldo."/>
   <translation tag="Hang on, we&apos;ll be right back!" it="Aspetta, torniamo subito!"/>
   <translation tag="Happy Hare MMU" it="Happy Hare MMU"/>
   <translation tag="Hardware" it="Hardware"/>
@@ -1348,6 +1363,7 @@
   <translation tag="Humidity inside the enclosure" it="Umidità nella camera"/>
   <translation tag="Hyperlapse" it="Hyperlapse"/>
   <translation tag="Hyperlapse captures frames at fixed time intervals. Good for very long prints." it="Hyperlapse cattura i fotogrammi a intervalli di tempo fissi. Ideale per stampe molto lunghe."/>
+  <translation tag="I understand" it="Ho capito"/>
   <translation tag="ID (optional)" it="ID (opzionale)"/>
   <translation tag="IMPORT FROM USB" it="IMPORTA DA USB"/>
   <translation tag="IP Address / Hostname" it="Indirizzo IP / Hostname"/>
@@ -1616,6 +1632,7 @@
   <translation tag="Make Optional" it="Rendi opzionale"/>
   <translation tag="Make bed mesh and QGL skippable" it="Rendi mesh piano e QGL saltabili"/>
   <translation tag="Make sure every nozzle is clean." it="Assicurati che tutti gli ugelli siano puliti."/>
+  <translation tag="Make sure no filament is loaded at the toolhead: it can soften in the extruder while the bed heats." it="Assicurati che nella testina non sia caricato filamento: può ammorbidirsi nell&apos;estrusore mentre il piano si scalda."/>
   <translation tag="MakeID (Bluetooth)" it="MakeID (Bluetooth)"/>
   <translation tag="Manage" it="Gestisci"/>
   <translation tag="Manage Printers" it="Gestisci stampanti"/>
@@ -1631,6 +1648,7 @@
   <translation tag="Map to closest colors with matching material" it="Abbina ai colori più vicini con materiale compatibile"/>
   <translation tag="Mapping Error" it="Errore di mappatura"/>
   <translation tag="Marginal" it="Marginale"/>
+  <translation tag="Mark a printer you enclosed yourself" it="Indica una stampante che hai chiuso tu"/>
   <translation tag="Master volume level" it="Livello volume principale"/>
   <translation tag="Match" it="Corrispondenza"/>
   <translation tag="Match to belt A" it="Corrispondenza con la cinghia A"/>
@@ -1703,6 +1721,7 @@
   <translation tag="Moves the print head to measure vibration frequencies on each axis. Takes 2-3 minutes. The printer will make noise — this is normal." it="Muove la testina per misurare le frequenze di vibrazione su ogni asse. Richiede 2-3 minuti. La stampante farà rumore — è normale."/>
   <translation tag="Moving gantry" it="Spostamento gantry"/>
   <translation tag="Moving lane" it="Spostamento corsia"/>
+  <translation tag="Moving the plate..." it="Spostamento del piano..."/>
   <translation tag="Multi-Filament" it="Multi-filamento"/>
   <translation tag="Multi-Filament Overview" it="Panoramica multi-filamento"/>
   <translation tag="Multi-Filament System" it="Sistema multi-filamento"/>
@@ -1817,11 +1836,13 @@
   <translation tag="No spool assigned" it="Nessuna bobina assegnata"/>
   <translation tag="No spools found — tap to retry" it="Nessuna bobina trovata — tocca per riprovare"/>
   <translation tag="No spools match your search" it="Nessuna bobina corrisponde alla tua ricerca"/>
+  <translation tag="No spools placed" it="Nessuna bobina appoggiata"/>
   <translation tag="No tape detected in printer" it="Nessun nastro rilevato nella stampante"/>
   <translation tag="No target printer configured" it="Nessuna stampante di destinazione configurata"/>
   <translation tag="No temperature sensors detected" it="Nessun sensore di temperatura rilevato"/>
   <translation tag="No timelapse videos found" it="Nessun video timelapse trovato"/>
   <translation tag="No tools to calibrate" it="Nessuno strumento da calibrare"/>
+  <translation tag="No unload macro found: unload by hand, then start again" it="Nessuna macro di scarico trovata: scarica a mano, poi ricomincia"/>
   <translation tag="No vendors found" it="Nessun fornitore trovato"/>
   <translation tag="No verified bypass command for this CFS firmware" it="Nessun comando bypass verificato per questo firmware CFS"/>
   <translation tag="No video player installed - showing the timelapse library" it="Nessun lettore video installato – viene mostrata la libreria timelapse"/>
@@ -1908,6 +1929,7 @@
   <translation tag="Open color and brightness controls" it="Apri controlli colore e luminosità"/>
   <translation tag="Open feeder" it="Apri alimentatore"/>
   <translation tag="Open feeder macro" it="Macro di apertura alimentatore"/>
+  <translation tag="Open frame" it="Telaio aperto"/>
   <translation tag="Open motion controls for jogging" it="Apri i controlli di movimento"/>
   <translation tag="Open the CFS unit and remove the broken filament from the slot" it="Aprire l&apos;unità CFS e rimuovere il filamento spezzato dallo slot"/>
   <translation tag="Operation already in progress" it="Operazione già in corso"/>
@@ -1991,6 +2013,7 @@
   <translation tag="Pill" it="Pillola"/>
   <translation tag="Pixels before a press becomes a scroll (lower = scrolls engage sooner)" it="Pixel prima che una pressione diventi scorrimento (più basso = scorrimento più rapido)"/>
   <translation tag="Place image files (PNG, JPEG, BMP, GIF) in config/custom_images/. Max size: 2048×2048 pixels." it="Posiziona file immagine (PNG, JPEG, BMP, GIF) in config/custom_images/. Dimensione max: 2048×2048 pixel."/>
+  <translation tag="Place the spools" it="Appoggia le bobine"/>
   <translation tag="Placed" it="Inserito"/>
   <translation tag="Platform" it="Piattaforma"/>
   <translation tag="Platform: " it="Piattaforma: "/>
@@ -2281,6 +2304,9 @@
   <translation tag="Remove plugin from printer" it="Rimuovi plugin dalla stampante"/>
   <translation tag="Remove the PEI sheet from the bed, then start again: probing through the sheet gives wrong results" it="Rimuovi il foglio PEI dal piatto, poi riprova: sondare attraverso il foglio dà risultati errati"/>
   <translation tag="Remove the bypass spool from the toolhead first" it="Rimuovi prima la bobina di bypass dalla testina"/>
+  <translation tag="Remove the spools" it="Togli le bobine"/>
+  <translation tag="Remove the spools from the bed" it="Togli le bobine dal piano"/>
+  <translation tag="Remove the spools now?" it="Togliere le bobine adesso?"/>
   <translation tag="Rename" it="Rinomina"/>
   <translation tag="Rename Fan" it="Rinomina ventola"/>
   <translation tag="Rename Mesh Profile" it="Rinomina profilo mesh"/>
@@ -2401,6 +2427,7 @@
   <translation tag="Run stopped" it="Esecuzione fermata"/>
   <translation tag="Run test sequence on all lanes" it="Esegui la sequenza di test su tutte le corsie"/>
   <translation tag="Run the HelixScreen installer with --update from a terminal on this printer. Scan for the command for your platform." it="Esegui l&apos;installer di HelixScreen con --update da un terminale su questa stampante. Scansiona per il comando della tua piattaforma."/>
+  <translation tag="Run the chamber dryer too" it="Usa anche l&apos;essiccatore della camera"/>
   <translation tag="Run {}?" it="Eseguire {}?"/>
   <translation tag="Running {}..." it="Esecuzione {}..."/>
   <translation tag="Runout" it="Esaurimento"/>
@@ -2665,6 +2692,9 @@
   <translation tag="Spoolman was not configured." it="Spoolman non era configurato."/>
   <translation tag="Spoolman: %zu Spool%s" it="Spoolman: %zu bobina%s"/>
   <translation tag="Spoolman: %zu/%zu Spool%s" it="Spoolman: %zu/%zu bobina%s"/>
+  <translation tag="Spools are on the bed: tap the drying banner to confirm they are off, then restart." it="Ci sono bobine sul piano: tocca il banner dell&apos;essiccazione per confermare di averle tolte, poi riavvia."/>
+  <translation tag="Spools on the bed: start drying, or confirm none were placed" it="Bobine sul piano: avvia l&apos;essiccazione o conferma di non averne appoggiata nessuna"/>
+  <translation tag="Spools removed" it="Bobine tolte"/>
   <translation tag="Square Corner Velocity" it="Velocità angoli retti"/>
   <translation tag="Stable" it="Stabile"/>
   <translation tag="Stall detection setup failed for the Z motor — power-cycle to retry" it="Impostazione del rilevamento di stallo per il motore Z non riuscita. Spegnere e riaccendere per riprovare"/>
@@ -2682,6 +2712,7 @@
   <translation tag="Start Probing" it="Avvia sondaggio"/>
   <translation tag="Start anyway?" it="Avviare comunque?"/>
   <translation tag="Start at" it="Inizia da"/>
+  <translation tag="Start drying" it="Avvia essiccazione"/>
   <translation tag="Start failed" it="Avvio fallito"/>
   <translation tag="Start next: {}" it="Avvia il prossimo: {}"/>
   <translation tag="Start over" it="Ricomincia"/>
@@ -2705,6 +2736,7 @@
   <translation tag="Stop" it="Ferma"/>
   <translation tag="Stop Drying" it="Ferma essiccazione"/>
   <translation tag="Stop Print?" it="Fermare stampa?"/>
+  <translation tag="Stop drying?" it="Fermare l&apos;essiccazione?"/>
   <translation tag="Stop failed" it="Arresto fallito"/>
   <translation tag="Stop printing &quot;{}&quot;?&#10;&#10;This cannot be undone after 5 seconds." it="Interrompere la stampa di &quot;{}&quot;?&#10;&#10;Non sarà possibile annullare dopo 5 secondi."/>
   <translation tag="Stopped" it="Fermato"/>
@@ -2813,6 +2845,8 @@
   <translation tag="The Spoolman spool currently loaded" it="La bobina Spoolman caricata"/>
   <translation tag="The accelerometer stream stopped: %s. Check that Klipper is running, then retry." it="Lo stream dell&apos;accelerometro si è interrotto: %s. Verifica che Klipper sia in esecuzione, poi riprova."/>
   <translation tag="The animated screensaver has been turned off on this device to prevent it from interfering with prints. You can re-enable it in Settings &gt; Display." it="Il salvaschermo animato è stato disattivato su questo dispositivo per evitare che interferisca con le stampe. Puoi riattivarlo in Impostazioni &gt; Schermo."/>
+  <translation tag="The bed has cooled. Take the spools off the plate, then confirm." it="Il piano si è raffreddato. Togli le bobine dal piano, poi conferma."/>
+  <translation tag="The bed turns off. The spools stay latched on the bed until you confirm they are off." it="Il piano si spegne. Le bobine restano registrate sul piano finché non confermi di averle tolte."/>
   <translation tag="The bed was reported dirty, so this print cannot resume." it="Il piano è stato segnalato come sporco, quindi questa stampa non può riprendere."/>
   <translation tag="The buffer may be disconnected, stuck, or faulty. Check it before retrying" it="Il buffer potrebbe essere scollegato, bloccato o guasto. Controllarlo prima di riprovare"/>
   <translation tag="The buffer saw no movement for 16 seconds. Check for a blockage between the CFS and the extruder, or a stuck buffer" it="Il buffer non ha rilevato movimento per 16 secondi. Verificare un&apos;ostruzione tra CFS ed estrusore, o un buffer bloccato"/>
@@ -2827,6 +2861,7 @@
   <translation tag="The left RFID reader in this CFS unit may need service" it="Il lettore RFID sinistro di questa unità CFS potrebbe richiedere assistenza"/>
   <translation tag="The loaded spool is {}, but this file was sliced for {}. Filled filament runs at a lower flow rate and needs a hardened nozzle." it="La bobina caricata è {}, ma questo file è stato sezionato per {}. Il filamento con cariche richiede un flusso più basso e un ugello indurito."/>
   <translation tag="The nozzle extrudes a few short test moves in a corner, away from the print area, and repeats until it agrees with itself." it="L&apos;ugello fa alcuni brevi movimenti di prova in un angolo, lontano dall&apos;area di stampa, e ripete finché i valori convergono."/>
+  <translation tag="The plate and the spools are still hot. Use gloves." it="Il piano e le bobine sono ancora caldi. Usa i guanti."/>
   <translation tag="The print is paused. Changing tools now moves the toolhead and swaps the filament at the nozzle. Resume the print once the change finishes." it="La stampa è in pausa. Cambiare utensile ora muove la testina e sostituisce il filamento all&apos;ugello. Riprendi la stampa al termine del cambio."/>
   <translation tag="The printer applied this value and keeps it for this tool." it="La stampante ha applicato questo valore e lo conserva per questo strumento."/>
   <translation tag="The printer extrudes in a corner and repeats until the readings agree. You do not judge anything by eye." it="La stampante estrude in un angolo e ripete finché le letture concordano. Non giudichi nulla a occhio."/>
@@ -2834,6 +2869,7 @@
   <translation tag="The printer halted this print and cannot resume it. Restart from the beginning?" it="La stampante ha interrotto questa stampa e non può riprenderla. Riavviare dall&apos;inizio?"/>
   <translation tag="The printer heats the nozzle, extrudes a few short test moves in a corner of the plate, and measures them itself. It repeats until the readings agree, then reports one number." it="La stampante riscalda l&apos;ugello, fa alcuni brevi movimenti di prova in un angolo del piano e li misura da sola. Ripete finché le letture concordano, poi riporta un unico numero."/>
   <translation tag="The printer homes and sweeps the cutter (about 1 minute). Keep the filament path clear." it="La stampante si azzera e fa scorrevolare la taglierina (circa 1 minuto). Mantenere libero il percorso del filamento."/>
+  <translation tag="The printer homes, then moves the plate as far from the nozzle as it goes. Some spools are not heat-resistant enough and can deform. Nothing moves from this screen until you confirm the spools are off the bed; Mainsail, macros and prints sent from a slicer are not blocked." it="La stampante esegue l&apos;homing, poi allontana il piano dall&apos;ugello il più possibile. Alcune bobine non resistono abbastanza al calore e possono deformarsi. Da questa schermata non si muove nulla finché non confermi che le bobine non sono più sul piano; Mainsail, le macro e le stampe inviate da uno slicer non vengono bloccati."/>
   <translation tag="The printer is not homed. Continuing will home all axes, moving the toolhead. Make sure the bed is clear." it="La stampante non ha eseguito l&apos;homing. Continuando verrà eseguito l&apos;homing di tutti gli assi, muovendo la testina. Assicurarsi che il piano sia libero."/>
   <translation tag="The printer lost power during a print. It can resume where it left off." it="La stampante ha perso l&apos;alimentazione durante una stampa. Può riprendere da dove si è interrotta."/>
   <translation tag="The printer lost power during a print. The resumed layer may not line up exactly." it="La stampante ha perso l&apos;alimentazione durante una stampa. Il layer ripreso potrebbe non allinearsi perfettamente."/>
@@ -3043,6 +3079,7 @@
   <translation tag="Unload at end" it="Scarica alla fine"/>
   <translation tag="Unload failed" it="Scarico non riuscito"/>
   <translation tag="Unload filament" it="Scarica il filamento"/>
+  <translation tag="Unload filament?" it="Scaricare il filamento?"/>
   <translation tag="Unload from toolhead first" it="Scarica prima dalla testina"/>
   <translation tag="Unload macro not configured" it="Macro scaricamento non configurata"/>
   <translation tag="Unload the CFS filament before enabling bypass" it="Scarica il filamento del CFS prima di attivare il bypass"/>

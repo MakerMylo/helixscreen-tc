@@ -74,6 +74,7 @@ void PrintingSettingsOverlay::register_callbacks() {
         {"on_toolhead_style_changed", on_toolhead_style_changed},
         {"on_gcode_mode_changed", on_gcode_mode_changed},
         {"on_z_movement_style_changed", on_z_movement_style_changed},
+        {"on_enclosure_style_changed", on_enclosure_style_changed},
         {"on_machine_limits_clicked", on_machine_limits_clicked},
         {"on_motion_settings_clicked", on_motion_settings_clicked},
         {"on_material_temps_clicked", on_material_temps_clicked},
@@ -290,6 +291,15 @@ void PrintingSettingsOverlay::on_z_movement_style_changed(lv_event_t* e) {
     auto* dropdown = static_cast<lv_obj_t*>(lv_event_get_current_target(e));
     int index = static_cast<int>(lv_dropdown_get_selected(dropdown));
     get_printing_settings_overlay().handle_z_movement_style_changed(index);
+    LVGL_SAFE_EVENT_CB_END();
+}
+
+void PrintingSettingsOverlay::on_enclosure_style_changed(lv_event_t* e) {
+    LVGL_SAFE_EVENT_CB_BEGIN("[PrintingSettingsOverlay] on_enclosure_style_changed");
+    auto* dropdown = static_cast<lv_obj_t*>(lv_event_get_current_target(e));
+    const int index = static_cast<int>(lv_dropdown_get_selected(dropdown));
+    SettingsManager::instance().set_enclosure_style(
+        static_cast<helix::bed_drying::EnclosureStyle>(index));
     LVGL_SAFE_EVENT_CB_END();
 }
 

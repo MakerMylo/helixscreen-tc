@@ -17,8 +17,10 @@
 #include <atomic>
 #include <lvgl.h>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "hv/json.hpp"
 
@@ -465,6 +467,32 @@ class PrinterPrintState {
      */
     lv_subject_t* get_job_holds_machine_subject() {
         return &job_holds_machine_;
+    }
+
+    /**
+     * @brief Whether anything may move the toolhead: a job holds the machine,
+     *        or spools lie on the bed (prestonbrown/helixscreen#1730)
+     *
+     * What `moves_machine="true"` controls bind to. job_holds_machine keeps its
+     * own meaning, "a print owns the machine", for the C++ readers that ask it.
+     */
+    lv_subject_t* get_machine_motion_blocked_subject() {
+        return &machine_motion_blocked_;
+    }
+    lv_subject_t* get_spool_latch_subject() {
+        return &spool_latch_;
+    }
+
+    /// Set or clear the spools-on-the-bed latch. @p extra_tokens are commands a
+    /// running dry cycle needs past the send-layer allowlist. Main thread.
+    void set_spool_latch(bool on, std::vector<std::string> extra_tokens = {});
+    /// Readable from any thread: the send layer asks it.
+    [[nodiscard]] bool spool_latch_active() const {
+        return spool_latch_active_.load();
+    }
+    [[nodiscard]] std::vector<std::string> spool_latch_extra_tokens() const {
+        std::lock_guard<std::mutex> lock(spool_latch_mutex_);
+        return spool_latch_tokens_;
     }
 
     lv_subject_t* get_print_start_phase_subject() {
@@ -1005,10 +1033,16 @@ class PrinterPrintState {
     void create_extruder_filament_entry(int extruder_idx);
 
     // Print start progress subjects
-    lv_subject_t print_start_phase_{};    // Integer: PrintStartPhase enum
-    lv_subject_t print_lifecycle_{};      // Integer: PrintState enum (derived)
-    lv_subject_t print_lifecycle_prev_{}; // Integer: PrintState enum, value before the current
-    lv_subject_t job_holds_machine_{};    // Integer 0/1: job_holds_machine(print_lifecycle)
+    lv_subject_t print_start_phase_{};      // Integer: PrintStartPhase enum
+    lv_subject_t print_lifecycle_{};        // Integer: PrintState enum (derived)
+    lv_subject_t print_lifecycle_prev_{};   // Integer: PrintState enum, value before the current
+    lv_subject_t job_holds_machine_{};      // Integer 0/1: job_holds_machine(print_lifecycle)
+    lv_subject_t machine_motion_blocked_{}; // Integer 0/1: job_holds_machine_ || spool_latch_
+    lv_subject_t spool_latch_{};            // Integer 0/1: spools lie on the bed
+    std::atomic<bool> spool_latch_active_{false};
+    mutable std::mutex spool_latch_mutex_;
+    std::vector<std::string> spool_latch_tokens_;
+    void publish_machine_motion_blocked();
 
     /// The job we are preparing; empty when none. See begin_preparing().
     PrintJobRef preparing_job_{};

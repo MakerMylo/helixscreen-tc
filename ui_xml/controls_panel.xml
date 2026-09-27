@@ -399,7 +399,8 @@
             </ui_button>
             <!-- Motors On/Off Button (disabled when motors already off) -->
             <lv_obj name="btn_motors"
-                    height="100%" flex_grow="1" style_bg_opa="0" style_pad_all="0" style_pad_gap="0" clickable="true">
+                    height="100%" flex_grow="1" style_bg_opa="0" style_pad_all="0" style_pad_gap="0" clickable="true"
+                    moves_machine="true">
               <bind_state_if_eq subject="motors_enabled" state="disabled" ref_value="0"/>
               <event_cb trigger="clicked" callback="on_calibration_motors"/>
               <lv_obj flex_flow="column"
@@ -460,7 +461,7 @@
                   style_border_color="#text_muted" style_border_opa="60">
             <ui_button name="btn_home_all"
                        width="0" height="100%" text="All" translation_tag="All" flex_grow="1" style_radius="0"
-                       style_border_width="0">
+                       style_border_width="0" moves_machine="true">
               <bind_style name="home_btn_homed" subject="all_homed" ref_value="1"/>
               <bind_style name="home_btn_unhomed" subject="all_homed" ref_value="0"/>
               <bind_state_if_eq subject="controls_operation_in_progress" state="disabled" ref_value="1"/>
@@ -468,7 +469,8 @@
             </ui_button>
             <ui_button name="btn_home_x"
                        width="0" height="100%" text="X" flex_grow="1" style_radius="0" style_border_width="1"
-                       style_border_side="left" style_border_color="#text_muted" style_border_opa="60">
+                       style_border_side="left" style_border_color="#text_muted" style_border_opa="60"
+                       moves_machine="true">
               <bind_style name="home_btn_homed" subject="x_homed" ref_value="1"/>
               <bind_style name="home_btn_unhomed" subject="x_homed" ref_value="0"/>
               <bind_flag_if_eq subject="printer_has_individual_xyz_homing" flag="hidden" ref_value="0"/>
@@ -477,7 +479,8 @@
             </ui_button>
             <ui_button name="btn_home_y"
                        width="0" height="100%" text="Y" flex_grow="1" style_radius="0" style_border_width="1"
-                       style_border_side="left" style_border_color="#text_muted" style_border_opa="60">
+                       style_border_side="left" style_border_color="#text_muted" style_border_opa="60"
+                       moves_machine="true">
               <bind_style name="home_btn_homed" subject="y_homed" ref_value="1"/>
               <bind_style name="home_btn_unhomed" subject="y_homed" ref_value="0"/>
               <bind_flag_if_eq subject="printer_has_individual_xyz_homing" flag="hidden" ref_value="0"/>
@@ -486,7 +489,8 @@
             </ui_button>
             <ui_button name="btn_home_xy"
                        width="0" height="100%" text="XY" flex_grow="1" style_radius="0" style_border_width="1"
-                       style_border_side="left" style_border_color="#text_muted" style_border_opa="60">
+                       style_border_side="left" style_border_color="#text_muted" style_border_opa="60"
+                       moves_machine="true">
               <bind_style name="home_btn_homed" subject="xy_homed" ref_value="1"/>
               <bind_style name="home_btn_unhomed" subject="xy_homed" ref_value="0"/>
               <bind_flag_if_eq subject="printer_has_individual_xyz_homing" flag="hidden" ref_value="0"/>
@@ -495,7 +499,8 @@
             </ui_button>
             <ui_button name="btn_home_z"
                        width="0" height="100%" text="Z" flex_grow="1" style_radius="0" style_border_width="1"
-                       style_border_side="left" style_border_color="#text_muted" style_border_opa="60">
+                       style_border_side="left" style_border_color="#text_muted" style_border_opa="60"
+                       moves_machine="true">
               <bind_style name="home_btn_homed" subject="z_homed" ref_value="1"/>
               <bind_style name="home_btn_unhomed" subject="z_homed" ref_value="0"/>
               <bind_flag_if_eq subject="printer_has_individual_xyz_homing" flag="hidden" ref_value="0"/>

@@ -295,6 +295,8 @@ translations:
   Bed Screws: ベッドネジ
   Bed Temp: ベッド温度
   Bed Temperature: ベッド温度
+  'Bed cooling, spools still on the bed:': 'ベッド冷却中、スプールはまだベッドの上です:'
+
   Bed is Level!: ベッドが水平です！
   Bed mesh operation timed out: ベッドメッシュ操作がタイムアウトしました
   Bed mesh...: ベッドメッシュ...
@@ -554,6 +556,10 @@ translations:
   Clear Spool: スプールを解除
   Clear all spool failover assignments: 'すべての予備スプール割り当てを消去'
   Clear failed: クリアに失敗しました
+  ? Clear the area above and below the plate. Lay the spools on the plate, cover them with a box (a printed lid or the filament's packaging) and close the door.
+
+  : ベッドの上と下を片付けてください。スプールをベッドに置き、箱(印刷したふたやフィラメントの梱包箱)でかぶせてドアを閉めてください。
+
   Cleared from settings — system unpair failed, may need OS Bluetooth: 設定から削除しました。システムのペアリング解除に失敗、OS
     の Bluetooth 設定が必要な場合があります
   Clipboard unavailable - use SSH: クリップボード利用不可 - SSHを使用してください
@@ -691,6 +697,8 @@ translations:
   Could not confirm cancel: キャンセルを確認できませんでした
   Could not forget device: デバイスの登録を解除できませんでした
   Could not load printer database: プリンターデータベースを読み込めませんでした
+  Could not move the plate: ベッドを動かせませんでした
+
   Could not open Klipper's accelerometer stream. Check that Klipper is running, then retry.: Klipperの加速度センサーストリームを開けませんでした。Klipperが実行中か確認してから再試行してください。
   Could not parse tips database: ヒントデータベースを解析できませんでした
   Could not reach Spoolman at: 'Spoolman に接続できません:'
@@ -698,6 +706,10 @@ translations:
   Could not remove the job from the queue: キューからジョブを削除できませんでした
   Could not resolve printer RFCOMM channel: プリンターの RFCOMM チャンネルを解決できませんでした
   Could not save filament: フィラメントを保存できませんでした
+  Could not save the drying state: 乾燥の状態を保存できませんでした
+
+  'Could not save the drying state: nothing was heated': '乾燥の状態を保存できませんでした: 何も加熱していません'
+
   "Could not save the mesh as '{}': {}": "メッシュを '{}' として保存できませんでした: {}"
   Could not start Bluetooth discovery: Bluetooth の検出を開始できませんでした
   Could not update filaments: フィラメントを更新できませんでした
@@ -848,7 +860,17 @@ translations:
   Draw a ripple at each touch — helps diagnose offsets: タッチごとに波紋を描画 — ズレの診断に役立ちます
   Drive Cal: ドライブキャリブレーション
   Drop shadow strength (0 = disabled): 影の強さ (0 = 無効)
+  Dry Filament: フィラメントを乾燥
+
+  Dry Filament on the Bed: ベッドでフィラメントを乾燥
+
+  Dry spools on the heated bed: 加熱ベッドでスプールを乾燥
+
   Drying: 乾燥中
+  Drying is already running: 乾燥はすでに実行中です
+
+  Drying on the bed: ベッドで乾燥中
+
   Drying started: 乾燥を開始しました
   Drying stopped: 乾燥を停止しました
   Duplicate: 複製
@@ -908,6 +930,10 @@ translations:
   Enable/disable automatic backup spool switching: '予備スプールへの自動切り替えの有効／無効'
   Enable/disable quiet operation mode: '静音動作モードの有効／無効'
   Enabled: 有効
+  Enclosed: 密閉
+
+  Enclosure: 筐体
+
   Encoder: エンコーダー
   Encoder Error: 'エンコーダーエラー'
   Ended: 終了
@@ -1154,6 +1180,8 @@ translations:
   Filament is clear of the toolhead. Pull it out the rest of the way.: フィラメントはツールヘッドから出ました。残りを手で引き抜いてください。
   Filament is dragging: フィラメントに抵抗がかかっています
   Filament is loaded at the toolhead. Unload it before enabling bypass.: 'ツールヘッドにフィラメントが装填されています。バイパスを有効にする前に取り出してください。'
+  Filament is loaded at the toolhead. Unload it first, so it does not soften in the extruder while the bed heats.: ツールヘッドにフィラメントがロードされています。ベッドの加熱中にエクストルーダー内で柔らかくならないよう、先に排出してください。
+
   Filament is loose: フィラメントが緩んでいます
   Filament is pulling tight: フィラメントが引っ張られています
   ? Filament is still at the nozzle after unloading. The cut or retract may not have completed. Clear the toolhead before loading another spool.
@@ -1211,6 +1239,8 @@ translations:
   FlashForge Adventurer 5X: FlashForge Adventurer 5X
   FlashForge IFS: FlashForge IFS
   Flip: 反転
+  Flip the spools: スプールを裏返す
+
   Flow: フロー
   Flow Compensation: 'フロー補正'
   Flow Rate: フローレート
@@ -1264,6 +1294,8 @@ translations:
   HTTP Code: HTTP コード
   'HTTP error: {} {}': 'HTTP エラー: {} {}'
   HUMIDITY SENSORS: 湿度センサー
+  'Halfway through drying: flip the spools over. Use gloves, the plate is hot.': '乾燥の折り返し地点です: スプールを裏返してください。ベッドが熱いので手袋を使ってください。'
+
   Hang on, we'll be right back!: しばらくお待ちください。すぐに戻ります！
   Happy Hare MMU: Happy Hare MMU
   Hardware: ハードウェア
@@ -1382,6 +1414,8 @@ translations:
   Humidity Sensors: 湿度センサー
   Hyperlapse: ハイパーラプス
   Hyperlapse captures frames at fixed time intervals. Good for very long prints.: ハイパーラプスは一定の時間間隔でフレームを撮影します。非常に長い印刷に適しています。
+  I understand: 理解しました
+
   ID (optional): ID（任意）
   IMPORT FROM USB: USBからインポート
   IP Address / Hostname: IPアドレス / ホスト名
@@ -1663,6 +1697,8 @@ translations:
   Make Optional: オプションにする
   Make bed mesh and QGL skippable: ベッドメッシュと QGL をスキップ可能にする
   Make sure every nozzle is clean.: すべてのノズルが清潔であることを確認してください。
+  'Make sure no filament is loaded at the toolhead: it can soften in the extruder while the bed heats.': 'ツールヘッドにフィラメントがロードされていないことを確認してください: ベッドの加熱中にエクストルーダー内で柔らかくなることがあります。'
+
   MakeID (Bluetooth): MakeID (Bluetooth)
   Manage: 管理
   Manage Printers: プリンター管理
@@ -1678,6 +1714,8 @@ translations:
   Map to closest colors with matching material: 一致する素材で最も近い色に割り当て
   Mapping Error: 'マッピングエラー'
   Marginal: やや不良
+  Mark a printer you enclosed yourself: 自分で筐体を付けたプリンターとして設定
+
   Master volume level: マスター音量
   Match: 一致度
   Match to belt A: ベルトAに合わせる
@@ -1751,6 +1789,8 @@ translations:
   : プリントヘッドを移動させて各軸の振動周波数を測定します。2〜3分かかります。プリンターから音がしますが、これは正常です。
   Moving gantry: ガントリーを移動中
   Moving lane: レーンを移動中
+  Moving the plate...: ベッドを移動中...
+
   Multi-Filament: マルチフィラメント
   Multi-Filament Overview: マルチフィラメント概要
   Multi-Filament System: マルチフィラメントシステム
@@ -1869,11 +1909,15 @@ translations:
   No spool assigned: スプール未割当
   No spools found — tap to retry: スプールが見つかりません — タップして再試行
   No spools match your search: 検索に一致するスプールがありません
+  No spools placed: スプールは置いていません
+
   No tape detected in printer: プリンターにテープが検出されません
   No target printer configured: 対象プリンターが設定されていません
   No temperature sensors detected: '温度センサーが検出されません'
   No timelapse videos found: タイムラプス動画が見つかりません
   No tools to calibrate: キャリブレートするツールがありません
+  'No unload macro found: unload by hand, then start again': '排出マクロが見つかりません: 手で排出してから、もう一度始めてください'
+
   No vendors found: ベンダーが見つかりません
   No verified bypass command for this CFS firmware: 'この CFS ファームウェアには検証済みのバイパスコマンドがありません'
   No video player installed - showing the timelapse library: '動画プレーヤーがありません – タイムラプス一覧を表示します'
@@ -1961,6 +2005,8 @@ translations:
   Open color and brightness controls: 色と明るさの調整を開く
   Open feeder macro: フィーダーを開くマクロ
   Open feeder: フィーダーを開く
+  Open frame: オープンフレーム
+
   Open motion controls for jogging: ジョグ操作を開く
   Open the CFS unit and remove the broken filament from the slot: CFS ユニットを開け、スロットから折れたフィラメントを取り除いてください
   Operation already in progress: 操作がすでに進行中です
@@ -2049,6 +2095,8 @@ translations:
     (低いほどスクロールが早く開始)
   'Place image files (PNG, JPEG, BMP, GIF) in config/custom_images/. Max size: 2048×2048 pixels.': '画像ファイル
     (PNG, JPEG, BMP, GIF) を config/custom_images/ に配置してください。最大サイズ: 2048×2048 ピクセル。'
+  Place the spools: スプールを置く
+
   Placed: 配置済み
   Platform: プラットフォーム
   'Platform: ': 'プラットフォーム: '
@@ -2350,6 +2398,12 @@ translations:
   Remove plugin from printer: プリンターからプラグインを削除
   'Remove the PEI sheet from the bed, then start again: probing through the sheet gives wrong results': 'PEIシートをベッドから取り外してから再開してください：シート越しの計測は誤った結果になります'
   Remove the bypass spool from the toolhead first: '先にバイパススプールをツールヘッドから取り外してください'
+  Remove the spools: スプールを取り出す
+
+  Remove the spools from the bed: ベッドからスプールを取り出す
+
+  Remove the spools now?: 今スプールを取り出しますか?
+
   Rename: 名前を変更
   Rename Fan: ファン名を変更
   Rename Mesh Profile: メッシュプロファイルの名前を変更
@@ -2471,6 +2525,8 @@ translations:
   Run stopped: '実行を停止しました'
   Run test sequence on all lanes: '全レーンでテストシーケンスを実行'
   Run the HelixScreen installer with --update from a terminal on this printer. Scan for the command for your platform.: このプリンターのターミナルで HelixScreen インストーラーを --update 付きで実行してください。プラットフォーム別のコマンドはスキャンして確認できます。
+  Run the chamber dryer too: チャンバーのドライヤーも使う
+
   Run {}?: '{} を実行しますか？'
   Running {}...: '{} を実行中...'
   Runout: 'フィラメント切れ'
@@ -2746,6 +2802,12 @@ translations:
   Spoolman was not configured.: Spoolman は設定されていませんでした。
   'Spoolman: %zu Spool%s': 'Spoolman: %zu 個のスプール%s'
   'Spoolman: %zu/%zu Spool%s': 'Spoolman: %zu/%zu 個のスプール%s'
+  'Spools are on the bed: tap the drying banner to confirm they are off, then restart.': 'ベッドにスプールがあります: 乾燥のバナーをタップして取り出したことを確認してから、再起動してください。'
+
+  'Spools on the bed: start drying, or confirm none were placed': 'ベッドにスプールがあります: 乾燥を開始するか、置いていないことを確認してください'
+
+  Spools removed: スプールを取り出しました
+
   Square Corner Velocity: 直角コーナー速度
   Stable: 安定版
   Stall detection setup failed for the Z motor — power-cycle to retry: Z モーターのストール検出の設定に失敗しました。電源を入れ直して再試行してください
@@ -2763,6 +2825,8 @@ translations:
   Start Probing: プローブ開始
   Start anyway?: 'それでも開始しますか？'
   Start at: 開始位置
+  Start drying: 乾燥開始
+
   Start failed: 開始に失敗
   'Start next: {}': '次を開始：{}'
   Start over: やり直す
@@ -2786,6 +2850,8 @@ translations:
   Stop: 停止
   Stop Drying: 乾燥を停止
   Stop Print?: 印刷を停止しますか？
+  Stop drying?: 乾燥を停止しますか?
+
   Stop failed: 停止に失敗
   ? "Stop printing \"{}\"?\n\nThis cannot be undone after 5 seconds."
   : "\"{}\" の印刷を停止しますか？\n\n5秒後は取り消せません。"
@@ -2905,6 +2971,10 @@ translations:
   ? The animated screensaver has been turned off on this device to prevent it from
     interfering with prints. You can re-enable it in Settings > Display.
   : アニメーション付きスクリーンセーバーが印刷に干渉しないよう、このデバイスではオフになっています。設定 > ディスプレイで再度有効にできます。
+  The bed has cooled. Take the spools off the plate, then confirm.: ベッドが冷えました。スプールをベッドから取り出してから確認してください。
+
+  The bed turns off. The spools stay latched on the bed until you confirm they are off.: ベッドをオフにします。取り出したことを確認するまで、スプールはベッド上にあるものとして扱われます。
+
   The bed was reported dirty, so this print cannot resume.: 'ベッドが汚れていると報告されたため、この印刷を再開できません。'
   The buffer may be disconnected, stuck, or faulty. Check it before retrying: バッファーが未接続、固着、または故障している可能性があります。再試行前に確認してください
   The buffer saw no movement for 16 seconds. Check for a blockage between the CFS and the extruder, or a stuck buffer: バッファーが 16 秒間動きを検出しませんでした。CFS とエクストルーダーの間の詰まり、またはバッファーの固着を確認してください
@@ -2921,6 +2991,8 @@ translations:
   ? The loaded spool is {}, but this file was sliced for {}. Filled filament runs at a lower flow rate and needs a hardened nozzle.
   : 装填中のスプールは {} ですが、このファイルは {} 用にスライスされています。充填材入りフィラメントはフローレートが低くなり、硬化ノズルが必要です。
   The nozzle extrudes a few short test moves in a corner, away from the print area, and repeats until it agrees with itself.: 'ノズルは印刷領域から離れた隅で短いテスト移動を数回行い、結果が一致するまで繰り返します。'
+  The plate and the spools are still hot. Use gloves.: ベッドとスプールはまだ熱いです。手袋を使ってください。
+
   ? The print is paused. Changing tools now moves the toolhead and swaps the filament at the nozzle. Resume the print once the change finishes.
   : 印刷は一時停止中です。ここでツールを交換すると、ツールヘッドが移動してノズルのフィラメントが入れ替わります。交換が完了したら印刷を再開してください。
   The printer applied this value and keeps it for this tool.: 'プリンターはこの値を適用し、このツールに保存しました。'
@@ -2930,6 +3002,10 @@ translations:
   ? The printer heats the nozzle, extrudes a few short test moves in a corner of the plate, and measures them itself. It repeats until the readings agree, then reports one number.
   : 'プリンターはノズルを加熱し、プレートの隅で短いテスト移動を数回行って自ら測定します。測定値が一致するまで繰り返し、最後にひとつの数値を報告します。'
   The printer homes and sweeps the cutter (about 1 minute). Keep the filament path clear.: プリンターが原点復帰してカッターを走査します（約1分）。フィラメントの経路を空けてください。
+  ? The printer homes, then moves the plate as far from the nozzle as it goes. Some spools are not heat-resistant enough and can deform. Nothing moves from this screen until you confirm the spools are off the bed; Mainsail, macros and prints sent from a slicer are not blocked.
+
+  : プリンターはホームに戻ってから、ベッドをノズルからできるだけ離します。耐熱性が足りずに変形するスプールもあります。スプールをベッドから取り出したことを確認するまで、この画面からは何も動きません。Mainsail、マクロ、スライサーから送られた印刷はブロックされません。
+
   The printer is not homed. Continuing will home all axes, moving the toolhead. Make sure the bed is clear.: プリンターがホーミングされていません。続行すると全軸がホーミングされ、ツールヘッドが移動します。ベッドに物がないことを確認してください。
   The printer lost power during a print. It can resume where it left off.: 印刷中にプリンターの電源が失われました。中断した箇所から再開できます。
   The printer lost power during a print. The resumed layer may not line up exactly.: 印刷中にプリンターの電源が失われました。再開したレイヤーがわずかにずれる可能性があります。
@@ -3161,6 +3237,8 @@ translations:
   'Unload at end': '終了時に排出'
   Unload failed: 排出に失敗しました
   Unload filament: 'フィラメントをアンロード'
+  Unload filament?: フィラメントを排出しますか?
+
   Unload from toolhead first: '先にツールヘッドから取り出してください'
   Unload macro not configured: アンロードマクロが未設定です
   Unload the CFS filament before enabling bypass: 'バイパスを有効にする前に CFS のフィラメントを取り出してください'

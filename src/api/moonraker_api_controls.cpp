@@ -251,6 +251,10 @@ void MoonrakerAPI::execute_gcode(const std::string& gcode, SuccessCallback on_su
                                                       "[Moonraker API]")) {
         return;
     }
+    if (helix::api::reject_motion_while_spools_on_bed(gcode, state_, silent, on_error,
+                                                      "[Moonraker API]")) {
+        return;
+    }
 
     // Gate discretionary gcode (fan, temp, non-homing moves, LED) while a blocking
     // non-print operation holds Klipper's single-threaded gcode lock (homing,
@@ -481,6 +485,12 @@ void MoonrakerAPI::emergency_stop(SuccessCallback on_success, ErrorCallback on_e
 }
 
 void MoonrakerAPI::restart_firmware(SuccessCallback on_success, ErrorCallback on_error) {
+    // Restarting releases the steppers; with spools on the bed a gantry can sink
+    // onto them (prestonbrown/helixscreen#1730).
+    if (helix::api::reject_restart_while_spools_on_bed(&state_, "printer.firmware_restart",
+                                                       on_error)) {
+        return;
+    }
     spdlog::info("[Moonraker API] Restarting firmware");
 
     client_.send_jsonrpc(
@@ -493,6 +503,11 @@ void MoonrakerAPI::restart_firmware(SuccessCallback on_success, ErrorCallback on
 }
 
 void MoonrakerAPI::restart_klipper(SuccessCallback on_success, ErrorCallback on_error) {
+    // Restarting releases the steppers; with spools on the bed a gantry can sink
+    // onto them (prestonbrown/helixscreen#1730).
+    if (helix::api::reject_restart_while_spools_on_bed(&state_, "printer.restart", on_error)) {
+        return;
+    }
     spdlog::info("[Moonraker API] Restarting Klipper");
 
     client_.send_jsonrpc(
@@ -506,6 +521,11 @@ void MoonrakerAPI::restart_klipper(SuccessCallback on_success, ErrorCallback on_
 
 void MoonrakerAPI::restart_service(const std::string& service_name, SuccessCallback on_success,
                                    ErrorCallback on_error) {
+    if (service_name.find("klipper") != std::string::npos &&
+        helix::api::reject_restart_while_spools_on_bed(&state_, "machine.services.restart",
+                                                       on_error)) {
+        return;
+    }
     spdlog::info("[Moonraker API] Restarting service '{}' via machine.services.restart",
                  service_name);
 

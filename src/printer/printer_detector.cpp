@@ -2064,6 +2064,25 @@ std::string PrinterDetector::get_toolhead_style(const std::string& printer_name)
     return "";
 }
 
+bool PrinterDetector::is_enclosed(const std::string& printer_name) {
+    if (printer_name.empty() || !g_database.load() || !g_database.data.contains("printers") ||
+        !g_database.data["printers"].is_array()) {
+        return false;
+    }
+    std::string name_lower = printer_name;
+    std::transform(name_lower.begin(), name_lower.end(), name_lower.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+    for (const auto& printer : g_database.data["printers"]) {
+        std::string db_name = printer.value("name", "");
+        std::transform(db_name.begin(), db_name.end(), db_name.begin(),
+                       [](unsigned char c) { return std::tolower(c); });
+        if (db_name == name_lower) {
+            return printer.value("enclosed", false);
+        }
+    }
+    return false;
+}
+
 // ============================================================================
 // Memory Management
 // ============================================================================

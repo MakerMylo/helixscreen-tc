@@ -540,6 +540,10 @@ void MoonrakerMotionAPI::execute_gcode(const std::string& gcode, SuccessCallback
                                                       "[Motion API]")) {
         return;
     }
+    if (helix::api::reject_motion_while_spools_on_bed(gcode, state_, silent, on_error,
+                                                      "[Motion API]")) {
+        return;
+    }
 
     // Refuse discretionary gcode (non-homing jog moves) while a blocking non-print
     // operation holds Klipper's single-threaded gcode lock — a jog that fires late,

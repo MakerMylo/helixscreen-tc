@@ -24,6 +24,9 @@
 
 #include <spdlog/spdlog.h>
 
+#include <atomic>
+#include <memory>
+
 #include "hv/json.hpp"
 
 using json = nlohmann::json;
@@ -100,16 +103,38 @@ static void on_probe_row_clicked(lv_event_t* e) {
 // XML EVENT CALLBACK REGISTRATION
 // ============================================================================
 
-// Helper to send a GCode command via MoonrakerClient
-static void send_probe_gcode(const char* gcode, const char* label) {
-    IMoonrakerClient* client = get_moonraker_client();
-    if (!client) {
-        spdlog::error("[Probe] No client for {} command", label);
-        return;
+/// Probe commands go through the API's send gate like every other machine
+/// command, so the homing-during-print guard and the spools-on-the-bed latch
+/// both apply. Returns false when the gate refused it on the spot; the refusal
+/// reaches the user as a toast.
+namespace helix::ui {
+bool probe_send_gcode(const char* gcode, const char* label) {
+    IMoonrakerAPI* api = get_moonraker_api();
+    if (!api) {
+        spdlog::error("[Probe] No API for {} command", label);
+        return false;
     }
     spdlog::debug("[Probe] Sending {}: {}", label, gcode);
-    client->gcode_script(gcode);
+    // The error callback can run long after this returns (an RPC error or a
+    // timeout), so it owns its flag rather than reaching into this frame. Read
+    // right after the call, the flag says whether the gate refused on the spot.
+    auto refused = std::make_shared<std::atomic<bool>>(false);
+    api->execute_gcode(gcode, nullptr, [refused](const MoonrakerError& err) {
+        refused->store(true);
+        helix::ui::queue_update("Probe::send_refused", [msg = err.message] {
+            ToastManager::instance().show(ToastSeverity::ERROR, msg.c_str(), 6000);
+        });
+    });
+    return !refused->load();
 }
+
+} // namespace helix::ui
+
+namespace {
+void send_probe_gcode(const char* gcode, const char* label) {
+    helix::ui::probe_send_gcode(gcode, label);
+}
+} // namespace
 
 void ui_probe_overlay_register_callbacks() {
     register_xml_callbacks({
@@ -149,29 +174,35 @@ void ui_probe_overlay_register_callbacks() {
         // Cartographer controls
         {"on_carto_touch_cal",
          [](lv_event_t* /*e*/) {
-             send_probe_gcode("CARTOGRAPHER_TOUCH_CALIBRATE", "Cartographer Touch Calibrate");
-             ToastManager::instance().show(ToastSeverity::INFO,
-                                           lv_tr("Cartographer touch calibrate sent"));
+             if (helix::ui::probe_send_gcode("CARTOGRAPHER_TOUCH_CALIBRATE",
+                                             "Cartographer Touch Calibrate")) {
+                 ToastManager::instance().show(ToastSeverity::INFO,
+                                               lv_tr("Cartographer touch calibrate sent"));
+             }
          }},
         {"on_carto_scan_cal",
          [](lv_event_t* /*e*/) {
-             send_probe_gcode("CARTOGRAPHER_SCAN_CALIBRATE", "Cartographer Scan Calibrate");
-             ToastManager::instance().show(
-                 ToastSeverity::INFO,
-                 lv_tr("Cartographer scan calibrate sent — use Z-Offset panel to adjust"));
+             if (helix::ui::probe_send_gcode("CARTOGRAPHER_SCAN_CALIBRATE",
+                                             "Cartographer Scan Calibrate")) {
+                 ToastManager::instance().show(
+                     ToastSeverity::INFO,
+                     lv_tr("Cartographer scan calibrate sent — use Z-Offset panel to adjust"));
+             }
          }},
 
         // Beacon controls
         {"on_beacon_calibrate",
          [](lv_event_t* /*e*/) {
-             send_probe_gcode("BEACON_CALIBRATE", "Beacon Calibrate");
-             ToastManager::instance().show(ToastSeverity::INFO, lv_tr("Beacon calibrate sent"));
+             if (helix::ui::probe_send_gcode("BEACON_CALIBRATE", "Beacon Calibrate")) {
+                 ToastManager::instance().show(ToastSeverity::INFO, lv_tr("Beacon calibrate sent"));
+             }
          }},
         {"on_beacon_auto_cal",
          [](lv_event_t* /*e*/) {
-             send_probe_gcode("BEACON_AUTO_CALIBRATE", "Beacon Auto-Calibrate");
-             ToastManager::instance().show(ToastSeverity::INFO,
-                                           lv_tr("Beacon auto-calibrate sent"));
+             if (helix::ui::probe_send_gcode("BEACON_AUTO_CALIBRATE", "Beacon Auto-Calibrate")) {
+                 ToastManager::instance().show(ToastSeverity::INFO,
+                                               lv_tr("Beacon auto-calibrate sent"));
+             }
          }},
 
         // Klicky controls

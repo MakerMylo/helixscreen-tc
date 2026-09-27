@@ -21,7 +21,8 @@ class TemperatureService;
 class UsbManager;
 namespace helix {
 class TemperatureController;
-}
+class BedDryingController;
+} // namespace helix
 namespace helix::ui {
 class PlrOfferController;
 }
@@ -143,6 +144,7 @@ class SubjectInitializer {
     std::unique_ptr<UsbManager> m_usb_manager;
     std::unique_ptr<helix::ui::PlrOfferController> m_plr_offer_controller;
     std::unique_ptr<helix::TemperatureController> m_temp_controller;
+    std::unique_ptr<helix::BedDryingController> m_bed_drying;
     std::unique_ptr<TemperatureService> m_temp_control_panel;
 
     // Alive guard for USB callback — invalidated on destruction to prevent

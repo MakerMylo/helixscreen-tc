@@ -248,7 +248,7 @@ TEST_CASE_METHOD(XMLTestFixture, "the bypass tile is disabled during a host-side
 // The guard arrives by construction
 //
 // The moves_machine attribute is what makes "did anyone forget one" answerable:
-// the engine installs the job_holds_machine -> disabled binding for the
+// the engine installs the machine_motion_blocked -> disabled binding for the
 // element itself, so a machine-moving control is guarded the moment its XML
 // says it moves the machine. This test pins that construction, not a spelling.
 // ============================================================================
@@ -277,6 +277,14 @@ TEST_CASE_METHOD(XMLTestFixture, "moves_machine installs the toolhead guard by c
     for (int pass = 0; pass < 8; ++pass) {
         helix::ui::UpdateQueue::instance().drain();
     }
+    REQUIRE_FALSE(lv_obj_has_state(control, LV_STATE_DISABLED));
+
+    // Spools on the bed block the same controls with no job at all
+    // (prestonbrown/helixscreen#1730).
+    state().set_spool_latch(true);
+    REQUIRE(lv_subject_get_int(state().get_job_holds_machine_subject()) == 0);
+    REQUIRE(lv_obj_has_state(control, LV_STATE_DISABLED));
+    state().set_spool_latch(false);
     REQUIRE_FALSE(lv_obj_has_state(control, LV_STATE_DISABLED));
 }
 
@@ -320,6 +328,7 @@ struct GuardedFile {
 constexpr GuardedFile kGuardedFiles[] = {
     {"ui_xml/ams_device_operations.xml", 1},
     {"ui_xml/batch_filament_modal.xml", 1},
+    {"ui_xml/bed_drying_modal.xml", 1},
     {"ui_xml/calibration_tool_offset_panel.xml", 2},
     {"ui_xml/chamber_dryer_modal.xml", 1},
     {"ui_xml/cfs_chute_calibration_overlay.xml", 6},
@@ -327,11 +336,17 @@ constexpr GuardedFile kGuardedFiles[] = {
     {"ui_xml/components/chamber_dryer_row.xml", 1},
     {"ui_xml/components/panel_widget_bypass.xml", 1},
     {"ui_xml/calibration_pa_panel.xml", 2},
-    {"ui_xml/controls_panel.xml", 11},
+    {"ui_xml/controls_panel.xml", 17},
     {"ui_xml/header_bar.xml", 1},
-    {"ui_xml/micro/controls_panel.xml", 11},
+    {"ui_xml/micro/controls_panel.xml", 17},
     {"ui_xml/micro/header_bar.xml", 1},
     {"ui_xml/motion_panel.xml", 4},
+    {"ui_xml/probe_generic_panel.xml", 2},
+    {"ui_xml/probe_eddy_panel.xml", 2},
+    {"ui_xml/probe_cartographer_panel.xml", 2},
+    {"ui_xml/probe_bltouch_panel.xml", 2},
+    {"ui_xml/probe_beacon_panel.xml", 2},
+    {"ui_xml/temp_graph_overlay.xml", 2},
 };
 
 /// Control-bearing files that command nothing on the printer. A guard appearing
@@ -363,6 +378,7 @@ constexpr const char* kNoMachineControlFiles[] = {
     "ui_xml/color_sensor_row.xml",
     "ui_xml/components/ams_environment_indicator.xml",
     "ui_xml/components/barcode_scanner_device_row.xml",
+    "ui_xml/components/bed_drying_banner.xml",
     "ui_xml/components/bed_mesh_canvas_band.xml",
     "ui_xml/components/bed_mesh_profiles_card.xml",
     "ui_xml/components/buffer_status_modal.xml",
@@ -514,12 +530,7 @@ constexpr const char* kNoMachineControlFiles[] = {
     "ui_xml/printer_manager_overlay.xml",
     "ui_xml/printer_switch_menu.xml",
     "ui_xml/probe_accuracy_modal.xml",
-    "ui_xml/probe_beacon_panel.xml",
-    "ui_xml/probe_bltouch_panel.xml",
-    "ui_xml/probe_cartographer_panel.xml",
     "ui_xml/probe_config_edit_modal.xml",
-    "ui_xml/probe_eddy_panel.xml",
-    "ui_xml/probe_generic_panel.xml",
     "ui_xml/probe_overlay.xml",
     "ui_xml/probe_sensor_row.xml",
     "ui_xml/qr_scanner_overlay.xml",
@@ -560,7 +571,6 @@ constexpr const char* kNoMachineControlFiles[] = {
     "ui_xml/step_test_panel.xml",
     "ui_xml/telemetry_data_overlay.xml",
     "ui_xml/telemetry_info_modal.xml",
-    "ui_xml/temp_graph_overlay.xml",
     "ui_xml/test_panel.xml",
     "ui_xml/theme_editor_overlay.xml",
     "ui_xml/theme_preview_overlay.xml",
