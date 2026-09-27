@@ -10,7 +10,6 @@
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
-#include <fstream>
 #include <optional>
 
 namespace helix {
@@ -193,14 +192,12 @@ bool MaterialSettingsManager::migrate_settings_overrides() {
     // Saving over an overlay that will not parse replaces the user's hand
     // edits with the migrated entries alone. Settings keep the only copy, and
     // the next start retries once the file is fixed.
-    if (const std::string path = FilamentCatalog::user_overlay_path(); !path.empty()) {
-        std::ifstream f(path);
-        if (nlohmann::json::parse(f, nullptr, /*allow_exceptions=*/false).is_discarded()) {
-            spdlog::warn("[MaterialSettingsManager] {} does not parse; leaving material_overrides "
-                         "in settings.json until it does",
-                         path);
-            return false;
-        }
+    if (const std::string path = FilamentCatalog::user_overlay_path();
+        FilamentCatalog::overlay_file_is_corrupt(path)) {
+        spdlog::warn("[MaterialSettingsManager] {} does not parse; leaving material_overrides "
+                     "in settings.json until it does",
+                     path);
+        return false;
     }
 
     if (legacy.is_object() && !legacy.empty()) {

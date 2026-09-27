@@ -261,3 +261,24 @@ TEST_CASE_METHOD(TypesFixture, "a new type with no nozzle_min is skipped",
     filament::load_materials_from(ASSET, overlay);
     CHECK_FALSE(filament::find_material("MaxOnly"));
 }
+
+TEST_CASE_METHOD(TypesFixture,
+                 "an empty overlay file reads as no overlay and saves without a backup",
+                 "[filament][types][filament_catalog]") {
+    const char* body = GENERATE("", "  \n");
+    auto overlay = write("user.json", body);
+    CHECK(FilamentCatalog::load_user_types_from(overlay).empty());
+    CHECK(FilamentCatalog::load_user_products_from(overlay).empty());
+    CHECK_FALSE(FilamentCatalog::overlay_file_is_corrupt(overlay));
+
+    REQUIRE(FilamentCatalog::save_user_types_to({{{"name", "PLA"}, {"bed", 64}}}, overlay));
+    CHECK_FALSE(fs::exists(overlay + ".bak"));
+    CHECK(FilamentCatalog::load_user_types_from(overlay).size() == 1);
+}
+
+TEST_CASE_METHOD(TypesFixture, "a truncated overlay file is corrupt",
+                 "[filament][types][filament_catalog]") {
+    auto overlay = write("user.json", R"({"types": [ )");
+    CHECK(FilamentCatalog::overlay_file_is_corrupt(overlay));
+    CHECK_FALSE(FilamentCatalog::overlay_file_is_corrupt((dir / "absent.json").string()));
+}

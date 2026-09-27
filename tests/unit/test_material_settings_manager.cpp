@@ -640,3 +640,18 @@ TEST_CASE_METHOD(MaterialSettingsFixture, "an unparseable overlay blocks the mig
     std::string body((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
     CHECK(body == R"({"types": [ {"name": "PLA", )");
 }
+
+TEST_CASE_METHOD(MaterialSettingsFixture, "an empty overlay file does not block the migration",
+                 "[material_settings][migration]") {
+    // A zero-byte or whitespace-only file is an overlay nobody has written yet.
+    const char* body = GENERATE("", " \n\t\r\n");
+    std::ofstream(overlay_path()) << body;
+    Config::get_instance()->get_json("/material_overrides") =
+        nlohmann::json::parse(R"({"PLA": {"bed_temp": 65}})");
+
+    MaterialSettingsManager::instance().init();
+
+    CHECK_FALSE(Config::get_instance()->exists("/material_overrides"));
+    CHECK(overlay_type("PLA")["bed"] == 65);
+    CHECK(find_material("PLA")->bed_temp == 65);
+}

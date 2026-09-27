@@ -12,6 +12,7 @@
 #include <atomic>
 #include <filesystem>
 #include <fstream>
+#include <iterator>
 #include <memory>
 #include <mutex>
 #include <set>
@@ -110,20 +111,37 @@ std::vector<nlohmann::json> object_entries(const nlohmann::json& arr, const char
     return out;
 }
 
+enum class FileRead { Absent, Parsed, Corrupt };
+
+/// The one way a filament JSON file is read. A missing file and one holding
+/// nothing but whitespace are both Absent: an empty file is an overlay nobody
+/// has written yet (a truncated seed, or `touch`), not a damaged one.
+FileRead read_json_file(const std::string& path, nlohmann::json& doc) {
+    if (path.empty())
+        return FileRead::Absent;
+    std::ifstream f(path);
+    if (!f.is_open())
+        return FileRead::Absent;
+    const std::string text((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+    if (text.find_first_not_of(" \t\r\n") == std::string::npos)
+        return FileRead::Absent;
+    doc = nlohmann::json::parse(text, nullptr, /*allow_exceptions=*/false);
+    if (doc.is_discarded()) {
+        spdlog::warn("[filament] {} does not parse as JSON", path);
+        return FileRead::Corrupt;
+    }
+    return FileRead::Parsed;
+}
+
 std::vector<nlohmann::json> read_products(const std::vector<std::string>& paths) {
     for (const auto& path : paths) {
-        std::ifstream f(path);
-        if (!f.is_open())
+        nlohmann::json doc;
+        if (read_json_file(path, doc) != FileRead::Parsed)
             continue;
-        try {
-            auto doc = nlohmann::json::parse(f);
-            if (doc.is_object() && doc.contains("filaments") && doc["filaments"].is_array())
-                return object_entries(doc["filaments"], path.c_str());
-            if (doc.is_array()) // user overlay is a bare array
-                return object_entries(doc, path.c_str());
-        } catch (const std::exception& e) {
-            spdlog::warn("[filament] parse failed {}: {}", path, e.what());
-        }
+        if (doc.is_object() && doc.contains("filaments") && doc["filaments"].is_array())
+            return object_entries(doc["filaments"], path.c_str());
+        if (doc.is_array()) // user overlay is a bare array
+            return object_entries(doc, path.c_str());
     }
     return {};
 }
@@ -264,28 +282,21 @@ std::map<std::string, std::string> FilamentCatalog::load_user_orca_type_map() {
 std::map<std::string, std::string>
 FilamentCatalog::load_user_orca_type_map_from(const std::string& path) {
     std::map<std::string, std::string> out;
-    if (path.empty())
+    nlohmann::json doc;
+    if (read_json_file(path, doc) != FileRead::Parsed)
         return out;
-    std::ifstream f(path);
-    if (!f.is_open())
+    // Only the object form carries orca_type_map. A bare array is a
+    // product-only overlay (the historical minimum) and contributes nothing
+    // here — by design, since users add Orca hints via the UI, which writes
+    // the object form.
+    if (!doc.is_object())
         return out;
-    try {
-        auto doc = nlohmann::json::parse(f);
-        // Only the object form carries orca_type_map. A bare array is a
-        // product-only overlay (the historical minimum) and contributes nothing
-        // here — by design, since users add Orca hints via the UI, which writes
-        // the object form.
-        if (!doc.is_object())
-            return out;
-        auto it = doc.find("orca_type_map");
-        if (it == doc.end() || !it->is_object())
-            return out;
-        for (const auto& [k, v] : it->items()) {
-            if (v.is_string())
-                out[k] = v.get<std::string>();
-        }
-    } catch (const std::exception& e) {
-        spdlog::warn("[filament] user orca_type_map parse failed {}: {}", path, e.what());
+    auto it = doc.find("orca_type_map");
+    if (it == doc.end() || !it->is_object())
+        return out;
+    for (const auto& [k, v] : it->items()) {
+        if (v.is_string())
+            out[k] = v.get<std::string>();
     }
     return out;
 }
@@ -317,19 +328,16 @@ std::vector<nlohmann::json> FilamentCatalog::load_user_types() {
 }
 
 std::vector<nlohmann::json> FilamentCatalog::load_user_types_from(const std::string& path) {
-    if (path.empty())
-        return {};
-    std::ifstream f(path);
-    if (!f.is_open())
-        return {};
-    try {
-        auto doc = nlohmann::json::parse(f);
-        if (doc.is_object() && doc.contains("types") && doc["types"].is_array())
-            return object_entries(doc["types"], path.c_str());
-    } catch (const std::exception& e) {
-        spdlog::warn("[filament] user types parse failed {}: {}", path, e.what());
-    }
+    nlohmann::json doc;
+    if (read_json_file(path, doc) == FileRead::Parsed && doc.is_object() && doc.contains("types") &&
+        doc["types"].is_array())
+        return object_entries(doc["types"], path.c_str());
     return {};
+}
+
+bool FilamentCatalog::overlay_file_is_corrupt(const std::string& path) {
+    nlohmann::json doc;
+    return read_json_file(path, doc) == FileRead::Corrupt;
 }
 
 std::string FilamentCatalog::builtin_asset_path() {
@@ -399,32 +407,32 @@ bool FilamentCatalog::save_user_section_to(const char* key, nlohmann::json value
     // missing, a bare array (legacy), or unparseable, start fresh with an empty
     // object — a corrupt existing file must not block the user's save.
     nlohmann::json doc = nlohmann::json::object();
-    {
-        std::ifstream in(path);
-        if (in.is_open()) {
-            try {
-                auto parsed = nlohmann::json::parse(in);
-                // The legacy bare-array form carries only products: kept as the
-                // `filaments` section, so a types save does not drop them, and a
-                // products save overwrites them with the full list it was given.
-                // Any other shape starts fresh.
-                if (parsed.is_object())
-                    doc = std::move(parsed);
-                else if (parsed.is_array())
-                    doc["filaments"] = std::move(parsed);
-            } catch (const std::exception& e) {
-                // The existing file is unparseable — we must not block the save,
-                // but the user may have hand-authored an orca_type_map in there.
-                // Preserve the original as a .bak (best-effort) so it stays
-                // recoverable, then start fresh with an empty object.
-                const std::string bak = path + ".bak";
-                std::error_code bak_ec;
-                std::filesystem::copy_file(
-                    path, bak, std::filesystem::copy_options::overwrite_existing, bak_ec);
-                spdlog::warn("[filament] existing overlay parse failed on save ({}): {}; {} to {}",
-                             path, e.what(), bak_ec ? "could not back up" : "backed up", bak);
-            }
-        }
+    nlohmann::json parsed;
+    switch (read_json_file(path, parsed)) {
+    case FileRead::Absent:
+        break;
+    case FileRead::Parsed:
+        // The legacy bare-array form carries only products: kept as the
+        // `filaments` section, so a types save does not drop them, and a
+        // products save overwrites them with the full list it was given.
+        // Any other shape starts fresh.
+        if (parsed.is_object())
+            doc = std::move(parsed);
+        else if (parsed.is_array())
+            doc["filaments"] = std::move(parsed);
+        break;
+    case FileRead::Corrupt: {
+        // We must not block the save, but the user may have hand-authored
+        // sections in there. Preserve the original as a .bak (best-effort) so
+        // it stays recoverable, then start fresh with an empty object.
+        const std::string bak = path + ".bak";
+        std::error_code bak_ec;
+        std::filesystem::copy_file(path, bak, std::filesystem::copy_options::overwrite_existing,
+                                   bak_ec);
+        spdlog::warn("[filament] starting {} fresh; {} the unparseable original to {}", path,
+                     bak_ec ? "could not back up" : "backed up", bak);
+        break;
+    }
     }
 
     // Atomic write: tmp file + rename. POSIX rename is atomic within a single

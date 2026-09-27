@@ -133,6 +133,10 @@ class FilamentCatalog {
     static bool save_user_types_to(const std::vector<nlohmann::json>& types,
                                    const std::string& path);
 
+    /// True when @p path exists, holds more than whitespace, and does not parse.
+    /// A missing or blank file is no overlay yet, not a corrupt one.
+    static bool overlay_file_is_corrupt(const std::string& path);
+
     /// The first shipped asset on the search path that exists, or "".
     static std::string builtin_asset_path();
     /// The first user overlay on the search path that exists, or "".

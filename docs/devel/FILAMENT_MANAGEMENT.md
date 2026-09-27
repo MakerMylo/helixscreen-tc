@@ -949,7 +949,8 @@ settings. It is keyed on the key's presence rather than a `config_version`
 bump: a versioned migration would bump the version even when the overlay
 write failed and never retry, while this one leaves settings holding the only
 copy and retries next start. An overlay that exists but does not parse blocks
-the migration the same way, since saving over it would replace the user's hand
+the migration the same way (an empty or whitespace-only file is no overlay yet,
+for every reader and the writer alike), since saving over it would replace the user's hand
 edits with the migrated entries alone. A settings restore from the rolling
 backup brings the key back, and the merge is idempotent. The move is one-way: an
 older build reads only `settings.json`, so a downgrade loses these overrides.
