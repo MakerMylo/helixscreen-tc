@@ -52,6 +52,10 @@ void seed_nav_panels(lv_obj_t* screen) {
     NavigationManager::instance().set_panels(panels.data());
 }
 
+void count_delete(lv_event_t* e) {
+    ++(*static_cast<int*>(lv_event_get_user_data(e)));
+}
+
 bool is_descendant(lv_obj_t* obj, lv_obj_t* root) {
     for (; obj != nullptr; obj = lv_obj_get_parent(obj)) {
         if (obj == root)
@@ -216,4 +220,99 @@ TEST_CASE_METHOD(LVGLUITestFixture,
     REQUIRE(second_cache != nullptr);
     CHECK(get_global_motion_panel().get_root() == second_cache);
     CHECK(lv_obj_find_by_name(second_cache, "jog_pad") != nullptr);
+}
+
+// A printer switch destroys the overlay singleton and frees its old tree on a
+// later tick. The re-created singleton can be opened on a new root before
+// then, so the old root's delete hook must leave the new tree alone.
+TEST_CASE_METHOD(LVGLUITestFixture,
+                 "a printer switch frees the old fan overlay tree without touching the new one",
+                 "[overlays][fan_control][switch][overlay-root-reuse]") {
+    FreshOverlays fresh;
+    state().init_fans({"fan", "fan_generic chamber"});
+    seed_nav_panels(test_screen());
+
+    lv_obj_t* old_root = helix::open_fan_control_overlay(test_screen());
+    REQUIRE(old_root != nullptr);
+    int old_deletes = 0;
+    lv_obj_add_event_cb(old_root, count_delete, LV_EVENT_DELETE, &old_deletes);
+
+    close_all();
+    helix::ui::destroy_static_panels();
+    REQUIRE(old_deletes == 0);
+
+    init_fan_control_overlay(get_printer_state());
+    seed_nav_panels(test_screen());
+    lv_obj_t* new_root = helix::open_fan_control_overlay(test_screen());
+    REQUIRE(new_root != nullptr);
+    REQUIRE(new_root != old_root);
+
+    process_lvgl(100); // the old tree's deferred delete lands here
+    REQUIRE(old_deletes == 1);
+
+    auto& overlay = get_fan_control_overlay();
+    CHECK(overlay.get_root() == new_root);
+    CHECK(FanControlOverlayTestAccess::dial_count(overlay) > 0);
+    CHECK(is_descendant(FanControlOverlayTestAccess::fans_container(overlay), new_root));
+}
+
+TEST_CASE_METHOD(LVGLUITestFixture,
+                 "a printer switch frees the old LED overlay tree without touching the new one",
+                 "[overlays][led_control][switch][overlay-root-reuse]") {
+    FreshOverlays fresh;
+    seed_nav_panels(test_screen());
+
+    lv_obj_t* old_root = helix::open_led_control_overlay(test_screen());
+    REQUIRE(old_root != nullptr);
+    int old_deletes = 0;
+    lv_obj_add_event_cb(old_root, count_delete, LV_EVENT_DELETE, &old_deletes);
+
+    close_all();
+    helix::ui::destroy_static_panels();
+    REQUIRE(old_deletes == 0);
+
+    init_led_control_overlay(get_printer_state());
+    seed_nav_panels(test_screen());
+    lv_obj_t* new_root = helix::open_led_control_overlay(test_screen());
+    REQUIRE(new_root != nullptr);
+    REQUIRE(new_root != old_root);
+
+    process_lvgl(100);
+    REQUIRE(old_deletes == 1);
+
+    CHECK(get_led_control_overlay().get_root() == new_root);
+}
+
+// After a printer switch the old tree stays allocated until a later tick, but
+// it belongs to the destroyed panel: a caller opening the new panel must get a
+// tree of its own.
+TEST_CASE_METHOD(LVGLUITestFixture,
+                 "lazy_create_and_push_overlay does not adopt the destroyed panel's tree",
+                 "[overlays][lazy_panel][switch][overlay-root-reuse]") {
+    FreshOverlays fresh;
+    seed_nav_panels(test_screen());
+
+    lv_obj_t* old_cache = nullptr;
+    REQUIRE(helix::ui::lazy_create_and_push_overlay<MotionPanel>(
+        get_global_motion_panel, old_cache, test_screen(), "Motion", "before switch"));
+    REQUIRE(old_cache != nullptr);
+    int old_deletes = 0;
+    lv_obj_add_event_cb(old_cache, count_delete, LV_EVENT_DELETE, &old_deletes);
+
+    close_all();
+    helix::ui::destroy_static_panels();
+    REQUIRE(old_deletes == 0); // the old tree is still allocated for the reopen
+
+    seed_nav_panels(test_screen());
+    lv_obj_t* cache = nullptr;
+    REQUIRE(helix::ui::lazy_create_and_push_overlay<MotionPanel>(
+        get_global_motion_panel, cache, test_screen(), "Motion", "after switch"));
+
+    CHECK(cache != old_cache);
+    CHECK(get_global_motion_panel().get_root() == cache);
+    CHECK(lv_obj_find_by_name(cache, "jog_pad") != nullptr);
+
+    close_all();
+    process_lvgl(100);
+    CHECK(old_deletes == 1);
 }

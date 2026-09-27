@@ -47,6 +47,9 @@ namespace helix::ui {
  * @param parent_screen Parent screen for overlay creation
  * @param panel_display_name Human-readable name for error messages
  * @param caller_name Name of the calling panel (for logging)
+ * @param destroy_on_close Free the widget tree when the overlay closes. Decided
+ *                         by the caller that creates the tree; a caller that
+ *                         adopts an existing tree registers no close callback.
  *
  * @return true if overlay was pushed, false on failure
  *

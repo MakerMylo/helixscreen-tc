@@ -55,8 +55,8 @@ lv_obj_t* open_led_control_overlay(lv_obj_t* parent_screen) {
         }
     }
     if (panel) {
-        // Registered before every push: navbar switches clear the registrations.
-        // Registering is idempotent.
+        // Registered before every push: a NavigationManager shutdown drops the
+        // registrations, and registering is idempotent.
         NavigationManager::instance().register_overlay_instance(panel, &overlay);
         NavigationManager::instance().push_overlay(panel);
     }
@@ -299,9 +299,9 @@ void LedControlOverlay::forget_widget_pointers() {
 }
 
 void LedControlOverlay::on_root_deleted(lv_event_t* e) {
-    // Resolved through the global, not user_data: the root can outlive this
-    // instance (a printer switch destroys the overlay before freeing its tree),
-    // and a hot-reload rebuild deletes a root that is no longer current.
+    // Resolved through the global, not user_data: a printer switch destroys the
+    // overlay before freeing its tree, and the re-created overlay can be opened
+    // on a new root before the old one is freed.
     if (!g_led_control_overlay ||
         g_led_control_overlay->overlay_root_ != lv_event_get_target_obj(e)) {
         return;
