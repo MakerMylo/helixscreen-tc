@@ -98,15 +98,14 @@ bool probe_writable(const std::string& dir, std::uint64_t min_free_bytes) {
         std::to_string(std::hash<std::thread::id>{}(std::this_thread::get_id())) + '.' +
         std::to_string(probe_counter.fetch_add(1));
 
-    // Cannot create the file — dir is missing, read-only, or full.
-    if (!helix::text_io::write_file(test_file, "x")) {
-        return false;
-    }
+    // False when the dir is missing, read-only, or full. A full disk can create
+    // the file and fail the write, so the probe is removed either way.
+    const bool wrote = helix::text_io::write_file(test_file, "x");
 
     std::error_code ec;
     std::filesystem::remove(test_file, ec);
 
-    return true;
+    return wrote;
 }
 
 std::string first_writable_dir(const std::vector<std::string>& candidates,
