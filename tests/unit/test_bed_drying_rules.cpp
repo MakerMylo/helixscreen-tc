@@ -32,9 +32,9 @@ TEST_CASE("availability needs a heated bed, an enclosure and 130 mm of Z", "[bed
     CHECK_FALSE(available(true, true, false, 0.0, 250.0));
 }
 
-TEST_CASE("the clearance move stops 10 mm short of the end of Z travel", "[bed_drying]") {
-    CHECK(clearance_z(250.0) == Catch::Approx(240.0));
-    CHECK(clearance_z(130.0) == Catch::Approx(120.0));
+TEST_CASE("the clearance move stops 20 mm short of the end of Z travel", "[bed_drying]") {
+    CHECK(clearance_z(250.0) == Catch::Approx(230.0));
+    CHECK(clearance_z(130.0) == Catch::Approx(110.0));
 }
 
 TEST_CASE("bed temperature: the material's table value, capped at 90 C and the bed max",

@@ -115,7 +115,7 @@ TEST_CASE_METHOD(BedDryingFixture, "prepare moves the plate to the far end of Z 
 
     CHECK(ready);
     CHECK_FALSE(sent("G28"));
-    CHECK(sent("G1 Z230.0 F600"));
+    CHECK(sent("G1 Z220.0 F600"));
     CHECK(sent("G1 X125.0 Y240.0 F6000"));
     CHECK(sent("M400"));
     // Spools can land on the plate once the place prompt is up, so the latch is
@@ -177,6 +177,31 @@ TEST_CASE_METHOD(BedDryingFixture, "a restore before Klipper is ready defers the
     CHECK(sent("SET_IDLE_TIMEOUT TIMEOUT=86400"));
 }
 
+TEST_CASE_METHOD(BedDryingFixture, "prepare parks over the plate, not in overtravel past it",
+                 "[bed_drying][1730]") {
+    // Snapmaker U1: Y travels to 335 past a 270 mm plate into the tool docks,
+    // and homing_origin shifts G-code space off machine space.
+    frame({{"toolhead",
+            {{"axis_minimum", {0, 0, -6, 0}},
+             {"axis_maximum", {271, 335, 275, 0}},
+             {"homed_axes", "xyz"}}},
+           {"gcode_move", {{"homing_origin", {-0.088928, -0.016043, 0.06, 0}}}}});
+    BuildVolume vol;
+    vol.x_max = 271;
+    vol.y_max = 335;
+    vol.plate_x_min = 3;
+    vol.plate_x_max = 267;
+    vol.plate_y_min = 3;
+    vol.plate_y_max = 267;
+    api.hardware().set_build_volume(vol);
+
+    ctrl->prepare(kMaterials[0], false, nullptr, nullptr);
+    drain();
+
+    CHECK(sent("G1 Z254.9 F600"));
+    CHECK(sent("G1 X135.1 Y257.0 F6000"));
+}
+
 TEST_CASE_METHOD(BedDryingFixture, "prepare homes first when an axis is unhomed",
                  "[bed_drying][1730]") {
     frame({{"toolhead", {{"homed_axes", "xy"}}}});
@@ -186,7 +211,7 @@ TEST_CASE_METHOD(BedDryingFixture, "prepare homes first when an axis is unhomed"
     auto home = std::find_if(h.begin(), h.end(),
                              [](const std::string& l) { return l.rfind("G28", 0) == 0; });
     auto move = std::find_if(h.begin(), h.end(), [](const std::string& l) {
-        return l.find("G1 Z230.0") != std::string::npos;
+        return l.find("G1 Z220.0") != std::string::npos;
     });
     REQUIRE(home != h.end());
     REQUIRE(move != h.end());
