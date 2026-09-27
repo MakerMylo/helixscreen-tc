@@ -11,13 +11,13 @@
 
 #include "app_globals.h"
 #include "display_numbering.h"
-#include "lvgl/src/misc/lv_text_private.h" // lv_text_get_width, lv_text_attributes_t
 #include "lvgl/src/others/translation/lv_translation.h"
 #include "nozzle_layout.h"
 #include "observer_factory.h"
 #include "panel_widget_registry.h"
 #include "printer_state.h"
 #include "static_subject_registry.h"
+#include "text_measure.h"
 #include "theme_manager.h"
 #include "tool_state.h"
 
@@ -368,22 +368,7 @@ void NozzleTempsWidget::rebuild_rows() {
     relayout_for_granted_size();
 }
 
-namespace {
-
-// Pixel width of a UTF-8 string in the given font. lv_text_get_width
-// dereferences its attributes argument, so a zeroed attributes block (no
-// recolor, zero letter/line space, unbounded width) is required — NULL crashes.
-int measure_text_px(const char* txt, const lv_font_t* font) {
-    if (!txt || !font)
-        return 0;
-    lv_text_attributes_t attrs;
-    lv_text_attributes_init(&attrs);
-    attrs.letter_space = 0;
-    attrs.max_width = LV_COORD_MAX;
-    return lv_text_get_width(txt, LV_TEXT_LEN_MAX, font, &attrs);
-}
-
-} // namespace
+using helix::ui::measure_text_px;
 
 void NozzleTempsWidget::on_size_changed(int colspan, int rowspan, int width_px, int height_px) {
     if (!widget_obj_)

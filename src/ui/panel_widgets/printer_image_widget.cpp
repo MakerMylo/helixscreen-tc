@@ -31,6 +31,28 @@
 static lv_subject_t s_printer_type_subject;
 static char s_printer_type_buffer[64];
 static lv_subject_t s_printer_info_visible;
+
+// Live callout subjects (printer image overlay chips). Task 5 drives their
+// values from PrinterState; this module only owns their storage and registration.
+static lv_subject_t s_printer_callout_mode;
+static lv_subject_t s_callout_toolhead_merged;
+static lv_subject_t s_callout_nozzle_shown;
+static lv_subject_t s_callout_bed_shown;
+static lv_subject_t s_callout_chamber_shown;
+static lv_subject_t s_callout_fan_shown;
+static lv_subject_t s_callout_light_shown;
+static lv_subject_t s_callout_bed_heating;
+static lv_subject_t s_callout_nozzle_text;
+static char s_callout_nozzle_text_buf[32];
+static lv_subject_t s_callout_bed_text;
+static char s_callout_bed_text_buf[32];
+static lv_subject_t s_callout_chamber_text;
+static char s_callout_chamber_text_buf[32];
+static lv_subject_t s_callout_fan_text;
+static char s_callout_fan_text_buf[32];
+static lv_subject_t s_callout_toolhead_text;
+static char s_callout_toolhead_text_buf[32];
+
 static bool s_subjects_initialized = false;
 
 static void printer_image_widget_init_subjects() {
@@ -53,11 +75,73 @@ static void printer_image_widget_init_subjects() {
     SubjectDebugRegistry::instance().register_subject(
         &s_printer_info_visible, "printer_info_visible", LV_SUBJECT_TYPE_INT, __FILE__, __LINE__);
 
+    // Live callout subjects. Every int starts at 0 (CalloutMode::ImageOnly for
+    // the mode subject, "not shown" for the rest) so the callout layer and
+    // every chip parse hidden, matching the widget's default idle state.
+    static const struct {
+        lv_subject_t* subject;
+        const char* name;
+    } int_subjects[] = {
+        {&s_printer_callout_mode, "printer_callout_mode"},
+        {&s_callout_toolhead_merged, "callout_toolhead_merged"},
+        {&s_callout_nozzle_shown, "callout_nozzle_shown"},
+        {&s_callout_bed_shown, "callout_bed_shown"},
+        {&s_callout_chamber_shown, "callout_chamber_shown"},
+        {&s_callout_fan_shown, "callout_fan_shown"},
+        {&s_callout_light_shown, "callout_light_shown"},
+        {&s_callout_bed_heating, "callout_bed_heating"},
+    };
+    for (const auto& s : int_subjects) {
+        // 0 doubles as CalloutMode::ImageOnly for the mode subject and as
+        // "not shown"/"not merged"/"not heating" for the rest.
+        lv_subject_init_int(s.subject, 0);
+        lv_xml_register_subject(nullptr, s.name, s.subject);
+        SubjectDebugRegistry::instance().register_subject(s.subject, s.name, LV_SUBJECT_TYPE_INT,
+                                                          __FILE__, __LINE__);
+    }
+
+    static const struct {
+        lv_subject_t* subject;
+        char* buf;
+        size_t buf_size;
+        const char* name;
+    } text_subjects[] = {
+        {&s_callout_nozzle_text, s_callout_nozzle_text_buf, sizeof(s_callout_nozzle_text_buf),
+         "callout_nozzle_text"},
+        {&s_callout_bed_text, s_callout_bed_text_buf, sizeof(s_callout_bed_text_buf),
+         "callout_bed_text"},
+        {&s_callout_chamber_text, s_callout_chamber_text_buf, sizeof(s_callout_chamber_text_buf),
+         "callout_chamber_text"},
+        {&s_callout_fan_text, s_callout_fan_text_buf, sizeof(s_callout_fan_text_buf),
+         "callout_fan_text"},
+        {&s_callout_toolhead_text, s_callout_toolhead_text_buf, sizeof(s_callout_toolhead_text_buf),
+         "callout_toolhead_text"},
+    };
+    for (const auto& s : text_subjects) {
+        lv_subject_init_string(s.subject, s.buf, nullptr, s.buf_size, "");
+        lv_xml_register_subject(nullptr, s.name, s.subject);
+        SubjectDebugRegistry::instance().register_subject(s.subject, s.name, LV_SUBJECT_TYPE_STRING,
+                                                          __FILE__, __LINE__);
+    }
+
     s_subjects_initialized = true;
 
     // Self-register cleanup with StaticSubjectRegistry (co-located with init)
     StaticSubjectRegistry::instance().register_deinit("PrinterImageWidgetSubjects", []() {
         if (s_subjects_initialized && lv_is_initialized()) {
+            lv_subject_deinit(&s_callout_toolhead_text);
+            lv_subject_deinit(&s_callout_fan_text);
+            lv_subject_deinit(&s_callout_chamber_text);
+            lv_subject_deinit(&s_callout_bed_text);
+            lv_subject_deinit(&s_callout_nozzle_text);
+            lv_subject_deinit(&s_callout_bed_heating);
+            lv_subject_deinit(&s_callout_light_shown);
+            lv_subject_deinit(&s_callout_fan_shown);
+            lv_subject_deinit(&s_callout_chamber_shown);
+            lv_subject_deinit(&s_callout_bed_shown);
+            lv_subject_deinit(&s_callout_nozzle_shown);
+            lv_subject_deinit(&s_callout_toolhead_merged);
+            lv_subject_deinit(&s_printer_callout_mode);
             lv_subject_deinit(&s_printer_info_visible);
             lv_subject_deinit(&s_printer_type_subject);
             s_subjects_initialized = false;
@@ -65,7 +149,8 @@ static void printer_image_widget_init_subjects() {
         }
     });
 
-    spdlog::debug("[PrinterImageWidget] Subjects initialized (type + host + info_visible)");
+    spdlog::debug(
+        "[PrinterImageWidget] Subjects initialized (type + host + info_visible + callouts)");
 }
 
 namespace helix {
@@ -77,6 +162,16 @@ void register_printer_image_widget() {
     // Register XML event callbacks at startup (before any XML is parsed)
     lv_xml_register_event_cb(nullptr, "printer_manager_clicked_cb",
                              PrinterImageWidget::printer_manager_clicked_cb);
+    lv_xml_register_event_cb(nullptr, "printer_callout_nozzle_cb",
+                             PrinterImageWidget::printer_callout_nozzle_cb);
+    lv_xml_register_event_cb(nullptr, "printer_callout_bed_cb",
+                             PrinterImageWidget::printer_callout_bed_cb);
+    lv_xml_register_event_cb(nullptr, "printer_callout_chamber_cb",
+                             PrinterImageWidget::printer_callout_chamber_cb);
+    lv_xml_register_event_cb(nullptr, "printer_callout_fan_cb",
+                             PrinterImageWidget::printer_callout_fan_cb);
+    lv_xml_register_event_cb(nullptr, "printer_callout_light_cb",
+                             PrinterImageWidget::printer_callout_light_cb);
 
     // Prune old cached printer images on startup
     prune_printer_image_cache();
@@ -458,5 +553,35 @@ void PrinterImageWidget::printer_manager_clicked_cb(lv_event_t* e) {
             "[PrinterImageWidget] printer_manager_clicked_cb: could not recover widget instance");
     }
 
+    LVGL_SAFE_EVENT_CB_END();
+}
+
+void PrinterImageWidget::printer_callout_nozzle_cb(lv_event_t* /*e*/) {
+    LVGL_SAFE_EVENT_CB_BEGIN("[PrinterImageWidget] printer_callout_nozzle_cb");
+    spdlog::debug("[PrinterImageWidget] printer_callout_nozzle_cb");
+    LVGL_SAFE_EVENT_CB_END();
+}
+
+void PrinterImageWidget::printer_callout_bed_cb(lv_event_t* /*e*/) {
+    LVGL_SAFE_EVENT_CB_BEGIN("[PrinterImageWidget] printer_callout_bed_cb");
+    spdlog::debug("[PrinterImageWidget] printer_callout_bed_cb");
+    LVGL_SAFE_EVENT_CB_END();
+}
+
+void PrinterImageWidget::printer_callout_chamber_cb(lv_event_t* /*e*/) {
+    LVGL_SAFE_EVENT_CB_BEGIN("[PrinterImageWidget] printer_callout_chamber_cb");
+    spdlog::debug("[PrinterImageWidget] printer_callout_chamber_cb");
+    LVGL_SAFE_EVENT_CB_END();
+}
+
+void PrinterImageWidget::printer_callout_fan_cb(lv_event_t* /*e*/) {
+    LVGL_SAFE_EVENT_CB_BEGIN("[PrinterImageWidget] printer_callout_fan_cb");
+    spdlog::debug("[PrinterImageWidget] printer_callout_fan_cb");
+    LVGL_SAFE_EVENT_CB_END();
+}
+
+void PrinterImageWidget::printer_callout_light_cb(lv_event_t* /*e*/) {
+    LVGL_SAFE_EVENT_CB_BEGIN("[PrinterImageWidget] printer_callout_light_cb");
+    spdlog::debug("[PrinterImageWidget] printer_callout_light_cb");
     LVGL_SAFE_EVENT_CB_END();
 }

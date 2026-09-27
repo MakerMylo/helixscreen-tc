@@ -40,6 +40,14 @@ class PrinterImageWidget : public PanelWidget {
     /// XML event callback — opens printer manager overlay
     static void printer_manager_clicked_cb(lv_event_t* e);
 
+    /// XML event callbacks for the live callout chips — one per heater/fan/light.
+    /// The toolhead chip (merged nozzle+fan) reuses printer_callout_nozzle_cb.
+    static void printer_callout_nozzle_cb(lv_event_t* e);
+    static void printer_callout_bed_cb(lv_event_t* e);
+    static void printer_callout_chamber_cb(lv_event_t* e);
+    static void printer_callout_fan_cb(lv_event_t* e);
+    static void printer_callout_light_cb(lv_event_t* e);
+
   private:
     /// Points `img` at the pre-scaled copy for its current size, if one is on disk.
     /// Returns false when the widget has no resolved size yet, or nothing is cached

@@ -21,13 +21,13 @@
 #include "grid_layout.h"
 #include "helix-xml/src/xml/lv_xml.h"
 #include "i_moonraker_api.h"
-#include "lvgl/src/misc/lv_text_private.h" // lv_text_get_width, lv_text_attributes_t
 #include "observer_factory.h"
 #include "panel_widget_registry.h"
 #include "panel_widget_size.h"
 #include "printer_fan_state.h"
 #include "printer_state.h"
 #include "stacked_row_layout.h"
+#include "text_measure.h"
 #include "theme_manager.h"
 #include "ui/fan_spin_animation.h"
 
@@ -89,25 +89,13 @@ constexpr const char* FONT_STACKED = "font_body";
 // name beside it does not reflow when a fan spins up from 0% to 100%.
 constexpr const char* WIDEST_SPEED_TEXT = "100%";
 
-// Pixel width of a UTF-8 string in the given font. lv_text_get_width
-// dereferences its attributes argument, so a zeroed attributes block (no
-// recolor, zero letter/line space, unbounded width) is required — NULL crashes.
-int measure_text_px(const char* txt, const lv_font_t* font) {
-    if (!txt || !font)
-        return 0;
-    lv_text_attributes_t attrs;
-    lv_text_attributes_init(&attrs);
-    attrs.letter_space = 0;
-    attrs.max_width = LV_COORD_MAX;
-    return lv_text_get_width(txt, LV_TEXT_LEN_MAX, font, &attrs);
-}
-
 // How much of a fan's name a row has room for, longest first. Letter is the
 // floor: it is used when nothing longer fits.
 enum class NameForm { Resolved, Short, Letter };
 } // namespace
 
 using namespace helix;
+using helix::ui::measure_text_px;
 
 FanStackWidget::FanStackWidget(const std::string& instance_id, PrinterState& printer_state)
     : instance_id_(instance_id), printer_state_(printer_state) {}
