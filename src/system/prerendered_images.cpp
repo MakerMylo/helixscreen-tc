@@ -9,15 +9,16 @@
 #include "prerender_size_class.h"
 #include "stb_image.h"
 #include "stb_image_resize.h"
+#include "text_io.h"
 
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <cctype>
 #include <charconv>
+#include <cstdio>
 #include <cstring>
 #include <filesystem>
-#include <fstream>
 #include <set>
 #include <vector>
 
@@ -356,15 +357,17 @@ bool generate_cached_printer_image(const std::string& source_image_path, int wid
 
     if (ext == ".bin") {
         // Source is LVGL binary — read header + BGRA pixel data, convert back to RGBA for resize
-        std::ifstream file(fs_path, std::ios::binary);
+        helix::text_io::File file = helix::text_io::open_file(fs_path, "rb");
         if (!file) {
             spdlog::warn("[PrinterCache] Cannot open source .bin: {}", fs_path);
             return false;
         }
+        auto read_exact = [&file](void* dst, size_t n) {
+            return n == 0 || std::fread(dst, n, 1, file.get()) == 1;
+        };
 
         lv_image_header_t header{};
-        file.read(reinterpret_cast<char*>(&header), sizeof(header));
-        if (!file.good() || header.magic != LV_IMAGE_HEADER_MAGIC) {
+        if (!read_exact(&header, sizeof(header)) || header.magic != LV_IMAGE_HEADER_MAGIC) {
             spdlog::warn("[PrinterCache] Invalid .bin header: {}", fs_path);
             return false;
         }
@@ -375,10 +378,8 @@ bool generate_cached_printer_image(const std::string& source_image_path, int wid
         size_t expected_bytes = stride * src_h;
 
         // Check file has enough data (handles compressed/RLE .bin files gracefully)
-        auto file_pos = file.tellg();
-        file.seekg(0, std::ios::end);
-        size_t file_size = static_cast<size_t>(file.tellg()) - static_cast<size_t>(file_pos);
-        file.seekg(file_pos);
+        const size_t file_size = static_cast<size_t>(
+            helix::text_io::file_size(fs_path).value_or(sizeof(header)) - sizeof(header));
 
         if (header.flags & LV_IMAGE_FLAGS_COMPRESSED) {
             // Every shipped tier is LZ4: scripts/lib/lvgl_image_lib.sh renders with
@@ -386,8 +387,7 @@ bool generate_cached_printer_image(const std::string& source_image_path, int wid
             // PNG, because packaging deletes those PNGs (prune_assets), so on a
             // device there is nothing to reach for and the cache is never built.
             CompressBlock comp{};
-            file.read(reinterpret_cast<char*>(&comp), sizeof(comp));
-            if (!file.good()) {
+            if (!read_exact(&comp, sizeof(comp))) {
                 spdlog::warn("[PrinterCache] Truncated compression header: {}", fs_path);
                 return false;
             }
@@ -398,8 +398,7 @@ bool generate_cached_printer_image(const std::string& source_image_path, int wid
             }
 
             std::vector<char> packed(comp.compressed_size);
-            file.read(packed.data(), static_cast<std::streamsize>(packed.size()));
-            if (!file.good()) {
+            if (!read_exact(packed.data(), packed.size())) {
                 spdlog::warn("[PrinterCache] Truncated compressed payload: {}", fs_path);
                 return false;
             }
@@ -456,14 +455,17 @@ bool generate_cached_printer_image(const std::string& source_image_path, int wid
         } else {
             // Uncompressed — read pixel data using stride
             rgba_pixels.resize(static_cast<size_t>(src_w) * src_h * 4);
-            for (int row = 0; row < src_h; ++row) {
-                file.read(reinterpret_cast<char*>(rgba_pixels.data() + row * src_w * 4), src_w * 4);
+            bool read_ok = true;
+            for (int row = 0; row < src_h && read_ok; ++row) {
+                read_ok = read_exact(rgba_pixels.data() + row * src_w * 4,
+                                     static_cast<size_t>(src_w) * 4);
                 // Skip stride padding if any
-                if (stride > static_cast<size_t>(src_w * 4)) {
-                    file.seekg(stride - src_w * 4, std::ios::cur);
+                if (read_ok && stride > static_cast<size_t>(src_w * 4)) {
+                    read_ok = std::fseek(file.get(), static_cast<long>(stride - src_w * 4),
+                                         SEEK_CUR) == 0;
                 }
             }
-            if (!file.good()) {
+            if (!read_ok) {
                 spdlog::warn("[PrinterCache] Read error from .bin: {}", fs_path);
                 return false;
             }

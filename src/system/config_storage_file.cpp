@@ -3,6 +3,7 @@
 
 #include "config_storage.h"
 #include "system/helix_paths.h"
+#include "text_io.h"
 
 #if !defined(HELIX_SPLASH_ONLY) && !defined(HELIX_WATCHDOG)
 #include "system/telemetry_manager.h"
@@ -18,8 +19,6 @@
 #include <cstring>
 #include <fcntl.h>
 #include <filesystem>
-#include <fstream>
-#include <sstream>
 #include <stdexcept>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -52,8 +51,8 @@ class FileConfigStorage : public ConfigStorage {
         if (stat(path_.c_str(), &st) != 0) {
             return std::nullopt; // absent — first boot
         }
-        std::ifstream in(path_);
-        if (!in.is_open()) {
+        std::optional<std::string> text = helix::text_io::read_file(path_);
+        if (!text) {
             // Present but unreadable (e.g. permission denied) — distinct
             // from "absent" so Config::init() can route this into
             // corrupt-preserve + backup-restore instead of silently
@@ -62,9 +61,7 @@ class FileConfigStorage : public ConfigStorage {
             throw std::runtime_error(
                 fmt::format("failed to open {} for reading: {}", path_, errno_reason(err)));
         }
-        std::ostringstream ss;
-        ss << in.rdbuf();
-        return ss.str();
+        return text;
     }
 
     bool store(const std::string& bytes) override {
@@ -77,8 +74,8 @@ class FileConfigStorage : public ConfigStorage {
 
             std::string tmp_path = target_path + ".tmp";
             {
-                std::ofstream o(tmp_path);
-                if (!o.is_open()) {
+                helix::text_io::File o = helix::text_io::open_file(tmp_path, "wb");
+                if (!o) {
                     std::string reason = errno_reason(errno);
                     NOTIFY_ERROR("Could not save settings: {}", reason);
                     LOG_ERROR_INTERNAL("Failed to open temp file for writing: {} ({})", tmp_path,
@@ -88,10 +85,8 @@ class FileConfigStorage : public ConfigStorage {
                     return false;
                 }
 
-                o << bytes;
-                o.flush();
-
-                if (!o.good()) {
+                const bool wrote = helix::text_io::write_all(o.get(), bytes);
+                if (!helix::text_io::close(o) || !wrote) {
                     std::string reason = errno_reason(errno);
                     NOTIFY_ERROR("Failed to save settings: {}", reason);
                     LOG_ERROR_INTERNAL("Failed to write config to {}: {}", tmp_path, reason);
@@ -154,8 +149,8 @@ class FileConfigStorage : public ConfigStorage {
         // Write-probe, moved verbatim from Config::init() (lines 1340-1359).
         fs::path config_dir = fs::path(path_).parent_path();
         std::string probe_path = (config_dir / ".helix-write-probe").string();
-        std::ofstream probe(probe_path);
-        if (!probe.is_open()) {
+        helix::text_io::File probe = helix::text_io::open_file(probe_path, "wb");
+        if (!probe) {
             int err = errno;
             if (err == EROFS || err == EACCES) {
                 spdlog::warn("[ConfigStorage] Read-only filesystem detected ({})", strerror(err));
@@ -163,7 +158,7 @@ class FileConfigStorage : public ConfigStorage {
             }
             return false;
         }
-        probe.close();
+        probe.reset();
         std::remove(probe_path.c_str());
         return false;
     }
