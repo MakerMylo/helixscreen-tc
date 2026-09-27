@@ -3186,7 +3186,7 @@
   <translation tag="X and Y jog feedrate" fr="Vitesse d&apos;avance du déplacement X et Y"/>
   <translation tag="X axis applied, but Y axis failed" fr="Axe X appliqué, mais l&apos;axe Y a échoué"/>
   <translation tag="X axis done, starting Y..." fr="Axe X terminé, démarrage de Y..."/>
-  <translation tag="X jog blocked at bed edge" fr="Déplacement X bloqué au bord du plateau"/>
+  <translation tag="X is at its limit ({}mm)" fr="X est à sa limite ({}mm)"/>
   <translation tag="X position" fr="Position X"/>
   <translation tag="X:" fr="X :"/>
   <translation tag="XY" fr="XY"/>
@@ -3194,7 +3194,7 @@
   <translation tag="Y Axis" fr="Axe Y"/>
   <translation tag="Y Offset" fr="Décalage Y"/>
   <translation tag="Y axis limit reached" fr="Limite de l&apos;axe Y atteinte"/>
-  <translation tag="Y jog blocked at bed edge" fr="Déplacement Y bloqué au bord du plateau"/>
+  <translation tag="Y is at its limit ({}mm)" fr="Y est à sa limite ({}mm)"/>
   <translation tag="Y position" fr="Position Y"/>
   <translation tag="Y:" fr="Y :"/>
   <translation tag="YOU WIN!&#10;Score: {}&#10;Tap to play again" fr="GAGNÉ !&#10;Score : {}&#10;Touchez pour rejouer"/>
@@ -3215,7 +3215,7 @@
   <translation tag="Z Offset" fr="Z Offset"/>
   <translation tag="Z Range" fr="Plage Z"/>
   <translation tag="Z Tilt Adjust..." fr="Ajustement inclinaison Z..."/>
-  <translation tag="Z jog blocked at axis limit" fr="Déplacement Z bloqué à la limite de l&apos;axe"/>
+  <translation tag="Z is at its limit ({}mm)" fr="Z est à sa limite ({}mm)"/>
   <translation tag="Z jog feedrate" fr="Vitesse d&apos;avance du déplacement Z"/>
   <translation tag="Z motor calibration failed" fr="Échec de l&apos;étalonnage du moteur Z"/>
   <translation tag="Z position" fr="Position Z"/>

@@ -3310,7 +3310,7 @@ translations:
   X and Y jog feedrate: X/Y軸のジョグ移動速度
   X axis applied, but Y axis failed: X軸は適用されましたが、Y軸は失敗しました
   X axis done, starting Y...: 'X軸が完了しました。Y軸を開始します...'
-  X jog blocked at bed edge: X軸移動はベッド端でブロックされました
+  X is at its limit ({}mm): X軸は限界に達しています ({}mm)
   X position: 'X位置'
   'X:': 'X:'
   XY: XY
@@ -3318,7 +3318,7 @@ translations:
   Y Axis: Y軸
   Y Offset: Yオフセット
   Y axis limit reached: Y軸のリミットに達しました
-  Y jog blocked at bed edge: Y軸移動はベッド端でブロックされました
+  Y is at its limit ({}mm): Y軸は限界に達しています ({}mm)
   Y position: 'Y位置'
   'Y:': 'Y:'
   ? "YOU WIN!\nScore: {}\nTap to play again"
@@ -3342,7 +3342,7 @@ translations:
   Z Offset: Zオフセット
   Z Range: Z 範囲
   Z Tilt Adjust...: Zチルト調整中...
-  Z jog blocked at axis limit: Z軸移動は軸の限界でブロックされました
+  Z is at its limit ({}mm): Z軸は限界に達しています ({}mm)
   Z jog feedrate: Z軸のジョグ移動速度
   Z motor calibration failed: Z モーターの校正に失敗しました
   Z position: 'Z位置'

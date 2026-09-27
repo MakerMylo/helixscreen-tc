@@ -3570,7 +3570,7 @@ translations:
   X and Y jog feedrate: Velocidad de avance del movimiento X y Y
   X axis applied, but Y axis failed: Eje X aplicado, pero eje Y falló
   X axis done, starting Y...: 'Eje X terminado, empezando con Y...'
-  X jog blocked at bed edge: Movimiento X bloqueado en el borde de la cama
+  X is at its limit ({}mm): X está en su límite ({}mm)
   X position: 'Posición X'
   'X:': 'X:'
   XY: XY
@@ -3578,7 +3578,7 @@ translations:
   Y Axis: Eje Y
   Y Offset: Desfase Y
   Y axis limit reached: Límite del eje Y alcanzado
-  Y jog blocked at bed edge: Movimiento Y bloqueado en el borde de la cama
+  Y is at its limit ({}mm): Y está en su límite ({}mm)
   Y position: 'Posición Y'
   'Y:': 'Y:'
   ? "YOU WIN!\nScore: {}\nTap to play again"
@@ -3605,7 +3605,7 @@ translations:
   Z Offset: Z Offset
   Z Range: Rango Z
   Z Tilt Adjust...: Ajuste de inclinación Z...
-  Z jog blocked at axis limit: Movimiento Z bloqueado en el límite del eje
+  Z is at its limit ({}mm): Z está en su límite ({}mm)
   Z jog feedrate: Velocidad de avance del movimiento Z
   Z motor calibration failed: Falló la calibración del motor Z
   Z position: 'Posición Z'

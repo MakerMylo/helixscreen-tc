@@ -3526,7 +3526,7 @@ translations:
   X and Y jog feedrate: Скорость перемещения по осям X и Y
   X axis applied, but Y axis failed: Ось X применена, но ось Y не удалась
   X axis done, starting Y...: 'Ось X готова, запуск Y...'
-  X jog blocked at bed edge: Перемещение по X заблокировано на краю стола
+  X is at its limit ({}mm): X на пределе ({}mm)
   X position: 'Позиция X'
   'X:': 'X:'
   XY: XY
@@ -3534,7 +3534,7 @@ translations:
   Y Axis: Ось Y
   Y Offset: Смещение Y
   Y axis limit reached: Достигнут предел оси Y
-  Y jog blocked at bed edge: Перемещение по Y заблокировано на краю стола
+  Y is at its limit ({}mm): Y на пределе ({}mm)
   Y position: 'Позиция Y'
   'Y:': 'Y:'
   ? "YOU WIN!\nScore: {}\nTap to play again"
@@ -3561,7 +3561,7 @@ translations:
   Z Offset: Z Offset
   Z Range: Диапазон Z
   Z Tilt Adjust...: Регулировка наклона Z...
-  Z jog blocked at axis limit: Перемещение по Z заблокировано на пределе оси
+  Z is at its limit ({}mm): Z на пределе ({}mm)
   Z jog feedrate: Скорость перемещения по оси Z
   Z motor calibration failed: Не удалась калибровка двигателя Z
   Z position: 'Позиция Z'
