@@ -4,6 +4,7 @@
 #pragma once
 
 #include "ui_observer_guard.h"
+#include "ui_widget_ref.h"
 
 #include "axis.h"
 #include "hold_repeat_timer.h"
@@ -11,7 +12,6 @@
 #include "overlay_base.h"
 #include "subject_managed_panel.h"
 
-#include <array>
 #include <optional>
 
 /**
@@ -42,7 +42,7 @@ std::optional<AxisKeypadParams> keypad_params_for_axis(const AxisBounds& bounds,
 
 /// Whether a Z button driving G-code direction `direction_mm` (after the
 /// bed_moves inversion) can still move: true only when Z is homed with known
-/// bounds and `z` (predicted, including uncommitted coalesced travel) already
+/// bounds and the commanded `z` already
 /// sits at the bound that direction drives toward, within AxisMove::EPSILON_MM.
 /// A partial move is possible anywhere else, so the button stays enabled.
 bool z_direction_blocked(bool z_homed, bool bounds_known, double z, double z_min, double z_max,
@@ -133,7 +133,8 @@ class MotionPanel : public OverlayBase {
     }
 
     /// Arm the Z hold repeat for a named button press (the XML pressed event).
-    void begin_z_hold(const char* button_name);
+    /// `button` is the pressed widget, when known.
+    void begin_z_hold(const char* button_name, lv_obj_t* button = nullptr);
 
     /// Flip the persisted commanded/actual coordinate preference. The panel's
     /// observer on the settings subject re-renders the readouts.
@@ -153,6 +154,8 @@ class MotionPanel : public OverlayBase {
     /// with the limit it hit. Returns the permitted delta, 0.0 when blocked.
     double clamp_axis_delta(helix::Axis axis, double current, double uncommitted, double delta,
                             float min, float max, bool fresh_press);
+    /// Raise the "at its limit" warning for an axis refused at `limit`.
+    void warn_axis_limit(helix::Axis axis, float limit);
 
   private:
     // RAII subject manager - auto-deinits all registered subjects on destruction
@@ -215,6 +218,9 @@ class MotionPanel : public OverlayBase {
     /// both use helix::HoldRepeatTimer so the timing logic is shared.
     helix::HoldRepeatTimer z_hold_timer_;
     char z_hold_button_[16] = {};
+    /// The held Z button. A button disabled under the finger never receives
+    /// RELEASED, so LVGL would leave it drawn pressed.
+    helix::ui::WidgetRef z_hold_obj_;
 
     /// stop_hold_repeat() sweeps both this timer and the pad's on every
     /// teardown path.

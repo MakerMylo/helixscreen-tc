@@ -430,10 +430,11 @@ void MotionPanel::on_ui_destroyed() {
 // Hold-to-Repeat (Z buttons; the pad owns its own repeat)
 // ============================================================================
 
-void MotionPanel::begin_z_hold(const char* button_name) {
+void MotionPanel::begin_z_hold(const char* button_name, lv_obj_t* button) {
     if (!button_name)
         return;
     snprintf(z_hold_button_, sizeof(z_hold_button_), "%s", button_name);
+    z_hold_obj_ = button;
     z_hold_repeated_ = false;
     z_hold_timer_.begin(&MotionPanel::z_hold_fire, this);
 }
@@ -443,7 +444,12 @@ bool MotionPanel::z_hold_fire(void* user_data) {
     // The first tick is this press's initial jog; later ones are repeats.
     const bool is_repeat = self->z_hold_repeated_;
     self->z_hold_repeated_ = true;
-    return self->handle_z_button(self->z_hold_button_, is_repeat);
+    const bool keep_going = self->handle_z_button(self->z_hold_button_, is_repeat);
+    lv_obj_t* held = self->z_hold_obj_.get();
+    if (!keep_going && held && lv_obj_has_state(held, LV_STATE_DISABLED)) {
+        lv_obj_remove_state(held, LV_STATE_PRESSED);
+    }
+    return keep_going;
 }
 
 void MotionPanel::stop_hold_repeat() {
@@ -663,7 +669,9 @@ void MotionPanel::update_z_button_blocked() {
         return;
     const auto bounds = get_printer_state().get_axis_bounds();
     const bool z_homed = helix::axis_is_homed(get_printer_state(), helix::Axis::Z);
-    const double z = jog_coalescer_.predicted_z(current_z_);
+    // Commanded, not predicted: an in-flight move leaves no recompute trigger
+    // when it acks, so a prediction here could disable a button for good.
+    const double z = current_z_;
     // The G-code direction the on-screen up buttons drive, after the bed_moves
     // inversion: screen-up is +Z unless the bed moves.
     const double up_dir = bed_moves_ ? -1.0 : 1.0;
@@ -863,15 +871,24 @@ bool MotionPanel::jog(JogDirection direction, float distance_mm, bool is_repeat)
     if (ddx != 0.0 && bounds.has_x && helix::axis_is_homed(get_printer_state(), helix::Axis::X)) {
         ddx = clamp_axis_delta(helix::Axis::X, current_x_,
                                jog_coalescer_.predicted_x(current_x_) - current_x_, ddx,
-                               bounds.x_min, bounds.x_max, /*fresh_press=*/!is_repeat);
+                               bounds.x_min, bounds.x_max, /*fresh_press=*/false);
     }
     if (ddy != 0.0 && bounds.has_y && helix::axis_is_homed(get_printer_state(), helix::Axis::Y)) {
         ddy = clamp_axis_delta(helix::Axis::Y, current_y_,
                                jog_coalescer_.predicted_y(current_y_) - current_y_, ddy,
-                               bounds.y_min, bounds.y_max, /*fresh_press=*/!is_repeat);
+                               bounds.y_min, bounds.y_max, /*fresh_press=*/false);
     }
 
     if (ddx == 0.0 && ddy == 0.0) {
+        // Warn only when the whole press is refused: a diagonal along a wall
+        // still moves the other axis, and partial travel is silent.
+        if (!is_repeat) {
+            if (dx != 0.0f) {
+                warn_axis_limit(helix::Axis::X, dx > 0.0f ? bounds.x_max : bounds.x_min);
+            } else if (dy != 0.0f) {
+                warn_axis_limit(helix::Axis::Y, dy > 0.0f ? bounds.y_max : bounds.y_min);
+            }
+        }
         return false;
     }
     return dispatch_jog({ddx, ddy, 0.0});
@@ -887,24 +904,28 @@ double MotionPanel::clamp_axis_delta(helix::Axis axis, double current, double un
     }
     if (fresh_press) {
         // Repeat ticks into a limit stop silently; only the initial jog of a
-        // press warns. Three literals rather than an assembled string: the
-        // translation extractor scans for lv_tr() literals and cannot see a
-        // runtime key.
-        char limit_buf[16];
-        format_axis_value(limit_buf, sizeof(limit_buf), delta > 0.0f ? max : min);
-        switch (axis) {
-        case helix::Axis::X:
-            NOTIFY_WARNING(lv_tr("X is at its limit ({}mm)"), limit_buf);
-            break;
-        case helix::Axis::Y:
-            NOTIFY_WARNING(lv_tr("Y is at its limit ({}mm)"), limit_buf);
-            break;
-        case helix::Axis::Z:
-            NOTIFY_WARNING(lv_tr("Z is at its limit ({}mm)"), limit_buf);
-            break;
-        }
+        // press warns.
+        warn_axis_limit(axis, delta > 0.0 ? max : min);
     }
     return 0.0;
+}
+
+void MotionPanel::warn_axis_limit(helix::Axis axis, float limit) {
+    // Three literals rather than an assembled string: the translation
+    // extractor scans for lv_tr() literals and cannot see a runtime key.
+    char limit_buf[16];
+    format_axis_value(limit_buf, sizeof(limit_buf), limit);
+    switch (axis) {
+    case helix::Axis::X:
+        NOTIFY_WARNING(lv_tr("X is at its limit ({}mm)"), limit_buf);
+        break;
+    case helix::Axis::Y:
+        NOTIFY_WARNING(lv_tr("Y is at its limit ({}mm)"), limit_buf);
+        break;
+    case helix::Axis::Z:
+        NOTIFY_WARNING(lv_tr("Z is at its limit ({}mm)"), limit_buf);
+        break;
+    }
 }
 
 bool MotionPanel::dispatch_jog(const helix::AxisMove& delta) {
@@ -1127,7 +1148,8 @@ static void on_motion_z_button_pressed(lv_event_t* e) {
     LVGL_SAFE_EVENT_CB_BEGIN("[MotionPanel] on_motion_z_button_pressed");
     const char* button_id = static_cast<const char*>(lv_event_get_user_data(e));
     if (button_id) {
-        get_global_motion_panel().begin_z_hold(button_id);
+        get_global_motion_panel().begin_z_hold(
+            button_id, static_cast<lv_obj_t*>(lv_event_get_current_target(e)));
     }
     LVGL_SAFE_EVENT_CB_END();
 }
