@@ -729,14 +729,45 @@ same way.
 
 ## Filament Catalog (`filaments.json`)
 
-HelixScreen ships a single generated catalog of **branded** filament products —
-`assets/filaments.json` — that unifies what used to be two disconnected data
-sources: the generic material-**type** table in `include/filament_database.h`
-(PLA, ABS, PETG, … — untouched, still `constexpr`, still the source of
-physical truth) and the old CFS-only assets/cfs_materials.json (renamed and
-superseded). The catalog is generic infrastructure, not CFS-specific: the CFS
-backend decodes material ids through it, and the catalog picker, the AMS edit
-overlay and the material settings manager all read it (consumers below).
+HelixScreen ships one data file, `assets/filaments.json`, holding two tables:
+the material **types** (PLA, ABS, PETG, … with their temperature, drying,
+density and compat-group data) and the **branded** products that inherit from
+them. The catalog is generic infrastructure, not CFS-specific: the CFS backend
+decodes material ids through it, and the catalog picker, the AMS edit overlay
+and the material settings manager all read it (consumers below).
+
+### Material types
+
+The `types` array is the only copy of the per-type table. It is hand-maintained
+inside the generated file: `scripts/import_orca_filaments.py` reads it back from
+the existing output, uses its nozzle ranges to fill products that carry none,
+and writes it through unchanged (it refuses to write an output with no `types`).
+
+```json
+{"name": "PLA", "category": "Standard", "nozzle_min": 190, "nozzle_max": 220,
+ "bed": 60, "chamber": 0, "dry_temp": 45, "dry_time": 240, "density": 1.24,
+ "compat_group": "PLA", "note": "why a value is what it is (ignored at runtime)"}
+```
+
+At runtime `filament::materials()` (`include/filament_database.h`,
+`src/printer/filament_database.cpp`) is the effective table: the shipped
+`types` with the user overlay's `types` merged in (below). It is an immutable
+`shared_ptr` snapshot swapped under a mutex, safe to read from any thread, and
+every `const char*` a `MaterialInfo` carries points into an append-only intern
+pool, so a name handed out before a reload stays valid after it.
+`filament::shipped_materials()` is the shipped rows alone, the defaults a user
+override is measured against. `find_material()`, the category and compat-group
+helpers and the drying presets all read `materials()`.
+
+- **Loading.** First use loads it; `SubjectInitializer::init_core_and_state()`
+  warms it on the main thread next to the Orca tables. A parse callback discards
+  every top-level key but `types`, so the 360 products are never materialized.
+  `reload_materials()` re-reads both files after an overlay write.
+- **Missing or unparseable asset.** The table is empty and an error is logged.
+  `find_material()` misses for every name, so temps read 0 and compatibility
+  reads "unknown, compatible": visibly wrong rather than confidently wrong. A
+  broken install is the only way to get here (fonts and XML live beside it).
+  There is deliberately no compiled-in fallback copy: two copies drift.
 
 ### Schema
 
@@ -747,7 +778,7 @@ Each entry in the `filaments` array is one branded product:
   "id": "creality-cr-abs",     // stable slug; user overrides target this
   "brand": "Creality",
   "name": "CR-ABS",            // display = "{brand} {name}"
-  "type": "ABS",               // resolves to a filament_database.h type
+  "type": "ABS",               // resolves to a `types` entry
   "nozzle": 260,                // recommended nozzle temp (°C)
   "bed": 60,                    // recommended bed temp (°C)
   "nozzle_min": 240,            // OPTIONAL — only emitted when it differs from the type's range
@@ -772,7 +803,7 @@ Products don't duplicate physical data — they carry deltas over their base
 material type:
 
 ```
-EffectiveFilament = filament::find_material(product.type)   // type defaults
+EffectiveFilament = filament::find_material(product.type)   // type (shipped ◀ user `types`)
                      ◀ product's own JSON fields              // product overrides
                      ◀ user overlay entry (same id), if any    // user overrides
 ```
@@ -780,7 +811,7 @@ EffectiveFilament = filament::find_material(product.type)   // type defaults
 `nozzle_min` / `nozzle_max` / `bed` / `density` / `chamber_temp_c` /
 `dry_temp_c` / `dry_time_min` / `compat_group` all come from the type unless
 the product JSON explicitly sets them. A product whose `type` string doesn't
-resolve in `filament_database.h` (an Orca material HelixScreen doesn't map
+resolve to a type (an Orca material HelixScreen doesn't map
 yet) is only valid if it's self-sufficient — i.e. the importer emitted
 explicit `nozzle_min`/`nozzle_max` for it directly; see the data-integrity
 lint in `tests/unit/test_filaments_data.cpp`.
@@ -854,16 +885,24 @@ list.
 
 ### User overlay format
 
-config/user_filaments.json is the on-disk shape for everything a user
-contributes about filaments — product entries (override/add to the built-in
-catalog) and Orca-type hints (so a display name not in our snapshot resolves
-correctly in OrcaSlicer without waiting for a HelixScreen release). The file
-does not exist by default; it is created the first time the Phase 3 edit UI
-writes a change. The on-disk format is an internal concern — users interact
-through the UI and never see JSON.
+user_filaments.json (resolved through `writable_path()`, so it follows
+`HELIX_CONFIG_DIR`, and linked into `printer_data` by the installer) is the one
+file for everything a user contributes about filaments: material types,
+products, and Orca-type hints. It is also the file users hand-edit, and the user
+guide documents its shape (`docs/user/guide/settings/printing.md` § "Editing
+materials and brands by hand"), so treat field names as a public format.
 
 ```jsonc
 {
+  "types": [
+    // A name matching a shipped type (any case, aliases resolved) is a sparse
+    // merge_patch over it; the shipped spelling stays canonical. A new name
+    // defines a type: category defaults to "Custom" and compat_group to its own
+    // name, so endless spool never cross-matches it. Entries with no name are
+    // skipped. preheat_macro / macro_handles_heating live here too.
+    {"name": "PLA", "bed": 65},
+    {"name": "PEKK", "nozzle_min": 330, "nozzle_max": 360, "bed": 120}
+  ],
   "filaments": [
     // Product entries: override built-ins by id, or add new ones. Merged by
     // FilamentCatalog::load_with_overlay(). See the "effective filament"
@@ -887,8 +926,30 @@ through the UI and never see JSON.
 }
 ```
 
-The two sections are independent: a user can carry only `filaments`, only
-`orca_type_map`, both, or neither. The shipped asset
+**Material overrides.** `MaterialSettingsManager` is the sparse view of the
+overlay's `types` (which of `nozzle_min`, `nozzle_max`, `bed`, `chamber`,
+`preheat_macro`, `macro_handles_heating` the user set) and their writer: the
+Material Temperatures screen calls `set_override()` / `clear_override()`,
+which read-modify-write only those six keys of one entry, keep any other key a
+user hand-authored, drop an entry left with nothing but its name, then reload
+the table. `clear_override()` on a user-defined type does nothing (its temps
+are its definition) and the screen hides Reset for it. Quick-button choices
+(`preset_materials`) stay in `settings.json`: they are a UI choice, not material
+data.
+
+**Migration from `settings.json`.** `MaterialSettingsManager::init()` moves any
+`material_overrides` left in `settings.json` into the overlay's `types`
+(`bed_temp` becomes `bed`, `chamber_temp` becomes `chamber`; a field the overlay
+already has wins), writes the overlay, and only then erases the key and saves
+settings. It is keyed on the key's presence rather than a `config_version`
+bump: a versioned migration would bump the version even when the overlay
+write failed and never retry, while this one leaves settings holding the only
+copy and retries next start. A settings restore from the rolling backup brings
+the key back, and the merge is idempotent.
+
+The sections are independent: a user can carry any of `types`, `filaments`
+and `orca_type_map`, or none. A bare array is a product-only overlay (the
+installer seeds `[]`). The shipped asset
 (`assets/filaments.json`) keeps its own split between `orca_library_types`
 (list) and `orca_type_overrides` (map) because the importer generates those
 two differently — that distinction does not propagate to the user overlay.
@@ -902,20 +963,21 @@ User entries land in `g_orca_overrides`, where resolution step 1 picks them
 up before any shipped lookup. An empty `orca_type_map` (the common case when
 no user overlay exists) is a no-op.
 
-**Writing the overlay.** `FilamentCatalog::save_user_products(products)`
-replaces the `filaments` section via a temp-file + `rename` (POSIX rename is
+**Writing the overlay.** `FilamentCatalog::save_user_products(products)` and
+`save_user_types(types)` each replace one section through one writer, a
+temp-file + `rename` (POSIX rename is
 atomic within a filesystem, so a **process** crash mid-write never leaves a
 partial overlay — the rename either fully happens or doesn't). It does **not**
 `fsync`, so this is not a power-loss durability guarantee; on the rare power
 cut mid-save a filesystem could still surface a truncated file. That trade is
 deliberate: the overlay is written only on user filament edits, and the
 original is never modified until the rename succeeds. It performs
-read-modify-write to preserve any existing `orca_type_map`, migrates legacy
-bare-array overlays to object form on first save, recovers from a corrupt
+read-modify-write to preserve the other sections, migrates legacy
+bare-array overlays to object form on first save (keeping their products), recovers from a corrupt
 existing file rather than blocking the save (preserving the unparseable
 original as `<path>.bak` for hand-recovery), and creates missing parent
 directories. On a fresh install where no overlay exists yet, the write target
-falls back to the canonical config/user_filaments.json so the first save can
+falls back to the primary path, `writable_path("user_filaments.json")`, so the first save can
 create the file. The caller supplies pre-built
 `nlohmann::json` product objects (one per entry, minimum field `id`) —
 typically the modal's form-handler builds these. `orca_type_map` has no
@@ -935,8 +997,8 @@ This shallow-clones OrcaSlicer's `resources/profiles` at the pinned tag into
 `build/orca-profiles` (sparse checkout, blob-filtered), runs
 `scripts/import_orca_filaments.py` to resolve `inherits` chains, extract
 facts, and union them with the preserved CFS-code seed
-(`scripts/fixtures/cfs_seed.json`), writes `assets/filaments.json`, mirrors it
-to android/app/src/main/assets/assets/filaments.json, and discards the
+(`scripts/fixtures/cfs_seed.json`), carries the hand-maintained `types` table
+through from the existing file, writes `assets/filaments.json`, and discards the
 cloned Orca checkout. Nothing from the Orca clone is committed — only the
 derived output. Bump `ORCA_TAG` to refresh against newer Orca data.
 

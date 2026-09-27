@@ -22,6 +22,13 @@
 
 namespace helix::printer {
 
+namespace detail {
+std::string& user_overlay_dir_ref() {
+    static std::string dir;
+    return dir;
+}
+} // namespace detail
+
 namespace {
 
 // Search paths for the built-in catalog (mirrors the old CFS loader).
@@ -32,6 +39,9 @@ const std::vector<std::string> BUILTIN_PATHS = {"assets/filaments.json", "../ass
 /// files, so the installer can link it out to printer_data. Resolved per call:
 /// HELIX_CONFIG_DIR is read at the time of use, like every writable_path().
 std::vector<std::string> user_paths() {
+    const std::string& dir = detail::user_overlay_dir_ref();
+    if (!dir.empty())
+        return {dir + "/user_filaments.json"};
     return {helix::writable_path("user_filaments.json"), "../config/user_filaments.json"};
 }
 
@@ -302,6 +312,34 @@ std::vector<nlohmann::json> FilamentCatalog::load_user_products_from(const std::
     return read_products({path});
 }
 
+std::vector<nlohmann::json> FilamentCatalog::load_user_types() {
+    return load_user_types_from(first_existing(user_paths()));
+}
+
+std::vector<nlohmann::json> FilamentCatalog::load_user_types_from(const std::string& path) {
+    if (path.empty())
+        return {};
+    std::ifstream f(path);
+    if (!f.is_open())
+        return {};
+    try {
+        auto doc = nlohmann::json::parse(f);
+        if (doc.is_object() && doc.contains("types") && doc["types"].is_array())
+            return object_entries(doc["types"], path.c_str());
+    } catch (const std::exception& e) {
+        spdlog::warn("[filament] user types parse failed {}: {}", path, e.what());
+    }
+    return {};
+}
+
+std::string FilamentCatalog::builtin_asset_path() {
+    return first_existing(BUILTIN_PATHS);
+}
+
+std::string FilamentCatalog::user_overlay_path() {
+    return first_existing(user_paths());
+}
+
 bool FilamentCatalog::upsert_product(std::vector<nlohmann::json>& products,
                                      const nlohmann::json& product) {
     // safe_string handles both hazards .value() has here: a non-object receiver
@@ -338,12 +376,26 @@ bool FilamentCatalog::remove_product(std::vector<nlohmann::json>& products, cons
 
 bool FilamentCatalog::save_user_products_to(const std::vector<nlohmann::json>& products,
                                             const std::string& path) {
+    return save_user_section_to("filaments", products, path);
+}
+
+bool FilamentCatalog::save_user_types(const std::vector<nlohmann::json>& types) {
+    return save_user_types_to(types, choose_overlay_write_path(user_paths()));
+}
+
+bool FilamentCatalog::save_user_types_to(const std::vector<nlohmann::json>& types,
+                                         const std::string& path) {
+    return save_user_section_to("types", types, path);
+}
+
+bool FilamentCatalog::save_user_section_to(const char* key, nlohmann::json value,
+                                           const std::string& path) {
     if (path.empty()) {
-        spdlog::warn("[filament] save_user_products: no overlay path configured");
+        spdlog::warn("[filament] save {}: no overlay path configured", key);
         return false;
     }
 
-    // Read-modify-write: preserve any existing `orca_type_map`. If the file is
+    // Read-modify-write: preserve the sections this call does not own. If the file is
     // missing, a bare array (legacy), or unparseable, start fresh with an empty
     // object — a corrupt existing file must not block the user's save.
     nlohmann::json doc = nlohmann::json::object();
@@ -352,11 +404,14 @@ bool FilamentCatalog::save_user_products_to(const std::vector<nlohmann::json>& p
         if (in.is_open()) {
             try {
                 auto parsed = nlohmann::json::parse(in);
+                // The legacy bare-array form carries only products: kept as the
+                // `filaments` section, so a types save does not drop them, and a
+                // products save overwrites them with the full list it was given.
+                // Any other shape starts fresh.
                 if (parsed.is_object())
                     doc = std::move(parsed);
-                // Bare array or other shape: silently start fresh. The legacy
-                // bare-array form carried only products, never orca_type_map,
-                // so nothing is lost by replacing it with object form here.
+                else if (parsed.is_array())
+                    doc["filaments"] = std::move(parsed);
             } catch (const std::exception& e) {
                 // The existing file is unparseable — we must not block the save,
                 // but the user may have hand-authored an orca_type_map in there.
@@ -386,23 +441,23 @@ bool FilamentCatalog::save_user_products_to(const std::vector<nlohmann::json>& p
         std::filesystem::create_directories(parent, ec);
         // Ignore "already exists"; report everything else.
         if (ec && !std::filesystem::is_directory(parent)) {
-            spdlog::warn("[filament] save_user_products: cannot create parent dir {}: {}",
+            spdlog::warn("[filament] save {}: cannot create parent dir {}: {}", key,
                          parent.string(), ec.message());
             return false;
         }
     }
 
-    doc["filaments"] = products;
+    doc[key] = std::move(value);
 
     {
         std::ofstream out(tmp, std::ios::trunc);
         if (!out) {
-            spdlog::warn("[filament] save_user_products: cannot open {} for writing", tmp.string());
+            spdlog::warn("[filament] save {}: cannot open {} for writing", key, tmp.string());
             return false;
         }
         out << helix::json_util::safe_dump(doc, 2);
         if (!out) {
-            spdlog::warn("[filament] save_user_products: error writing to {}", tmp.string());
+            spdlog::warn("[filament] save {}: error writing to {}", key, tmp.string());
             std::error_code rm_ec;
             std::filesystem::remove(tmp, rm_ec);
             return false;
@@ -411,7 +466,7 @@ bool FilamentCatalog::save_user_products_to(const std::vector<nlohmann::json>& p
 
     std::filesystem::rename(tmp, target, ec);
     if (ec) {
-        spdlog::warn("[filament] save_user_products: rename failed ({} -> {}): {}", tmp.string(),
+        spdlog::warn("[filament] save {}: rename failed ({} -> {}): {}", key, tmp.string(),
                      target.string(), ec.message());
         std::error_code rm_ec;
         std::filesystem::remove(tmp, rm_ec);
