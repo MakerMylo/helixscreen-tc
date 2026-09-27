@@ -284,8 +284,6 @@ translations:
   BLUETOOTH PRINTERS: BLUETOOTH PRINTERS
   BLUETOOTH SCANNERS: BLUETOOTH SCANNERS
   Back: Back
-  Back Left: Back Left
-  Back Right: Back Right
   'Backtrace: {} frames': 'Backtrace: {} frames'
   Backup lane name contains invalid characters: Backup lane name contains invalid characters
   Backup spool switching state unknown: Backup spool switching state unknown
@@ -2446,6 +2444,9 @@ translations:
   Ready to Apply: Ready to Apply
   Ready to calibrate: Ready to calibrate
   Ready to pluck: Ready to pluck
+  Rear: Rear
+  Rear Left: Rear Left
+  Rear Right: Rear Right
   Reason: Reason
   ? "Reason: {}\n\nThe printer cannot resume this print. Restart from the beginning?"
   : "Reason: {}\n\nThe printer cannot resume this print. Restart from the beginning?"

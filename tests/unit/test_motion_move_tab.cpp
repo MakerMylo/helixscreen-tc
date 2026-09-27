@@ -29,6 +29,7 @@
 #include "settings_manager.h"
 #include "standard_macros.h"
 #include "static_panel_registry.h"
+#include "theme_manager.h"
 #include "ui/ui_lazy_panel_helper.h"
 
 #include <array>
@@ -116,9 +117,9 @@ class MoveTabFixture : public LVGLUITestFixture {
         return joined;
     }
 
-    // 235x235 with a 10% inset: the back-right preset lands at 211.5/211.5
+    // 235x235 with a 10% inset: the rear-right preset lands at 211.5/211.5
     // and the front row at Y 23.5.
-    static constexpr float kBackRightXY = 211.5f;
+    static constexpr float kRearRightXY = 211.5f;
     static constexpr float kFrontY = 23.5f;
 
     MoonrakerClientMock client_{MoonrakerClientMock::PrinterType::VORON_24};
@@ -150,11 +151,25 @@ TEST_CASE_METHOD(MoveTabFixture, "motion tab switching toggles the tab container
     CHECK(lv_obj_has_flag(panel_widget("move_tab"), LV_OBJ_FLAG_HIDDEN));
 }
 
+TEST_CASE_METHOD(MoveTabFixture, "the tab rail renders filled pills", "[motion][move-tab][xml]") {
+    // The rail's direct children are the zone_tab roots: the active tab is a
+    // solid primary pill, idle tabs sit on the card fill. The AMS strip's
+    // flat/selected-card look is the zone_tab default; the motion XML opts
+    // into the pill pair by style-name props.
+    lv_obj_t* rail = panel_widget("motion_tab_rail");
+    REQUIRE(lv_obj_get_child_count(rail) >= 2);
+    lv_obj_t* active = lv_obj_get_child(rail, 0);
+    lv_obj_t* idle = lv_obj_get_child(rail, 1);
+    const auto& palette = ThemeManager::instance().current_palette();
+    CHECK(lv_color_eq(lv_obj_get_style_bg_color(active, LV_PART_MAIN), palette.primary));
+    CHECK(lv_color_eq(lv_obj_get_style_bg_color(idle, LV_PART_MAIN), palette.card_bg));
+}
+
 TEST_CASE_METHOD(MoveTabFixture, "homed preset tap sends one absolute move", "[motion][move-tab]") {
     get_global_motion_panel().set_motion_tab(1);
     drain();
 
-    click(panel_widget("preset_back_right"));
+    click(panel_widget("preset_rear_right"));
 
     const std::string scripts = all_scripts();
     CHECK(scripts.find("G0 X211.5 Y211.5") != std::string::npos);
@@ -240,7 +255,7 @@ TEST_CASE_METHOD(MoveTabFixture, "a print or disabled nav gates the move grid",
     get_global_motion_panel().set_motion_tab(1);
     drain();
 
-    lv_obj_t* preset = panel_widget("preset_back_right");
+    lv_obj_t* preset = panel_widget("preset_rear_right");
     lv_obj_t* park = panel_widget("move_park");
     CHECK_FALSE(lv_obj_has_state(preset, LV_STATE_DISABLED));
 

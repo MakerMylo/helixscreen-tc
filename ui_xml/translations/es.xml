@@ -266,8 +266,6 @@
   <translation tag="BLUETOOTH PRINTERS" es="IMPRESORAS BLUETOOTH"/>
   <translation tag="BLUETOOTH SCANNERS" es="ESCÁNERES BLUETOOTH"/>
   <translation tag="Back" es="Volver"/>
-  <translation tag="Back Left" es="Atrás izquierda"/>
-  <translation tag="Back Right" es="Atrás derecha"/>
   <translation tag="Backtrace: {} frames" es="Traza inversa: {} marcos"/>
   <translation tag="Backup lane name contains invalid characters" es="El nombre del carril de reserva contiene caracteres no válidos"/>
   <translation tag="Backup spool switching state unknown" es="Estado del cambio a bobina de respaldo desconocido"/>
@@ -2272,6 +2270,9 @@
   <translation tag="Ready to Apply" es="Listo para Aplicar"/>
   <translation tag="Ready to calibrate" es="Listo para calibrar"/>
   <translation tag="Ready to pluck" es="Listo para puntear"/>
+  <translation tag="Rear" es="Atrás"/>
+  <translation tag="Rear Left" es="Atrás izquierda"/>
+  <translation tag="Rear Right" es="Atrás derecha"/>
   <translation tag="Reason" es="Motivo"/>
   <translation tag="Reason: {}&#10;&#10;The printer cannot resume this print. Restart from the beginning?" es="Motivo: {}&#10;&#10;La impresora no puede reanudar esta impresión. ¿Reiniciar desde el principio?"/>
   <translation tag="Reboot" es="Reiniciar"/>

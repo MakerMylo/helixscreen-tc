@@ -42,11 +42,10 @@ _LANDSCAPE = [
 ]
 
 _PORTRAIT = [
-    ("272x480", 204),
-    # The coordinate row's 32px touch targets (the coordinates open a keypad,
-    # the swap icon flips commanded/actual) take their height from the pad,
-    # and the Jog/Move tab strip claims more of the pad's column.
-    ("320x480", 232),
+    # Height-bound square after the Z column takes its floor width first;
+    # the tab strip and the coordinate row claim the rest of the column.
+    ("272x480", 198),
+    ("320x480", 192),
 ]
 
 # 1/100 mm: the widest realistic readout, 3 digits + 2 decimals per axis.
@@ -192,6 +191,12 @@ def test_portrait_strips_stack_and_fit(size, pad_floor, tmp_path):
             assert _right(pad_row) - _right(z_col) <= 6, (
                 f"{size}: {_right(pad_row) - _right(z_col)}px of dead space "
                 f"right of the Z column")
+            # And none between them: the wrapper is clamped to the pad square
+            # so the growing Z column, not empty row width, takes the rest.
+            assert z_col["x"] - _right(pad) <= 8, (
+                f"{size}: {z_col['x'] - _right(pad)}px of dead space between "
+                f"the pad and the Z column - the wrapper is not clamped to "
+                f"the pad square")
 
             content = _geom(app, "overlay_content")
             assert all(v == 0 for v in content["scroll"].values()), (
@@ -202,6 +207,34 @@ def test_portrait_strips_stack_and_fit(size, pad_floor, tmp_path):
             assert _bottom(bottom) <= panel["y"] + panel["h"], (
                 f"{size}: bottom row bottom {_bottom(bottom)} exceeds the "
                 f"panel bottom {panel['y'] + panel['h']} - portrait does not fit")
+
+            # Jog owns the bottom row: the Move actions are not in it.
+            with pytest.raises(HelixCtlError):
+                app.geom("move_park")
+
+            # On Move, Park and Motors off sit in the bottom row beside QGL
+            # and the grid's own action row stays hidden, so the grid fills
+            # the height that row used to claim.
+            app.set("motion_tab", 1)
+            app.wait_idle()
+            with pytest.raises(HelixCtlError):
+                app.geom("move_actions")
+            with pytest.raises(HelixCtlError):
+                app.geom("jog_mode_fine")
+            park = _geom(app, "move_park")
+            motors = _geom(app, "move_motors_off")
+            qgl = _geom(app, "btn_qgl")
+            assert park["y"] == motors["y"] == qgl["y"] == bottom["y"], (
+                f"{size}: Park/Motors off (y={park['y']}/{motors['y']}) are not "
+                f"in the bottom row (y={bottom['y']})")
+            assert _right(park) <= motors["x"] and _right(motors) <= qgl["x"], (
+                f"{size}: bottom row order is Park({park['x']}-{_right(park)}) "
+                f"Motors off({motors['x']}-{_right(motors)}) "
+                f"QGL({qgl['x']}-{_right(qgl)})")
+            grid = _geom(app, "move_grid")
+            assert _bottom(grid) <= bottom["y"], (
+                f"{size}: grid bottom {_bottom(grid)} runs past the bottom row "
+                f"top {bottom['y']}")
     finally:
         _restore_size(before)
 

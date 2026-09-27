@@ -300,8 +300,6 @@ translations:
   BLUETOOTH PRINTERS: IMPRIMANTES BLUETOOTH
   BLUETOOTH SCANNERS: SCANNERS BLUETOOTH
   Back: Retour
-  Back Left: 'Arrière gauche'
-  Back Right: 'Arrière droit'
   'Backtrace: {} frames': 'Trace : {} frames'
   Backup lane name contains invalid characters: 'Le nom de la voie de secours contient des caractères non valides'
   Backup spool switching state unknown: État du passage à la bobine de secours inconnu
@@ -2540,6 +2538,9 @@ translations:
   Ready to Apply: Prêt à appliquer
   Ready to calibrate: Prêt à calibrer
   Ready to pluck: Prêt à pincer
+  Rear: 'Arrière'
+  Rear Left: 'Arrière gauche'
+  Rear Right: 'Arrière droit'
   Reason: Raison
   ? "Reason: {}\n\nThe printer cannot resume this print. Restart from the beginning?"
   : "Raison : {}\n\nL'imprimante ne peut pas reprendre cette impression. Recommencer depuis le début ?"

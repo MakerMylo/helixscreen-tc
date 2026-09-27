@@ -35,7 +35,6 @@
 #include "lvgl/src/display/lv_display_private.h" // For rendering_in_progress check
 #include "lvgl_debug_invalidate.h"
 #include "macro_manager.h"
-#include "motion_presets.h"
 #include "plr_backend.h"
 #include "pre_print_preferences.h"
 #include "printer_cache_registry.h"

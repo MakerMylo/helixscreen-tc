@@ -418,15 +418,7 @@ void MotionPanel::on_activate() {
 
     // Recalculate jog pad size — the wrapper dimensions may differ after re-layout
     if (jog_pad_ && overlay_root_) {
-        lv_obj_t* jog_wrapper = lv_obj_get_parent(jog_pad_);
-        if (jog_wrapper) {
-            lv_obj_update_layout(overlay_root_);
-            lv_coord_t w = lv_obj_get_width(jog_wrapper);
-            lv_coord_t h = lv_obj_get_height(jog_wrapper);
-            lv_coord_t size = LV_MIN(w, h);
-            lv_obj_set_width(jog_pad_, size);
-            lv_obj_set_height(jog_pad_, size);
-        }
+        fit_jog_pad();
         // Jog step distances are settings, and both the header cog and
         // Settings > Printing > Motion can change them while this panel sits on
         // the stack. The ring labels are painted from the draw callback, so a
@@ -495,6 +487,42 @@ void MotionPanel::stop_hold_repeat() {
 // Jog Pad Setup
 // ============================================================================
 
+void MotionPanel::fit_jog_pad() {
+    lv_obj_t* jog_wrapper = lv_obj_get_parent(jog_pad_);
+    if (!jog_wrapper)
+        return;
+
+    lv_obj_update_layout(overlay_root_);
+    const lv_coord_t wrapper_h = lv_obj_get_height(jog_wrapper);
+
+    // Portrait only: the Z column grows beside the wrapper, so the wrapper's
+    // resolved share under-reports the width a square pad could claim. Size
+    // against the row minus the column's floor instead, then clamp the
+    // wrapper to the square so the growing column absorbs the leftover (no
+    // dead band beside a height-bound pad). Landscape keeps its growing
+    // wrapper: the pad centres in it and the Z controls live in a separate
+    // right-hand column.
+    lv_obj_t* pad_row = lv_obj_get_parent(jog_wrapper);
+    lv_coord_t wrapper_w = lv_obj_get_width(jog_wrapper);
+    const bool portrait_pad_row = lv_streq(lv_obj_get_name(pad_row), "pad_row");
+    if (portrait_pad_row) {
+        lv_obj_t* z_column = lv_obj_get_child_by_name(pad_row, "z_column");
+        if (z_column) {
+            const lv_coord_t z_floor = lv_obj_get_style_min_width(z_column, LV_PART_MAIN);
+            wrapper_w = lv_obj_get_content_width(pad_row) - z_floor -
+                        lv_obj_get_style_pad_column(pad_row, LV_PART_MAIN);
+        }
+    }
+
+    const lv_coord_t jog_size = LV_MIN(wrapper_w, wrapper_h);
+    if (portrait_pad_row) {
+        lv_obj_set_width(jog_wrapper, jog_size);
+        lv_obj_set_flex_grow(jog_wrapper, 0);
+    }
+    lv_obj_set_width(jog_pad_, jog_size);
+    lv_obj_set_height(jog_pad_, jog_size);
+}
+
 void MotionPanel::setup_jog_pad() {
     // Find overlay_content to access motion panel widgets
     lv_obj_t* overlay_content = lv_obj_find_by_name(overlay_root_, "overlay_content");
@@ -518,16 +546,6 @@ void MotionPanel::setup_jog_pad() {
     // centred with dead bands), landscape centres it in the wider wrapper.
     const lv_align_t pad_align = lv_obj_get_style_align(jog_pad_container, LV_PART_MAIN);
 
-    // Force flex layout resolution so dimensions are available
-    lv_obj_update_layout(overlay_root_);
-
-    // Jog pad is square: fit within the wrapper's resolved dimensions.
-    // The jog pad draws axis labels (Y+/Y-) that extend beyond the circle edge,
-    // so we size the widget to fill the wrapper and let the draw code handle overflow.
-    lv_coord_t wrapper_w = lv_obj_get_width(jog_wrapper);
-    lv_coord_t wrapper_h = lv_obj_get_height(jog_wrapper);
-    lv_coord_t jog_size = LV_MIN(wrapper_w, wrapper_h);
-
     // Delete placeholder container
     helix::ui::safe_delete(jog_pad_container);
 
@@ -535,9 +553,9 @@ void MotionPanel::setup_jog_pad() {
     jog_pad_ = ui_jog_pad_create(jog_wrapper);
     if (jog_pad_) {
         lv_obj_set_name(jog_pad_, "jog_pad");
-        lv_obj_set_width(jog_pad_, jog_size);
-        lv_obj_set_height(jog_pad_, jog_size);
         lv_obj_set_align(jog_pad_, pad_align);
+
+        fit_jog_pad();
 
         // Set callbacks - pass 'this' as user_data
         ui_jog_pad_set_jog_callback(jog_pad_, jog_pad_jog_cb, this);
@@ -549,7 +567,7 @@ void MotionPanel::setup_jog_pad() {
         // Apply initial enabled/dimmed state (the observer only fires on change)
         update_jog_pad_enabled();
 
-        spdlog::debug("[{}] Jog pad widget created (size: {}px)", get_name(), jog_size);
+        spdlog::debug("[{}] Jog pad widget created", get_name());
     } else {
         spdlog::error("[{}] Failed to create jog pad widget!", get_name());
     }
@@ -1391,14 +1409,14 @@ static void on_motion_tab_clicked(lv_event_t* e) {
 }
 
 /// Bed-grid preset keys as they appear in motion_panel.xml user_data, in
-/// MotionPreset declaration order (back row first, front row last).
+/// MotionPreset declaration order (rear row first, front row last).
 static std::optional<helix::MotionPreset> preset_from_key(const char* key) {
     static const struct {
         const char* key;
         helix::MotionPreset preset;
     } table[] = {
-        {"back_left", helix::MotionPreset::BackLeft},     {"back", helix::MotionPreset::Back},
-        {"back_right", helix::MotionPreset::BackRight},   {"left", helix::MotionPreset::Left},
+        {"rear_left", helix::MotionPreset::RearLeft},     {"rear", helix::MotionPreset::Rear},
+        {"rear_right", helix::MotionPreset::RearRight},   {"left", helix::MotionPreset::Left},
         {"center", helix::MotionPreset::Center},          {"right", helix::MotionPreset::Right},
         {"front_left", helix::MotionPreset::FrontLeft},   {"front", helix::MotionPreset::Front},
         {"front_right", helix::MotionPreset::FrontRight},

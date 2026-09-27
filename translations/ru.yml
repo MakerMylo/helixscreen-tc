@@ -290,8 +290,6 @@ translations:
   BLUETOOTH PRINTERS: BLUETOOTH-ПРИНТЕРЫ
   BLUETOOTH SCANNERS: BLUETOOTH-СКАНЕРЫ
   Back: Назад
-  Back Left: 'Сзади слева'
-  Back Right: 'Сзади справа'
   'Backtrace: {} frames': 'Трассировка: {} кадров'
   Backup lane name contains invalid characters: 'Имя резервного канала содержит недопустимые символы'
   Backup spool switching state unknown: 'Резервная катушка: состояние неизвестно'
@@ -2498,6 +2496,9 @@ translations:
   Ready to Apply: Готово к применению
   Ready to calibrate: Готов к калибровке
   Ready to pluck: Готово к щипку
+  Rear: 'Сзади'
+  Rear Left: 'Сзади слева'
+  Rear Right: 'Сзади справа'
   Reason: Причина
   ? "Reason: {}\n\nThe printer cannot resume this print. Restart from the beginning?"
   : "Причина: {}\n\nПринтер не может возобновить эту печать. Начать заново?"

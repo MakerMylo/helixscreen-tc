@@ -266,8 +266,6 @@
   <translation tag="BLUETOOTH PRINTERS" ja="Bluetooth プリンター"/>
   <translation tag="BLUETOOTH SCANNERS" ja="Bluetooth スキャナー"/>
   <translation tag="Back" ja="戻る"/>
-  <translation tag="Back Left" ja="左奥"/>
-  <translation tag="Back Right" ja="右奥"/>
   <translation tag="Backtrace: {} frames" ja="バックトレース: {} フレーム"/>
   <translation tag="Backup lane name contains invalid characters" ja="バックアップレーン名に無効な文字が含まれています"/>
   <translation tag="Backup spool switching state unknown" ja="バックアップスプール切り替えの状態は不明です"/>
@@ -2272,6 +2270,9 @@
   <translation tag="Ready to Apply" ja="適用の準備完了"/>
   <translation tag="Ready to calibrate" ja="キャリブレーション準備完了"/>
   <translation tag="Ready to pluck" ja="はじく準備完了"/>
+  <translation tag="Rear" ja="奥"/>
+  <translation tag="Rear Left" ja="左奥"/>
+  <translation tag="Rear Right" ja="右奥"/>
   <translation tag="Reason" ja="理由"/>
   <translation tag="Reason: {}&#10;&#10;The printer cannot resume this print. Restart from the beginning?" ja="理由: {}&#10;&#10;プリンターはこの印刷を再開できません。最初からやり直しますか？"/>
   <translation tag="Reboot" ja="再起動"/>

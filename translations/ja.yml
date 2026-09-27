@@ -270,8 +270,6 @@ translations:
   BLUETOOTH PRINTERS: Bluetooth プリンター
   BLUETOOTH SCANNERS: Bluetooth スキャナー
   Back: 戻る
-  Back Left: '左奥'
-  Back Right: '右奥'
   'Backtrace: {} frames': 'バックトレース: {} フレーム'
   Backup lane name contains invalid characters: 'バックアップレーン名に無効な文字が含まれています'
   Backup spool switching state unknown: バックアップスプール切り替えの状態は不明です
@@ -2363,6 +2361,9 @@ translations:
   Ready to Apply: 適用の準備完了
   Ready to calibrate: キャリブレーション準備完了
   Ready to pluck: はじく準備完了
+  Rear: '奥'
+  Rear Left: '左奥'
+  Rear Right: '右奥'
   Reason: 理由
   ? "Reason: {}\n\nThe printer cannot resume this print. Restart from the beginning?"
   : "理由: {}\n\nプリンターはこの印刷を再開できません。最初からやり直しますか？"

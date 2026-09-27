@@ -37,6 +37,7 @@
 #include <mutex>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -177,6 +178,17 @@ enum class ZOffsetCalibrationStrategy {
  * @return Display string (e.g., "Printing", "Paused")
  */
 const char* print_job_state_to_string(PrintJobState state);
+
+/**
+ * @brief Whether a kinematics string names a round-bed machine
+ *
+ * The value is PrinterDiscovery::kinematics(), read from
+ * configfile.config.printer.kinematics because toolhead.kinematics comes
+ * back null in the status payload.
+ */
+constexpr bool circular_bed_kinematics(std::string_view kinematics) {
+    return kinematics == "delta" || kinematics == "rotary_delta";
+}
 
 /**
  * @brief Printer state manager with LVGL 9 reactive subjects

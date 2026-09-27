@@ -269,8 +269,6 @@ translations:
   BLUETOOTH PRINTERS: 蓝牙打印机
   BLUETOOTH SCANNERS: 蓝牙扫描器
   Back: 返回
-  Back Left: '左后'
-  Back Right: '右后'
   'Backtrace: {} frames': '回溯: {} 帧'
   Backup lane name contains invalid characters: '备用耗材通道名称包含无效字符'
   Backup spool switching state unknown: 备用料盘切换状态未知
@@ -2354,6 +2352,9 @@ translations:
   Ready to Apply: 准备应用
   Ready to calibrate: 准备校准
   Ready to pluck: 准备拨动
+  Rear: '后'
+  Rear Left: '左后'
+  Rear Right: '右后'
   Reason: 原因
   ? "Reason: {}\n\nThe printer cannot resume this print. Restart from the beginning?"
   : "原因：{}\n\n打印机无法恢复此次打印。要从头重新开始吗？"

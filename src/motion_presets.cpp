@@ -27,11 +27,11 @@ struct GridPosition {
 
 constexpr GridPosition grid_position(MotionPreset preset) {
     switch (preset) {
-    case MotionPreset::BackLeft:
+    case MotionPreset::RearLeft:
         return {-1, 1};
-    case MotionPreset::Back:
+    case MotionPreset::Rear:
         return {0, 1};
-    case MotionPreset::BackRight:
+    case MotionPreset::RearRight:
         return {1, 1};
     case MotionPreset::Left:
         return {-1, 0};

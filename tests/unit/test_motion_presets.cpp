@@ -51,8 +51,8 @@ TEST_CASE("motion presets cover a 235x235 bed", "[motion][presets]") {
     const auto bounds = known_bounds(0, 235, 0, 235);
     // Edge presets sit 10% of the 235 mm span (23.5 mm) in from the edge.
     const PresetPoint grid[] = {
-        {MotionPreset::BackLeft, 23.5, 211.5},   {MotionPreset::Back, 117.5, 211.5},
-        {MotionPreset::BackRight, 211.5, 211.5}, {MotionPreset::Left, 23.5, 117.5},
+        {MotionPreset::RearLeft, 23.5, 211.5},   {MotionPreset::Rear, 117.5, 211.5},
+        {MotionPreset::RearRight, 211.5, 211.5}, {MotionPreset::Left, 23.5, 117.5},
         {MotionPreset::Center, 117.5, 117.5},    {MotionPreset::Right, 211.5, 117.5},
         {MotionPreset::FrontLeft, 23.5, 23.5},   {MotionPreset::Front, 117.5, 23.5},
         {MotionPreset::FrontRight, 211.5, 23.5},
@@ -64,8 +64,8 @@ TEST_CASE("motion presets on a centre-origin bed", "[motion][presets]") {
     const auto bounds = known_bounds(-100, 100, -100, 100);
     // 10% of the 200 mm span is 20 mm in from each edge.
     const PresetPoint grid[] = {
-        {MotionPreset::BackLeft, -80, 80},   {MotionPreset::Back, 0, 80},
-        {MotionPreset::BackRight, 80, 80},   {MotionPreset::Left, -80, 0},
+        {MotionPreset::RearLeft, -80, 80},   {MotionPreset::Rear, 0, 80},
+        {MotionPreset::RearRight, 80, 80},   {MotionPreset::Left, -80, 0},
         {MotionPreset::Center, 0, 0},        {MotionPreset::Right, 80, 0},
         {MotionPreset::FrontLeft, -80, -80}, {MotionPreset::Front, 0, -80},
         {MotionPreset::FrontRight, 80, -80},
@@ -78,9 +78,9 @@ TEST_CASE("motion presets on a circular bed sit on the inscribed circle", "[moti
     // Rim presets at 90% of the 100 mm radius; diagonals at 45 degrees, not
     // on the bounding square's corners where the round bed has ended.
     const PresetPoint grid[] = {
-        {MotionPreset::BackLeft, -CORNER_REACH_100, CORNER_REACH_100},
-        {MotionPreset::Back, 0, 90},
-        {MotionPreset::BackRight, CORNER_REACH_100, CORNER_REACH_100},
+        {MotionPreset::RearLeft, -CORNER_REACH_100, CORNER_REACH_100},
+        {MotionPreset::Rear, 0, 90},
+        {MotionPreset::RearRight, CORNER_REACH_100, CORNER_REACH_100},
         {MotionPreset::Left, -90, 0},
         {MotionPreset::Center, 0, 0},
         {MotionPreset::Right, 90, 0},
@@ -101,7 +101,7 @@ TEST_CASE("motion presets refuse unknown or degenerate bounds", "[motion][preset
     AxisBounds unknown_x = known_bounds(0, 235, 0, 235);
     unknown_x.has_x = false;
     CHECK_FALSE(motion_preset_target(MotionPreset::Center, unknown_x, false).has_value());
-    CHECK_FALSE(motion_preset_target(MotionPreset::BackRight, unknown_x, true).has_value());
+    CHECK_FALSE(motion_preset_target(MotionPreset::RearRight, unknown_x, true).has_value());
 
     AxisBounds unknown_y = known_bounds(0, 235, 0, 235);
     unknown_y.has_y = false;

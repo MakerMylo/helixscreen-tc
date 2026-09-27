@@ -314,6 +314,11 @@ class MotionPanel : public OverlayBase {
     static void on_axis_keypad_value(float value, void* user_data);
 
     void setup_jog_pad();
+
+    /// Re-fit the pad square inside its wrapper. Portrait also clamps the
+    /// wrapper to the square so the growing Z column absorbs the leftover
+    /// width; landscape centres the pad in its growing wrapper untouched.
+    void fit_jog_pad();
     void register_position_observers();
 
     // Enable/dim the jog pad from the current nav_buttons_enabled state
