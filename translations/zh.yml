@@ -65,6 +65,7 @@ translations:
   1. Printer will home and probe each screw: 1. 打印机将归位并探测每个螺丝位置
   10 minutes: 10 分钟
   12 Hour: 12 小时
+  12-hour: 12小时制
   120 seconds: 120 秒
   15 seconds: 15 秒
   170-300 °C: '170-300 °C'
@@ -78,6 +79,7 @@ translations:
   2. Results show how much to turn each screw: 2. 结果显示每个螺丝需要旋转多少
   20 minutes: 20分钟
   24 Hour: 24 小时
+  24-hour: 24小时制
   270°: 270°
   270° Clockwise: 顺时针 270°
   2D Heatmap: 2D 热图
@@ -182,6 +184,7 @@ translations:
   All Devices: 所有设备
   All axes homed: 所有轴已归位
   All fields are required: 所有字段均为必填项
+  All healthy: 一切正常
   Allow: '允许'
   Allow Home Screen Editing: '允许编辑主屏幕'
   Allow cold load/unload: 允许冷态加载/卸载
@@ -501,6 +504,7 @@ translations:
   Check Again: 重新检查
   Check Klipper console for details: 详情请查看 Klipper 控制台
   Check extruder temperature and try again. Manual removal may be required.: 请检查挤出机温度后重试。可能需要手动取出。
+  Check failed: 检查失败
   Check filament: 检查耗材
   Check for Updates: 检查更新
   Check slot: 检查槽位
@@ -531,6 +535,7 @@ translations:
   Checking timelapse plugin...: 正在检查延时摄影插件...
   Checking webcam: 正在检查摄像头
   Checking...: 检查中...
+  Checking…: 检查中…
   Choose 12-hour or 24-hour time display: 选择 12 小时制或 24 小时制
   Choose Filament: 选择耗材
   Choose Model: 选择型号
@@ -770,6 +775,7 @@ translations:
   Damping (Kd): 阻尼 (Kd)
   Danger: 危险
   Danger Zone: 危险区域
+  Dark: 深色
   Dark Mode: 深色模式
   Database: 数据库
   Date (newest): 日期（最新）
@@ -1708,6 +1714,7 @@ translations:
   Manage: 管理
   Manage Printers: 管理打印机
   Manage configured printers: 管理已配置的打印机
+  Managed by firmware: 由固件管理
   Managed by your firmware: 由固件管理
   Manual: 手动
   Manual Bed Leveling: 手动热床调平
@@ -1808,6 +1815,7 @@ translations:
   Multi-Filament System not available: 多耗材系统不可用
   Multi-filament system not ready: 多耗材系统未就绪
   Must home axes first: 请先归位
+  Muted: 静音
   My Custom Theme: 我的自定义主题
   My Panel: 我的面板
   My Printer: 我的打印机
@@ -1819,6 +1827,7 @@ translations:
   'Name:': '名称:'
   Named actions in the LED Controls widget. Not shown under LED selection.: 在 LED 控制小组件中显示为命名操作。不会出现在 LED 选择中。
   Needs adjustment: 需要调整
+  Needs attention: 需要处理
   Needs the {} package to switch spools: '切换料盘需要 {} 插件'
   Net Weight (g): 净重（克）
   Network: 网络
@@ -1831,6 +1840,7 @@ translations:
   Network name cannot be empty: 网络名称不能为空
   'Network, display, sound, printer setup, and more. You can replay this tour anytime from Help & About.': 网络、显示、声音、打印机设置等。您可以随时从“帮助与关于”中重播此漫游。
   Never: 从不
+  Never sleeps: 从不休眠
   New Spool: 新料盘
   'New Spool: Step 1 of 3': 新料盘：步骤 1 / 3
   'New Spool: Step {} of {}': '新线轴: 第 {} 步,共 {} 步'
@@ -2278,6 +2288,7 @@ translations:
   Checking Bed Mesh...: 正在检查热床网格...
   Probing point {} of {}: '探测点 {} / {}'
   Probing... ({} points): '探测中...（{} 个点）'
+  Problem found: 发现问题
   Proceed: 继续
   # Source: abort_progress_modal.xml:20
   Processing...: '处理中...'
@@ -2746,6 +2757,7 @@ translations:
   Skipped: '已跳过'
   Sleep While Printing: 打印时休眠
   Sleep adjusted to match dim timeout: 休眠超时已调整
+  Sleep {} min: '{} 分钟后休眠'
   Sliced colors: 切片颜色
   Slicer: 切片软件
   Slot: 槽位
@@ -3307,6 +3319,7 @@ translations:
   Verifying timelapse plugin...: 正在验证延时摄影插件...
   Verifying...: 验证中...
   Version: 版本
+  Version {}: 版本 {}
   Version, updates, and printer info: 版本、更新和打印机信息
   Vertical: 垂直
   Vibration: 振动
@@ -3324,6 +3337,7 @@ translations:
   'Visits: ': '访问次数: '
   Volume: 音量
   Volume of filament used during ramming: '填充过程中使用的耗材体积'
+  Volume {}%: 音量 {}%
   WIDTH SENSORS: 宽度传感器
   WLED: WLED
   WLED Preset: WLED 预设
@@ -3367,7 +3381,9 @@ translations:
   Which macro the Close feeder button sends: “关闭送料器”按钮发送的宏
   Which macro the Open feeder button sends: “打开送料器”按钮发送的宏
   White: 白色
+  Wi-Fi: WiFi
   Wi-Fi or ethernet connection status: WiFi 或以太网连接状态
+  Wi-Fi {}: WiFi {}
   WiFi: WiFi
   WiFi Disabled: WiFi 已禁用
   WiFi Enabled: WiFi 已启用
@@ -3494,6 +3510,7 @@ translations:
   locked: '已锁定'
   mm before clog: 毫米后堵料
   needs: 需要
+  never sleeps: 从不休眠
   not detected: 未检测到
   not loaded: '未加载'
   nozzle: 喷嘴
@@ -3513,6 +3530,7 @@ translations:
   remaining: 剩余
   remaining before clog detection triggers: 剩余即触发堵料检测
   rendering: 渲染中
+  sleep {} min: '{} 分钟后休眠'
   slots): 个槽位)
   started: 已启动
   steppers: 步进电机
@@ -3526,6 +3544,7 @@ translations:
   you have: 您有
   '{} LED strips available': '{} 条 LED 灯带可用'
   '{} and {} are both mapped here': '{} 和 {} 都映射到这里'
+  '{} available': '{} 可用'
   '{} axis homed': '{} 轴已归位'
   '{} command timed out': '{} 命令超时'
   '{} complete': '{} 完成'

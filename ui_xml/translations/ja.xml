@@ -65,6 +65,7 @@
   <translation tag="1. Printer will home and probe each screw" ja="1. プリンターがホーミングして各ネジをプローブします"/>
   <translation tag="10 minutes" ja="10分"/>
   <translation tag="12 Hour" ja="12時間"/>
+  <translation tag="12-hour" ja="12時間制"/>
   <translation tag="120 seconds" ja="120秒"/>
   <translation tag="15 seconds" ja="15秒"/>
   <translation tag="170-300 °C" ja="170-300 °C"/>
@@ -77,6 +78,7 @@
   <translation tag="2. Results show how much to turn each screw" ja="2. 各ネジをどれだけ回すか結果が表示されます"/>
   <translation tag="20 minutes" ja="20分"/>
   <translation tag="24 Hour" ja="24時間"/>
+  <translation tag="24-hour" ja="24時間制"/>
   <translation tag="270°" ja="270°"/>
   <translation tag="270° Clockwise" ja="270° 時計回り"/>
   <translation tag="2D Heatmap" ja="2Dヒートマップ"/>
@@ -182,6 +184,7 @@
   <translation tag="All Devices" ja="すべてのデバイス"/>
   <translation tag="All axes homed" ja="すべての軸がホーミング済み"/>
   <translation tag="All fields are required" ja="すべての項目が必須です"/>
+  <translation tag="All healthy" ja="すべて正常"/>
   <translation tag="Allow" ja="許可"/>
   <translation tag="Allow Home Screen Editing" ja="ホーム画面の編集を許可"/>
   <translation tag="Allow cold load/unload" ja="コールド時の装填/取り出しを許可"/>
@@ -494,6 +497,7 @@
   <translation tag="Check Again" ja="再確認"/>
   <translation tag="Check Klipper console for details" ja="詳細は Klipper コンソールを確認してください"/>
   <translation tag="Check extruder temperature and try again. Manual removal may be required." ja="エクストルーダーの温度を確認してもう一度お試しください。手動での取り出しが必要な場合があります。"/>
+  <translation tag="Check failed" ja="確認に失敗しました"/>
   <translation tag="Check filament" ja="フィラメントを確認"/>
   <translation tag="Check for Updates" ja="更新を確認"/>
   <translation tag="Check slot" ja="スロットを確認"/>
@@ -524,6 +528,7 @@
   <translation tag="Checking timelapse plugin..." ja="タイムラプスプラグインを確認中..."/>
   <translation tag="Checking webcam" ja="ウェブカメラを確認中"/>
   <translation tag="Checking..." ja="確認中..."/>
+  <translation tag="Checking…" ja="確認中…"/>
   <translation tag="Choose 12-hour or 24-hour time display" ja="12時間表示または24時間表示を選択"/>
   <translation tag="Choose Filament" ja="フィラメントを選択"/>
   <translation tag="Choose Model" ja="モデルを選択"/>
@@ -750,6 +755,7 @@
   <translation tag="Damping (Kd)" ja="減衰 (Kd)"/>
   <translation tag="Danger" ja="危険"/>
   <translation tag="Danger Zone" ja="危険ゾーン"/>
+  <translation tag="Dark" ja="ダーク"/>
   <translation tag="Dark Mode" ja="ダークモード"/>
   <translation tag="Database" ja="データベース"/>
   <translation tag="Date (newest)" ja="日付（新しい順）"/>
@@ -1648,6 +1654,7 @@
   <translation tag="Manage" ja="管理"/>
   <translation tag="Manage Printers" ja="プリンター管理"/>
   <translation tag="Manage configured printers" ja="設定済みプリンターを管理"/>
+  <translation tag="Managed by firmware" ja="ファームウェア管理"/>
   <translation tag="Managed by your firmware" ja="ファームウェアによって管理されています"/>
   <translation tag="Manual" ja="手動"/>
   <translation tag="Manual Bed Leveling" ja="手動ベッドレベリング"/>
@@ -1745,6 +1752,7 @@
   <translation tag="Multi-Filament System not available" ja="マルチフィラメントシステムが利用できません"/>
   <translation tag="Multi-filament system not ready" ja="マルチフィラメントシステムの準備ができていません"/>
   <translation tag="Must home axes first" ja="先にホーミングしてください"/>
+  <translation tag="Muted" ja="ミュート"/>
   <translation tag="My Custom Theme" ja="マイカスタムテーマ"/>
   <translation tag="My Panel" ja="マイパネル"/>
   <translation tag="My Printer" ja="マイプリンター"/>
@@ -1755,6 +1763,7 @@
   <translation tag="Name:" ja="名前:"/>
   <translation tag="Named actions in the LED Controls widget. Not shown under LED selection." ja="LEDコントロールウィジェットの名前付きアクションです。LED選択には表示されません。"/>
   <translation tag="Needs adjustment" ja="調整が必要"/>
+  <translation tag="Needs attention" ja="対応が必要"/>
   <translation tag="Needs the {} package to switch spools" ja="スプール切り替えには {} プラグインが必要です"/>
   <translation tag="Net Weight (g)" ja="正味重量（g）"/>
   <translation tag="Network" ja="ネットワーク"/>
@@ -1767,6 +1776,7 @@
   <translation tag="Network name cannot be empty" ja="ネットワーク名は空にできません"/>
   <translation tag="Network, display, sound, printer setup, and more. You can replay this tour anytime from Help &amp; About." ja="ネットワーク、ディスプレイ、サウンド、プリンター設定など。このツアーは「ヘルプと情報」からいつでも再生できます。"/>
   <translation tag="Never" ja="なし"/>
+  <translation tag="Never sleeps" ja="スリープしない"/>
   <translation tag="New Spool" ja="新規スプール"/>
   <translation tag="New Spool: Step 1 of 3" ja="新しいスプール: ステップ 1 / 3"/>
   <translation tag="New Spool: Step {} of {}" ja="新規スプール: ステップ {} / {}"/>
@@ -2198,6 +2208,7 @@
   <translation tag="Probing Z..." ja="Z軸をプローブ中..."/>
   <translation tag="Probing point {} of {}" ja="プローブ点 {} / {}"/>
   <translation tag="Probing... ({} points)" ja="プローブ中... ({} 点)"/>
+  <translation tag="Problem found" ja="問題が見つかりました"/>
   <translation tag="Proceed" ja="続行"/>
   <translation tag="Processing..." ja="処理中..."/>
   <translation tag="Profile deleted" ja="プロファイルを削除しました"/>
@@ -2647,6 +2658,7 @@
   <translation tag="Skipped" ja="スキップ"/>
   <translation tag="Sleep While Printing" ja="印刷中のスリープ"/>
   <translation tag="Sleep adjusted to match dim timeout" ja="スリープタイムアウトを調整しました"/>
+  <translation tag="Sleep {} min" ja="{}分でスリープ"/>
   <translation tag="Sliced colors" ja="スライスした色"/>
   <translation tag="Slicer" ja="スライサー"/>
   <translation tag="Slot" ja="スロット"/>
@@ -3158,6 +3170,7 @@
   <translation tag="Verifying timelapse plugin..." ja="タイムラプスプラグインを確認中..."/>
   <translation tag="Verifying..." ja="検証中..."/>
   <translation tag="Version" ja="バージョン"/>
+  <translation tag="Version {}" ja="バージョン {}"/>
   <translation tag="Version, updates, and printer info" ja="バージョン、アップデート、プリンター情報"/>
   <translation tag="Vertical" ja="垂直"/>
   <translation tag="Vibration" ja="振動"/>
@@ -3175,6 +3188,7 @@
   <translation tag="Visits: " ja="表示回数: "/>
   <translation tag="Volume" ja="音量"/>
   <translation tag="Volume of filament used during ramming" ja="ラミング時に使用するフィラメント量"/>
+  <translation tag="Volume {}%" ja="音量 {}%"/>
   <translation tag="WIDTH SENSORS" ja="幅センサー"/>
   <translation tag="WLED" ja="WLED"/>
   <translation tag="WLED Preset" ja="WLED プリセット"/>
@@ -3213,7 +3227,9 @@
   <translation tag="Which macro the Close feeder button sends" ja="「フィーダーを閉じる」ボタンが送信するマクロ"/>
   <translation tag="Which macro the Open feeder button sends" ja="「フィーダーを開く」ボタンが送信するマクロ"/>
   <translation tag="White" ja="ホワイト"/>
+  <translation tag="Wi-Fi" ja="WiFi"/>
   <translation tag="Wi-Fi or ethernet connection status" ja="WiFi またはイーサネットの接続状態"/>
+  <translation tag="Wi-Fi {}" ja="WiFi {}"/>
   <translation tag="WiFi" ja="WiFi"/>
   <translation tag="WiFi Disabled" ja="WiFi 無効"/>
   <translation tag="WiFi Enabled" ja="WiFi 有効"/>
@@ -3336,6 +3352,7 @@
   <translation tag="locked" ja="ロック中"/>
   <translation tag="mm before clog" ja="詰まりまでの距離 (mm)"/>
   <translation tag="needs" ja="必要"/>
+  <translation tag="never sleeps" ja="スリープしない"/>
   <translation tag="not detected" ja="未検出"/>
   <translation tag="not loaded" ja="未装填"/>
   <translation tag="nozzle" ja="ノズル"/>
@@ -3350,6 +3367,7 @@
   <translation tag="remaining" ja="残り"/>
   <translation tag="remaining before clog detection triggers" ja="残りで詰まり検出が作動します"/>
   <translation tag="rendering" ja="レンダリング中"/>
+  <translation tag="sleep {} min" ja="{}分でスリープ"/>
   <translation tag="slots)" ja="スロット)"/>
   <translation tag="started" ja="開始"/>
   <translation tag="steppers" ja="ステッパー"/>
@@ -3363,6 +3381,7 @@
   <translation tag="you have" ja="現在は"/>
   <translation tag="{} LED strips available" ja="{} 個の LED ストリップが利用可能です"/>
   <translation tag="{} and {} are both mapped here" ja="{} と {} の両方がここに割り当てられています"/>
+  <translation tag="{} available" ja="{} が利用可能"/>
   <translation tag="{} axis homed" ja="{} 軸がホーミング済み"/>
   <translation tag="{} command timed out" ja="{} コマンドがタイムアウトしました"/>
   <translation tag="{} complete" ja="{} 完了"/>

@@ -66,6 +66,7 @@ translations:
   1. Printer will home and probe each screw: 1. プリンターがホーミングして各ネジをプローブします
   10 minutes: 10分
   12 Hour: 12時間
+  12-hour: 12時間制
   120 seconds: 120秒
   15 seconds: 15秒
   170-300 °C: '170-300 °C'
@@ -79,6 +80,7 @@ translations:
   2. Results show how much to turn each screw: 2. 各ネジをどれだけ回すか結果が表示されます
   20 minutes: 20分
   24 Hour: 24時間
+  24-hour: 24時間制
   270°: 270°
   270° Clockwise: 270° 時計回り
   2D Heatmap: 2Dヒートマップ
@@ -183,6 +185,7 @@ translations:
   All Devices: すべてのデバイス
   All axes homed: すべての軸がホーミング済み
   All fields are required: すべての項目が必須です
+  All healthy: すべて正常
   Allow: '許可'
   Allow Home Screen Editing: 'ホーム画面の編集を許可'
   Allow cold load/unload: コールド時の装填/取り出しを許可
@@ -502,6 +505,7 @@ translations:
   Check Again: 再確認
   Check Klipper console for details: 詳細は Klipper コンソールを確認してください
   Check extruder temperature and try again. Manual removal may be required.: エクストルーダーの温度を確認してもう一度お試しください。手動での取り出しが必要な場合があります。
+  Check failed: 確認に失敗しました
   Check filament: フィラメントを確認
   Check for Updates: 更新を確認
   Check slot: スロットを確認
@@ -532,6 +536,7 @@ translations:
   Checking timelapse plugin...: タイムラプスプラグインを確認中...
   Checking webcam: ウェブカメラを確認中
   Checking...: 確認中...
+  Checking…: 確認中…
   Choose 12-hour or 24-hour time display: 12時間表示または24時間表示を選択
   Choose Filament: フィラメントを選択
   Choose Model: モデルを選択
@@ -772,6 +777,7 @@ translations:
   Damping (Kd): 減衰 (Kd)
   Danger: 危険
   Danger Zone: 危険ゾーン
+  Dark: ダーク
   Dark Mode: ダークモード
   Database: データベース
   Date (newest): 日付（新しい順）
@@ -1714,6 +1720,7 @@ translations:
   Manage: 管理
   Manage Printers: プリンター管理
   Manage configured printers: 設定済みプリンターを管理
+  Managed by firmware: ファームウェア管理
   Managed by your firmware: ファームウェアによって管理されています
   Manual: 手動
   Manual Bed Leveling: 手動ベッドレベリング
@@ -1814,6 +1821,7 @@ translations:
   Multi-Filament System not available: マルチフィラメントシステムが利用できません
   Multi-filament system not ready: マルチフィラメントシステムの準備ができていません
   Must home axes first: 先にホーミングしてください
+  Muted: ミュート
   My Custom Theme: マイカスタムテーマ
   My Panel: マイパネル
   My Printer: マイプリンター
@@ -1825,6 +1833,7 @@ translations:
   'Name:': '名前:'
   Named actions in the LED Controls widget. Not shown under LED selection.: LEDコントロールウィジェットの名前付きアクションです。LED選択には表示されません。
   Needs adjustment: 調整が必要
+  Needs attention: 対応が必要
   Needs the {} package to switch spools: 'スプール切り替えには {} プラグインが必要です'
   Net Weight (g): 正味重量（g）
   Network: ネットワーク
@@ -1837,6 +1846,7 @@ translations:
   Network name cannot be empty: ネットワーク名は空にできません
   'Network, display, sound, printer setup, and more. You can replay this tour anytime from Help & About.': ネットワーク、ディスプレイ、サウンド、プリンター設定など。このツアーは「ヘルプと情報」からいつでも再生できます。
   Never: なし
+  Never sleeps: スリープしない
   New Spool: 新規スプール
   'New Spool: Step 1 of 3': '新しいスプール: ステップ 1 / 3'
   'New Spool: Step {} of {}': '新規スプール: ステップ {} / {}'
@@ -2287,6 +2297,7 @@ translations:
   Checking Bed Mesh...: ベッドメッシュを確認中...
   Probing point {} of {}: 'プローブ点 {} / {}'
   Probing... ({} points): 'プローブ中... ({} 点)'
+  Problem found: 問題が見つかりました
   Proceed: 続行
   # Source: abort_progress_modal.xml:20
   Processing...: '処理中...'
@@ -2755,6 +2766,7 @@ translations:
   Skipped: 'スキップ'
   Sleep While Printing: 印刷中のスリープ
   Sleep adjusted to match dim timeout: スリープタイムアウトを調整しました
+  Sleep {} min: '{}分でスリープ'
   Sliced colors: スライスした色
   Slicer: スライサー
   Slot: スロット
@@ -3317,6 +3329,7 @@ translations:
   Verifying timelapse plugin...: タイムラプスプラグインを確認中...
   Verifying...: 検証中...
   Version: バージョン
+  Version {}: バージョン {}
   Version, updates, and printer info: バージョン、アップデート、プリンター情報
   Vertical: 垂直
   Vibration: 振動
@@ -3334,6 +3347,7 @@ translations:
   'Visits: ': '表示回数: '
   Volume: 音量
   Volume of filament used during ramming: 'ラミング時に使用するフィラメント量'
+  Volume {}%: 音量 {}%
   WIDTH SENSORS: 幅センサー
   WLED: WLED
   WLED Preset: WLED プリセット
@@ -3377,7 +3391,9 @@ translations:
   Which macro the Close feeder button sends: 「フィーダーを閉じる」ボタンが送信するマクロ
   Which macro the Open feeder button sends: 「フィーダーを開く」ボタンが送信するマクロ
   White: ホワイト
+  Wi-Fi: WiFi
   Wi-Fi or ethernet connection status: WiFi またはイーサネットの接続状態
+  Wi-Fi {}: WiFi {}
   WiFi: WiFi
   WiFi Disabled: WiFi 無効
   WiFi Enabled: WiFi 有効
@@ -3505,6 +3521,7 @@ translations:
   locked: 'ロック中'
   mm before clog: 詰まりまでの距離 (mm)
   needs: 必要
+  never sleeps: スリープしない
   not detected: 未検出
   not loaded: '未装填'
   nozzle: ノズル
@@ -3524,6 +3541,7 @@ translations:
   remaining: 残り
   remaining before clog detection triggers: 残りで詰まり検出が作動します
   rendering: レンダリング中
+  sleep {} min: '{}分でスリープ'
   slots): スロット)
   started: 開始
   steppers: ステッパー
@@ -3537,6 +3555,7 @@ translations:
   you have: 現在は
   '{} LED strips available': '{} 個の LED ストリップが利用可能です'
   '{} and {} are both mapped here': '{} と {} の両方がここに割り当てられています'
+  '{} available': '{} が利用可能'
   '{} axis homed': '{} 軸がホーミング済み'
   '{} command timed out': '{} コマンドがタイムアウトしました'
   '{} complete': '{} 完了'

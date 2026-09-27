@@ -65,6 +65,7 @@
   <translation tag="1. Printer will home and probe each screw" ru="1. Принтер запаркуется и проверит каждый винт"/>
   <translation tag="10 minutes" ru="10 минут"/>
   <translation tag="12 Hour" ru="12 часов"/>
+  <translation tag="12-hour" ru="12-часовой"/>
   <translation tag="120 seconds" ru="120 секунд"/>
   <translation tag="15 seconds" ru="15 секунд"/>
   <translation tag="170-300 °C" ru="170-300 °C"/>
@@ -77,6 +78,7 @@
   <translation tag="2. Results show how much to turn each screw" ru="2. Результаты покажут, насколько повернуть каждый винт"/>
   <translation tag="20 minutes" ru="20 минут"/>
   <translation tag="24 Hour" ru="24 часа"/>
+  <translation tag="24-hour" ru="24-часовой"/>
   <translation tag="270°" ru="270°"/>
   <translation tag="270° Clockwise" ru="270° по часовой стрелке"/>
   <translation tag="2D Heatmap" ru="2D тепловая карта"/>
@@ -182,6 +184,7 @@
   <translation tag="All Devices" ru="Все устройства"/>
   <translation tag="All axes homed" ru="Все оси запаркованы"/>
   <translation tag="All fields are required" ru="Все поля обязательны для заполнения"/>
+  <translation tag="All healthy" ru="Всё в порядке"/>
   <translation tag="Allow" ru="Разрешить"/>
   <translation tag="Allow Home Screen Editing" ru="Разрешить редактирование главного экрана"/>
   <translation tag="Allow cold load/unload" ru="Разрешить загрузку/выгрузку без нагрева"/>
@@ -494,6 +497,7 @@
   <translation tag="Check Again" ru="Проверить снова"/>
   <translation tag="Check Klipper console for details" ru="Подробности смотрите в консоли Klipper"/>
   <translation tag="Check extruder temperature and try again. Manual removal may be required." ru="Проверьте температуру экструдера и повторите попытку. Может потребоваться удалить филамент вручную."/>
+  <translation tag="Check failed" ru="Ошибка проверки"/>
   <translation tag="Check filament" ru="Проверьте филамент"/>
   <translation tag="Check for Updates" ru="Проверить обновления"/>
   <translation tag="Check slot" ru="Проверить слот"/>
@@ -524,6 +528,7 @@
   <translation tag="Checking timelapse plugin..." ru="Проверка плагина таймлапса..."/>
   <translation tag="Checking webcam" ru="Проверка веб-камеры"/>
   <translation tag="Checking..." ru="Проверка..."/>
+  <translation tag="Checking…" ru="Проверка…"/>
   <translation tag="Choose 12-hour or 24-hour time display" ru="Выберите 12-часовой или 24-часовой формат времени"/>
   <translation tag="Choose Filament" ru="Выбрать филамент"/>
   <translation tag="Choose Model" ru="Выберите модель"/>
@@ -750,6 +755,7 @@
   <translation tag="Damping (Kd)" ru="Демпфирование (Kd)"/>
   <translation tag="Danger" ru="Опасность"/>
   <translation tag="Danger Zone" ru="Опасная зона"/>
+  <translation tag="Dark" ru="Тёмный"/>
   <translation tag="Dark Mode" ru="Тёмный режим"/>
   <translation tag="Database" ru="База данных"/>
   <translation tag="Date (newest)" ru="Дата (новые)"/>
@@ -1648,6 +1654,7 @@
   <translation tag="Manage" ru="Управление"/>
   <translation tag="Manage Printers" ru="Управление принтерами"/>
   <translation tag="Manage configured printers" ru="Управление настроенными принтерами"/>
+  <translation tag="Managed by firmware" ru="Управляется прошивкой"/>
   <translation tag="Managed by your firmware" ru="Управляется прошивкой"/>
   <translation tag="Manual" ru="Вручную"/>
   <translation tag="Manual Bed Leveling" ru="Ручное выравнивание стола"/>
@@ -1745,6 +1752,7 @@
   <translation tag="Multi-Filament System not available" ru="Мультифиламентная система недоступна"/>
   <translation tag="Multi-filament system not ready" ru="Мультифиламентная система не готова"/>
   <translation tag="Must home axes first" ru="Сначала необходимо запарковать оси"/>
+  <translation tag="Muted" ru="Без звука"/>
   <translation tag="My Custom Theme" ru="Моя тема"/>
   <translation tag="My Panel" ru="Моя панель"/>
   <translation tag="My Printer" ru="Мой принтер"/>
@@ -1755,6 +1763,7 @@
   <translation tag="Name:" ru="Имя:"/>
   <translation tag="Named actions in the LED Controls widget. Not shown under LED selection." ru="Именованные действия в виджете «Управление LED». Не отображаются в разделе «Выбор LED»."/>
   <translation tag="Needs adjustment" ru="Требуется регулировка"/>
+  <translation tag="Needs attention" ru="Требует внимания"/>
   <translation tag="Needs the {} package to switch spools" ru="Для смены катушки нужен плагин {}"/>
   <translation tag="Net Weight (g)" ru="Вес нетто (г)"/>
   <translation tag="Network" ru="Сеть"/>
@@ -1767,6 +1776,7 @@
   <translation tag="Network name cannot be empty" ru="Имя сети не может быть пустым"/>
   <translation tag="Network, display, sound, printer setup, and more. You can replay this tour anytime from Help &amp; About." ru="Сеть, дисплей, звук, настройка принтера и многое другое. Этот тур можно повторить в любой момент из раздела «Справка и о программе»."/>
   <translation tag="Never" ru="Никогда"/>
+  <translation tag="Never sleeps" ru="Никогда не спит"/>
   <translation tag="New Spool" ru="Новая катушка"/>
   <translation tag="New Spool: Step 1 of 3" ru="Новая катушка: Шаг 1 из 3"/>
   <translation tag="New Spool: Step {} of {}" ru="Новая катушка: шаг {} из {}"/>
@@ -2198,6 +2208,7 @@
   <translation tag="Probing Z..." ru="Зондирование Z..."/>
   <translation tag="Probing point {} of {}" ru="Точка замера {} из {}"/>
   <translation tag="Probing... ({} points)" ru="Замер... ({} точек)"/>
+  <translation tag="Problem found" ru="Обнаружена проблема"/>
   <translation tag="Proceed" ru="Продолжить"/>
   <translation tag="Processing..." ru="Обработка..."/>
   <translation tag="Profile deleted" ru="Профиль удалён"/>
@@ -2647,6 +2658,7 @@
   <translation tag="Skipped" ru="Пропущено"/>
   <translation tag="Sleep While Printing" ru="Спящий режим при печати"/>
   <translation tag="Sleep adjusted to match dim timeout" ru="Таймаут сна изменён"/>
+  <translation tag="Sleep {} min" ru="Сон через {} мин"/>
   <translation tag="Sliced colors" ru="Цвета из слайсера"/>
   <translation tag="Slicer" ru="Слайсер"/>
   <translation tag="Slot" ru="Слот"/>
@@ -3158,6 +3170,7 @@
   <translation tag="Verifying timelapse plugin..." ru="Проверка плагина таймлапса..."/>
   <translation tag="Verifying..." ru="Проверка..."/>
   <translation tag="Version" ru="Версия"/>
+  <translation tag="Version {}" ru="Версия {}"/>
   <translation tag="Version, updates, and printer info" ru="Версия, обновления и сведения о принтере"/>
   <translation tag="Vertical" ru="Вертикально"/>
   <translation tag="Vibration" ru="Вибрация"/>
@@ -3175,6 +3188,7 @@
   <translation tag="Visits: " ru="Посещений: "/>
   <translation tag="Volume" ru="Громкость"/>
   <translation tag="Volume of filament used during ramming" ru="Объём филамента, расходуемый при рэмминге"/>
+  <translation tag="Volume {}%" ru="Громкость {}%"/>
   <translation tag="WIDTH SENSORS" ru="ДАТЧИКИ ШИРИНЫ"/>
   <translation tag="WLED" ru="WLED"/>
   <translation tag="WLED Preset" ru="Пресет WLED"/>
@@ -3213,7 +3227,9 @@
   <translation tag="Which macro the Close feeder button sends" ru="Какой макрос отправляет кнопка «Закрыть фидер»"/>
   <translation tag="Which macro the Open feeder button sends" ru="Какой макрос отправляет кнопка «Открыть фидер»"/>
   <translation tag="White" ru="Белый"/>
+  <translation tag="Wi-Fi" ru="WiFi"/>
   <translation tag="Wi-Fi or ethernet connection status" ru="Статус подключения Wi-Fi или Ethernet"/>
+  <translation tag="Wi-Fi {}" ru="WiFi {}"/>
   <translation tag="WiFi" ru="WiFi"/>
   <translation tag="WiFi Disabled" ru="WiFi отключён"/>
   <translation tag="WiFi Enabled" ru="WiFi включён"/>
@@ -3336,6 +3352,7 @@
   <translation tag="locked" ru="заблокировано"/>
   <translation tag="mm before clog" ru="мм до засора"/>
   <translation tag="needs" ru="требуется"/>
+  <translation tag="never sleeps" ru="никогда не спит"/>
   <translation tag="not detected" ru="не обнаружено"/>
   <translation tag="not loaded" ru="не загружен"/>
   <translation tag="nozzle" ru="сопло"/>
@@ -3350,6 +3367,7 @@
   <translation tag="remaining" ru="осталось"/>
   <translation tag="remaining before clog detection triggers" ru="осталось до срабатывания обнаружения засора"/>
   <translation tag="rendering" ru="рендеринг"/>
+  <translation tag="sleep {} min" ru="сон через {} мин"/>
   <translation tag="slots)" ru="слотов)"/>
   <translation tag="started" ru="запущено"/>
   <translation tag="steppers" ru="шаговые двигатели"/>
@@ -3363,6 +3381,7 @@
   <translation tag="you have" ru="у вас"/>
   <translation tag="{} LED strips available" ru="Доступно светодиодных лент: {}"/>
   <translation tag="{} and {} are both mapped here" ru="{} и {} оба назначены сюда"/>
+  <translation tag="{} available" ru="Доступна версия {}"/>
   <translation tag="{} axis homed" ru="Ось {} запаркована"/>
   <translation tag="{} command timed out" ru="Время команды {} истекло"/>
   <translation tag="{} complete" ru="{} завершено"/>

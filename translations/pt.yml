@@ -67,6 +67,7 @@ translations:
     parafuso
   10 minutes: 10 minutos
   12 Hour: 12 horas
+  12-hour: 12 horas
   120 seconds: 120 segundos
   15 seconds: 15 segundos
   170-300 °C: '170-300 °C'
@@ -81,6 +82,7 @@ translations:
     cada parafuso
   20 minutes: 20 minutos
   24 Hour: 24 horas
+  24-hour: 24 horas
   270°: 270°
   270° Clockwise: 270° no sentido horário
   2D Heatmap: Mapa de calor 2D
@@ -194,6 +196,7 @@ translations:
   All Devices: Todos os Dispositivos
   All axes homed: Todos os eixos referenciados
   All fields are required: Todos os campos são obrigatórios
+  All healthy: Tudo em ordem
   Allow: 'Permitir'
   Allow Home Screen Editing: 'Permitir a edição da tela inicial'
   Allow cold load/unload: Permitir carregar/descarregar a frio
@@ -551,6 +554,7 @@ translations:
   Check Again: Verificar Novamente
   Check Klipper console for details: Verifique o console do Klipper para detalhes
   Check extruder temperature and try again. Manual removal may be required.: Verifique a temperatura do extrusor e tente novamente. A remoção manual pode ser necessária.
+  Check failed: Falha na verificação
   Check filament: Verificar filamento
   Check for Updates: Verificar Atualizações
   Check slot: Verificar slot
@@ -583,6 +587,7 @@ translations:
   Checking timelapse plugin...: Verificando plugin de timelapse...
   Checking webcam: Verificando webcam
   Checking...: Verificando...
+  Checking…: Verificando…
   Choose 12-hour or 24-hour time display: Escolha exibição de hora em 12 ou 24 horas
   Choose Filament: Escolher Filamento
   Choose Model: Escolher Modelo
@@ -843,6 +848,7 @@ translations:
   Damping (Kd): Amortecimento (Kd)
   Danger: Perigo
   Danger Zone: Zona de Perigo
+  Dark: Escuro
   Dark Mode: Modo Escuro
   Database: Banco de Dados
   Date (newest): Data (mais recente)
@@ -1844,6 +1850,7 @@ translations:
   Manage: Gerenciar
   Manage Printers: Gerenciar Impressoras
   Manage configured printers: Gerenciar impressoras configuradas
+  Managed by firmware: Gerenciado pelo firmware
   Managed by your firmware: Gerenciado pelo seu firmware
   Manual: Manual
   Manual Bed Leveling: Nivelamento Manual da Mesa
@@ -1950,6 +1957,7 @@ translations:
   Multi-Filament System not available: Sistema multi-filamento não disponível
   Multi-filament system not ready: Sistema multifilamento não está pronto
   Must home axes first: Deve referenciar os eixos primeiro
+  Muted: Sem som
   My Custom Theme: Meu Tema Personalizado
   My Panel: Meu Painel
   My Printer: Minha Impressora
@@ -1961,6 +1969,7 @@ translations:
   'Name:': 'Nome:'
   Named actions in the LED Controls widget. Not shown under LED selection.: Ações nomeadas no widget Controles LED. Não aparecem na seleção de LED.
   Needs adjustment: Precisa de ajuste
+  Needs attention: Requer atenção
   Needs the {} package to switch spools: 'Precisa do plugin {} para trocar de carretel'
   Net Weight (g): Peso Líquido (g)
   Network: Rede
@@ -1973,6 +1982,7 @@ translations:
   Network name cannot be empty: O nome da rede não pode estar vazio
   'Network, display, sound, printer setup, and more. You can replay this tour anytime from Help & About.': 'Rede, tela, som, configuração da impressora e muito mais. Você pode repetir este tour a qualquer momento em Ajuda e sobre.'
   Never: Nunca
+  Never sleeps: Nunca dorme
   New Spool: Novo carretel
   'New Spool: Step 1 of 3': 'Nova Bobina: Etapa 1 de 3'
   'New Spool: Step {} of {}': 'Nova Bobina: Passo {} de {}'
@@ -2446,6 +2456,7 @@ translations:
   Checking Bed Mesh...: Verificando Malha da Mesa...
   Probing point {} of {}: 'Ponto de sondagem {} de {}'
   Probing... ({} points): 'Sondando... ({} pontos)'
+  Problem found: Problema detectado
   Proceed: Prosseguir
   # Source: abort_progress_modal.xml:20
   Processing...: 'Processando...'
@@ -2957,6 +2968,7 @@ translations:
   Skipped: 'Ignorado'
   Sleep While Printing: Suspender Durante Impressão
   Sleep adjusted to match dim timeout: Tempo de suspensão ajustado
+  Sleep {} min: Suspender em {} min
   Sliced colors: Cores fatiadas
   Slicer: Fatiador
   Slot: Slot
@@ -3574,6 +3586,7 @@ translations:
   Verifying timelapse plugin...: Verificando plugin de timelapse...
   Verifying...: Verificando...
   Version: Versão
+  Version {}: Versão {}
   Version, updates, and printer info: Versão, atualizações e informações da impressora
   Vertical: Vertical
   Vibration: Vibração
@@ -3592,6 +3605,7 @@ translations:
   'Visits: ': 'Visitas: '
   Volume: Volume
   Volume of filament used during ramming: 'Volume de filamento usado durante a compactação'
+  Volume {}%: Volume {}%
   WIDTH SENSORS: SENSORES DE LARGURA
   WLED: WLED
   WLED Preset: Predefinição WLED
@@ -3641,7 +3655,9 @@ translations:
   Which macro the Close feeder button sends: Qual macro o botão Fechar alimentador envia
   Which macro the Open feeder button sends: Qual macro o botão Abrir alimentador envia
   White: Branco
+  Wi-Fi: WiFi
   Wi-Fi or ethernet connection status: Status da conexão Wi-Fi ou ethernet
+  Wi-Fi {}: WiFi {}
   WiFi: WiFi
   WiFi Disabled: WiFi Desativado
   WiFi Enabled: WiFi Ativado
@@ -3775,6 +3791,7 @@ translations:
   locked: 'bloqueado'
   mm before clog: mm antes da obstrução
   needs: precisa
+  never sleeps: nunca dorme
   not detected: não detectado
   not loaded: 'não carregado'
   nozzle: bico
@@ -3795,6 +3812,7 @@ translations:
   remaining before clog detection triggers: restante antes da detecção de obstrução
     ser acionada
   rendering: renderizando
+  sleep {} min: suspender em {} min
   slots): slots)
   started: iniciado
   steppers: motores de passo
@@ -3808,6 +3826,7 @@ translations:
   you have: você tem
   '{} LED strips available': '{} fitas de LED disponíveis'
   '{} and {} are both mapped here': '{} e {} estão ambos atribuídos aqui'
+  '{} available': '{} disponível'
   '{} axis homed': Eixo {} referenciado
   '{} command timed out': Comando {} expirou
   '{} complete': '{} concluído'

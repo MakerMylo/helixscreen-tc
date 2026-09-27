@@ -343,6 +343,7 @@ src/ui/print_control_buttons.cpp
 src/ui/print_control_view.cpp
 src/ui/save_config_restart.cpp
 src/ui/setting_group.cpp
+src/ui/settings_root_status.cpp
 src/ui/shared_font_style.cpp
 src/ui/text_metrics.cpp
 src/ui/style_configs.cpp

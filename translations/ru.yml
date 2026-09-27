@@ -67,6 +67,7 @@ translations:
     винт
   10 minutes: 10 минут
   12 Hour: 12 часов
+  12-hour: 12-часовой
   120 seconds: 120 секунд
   15 seconds: 15 секунд
   170-300 °C: '170-300 °C'
@@ -81,6 +82,7 @@ translations:
     каждый винт
   20 minutes: 20 минут
   24 Hour: 24 часа
+  24-hour: 24-часовой
   270°: 270°
   270° Clockwise: 270° по часовой стрелке
   2D Heatmap: 2D тепловая карта
@@ -191,6 +193,7 @@ translations:
   All Devices: Все устройства
   All axes homed: Все оси запаркованы
   All fields are required: Все поля обязательны для заполнения
+  All healthy: Всё в порядке
   Allow: 'Разрешить'
   Allow Home Screen Editing: 'Разрешить редактирование главного экрана'
   Allow cold load/unload: Разрешить загрузку/выгрузку без нагрева
@@ -544,6 +547,7 @@ translations:
   Check Again: Проверить снова
   Check Klipper console for details: Подробности смотрите в консоли Klipper
   Check extruder temperature and try again. Manual removal may be required.: Проверьте температуру экструдера и повторите попытку. Может потребоваться удалить филамент вручную.
+  Check failed: Ошибка проверки
   Check filament: Проверьте филамент
   Check for Updates: Проверить обновления
   Check slot: Проверить слот
@@ -575,6 +579,7 @@ translations:
   Checking timelapse plugin...: Проверка плагина таймлапса...
   Checking webcam: Проверка веб-камеры
   Checking...: Проверка...
+  Checking…: Проверка…
   Choose 12-hour or 24-hour time display: Выберите 12-часовой или 24-часовой формат
     времени
   Choose Filament: Выбрать филамент
@@ -830,6 +835,7 @@ translations:
   Damping (Kd): Демпфирование (Kd)
   Danger: Опасность
   Danger Zone: Опасная зона
+  Dark: Тёмный
   Dark Mode: Тёмный режим
   Database: База данных
   Date (newest): Дата (новые)
@@ -1823,6 +1829,7 @@ translations:
   Manage: Управление
   Manage Printers: Управление принтерами
   Manage configured printers: Управление настроенными принтерами
+  Managed by firmware: Управляется прошивкой
   Managed by your firmware: Управляется прошивкой
   Manual: Вручную
   Manual Bed Leveling: Ручное выравнивание стола
@@ -1927,6 +1934,7 @@ translations:
   Multi-Filament System not available: Мультифиламентная система недоступна
   Multi-filament system not ready: Мультифиламентная система не готова
   Must home axes first: Сначала необходимо запарковать оси
+  Muted: Без звука
   My Custom Theme: Моя тема
   My Panel: Моя панель
   My Printer: Мой принтер
@@ -1938,6 +1946,7 @@ translations:
   'Name:': 'Имя:'
   Named actions in the LED Controls widget. Not shown under LED selection.: Именованные действия в виджете «Управление LED». Не отображаются в разделе «Выбор LED».
   Needs adjustment: Требуется регулировка
+  Needs attention: Требует внимания
   Needs the {} package to switch spools: 'Для смены катушки нужен плагин {}'
   Net Weight (g): Вес нетто (г)
   Network: Сеть
@@ -1950,6 +1959,7 @@ translations:
   Network name cannot be empty: Имя сети не может быть пустым
   'Network, display, sound, printer setup, and more. You can replay this tour anytime from Help & About.': 'Сеть, дисплей, звук, настройка принтера и многое другое. Этот тур можно повторить в любой момент из раздела «Справка и о программе».'
   Never: Никогда
+  Never sleeps: Никогда не спит
   New Spool: Новая катушка
   'New Spool: Step 1 of 3': 'Новая катушка: Шаг 1 из 3'
   'New Spool: Step {} of {}': 'Новая катушка: шаг {} из {}'
@@ -2419,6 +2429,7 @@ translations:
   Checking Bed Mesh...: Проверка сетки стола...
   Probing point {} of {}: 'Точка замера {} из {}'
   Probing... ({} points): 'Замер... ({} точек)'
+  Problem found: Обнаружена проблема
   Proceed: Продолжить
   # Source: abort_progress_modal.xml:20
   Processing...: 'Обработка...'
@@ -2923,6 +2934,7 @@ translations:
   Skipped: 'Пропущено'
   Sleep While Printing: Спящий режим при печати
   Sleep adjusted to match dim timeout: Таймаут сна изменён
+  Sleep {} min: Сон через {} мин
   Sliced colors: Цвета из слайсера
   Slicer: Слайсер
   Slot: Слот
@@ -3528,6 +3540,7 @@ translations:
   Verifying timelapse plugin...: Проверка плагина таймлапса...
   Verifying...: Проверка...
   Version: Версия
+  Version {}: Версия {}
   Version, updates, and printer info: Версия, обновления и сведения о принтере
   Vertical: Вертикально
   Vibration: Вибрация
@@ -3545,6 +3558,7 @@ translations:
   'Visits: ': 'Посещений: '
   Volume: Громкость
   Volume of filament used during ramming: 'Объём филамента, расходуемый при рэмминге'
+  Volume {}%: Громкость {}%
   WIDTH SENSORS: ДАТЧИКИ ШИРИНЫ
   WLED: WLED
   WLED Preset: Пресет WLED
@@ -3593,7 +3607,9 @@ translations:
   Which macro the Close feeder button sends: Какой макрос отправляет кнопка «Закрыть фидер»
   Which macro the Open feeder button sends: Какой макрос отправляет кнопка «Открыть фидер»
   White: Белый
+  Wi-Fi: WiFi
   Wi-Fi or ethernet connection status: Статус подключения Wi-Fi или Ethernet
+  Wi-Fi {}: WiFi {}
   WiFi: WiFi
   WiFi Disabled: WiFi отключён
   WiFi Enabled: WiFi включён
@@ -3726,6 +3742,7 @@ translations:
   locked: 'заблокировано'
   mm before clog: мм до засора
   needs: требуется
+  never sleeps: никогда не спит
   not detected: не обнаружено
   not loaded: 'не загружен'
   nozzle: сопло
@@ -3745,6 +3762,7 @@ translations:
   remaining: осталось
   remaining before clog detection triggers: осталось до срабатывания обнаружения засора
   rendering: рендеринг
+  sleep {} min: сон через {} мин
   slots): слотов)
   started: запущено
   steppers: шаговые двигатели
@@ -3758,6 +3776,7 @@ translations:
   you have: у вас
   '{} LED strips available': 'Доступно светодиодных лент: {}'
   '{} and {} are both mapped here': '{} и {} оба назначены сюда'
+  '{} available': Доступна версия {}
   '{} axis homed': Ось {} запаркована
   '{} command timed out': Время команды {} истекло
   '{} complete': '{} завершено'

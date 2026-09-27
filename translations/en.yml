@@ -65,6 +65,7 @@ translations:
   1. Printer will home and probe each screw: 1. Printer will home and probe each screw
   10 minutes: 10 minutes
   12 Hour: 12 Hour
+  12-hour: 12-hour
   120 seconds: 120 seconds
   15 seconds: 15 seconds
   170-300 °C: 170-300 °C
@@ -78,6 +79,7 @@ translations:
     screw
   20 minutes: 20 minutes
   24 Hour: 24 Hour
+  24-hour: 24-hour
   270°: 270°
   270° Clockwise: 270° Clockwise
   2D Heatmap: 2D Heatmap
@@ -188,6 +190,7 @@ translations:
   All Devices: All Devices
   All axes homed: All axes homed
   All fields are required: All fields are required
+  All healthy: All healthy
   Allow: Allow
   Allow Home Screen Editing: Allow Home Screen Editing
   Allow cold load/unload: Allow cold load/unload
@@ -532,6 +535,7 @@ translations:
   Check Again: Check Again
   Check Klipper console for details: Check Klipper console for details
   Check extruder temperature and try again. Manual removal may be required.: Check extruder temperature and try again. Manual removal may be required.
+  Check failed: Check failed
   Check filament: Check filament
   Check for Updates: Check for Updates
   Check slot: Check slot
@@ -564,6 +568,7 @@ translations:
   Checking timelapse plugin...: Checking timelapse plugin...
   Checking webcam: Checking webcam
   Checking...: Checking...
+  Checking…: Checking…
   Choose 12-hour or 24-hour time display: Choose 12-hour or 24-hour time display
   Choose Filament: Choose Filament
   Choose Model: Choose Model
@@ -810,6 +815,7 @@ translations:
   Damping (Kd): Damping (Kd)
   Danger: Danger
   Danger Zone: Danger Zone
+  Dark: Dark
   Dark Mode: Dark Mode
   Database: Database
   Date (newest): Date (newest)
@@ -1779,6 +1785,7 @@ translations:
   Manage: Manage
   Manage Printers: Manage Printers
   Manage configured printers: Manage configured printers
+  Managed by firmware: Managed by firmware
   Managed by your firmware: Managed by your firmware
   Manual: Manual
   Manual Bed Leveling: Manual Bed Leveling
@@ -1885,6 +1892,7 @@ translations:
   Multi-Filament System not available: Multi-Filament System not available
   Multi-filament system not ready: Multi-filament system not ready
   Must home axes first: Must home axes first
+  Muted: Muted
   My Custom Theme: My Custom Theme
   My Panel: My Panel
   My Printer: My Printer
@@ -1896,6 +1904,7 @@ translations:
   'Name:': 'Name:'
   Named actions in the LED Controls widget. Not shown under LED selection.: Named actions in the LED Controls widget. Not shown under LED selection.
   Needs adjustment: Needs adjustment
+  Needs attention: Needs attention
   Needs the {} package to switch spools: Needs the {} package to switch spools
   Net Weight (g): Net Weight (g)
   Network: Network
@@ -1908,6 +1917,7 @@ translations:
   Network name cannot be empty: Network name cannot be empty
   'Network, display, sound, printer setup, and more. You can replay this tour anytime from Help & About.': 'Network, display, sound, printer setup, and more. You can replay this tour anytime from Help & About.'
   Never: Never
+  Never sleeps: Never sleeps
   New Spool: New Spool
   'New Spool: Step 1 of 3': 'New Spool: Step 1 of 3'
   'New Spool: Step {} of {}': 'New Spool: Step {} of {}'
@@ -2368,6 +2378,7 @@ translations:
   'Probing Z...': 'Probing Z...'
   Probing point {} of {}: Probing point {} of {}
   Probing... ({} points): Probing... ({} points)
+  Problem found: Problem found
   Proceed: Proceed
   # Source: abort_progress_modal.xml:20
   Processing...: Processing...
@@ -2862,6 +2873,7 @@ translations:
   Skipped: Skipped
   Sleep While Printing: Sleep While Printing
   Sleep adjusted to match dim timeout: Sleep adjusted to match dim timeout
+  Sleep {} min: Sleep {} min
   Sliced colors: Sliced colors
   Slicer: Slicer
   Slot: Slot
@@ -3454,6 +3466,7 @@ translations:
   Verifying timelapse plugin...: Verifying timelapse plugin...
   Verifying...: Verifying...
   Version: Version
+  Version {}: Version {}
   Version, updates, and printer info: Version, updates, and printer info
   Vertical: Vertical
   Vibration: Vibration
@@ -3471,6 +3484,7 @@ translations:
   'Visits: ': 'Visits: '
   Volume: Volume
   Volume of filament used during ramming: Volume of filament used during ramming
+  Volume {}%: Volume {}%
   WIDTH SENSORS: WIDTH SENSORS
   WLED: WLED
   WLED Preset: WLED Preset
@@ -3521,7 +3535,9 @@ translations:
   Which macro the Close feeder button sends: Which macro the Close feeder button sends
   Which macro the Open feeder button sends: Which macro the Open feeder button sends
   White: White
+  Wi-Fi: Wi-Fi
   Wi-Fi or ethernet connection status: Wi-Fi or ethernet connection status
+  Wi-Fi {}: Wi-Fi {}
   WiFi: WiFi
   WiFi Disabled: WiFi Disabled
   WiFi Enabled: WiFi Enabled
@@ -3654,6 +3670,7 @@ translations:
   locked: locked
   mm before clog: mm before clog
   needs: needs
+  never sleeps: never sleeps
   not detected: not detected
   not loaded: not loaded
   nozzle: nozzle
@@ -3668,6 +3685,7 @@ translations:
   remaining: remaining
   remaining before clog detection triggers: remaining before clog detection triggers
   rendering: rendering
+  sleep {} min: sleep {} min
   slots): slots)
   started: started
   steppers: steppers
@@ -3681,6 +3699,7 @@ translations:
   you have: you have
   '{} LED strips available': '{} LED strips available'
   '{} and {} are both mapped here': '{} and {} are both mapped here'
+  '{} available': '{} available'
   '{} axis homed': '{} axis homed'
   '{} command timed out': '{} command timed out'
   '{} complete': '{} complete'

@@ -65,6 +65,7 @@
   <translation tag="1. Printer will home and probe each screw" pt="1. A impressora fará home e sondará cada parafuso"/>
   <translation tag="10 minutes" pt="10 minutos"/>
   <translation tag="12 Hour" pt="12 horas"/>
+  <translation tag="12-hour" pt="12 horas"/>
   <translation tag="120 seconds" pt="120 segundos"/>
   <translation tag="15 seconds" pt="15 segundos"/>
   <translation tag="170-300 °C" pt="170-300 °C"/>
@@ -77,6 +78,7 @@
   <translation tag="2. Results show how much to turn each screw" pt="2. Os resultados mostram quanto girar cada parafuso"/>
   <translation tag="20 minutes" pt="20 minutos"/>
   <translation tag="24 Hour" pt="24 horas"/>
+  <translation tag="24-hour" pt="24 horas"/>
   <translation tag="270°" pt="270°"/>
   <translation tag="270° Clockwise" pt="270° no sentido horário"/>
   <translation tag="2D Heatmap" pt="Mapa de calor 2D"/>
@@ -182,6 +184,7 @@
   <translation tag="All Devices" pt="Todos os Dispositivos"/>
   <translation tag="All axes homed" pt="Todos os eixos referenciados"/>
   <translation tag="All fields are required" pt="Todos os campos são obrigatórios"/>
+  <translation tag="All healthy" pt="Tudo em ordem"/>
   <translation tag="Allow" pt="Permitir"/>
   <translation tag="Allow Home Screen Editing" pt="Permitir a edição da tela inicial"/>
   <translation tag="Allow cold load/unload" pt="Permitir carregar/descarregar a frio"/>
@@ -494,6 +497,7 @@
   <translation tag="Check Again" pt="Verificar Novamente"/>
   <translation tag="Check Klipper console for details" pt="Verifique o console do Klipper para detalhes"/>
   <translation tag="Check extruder temperature and try again. Manual removal may be required." pt="Verifique a temperatura do extrusor e tente novamente. A remoção manual pode ser necessária."/>
+  <translation tag="Check failed" pt="Falha na verificação"/>
   <translation tag="Check filament" pt="Verificar filamento"/>
   <translation tag="Check for Updates" pt="Verificar Atualizações"/>
   <translation tag="Check slot" pt="Verificar slot"/>
@@ -524,6 +528,7 @@
   <translation tag="Checking timelapse plugin..." pt="Verificando plugin de timelapse..."/>
   <translation tag="Checking webcam" pt="Verificando webcam"/>
   <translation tag="Checking..." pt="Verificando..."/>
+  <translation tag="Checking…" pt="Verificando…"/>
   <translation tag="Choose 12-hour or 24-hour time display" pt="Escolha exibição de hora em 12 ou 24 horas"/>
   <translation tag="Choose Filament" pt="Escolher Filamento"/>
   <translation tag="Choose Model" pt="Escolher Modelo"/>
@@ -750,6 +755,7 @@
   <translation tag="Damping (Kd)" pt="Amortecimento (Kd)"/>
   <translation tag="Danger" pt="Perigo"/>
   <translation tag="Danger Zone" pt="Zona de Perigo"/>
+  <translation tag="Dark" pt="Escuro"/>
   <translation tag="Dark Mode" pt="Modo Escuro"/>
   <translation tag="Database" pt="Banco de Dados"/>
   <translation tag="Date (newest)" pt="Data (mais recente)"/>
@@ -1648,6 +1654,7 @@
   <translation tag="Manage" pt="Gerenciar"/>
   <translation tag="Manage Printers" pt="Gerenciar Impressoras"/>
   <translation tag="Manage configured printers" pt="Gerenciar impressoras configuradas"/>
+  <translation tag="Managed by firmware" pt="Gerenciado pelo firmware"/>
   <translation tag="Managed by your firmware" pt="Gerenciado pelo seu firmware"/>
   <translation tag="Manual" pt="Manual"/>
   <translation tag="Manual Bed Leveling" pt="Nivelamento Manual da Mesa"/>
@@ -1745,6 +1752,7 @@
   <translation tag="Multi-Filament System not available" pt="Sistema multi-filamento não disponível"/>
   <translation tag="Multi-filament system not ready" pt="Sistema multifilamento não está pronto"/>
   <translation tag="Must home axes first" pt="Deve referenciar os eixos primeiro"/>
+  <translation tag="Muted" pt="Sem som"/>
   <translation tag="My Custom Theme" pt="Meu Tema Personalizado"/>
   <translation tag="My Panel" pt="Meu Painel"/>
   <translation tag="My Printer" pt="Minha Impressora"/>
@@ -1755,6 +1763,7 @@
   <translation tag="Name:" pt="Nome:"/>
   <translation tag="Named actions in the LED Controls widget. Not shown under LED selection." pt="Ações nomeadas no widget Controles LED. Não aparecem na seleção de LED."/>
   <translation tag="Needs adjustment" pt="Precisa de ajuste"/>
+  <translation tag="Needs attention" pt="Requer atenção"/>
   <translation tag="Needs the {} package to switch spools" pt="Precisa do plugin {} para trocar de carretel"/>
   <translation tag="Net Weight (g)" pt="Peso Líquido (g)"/>
   <translation tag="Network" pt="Rede"/>
@@ -1767,6 +1776,7 @@
   <translation tag="Network name cannot be empty" pt="O nome da rede não pode estar vazio"/>
   <translation tag="Network, display, sound, printer setup, and more. You can replay this tour anytime from Help &amp; About." pt="Rede, tela, som, configuração da impressora e muito mais. Você pode repetir este tour a qualquer momento em Ajuda e sobre."/>
   <translation tag="Never" pt="Nunca"/>
+  <translation tag="Never sleeps" pt="Nunca dorme"/>
   <translation tag="New Spool" pt="Novo carretel"/>
   <translation tag="New Spool: Step 1 of 3" pt="Nova Bobina: Etapa 1 de 3"/>
   <translation tag="New Spool: Step {} of {}" pt="Nova Bobina: Passo {} de {}"/>
@@ -2198,6 +2208,7 @@
   <translation tag="Probing Z..." pt="Sondando Z..."/>
   <translation tag="Probing point {} of {}" pt="Ponto de sondagem {} de {}"/>
   <translation tag="Probing... ({} points)" pt="Sondando... ({} pontos)"/>
+  <translation tag="Problem found" pt="Problema detectado"/>
   <translation tag="Proceed" pt="Prosseguir"/>
   <translation tag="Processing..." pt="Processando..."/>
   <translation tag="Profile deleted" pt="Perfil excluído"/>
@@ -2647,6 +2658,7 @@
   <translation tag="Skipped" pt="Ignorado"/>
   <translation tag="Sleep While Printing" pt="Suspender Durante Impressão"/>
   <translation tag="Sleep adjusted to match dim timeout" pt="Tempo de suspensão ajustado"/>
+  <translation tag="Sleep {} min" pt="Suspender em {} min"/>
   <translation tag="Sliced colors" pt="Cores fatiadas"/>
   <translation tag="Slicer" pt="Fatiador"/>
   <translation tag="Slot" pt="Slot"/>
@@ -3158,6 +3170,7 @@
   <translation tag="Verifying timelapse plugin..." pt="Verificando plugin de timelapse..."/>
   <translation tag="Verifying..." pt="Verificando..."/>
   <translation tag="Version" pt="Versão"/>
+  <translation tag="Version {}" pt="Versão {}"/>
   <translation tag="Version, updates, and printer info" pt="Versão, atualizações e informações da impressora"/>
   <translation tag="Vertical" pt="Vertical"/>
   <translation tag="Vibration" pt="Vibração"/>
@@ -3175,6 +3188,7 @@
   <translation tag="Visits: " pt="Visitas: "/>
   <translation tag="Volume" pt="Volume"/>
   <translation tag="Volume of filament used during ramming" pt="Volume de filamento usado durante a compactação"/>
+  <translation tag="Volume {}%" pt="Volume {}%"/>
   <translation tag="WIDTH SENSORS" pt="SENSORES DE LARGURA"/>
   <translation tag="WLED" pt="WLED"/>
   <translation tag="WLED Preset" pt="Predefinição WLED"/>
@@ -3213,7 +3227,9 @@
   <translation tag="Which macro the Close feeder button sends" pt="Qual macro o botão Fechar alimentador envia"/>
   <translation tag="Which macro the Open feeder button sends" pt="Qual macro o botão Abrir alimentador envia"/>
   <translation tag="White" pt="Branco"/>
+  <translation tag="Wi-Fi" pt="WiFi"/>
   <translation tag="Wi-Fi or ethernet connection status" pt="Status da conexão Wi-Fi ou ethernet"/>
+  <translation tag="Wi-Fi {}" pt="WiFi {}"/>
   <translation tag="WiFi" pt="WiFi"/>
   <translation tag="WiFi Disabled" pt="WiFi Desativado"/>
   <translation tag="WiFi Enabled" pt="WiFi Ativado"/>
@@ -3336,6 +3352,7 @@
   <translation tag="locked" pt="bloqueado"/>
   <translation tag="mm before clog" pt="mm antes da obstrução"/>
   <translation tag="needs" pt="precisa"/>
+  <translation tag="never sleeps" pt="nunca dorme"/>
   <translation tag="not detected" pt="não detectado"/>
   <translation tag="not loaded" pt="não carregado"/>
   <translation tag="nozzle" pt="bico"/>
@@ -3350,6 +3367,7 @@
   <translation tag="remaining" pt="restante"/>
   <translation tag="remaining before clog detection triggers" pt="restante antes da detecção de obstrução ser acionada"/>
   <translation tag="rendering" pt="renderizando"/>
+  <translation tag="sleep {} min" pt="suspender em {} min"/>
   <translation tag="slots)" pt="slots)"/>
   <translation tag="started" pt="iniciado"/>
   <translation tag="steppers" pt="motores de passo"/>
@@ -3363,6 +3381,7 @@
   <translation tag="you have" pt="você tem"/>
   <translation tag="{} LED strips available" pt="{} fitas de LED disponíveis"/>
   <translation tag="{} and {} are both mapped here" pt="{} e {} estão ambos atribuídos aqui"/>
+  <translation tag="{} available" pt="{} disponível"/>
   <translation tag="{} axis homed" pt="Eixo {} referenciado"/>
   <translation tag="{} command timed out" pt="Comando {} expirou"/>
   <translation tag="{} complete" pt="{} concluído"/>
