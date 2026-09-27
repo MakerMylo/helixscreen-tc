@@ -79,8 +79,8 @@ static constexpr const char* kHeaderName = "setting_group_header";
 // wrapper whose own contents are all hidden is not a row, which holds only
 // while wrappers carry no padding: a padded wrapper keeps its height when
 // empty and reads as a row, so section wrappers are style_pad_all="0". Rows
-// stay in the
-// layout while the card is collapsed, so a row returning still resizes it.
+// stay in the layout while the card is collapsed, so a row returning still
+// resizes it.
 static void setting_group_sync_header(lv_event_t* e) {
     lv_obj_t* group = lv_event_get_target_obj(e);
     lv_obj_t* header = nullptr;
