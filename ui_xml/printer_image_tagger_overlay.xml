@@ -22,43 +22,50 @@
           <event_cb trigger="clicked" callback="on_printer_image_tagger_tap"/>
         </lv_image>
 
-        <!-- Review: sample chips, each placed by C++ with its centre on the
-             tapped point; the bed chip sits midway along the tapped edge. -->
+        <!-- Review: sample chips laid out by C++ exactly as the home widget
+             pins them on these points (review_callout_layout). The toolhead chip
+             stands in for nozzle and fan when they sit close together. -->
         <lv_obj name="tagger_review_layer"
                 width="100%" height="100%" style_pad_all="0" style_bg_opa="0" style_border_width="0" scrollable="false"
                 clickable="false" hidden="true">
           <bind_flag_if_eq subject="printer_image_tagger_reviewing" flag="hidden" ref_value="0"/>
-          <lv_obj name="tagger_chip_nozzle"
-                  width="content" height="content" scrollable="false" style_translate_x="-50%" style_translate_y="-50%">
+          <lv_obj name="tagger_chip_nozzle" width="content" height="content" scrollable="false" hidden="true">
             <style name="styles.activity_chip"/>
+            <bind_flag_if_eq subject="printer_image_tagger_nozzle_shown" flag="hidden" ref_value="0"/>
             <text_small text="215°C"/>
             <icon src="heater" size="xs"/>
           </lv_obj>
-          <lv_obj name="tagger_chip_fan"
-                  width="content" height="content" scrollable="false" style_translate_x="-50%" style_translate_y="-50%">
+          <lv_obj name="tagger_chip_fan" width="content" height="content" scrollable="false" hidden="true">
             <style name="styles.activity_chip"/>
-            <bind_flag_if_eq subject="printer_image_tagger_fan" flag="hidden" ref_value="0"/>
+            <bind_flag_if_eq subject="printer_image_tagger_fan_shown" flag="hidden" ref_value="0"/>
             <text_small text="100%"/>
             <icon src="fan" size="xs"/>
           </lv_obj>
-          <lv_obj name="tagger_chip_bed"
-                  width="content" height="content" scrollable="false" style_translate_x="-50%" style_translate_y="-50%">
+          <lv_obj name="tagger_chip_bed" width="content" height="content" scrollable="false" hidden="true">
             <style name="styles.activity_chip"/>
+            <bind_flag_if_eq subject="printer_image_tagger_bed_shown" flag="hidden" ref_value="0"/>
             <text_small text="60°C"/>
             <icon src="radiator" size="xs"/>
           </lv_obj>
-          <lv_obj name="tagger_chip_chamber"
-                  width="content" height="content" scrollable="false" style_translate_x="-50%" style_translate_y="-50%">
+          <lv_obj name="tagger_chip_chamber" width="content" height="content" scrollable="false" hidden="true">
             <style name="styles.activity_chip"/>
-            <bind_flag_if_eq subject="printer_image_tagger_chamber" flag="hidden" ref_value="0"/>
+            <bind_flag_if_eq subject="printer_image_tagger_chamber_shown" flag="hidden" ref_value="0"/>
             <text_small text="35°C"/>
             <icon src="fridge_industrial" size="xs"/>
           </lv_obj>
-          <lv_obj name="tagger_chip_light"
-                  width="content" height="content" scrollable="false" style_translate_x="-50%" style_translate_y="-50%">
+          <lv_obj name="tagger_chip_light" width="content" height="content" scrollable="false" hidden="true">
             <style name="styles.activity_chip"/>
-            <bind_flag_if_eq subject="printer_image_tagger_light" flag="hidden" ref_value="0"/>
+            <bind_flag_if_eq subject="printer_image_tagger_light_shown" flag="hidden" ref_value="0"/>
             <icon src="lightbulb_on" size="xs" variant="warning"/>
+          </lv_obj>
+          <!-- row_reverse draws children last-first: nozzle, fan, temperature, speed -->
+          <lv_obj name="tagger_chip_toolhead" width="content" height="content" scrollable="false" hidden="true">
+            <style name="styles.activity_chip"/>
+            <bind_flag_if_eq subject="printer_image_tagger_toolhead_shown" flag="hidden" ref_value="0"/>
+            <text_small text="100%" style_pad_left="#space_xs"/>
+            <text_small text="215°C"/>
+            <icon src="fan" size="xs"/>
+            <icon src="heater" size="xs"/>
           </lv_obj>
         </lv_obj>
       </lv_obj>

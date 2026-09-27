@@ -271,3 +271,31 @@ TEST_CASE("regions.json: every entry's size matches its source PNG", "[printer_i
         CHECK(int(be32(20)) == r.src_h);
     }
 }
+
+TEST_CASE("review_callout_layout: close nozzle and fan points give chips that do not overlap",
+          "[printer_image][image_tagger]") {
+    ImageRegions r;
+    r.src_w = 750;
+    r.src_h = 930;
+    r.nozzle = {0.45f, 0.61f};
+    r.part_fan = NormPoint{0.45f, 0.58f};
+    r.bed_left = {0.2f, 0.66f};
+    r.bed_right = {0.55f, 0.70f};
+    r.chamber = NormPoint{0.3f, 0.36f};
+    r.light = NormPoint{0.8f, 0.16f};
+    CalloutChipWidths w{};
+    w.fill(75);
+    w[size_t(CalloutKind::Toolhead)] = 120;
+
+    const auto out = review_callout_layout(r, 786, 326, w, 30, 4);
+    REQUIRE(out.mode == CalloutMode::Pinned);
+    REQUIRE(out.chips.size() >= 4);
+    for (size_t i = 0; i < out.chips.size(); ++i) {
+        for (size_t j = i + 1; j < out.chips.size(); ++j) {
+            const auto& a = out.chips[i].rect;
+            const auto& b = out.chips[j].rect;
+            INFO("chips " << int(out.chips[i].kind) << " and " << int(out.chips[j].kind));
+            CHECK((a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y));
+        }
+    }
+}

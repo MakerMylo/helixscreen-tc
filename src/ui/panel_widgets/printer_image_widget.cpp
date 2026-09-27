@@ -962,23 +962,7 @@ void PrinterImageWidget::apply_callout_layout() {
     in.min_line = theme_manager_get_spacing("space_md");
 
     const auto anchor = [&](CalloutKind k) -> std::optional<NormPoint> {
-        if (!r)
-            return std::nullopt;
-        switch (k) {
-        case CalloutKind::Nozzle:
-        case CalloutKind::Toolhead:
-            return r->nozzle;
-        case CalloutKind::Fan:
-            return r->part_fan;
-        case CalloutKind::Bed:
-            return NormPoint{(r->bed_left.x + r->bed_right.x) / 2,
-                             (r->bed_left.y + r->bed_right.y) / 2};
-        case CalloutKind::Chamber:
-            return r->chamber;
-        case CalloutKind::Light:
-            return r->light;
-        }
-        return std::nullopt;
+        return r ? region_anchor(*r, k) : std::nullopt;
     };
 
     const std::string widest_heater = helix::ui::temperature::heater_display(9990, 9990).temp;

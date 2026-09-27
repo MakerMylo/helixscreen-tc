@@ -11,9 +11,11 @@
 #include "printer_image_manager.h"
 #include "printer_images.h"
 #include "static_panel_registry.h"
+#include "theme_manager.h"
 
 #include <spdlog/spdlog.h>
 
+#include <algorithm>
 #include <cstring>
 #include <memory>
 
@@ -54,6 +56,15 @@ const char* prompt_text(TagPrompt p) {
     return lv_tr("Check the chips, then save");
 }
 
+// Review chips and their shown subjects, indexed by CalloutKind.
+constexpr const char* kChipNames[] = {"tagger_chip_nozzle",  "tagger_chip_bed",
+                                      "tagger_chip_chamber", "tagger_chip_fan",
+                                      "tagger_chip_light",   "tagger_chip_toolhead"};
+constexpr const char* kChipShownSubjects[] = {
+    "printer_image_tagger_nozzle_shown",  "printer_image_tagger_bed_shown",
+    "printer_image_tagger_chamber_shown", "printer_image_tagger_fan_shown",
+    "printer_image_tagger_light_shown",   "printer_image_tagger_toolhead_shown"};
+
 std::unique_ptr<PrinterImageTaggerOverlay> g_tagger_overlay;
 
 } // namespace
@@ -86,9 +97,9 @@ void PrinterImageTaggerOverlay::init_subjects() {
     UI_MANAGED_SUBJECT_INT(reviewing_subject_, 0, "printer_image_tagger_reviewing", subjects_);
     UI_MANAGED_SUBJECT_INT(can_skip_subject_, 0, "printer_image_tagger_can_skip", subjects_);
     UI_MANAGED_SUBJECT_INT(can_undo_subject_, 0, "printer_image_tagger_can_undo", subjects_);
-    UI_MANAGED_SUBJECT_INT(fan_tagged_subject_, 0, "printer_image_tagger_fan", subjects_);
-    UI_MANAGED_SUBJECT_INT(chamber_tagged_subject_, 0, "printer_image_tagger_chamber", subjects_);
-    UI_MANAGED_SUBJECT_INT(light_tagged_subject_, 0, "printer_image_tagger_light", subjects_);
+    for (size_t k = 0; k < std::size(chip_shown_); ++k) {
+        UI_MANAGED_SUBJECT_INT(chip_shown_[k], 0, kChipShownSubjects[k], subjects_);
+    }
     subjects_initialized_ = true;
 }
 
@@ -154,10 +165,6 @@ void PrinterImageTaggerOverlay::refresh() {
     lv_subject_set_int(&reviewing_subject_, session_.done() ? 1 : 0);
     lv_subject_set_int(&can_skip_subject_, session_.can_skip() ? 1 : 0);
     lv_subject_set_int(&can_undo_subject_, session_.can_undo() ? 1 : 0);
-    const ImageRegions r = session_.regions(target_.natural_w, target_.natural_h);
-    lv_subject_set_int(&fan_tagged_subject_, r.part_fan ? 1 : 0);
-    lv_subject_set_int(&chamber_tagged_subject_, r.chamber ? 1 : 0);
-    lv_subject_set_int(&light_tagged_subject_, r.light ? 1 : 0);
     if (session_.done()) {
         place_review_chips();
     }
@@ -165,25 +172,36 @@ void PrinterImageTaggerOverlay::refresh() {
 
 void PrinterImageTaggerOverlay::place_review_chips() {
     lv_obj_t* img = lv_obj_find_by_name(overlay_root_, "tagger_image");
-    if (!img) {
+    lv_obj_t* layer = lv_obj_find_by_name(overlay_root_, "tagger_review_layer");
+    if (!img || !layer) {
         return;
     }
-    const CalloutRect fit = fit_image(lv_obj_get_width(img), lv_obj_get_height(img),
-                                      target_.natural_w, target_.natural_h);
-    const ImageRegions r = session_.regions(target_.natural_w, target_.natural_h);
-    const NormPoint bed{(r.bed_left.x + r.bed_right.x) / 2, (r.bed_left.y + r.bed_right.y) / 2};
-    const std::pair<const char*, std::optional<NormPoint>> chips[] = {
-        {"tagger_chip_nozzle", r.nozzle}, {"tagger_chip_fan", r.part_fan},
-        {"tagger_chip_bed", bed},         {"tagger_chip_chamber", r.chamber},
-        {"tagger_chip_light", r.light},
-    };
-    for (const auto& [name, pt] : chips) {
-        lv_obj_t* chip = lv_obj_find_by_name(overlay_root_, name);
-        if (chip && pt) {
-            // Measured layout: the chip centres itself on this point in XML.
-            lv_obj_set_pos(chip, callout_detail::px(pt->x, fit.x, fit.w),
-                           callout_detail::px(pt->y, fit.y, fit.h));
+    // Measured layout: the chips are content-sized, so their widths come from
+    // the laid-out chips themselves.
+    lv_obj_update_layout(layer);
+    CalloutChipWidths widths{};
+    int chip_h = 0;
+    for (size_t k = 0; k < std::size(kChipNames); ++k) {
+        if (lv_obj_t* chip = lv_obj_find_by_name(layer, kChipNames[k])) {
+            widths[k] = lv_obj_get_width(chip);
+            chip_h = std::max(chip_h, static_cast<int>(lv_obj_get_height(chip)));
         }
+    }
+    const CalloutLayout out = review_callout_layout(
+        session_.regions(target_.natural_w, target_.natural_h), lv_obj_get_width(img),
+        lv_obj_get_height(img), widths, chip_h, theme_manager_get_spacing("space_xs"));
+
+    bool shown[std::size(kChipNames)] = {};
+    for (const CalloutChipOut& c : out.chips) {
+        const auto k = static_cast<size_t>(c.kind);
+        if (lv_obj_t* chip = lv_obj_find_by_name(layer, kChipNames[k])) {
+            // DECLARATIVE_OK: measured callout layout
+            lv_obj_set_pos(chip, c.rect.x, c.rect.y);
+            shown[k] = true;
+        }
+    }
+    for (size_t k = 0; k < std::size(chip_shown_); ++k) {
+        lv_subject_set_int(&chip_shown_[k], shown[k] ? 1 : 0);
     }
 }
 

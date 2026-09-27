@@ -56,7 +56,7 @@ class PrinterImageTaggerOverlay : public OverlayBase {
 
     void handle_tap();
     void handle_save();
-    /// Session state -> subjects; in review, moves each chip onto its point.
+    /// Session state -> subjects; in review, lays the chips out as the home widget pins them.
     void refresh();
     void place_review_chips();
 
@@ -71,9 +71,8 @@ class PrinterImageTaggerOverlay : public OverlayBase {
     lv_subject_t reviewing_subject_{};
     lv_subject_t can_skip_subject_{};
     lv_subject_t can_undo_subject_{};
-    lv_subject_t fan_tagged_subject_{};
-    lv_subject_t chamber_tagged_subject_{};
-    lv_subject_t light_tagged_subject_{};
+    /// One per review chip, indexed by CalloutKind: 1 while the layout places it.
+    lv_subject_t chip_shown_[6] = {};
 };
 
 PrinterImageTaggerOverlay& get_printer_image_tagger_overlay();
