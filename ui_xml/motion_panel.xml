@@ -47,9 +47,10 @@
                 action_button_2_callback="on_motion_header_settings_clicked">
       <!-- Header coordinates: one line, bold tinted axis letter + tabular
            mono value, no unit suffix. Each letter+value pair is one tap
-           target (opens that axis' keypad); the swap chip at the end names the
-           shown mode (Target / Actual) and flips it. The value labels carry the stable
-           per-axis names (header_pos_x/_y/_z). Hidden in portrait, where the
+           target (opens that axis' keypad); the swap chip at the end
+           names the shown mode (Target / Actual) and flips it. The value
+           labels carry the stable per-axis names (header_pos_x/_y/_z).
+           Hidden in portrait, where the
            coord_row under the header carries the same three bindings under
            row_pos_* names (distinct on purpose: this group is outside any
            <if> branch, so the duplicate-name gate would flag sharing them). -->
