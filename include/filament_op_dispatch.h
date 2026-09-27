@@ -196,7 +196,7 @@ struct BackendCaps {
 /// physical target rather than "nothing resolved".
 inline constexpr int EXTERNAL_SPOOL_SLOT = -2;
 
-/// Slot sentinel meaning "the active head — whatever the firmware has at the
+/// Slot sentinel meaning "the active head: whatever the firmware has at the
 /// nozzle", reached when no lane resolved (current_slot is -1). The sidebar's
 /// own Unload button and the Filament panel's Unload with no resolvable slot
 /// both target it, and every backend's unload_filament(-1) resolves the real
@@ -294,7 +294,7 @@ inline constexpr int ACTIVE_HEAD_SLOT = -1;
         // handle it (CFS ignores the slot and runs its unload script, AFC
         // resolves the lane name to "" and sends a bare TOOL_UNLOAD, Happy Hare
         // sends MMU_UNLOAD). ACTIVE_HEAD_SLOT joins it only while the backend
-        // reports the toolhead unaccounted — filament at the nozzle that no
+        // reports the toolhead unaccounted: filament at the nozzle that no
         // lane claims, so only the backend can resolve the real channel, which
         // every backend's unload_filament(-1) does. Any other negative slot
         // still means "nothing resolved" and must not dispatch against whatever
