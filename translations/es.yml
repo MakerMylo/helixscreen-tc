@@ -1868,6 +1868,7 @@ translations:
     de correa
   Measure belt path frequencies: Medir frecuencias de rutas de correa
   Measure every tool's XYZ offset automatically: Mide el offset XYZ de cada herramienta automáticamente
+  Measure pressure advance automatically: 'Mide el Pressure Advance automáticamente'
   Measured (shaper off): Medición (moldeador desactivado)
   Measured filament diameter: Diámetro medido del filamento
   Measured pressure advance: 'Pressure Advance medido'

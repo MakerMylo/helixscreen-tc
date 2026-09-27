@@ -1672,6 +1672,7 @@
   <translation tag="Measure and compare belt path frequencies" ru="Измерить и сравнить частоты путей ремня"/>
   <translation tag="Measure belt path frequencies" ru="Измерить частоты путей ремня"/>
   <translation tag="Measure every tool&apos;s XYZ offset automatically" ru="Автоматически измеряет смещение XYZ каждого инструмента"/>
+  <translation tag="Measure pressure advance automatically" ru="Автоматически измеряет Pressure Advance"/>
   <translation tag="Measured (shaper off)" ru="Измерено (шейпер выключен)"/>
   <translation tag="Measured filament diameter" ru="Измеренный диаметр филамента"/>
   <translation tag="Measured pressure advance" ru="Измеренный Pressure Advance"/>

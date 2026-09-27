@@ -1672,6 +1672,7 @@
   <translation tag="Measure and compare belt path frequencies" de="Riemenpfad-Frequenzen messen und vergleichen"/>
   <translation tag="Measure belt path frequencies" de="Riemenpfad-Frequenzen messen"/>
   <translation tag="Measure every tool&apos;s XYZ offset automatically" de="Misst den XYZ-Offset jedes Werkzeugs automatisch"/>
+  <translation tag="Measure pressure advance automatically" de="Misst Pressure Advance automatisch"/>
   <translation tag="Measured (shaper off)" de="Gemessen (Shaper aus)"/>
   <translation tag="Measured filament diameter" de="Gemessener Filamentdurchmesser"/>
   <translation tag="Measured pressure advance" de="Gemessener Pressure Advance"/>

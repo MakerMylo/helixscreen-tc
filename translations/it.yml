@@ -1868,6 +1868,7 @@ translations:
     cinghia
   Measure belt path frequencies: Misura le frequenze dei percorsi cinghia
   Measure every tool's XYZ offset automatically: Misura automaticamente l'offset XYZ di ogni strumento
+  Measure pressure advance automatically: 'Misura automaticamente il Pressure Advance'
   Measured (shaper off): Misurato (shaper disattivato)
   Measured filament diameter: Diametro filamento misurato
   Measured pressure advance: 'Pressure Advance misurato'

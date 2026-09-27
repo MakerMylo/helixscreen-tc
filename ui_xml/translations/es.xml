@@ -1672,6 +1672,7 @@
   <translation tag="Measure and compare belt path frequencies" es="Medir y comparar frecuencias de rutas de correa"/>
   <translation tag="Measure belt path frequencies" es="Medir frecuencias de rutas de correa"/>
   <translation tag="Measure every tool&apos;s XYZ offset automatically" es="Mide el offset XYZ de cada herramienta automáticamente"/>
+  <translation tag="Measure pressure advance automatically" es="Mide el Pressure Advance automáticamente"/>
   <translation tag="Measured (shaper off)" es="Medición (moldeador desactivado)"/>
   <translation tag="Measured filament diameter" es="Diámetro medido del filamento"/>
   <translation tag="Measured pressure advance" es="Pressure Advance medido"/>
