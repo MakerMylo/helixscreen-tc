@@ -555,6 +555,7 @@ translations:
   Check the PTFE tube along the drag chain for kinks, and the bend where it enters the extruder sensor: Проверьте трубку PTFE вдоль кабель-канала на перегибы, а также изгиб на входе в датчик экструдера
   Check the RS-485 cable between printer and CFS: Проверьте кабель RS-485 между принтером и CFS
   Check the buffer unit on the back of the printer: Проверьте буферный блок на задней панели принтера
+  Check the chips, then save: Проверьте метки и сохраните
   Check the filament path and try again.: Проверьте путь филамента и попробуйте снова.
   ? Check the path from the slot to the hub for a tangle or drag. If the slot feeds freely, the hub sensor or the feeder motor may have failed
   : Проверьте путь от слота до хаба на запутывание или трение. Если слот подаёт свободно, возможно, неисправен датчик хаба или подающий двигатель
@@ -762,6 +763,7 @@ translations:
   Could not reach Spoolman at: Не удалось связаться со Spoolman по адресу
   Could not read the screw adjustments from the printer: Не удалось получить данные регулировки винтов от принтера
   Could not remove the job from the queue: Не удалось удалить задание из очереди
+  Could not reset the printer image tags: Не удалось сбросить отметки изображения
   Could not resolve printer RFCOMM channel: Не удалось определить RFCOMM-канал принтера
   Could not save filament: Не удалось сохранить филамент
   Could not save the drying state: Не удалось сохранить состояние сушки
@@ -769,6 +771,7 @@ translations:
   'Could not save the drying state: nothing was heated': 'Не удалось сохранить состояние сушки: ничего не нагревалось'
 
   "Could not save the mesh as '{}': {}": "Не удалось сохранить сетку как '{}': {}"
+  Could not save the printer image tags: Не удалось сохранить отметки изображения
   Could not start Bluetooth discovery: Не удалось запустить поиск Bluetooth
   Could not update filaments: Не удалось обновить филаменты
   Could not verify Spoolman status. Moonraker may still be restarting.: Не удалось
@@ -2583,6 +2586,7 @@ translations:
   Reset endless spool failed: 'Не удалось сбросить бесконечную катушку'
   Reset failed: Ошибка сброса
   Reset motor run-time counter: 'Сбросить счётчик наработки мотора'
+  Reset tags: Сбросить отметки
   Reset to Default: Сбросить до умолчания
   Reset to defaults: Сбросить по умолчанию
   Reset to original values: Сбросить к исходным значениям
@@ -3081,19 +3085,27 @@ translations:
   'TOGGLE: {}': 'ПЕРЕКЛЮЧИТЬ: {}'
   TOOLS: ИНСТРУМЕНТЫ
   TPU: TPU
+  Tag Parts: Отметить узлы
+  Tag parts: Отметить узлы
   Takes 3-5 min. Do not interrupt.: Занимает 3-5 мин. Не прерывайте.
   'Tangle sensitivity': 'Чувствительность к спутыванию'
   Tap + to add: Нажмите +, чтобы добавить
   Tap Firmware Restart to recover — on K2 this also bounces the rpi MCU bridge: Нажмите «Перезапуск прошивки» для восстановления. На K2 это также перезапускает мост MCU rpi
   Tap again to confirm this orientation: Нажмите ещё раз для подтверждения ориентации
+  Tap an empty spot inside the enclosure: Нажмите на пустое место внутри корпуса
   Tap an object to exclude it | {} objects ({} excluded): 'Коснитесь объекта, чтобы исключить его | {} объектов ({} исключено)'
   Tap any tile to open its full controls or toggle its state.: 'Нажмите на любую плитку, чтобы открыть её полные элементы управления или переключить состояние.'
   Tap anywhere if this text is right-side up: Нажмите в любом месте, если текст расположен
     правильно
   Tap anywhere to begin: Нажмите в любом месте для начала
   Tap anywhere to begin calibration: Нажмите в любом месте для начала калибровки
+  Tap the bed's front-left corner: Нажмите на передний левый угол стола
+  Tap the bed's front-right corner: Нажмите на передний правый угол стола
   Tap the crosshair (point %1$d of 3) — touch %2$d of %3$d: Нажмите на
     перекрестие (точка %1$d из 3) — касание %2$d из %3$d
+  Tap the light: Нажмите на подсветку
+  Tap the nozzle tip: Нажмите на кончик сопла
+  Tap the part cooling fan: Нажмите на вентилятор охлаждения детали
   Tap to assign: Нажмите для назначения
   Target: 'Цель'
   Target Frequency: Целевая частота
@@ -3420,6 +3432,7 @@ translations:
   Unavailable: Недоступно
   Unavailable on this printer: Недоступно на этом принтере
   Understanding Results: Понимание результатов
+  Undo: Шаг назад
   ? "Uneven belt tension causes print artifacts like layer shifts, VFAs (vertical fine artifacts), and ringing.\n\nPluck each belt by hand and this tool listens through the accelerometer to measure the belt's frequency. Matched frequencies mean balanced tension.\n\nOn CoreXY, belts A and B should be within a few Hz of each other."
   : "Неравномерное натяжение ремня вызывает дефекты печати, такие как смещения слоёв, VFA (вертикальные мелкие артефакты) и ringing.\n\nДёрните каждый ремень рукой, и этот инструмент измерит частоту ремня с помощью акселерометра. Совпадающие частоты означают сбалансированное натяжение.\n\nДля CoreXY ремни A и B должны отличаться на несколько Гц."
   Uninstall: Удалить

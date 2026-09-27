@@ -562,6 +562,7 @@ translations:
   Check the PTFE tube along the drag chain for kinks, and the bend where it enters the extruder sensor: Verifique se o tubo PTFE ao longo da esteira está dobrado, e a curva na entrada do sensor do extrusor
   Check the RS-485 cable between printer and CFS: Verifique o cabo RS-485 entre a impressora e o CFS
   Check the buffer unit on the back of the printer: Verifique a unidade de buffer na parte de trás da impressora
+  Check the chips, then save: Confira as etiquetas e salve
   Check the filament path and try again.: Verifique o caminho do filamento e tente
     novamente.
   ? Check the path from the slot to the hub for a tangle or drag. If the slot feeds freely, the hub sensor or the feeder motor may have failed
@@ -774,6 +775,7 @@ translations:
   Could not reach Spoolman at: Não foi possível alcançar o Spoolman em
   Could not read the screw adjustments from the printer: Não foi possível ler os ajustes dos parafusos da impressora
   Could not remove the job from the queue: Não foi possível remover o trabalho da fila
+  Could not reset the printer image tags: Falha ao resetar as marcações da imagem
   Could not resolve printer RFCOMM channel: Não foi possível resolver o canal RFCOMM
     da impressora
   Could not save filament: Não foi possível salvar o filamento
@@ -782,6 +784,7 @@ translations:
   'Could not save the drying state: nothing was heated': 'Não foi possível salvar o estado da secagem: nada foi aquecido'
 
   "Could not save the mesh as '{}': {}": "Não foi possível salvar a malha como '{}': {}"
+  Could not save the printer image tags: Falha ao salvar as marcações da imagem
   Could not start Bluetooth discovery: Não foi possível iniciar a descoberta Bluetooth
   Could not update filaments: Não foi possível atualizar os filamentos
   Could not verify Spoolman status. Moonraker may still be restarting.: Não foi possível
@@ -2612,6 +2615,7 @@ translations:
   Reset endless spool failed: 'Falha ao resetar o carretel infinito'
   Reset failed: Falha ao redefinir
   Reset motor run-time counter: 'Resetar o contador de horas de funcionamento do motor'
+  Reset tags: Resetar marcações
   Reset to Default: Restaurar Padrão
   Reset to defaults: Restaurar padrões
   Reset to original values: Restaurar valores originais
@@ -3118,19 +3122,27 @@ translations:
   'TOGGLE: {}': 'ALTERNAR: {}'
   TOOLS: FERRAMENTAS
   TPU: TPU
+  Tag Parts: Marcar Componentes
+  Tag parts: Marcar componentes
   Takes 3-5 min. Do not interrupt.: Leva 3-5 min. Não interrompa.
   'Tangle sensitivity': 'Sensibilidade a emaranhados'
   Tap + to add: Toque em + para adicionar
   Tap Firmware Restart to recover — on K2 this also bounces the rpi MCU bridge: Toque em Reiniciar firmware para recuperar. Na K2 isso também reinicia a ponte MCU rpi
   Tap again to confirm this orientation: Toque novamente para confirmar esta orientação
+  Tap an empty spot inside the enclosure: Toque em um ponto vazio dentro do gabinete
   Tap an object to exclude it | {} objects ({} excluded): 'Toque em um objeto para excluí-lo | {} objetos ({} excluídos)'
   Tap any tile to open its full controls or toggle its state.: Toque em qualquer bloco para abrir seus controles completos ou alternar seu estado.
   Tap anywhere if this text is right-side up: Toque em qualquer lugar se este texto
     estiver correto
   Tap anywhere to begin: Toque em qualquer lugar para começar
   Tap anywhere to begin calibration: Toque em qualquer lugar para iniciar a calibração
+  Tap the bed's front-left corner: Toque no canto frontal esquerdo da mesa
+  Tap the bed's front-right corner: Toque no canto frontal direito da mesa
   Tap the crosshair (point %1$d of 3) — touch %2$d of %3$d: Toque na mira
     (ponto %1$d de 3) — toque %2$d de %3$d
+  Tap the light: Toque na luz
+  Tap the nozzle tip: Toque na ponta do bico
+  Tap the part cooling fan: Toque na ventoinha de resfriamento da peça
   Tap to assign: Toque para atribuir
   Target: 'Alvo'
   Target Frequency: Frequência alvo
@@ -3465,6 +3477,7 @@ translations:
   Unavailable: Indisponível
   Unavailable on this printer: Não disponível nesta impressora
   Understanding Results: Entender resultados
+  Undo: Desfazer
   ? "Uneven belt tension causes print artifacts like layer shifts, VFAs (vertical fine artifacts), and ringing.\n\nPluck each belt by hand and this tool listens through the accelerometer to measure the belt's frequency. Matched frequencies mean balanced tension.\n\nOn CoreXY, belts A and B should be within a few Hz of each other."
   : "A tensão desigual da correia causa artefatos de impressão como deslocamentos de camada, VFAs (artefatos verticais finos) e ringing.\n\nBelisque cada correia com a mão e esta ferramenta escuta pelo acelerômetro para medir a frequência da correia. Frequências coincidentes significam tensão equilibrada.\n\nPara CoreXY, as correias A e B devem estar a poucos Hz uma da outra."
   Uninstall: Desinstalar

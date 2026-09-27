@@ -512,6 +512,7 @@ translations:
   Check the PTFE tube along the drag chain for kinks, and the bend where it enters the extruder sensor: 请检查拖链沿线的 PTFE 管是否折弯，以及进入挤出机传感器处的弯曲
   Check the RS-485 cable between printer and CFS: 请检查打印机与 CFS 之间的 RS-485 线缆
   Check the buffer unit on the back of the printer: 请检查打印机背面的缓冲单元
+  Check the chips, then save: 检查标签后保存
   Check the filament path and try again.: 检查耗材路径并重试。
   ? Check the path from the slot to the hub for a tangle or drag. If the slot feeds freely, the hub sensor or the feeder motor may have failed
   : 请检查从槽位到集线器的通路是否缠绕或阻力过大。若槽位送料顺畅，可能是集线器传感器或送料电机故障
@@ -702,6 +703,7 @@ translations:
   Could not reach Spoolman at: 无法连接 Spoolman：
   Could not read the screw adjustments from the printer: 无法从打印机读取螺丝调整数据
   Could not remove the job from the queue: 无法从队列中移除任务
+  Could not reset the printer image tags: 重置打印机图片标记失败
   Could not resolve printer RFCOMM channel: 无法解析打印机 RFCOMM 通道
   Could not save filament: 无法保存耗材
   Could not save the drying state: 无法保存烘干状态
@@ -709,6 +711,7 @@ translations:
   'Could not save the drying state: nothing was heated': 无法保存烘干状态:未进行任何加热
 
   "Could not save the mesh as '{}': {}": "无法将网格保存为 '{}'：{}"
+  Could not save the printer image tags: 保存打印机图片标记失败
   Could not start Bluetooth discovery: 无法启动蓝牙发现
   Could not update filaments: 无法更新耗材
   Could not verify Spoolman status. Moonraker may still be restarting.: 无法验证 Spoolman
@@ -2434,6 +2437,7 @@ translations:
   Reset endless spool failed: '重置无限料盘失败'
   Reset failed: 重置失败
   Reset motor run-time counter: '重置电机运行时间计数器'
+  Reset tags: 重置标记
   Reset to Default: 重置为默认
   Reset to defaults: 重置为默认值
   Reset to original values: 重置为原始值
@@ -2893,18 +2897,26 @@ translations:
   'TOGGLE: {}': '切换: {}'
   TOOLS: 工具
   TPU: TPU
+  Tag Parts: 标记部件
+  Tag parts: 标记部件
   Takes 3-5 min. Do not interrupt.: 需要 3-5 分钟。请勿中断。
   'Tangle sensitivity': '打结灵敏度'
   Tap + to add: 点击 + 添加
   Tap Firmware Restart to recover — on K2 this also bounces the rpi MCU bridge: 点按“重启固件”以恢复。在 K2 上这也会重启 rpi MCU 桥接
   Tap again to confirm this orientation: 再次点击确认此方向
+  Tap an empty spot inside the enclosure: 点击机箱内的空白处
   Tap an object to exclude it | {} objects ({} excluded): '点按对象以排除 | {} 个对象（已排除 {} 个）'
   Tap any tile to open its full controls or toggle its state.: 点击任意磁贴以打开其完整控制项或切换其状态。
   Tap anywhere if this text is right-side up: 如果文字方向正确请点击任意位置
   Tap anywhere to begin: 点击任意位置开始
   Tap anywhere to begin calibration: 点击任意位置开始校准
+  Tap the bed's front-left corner: 点击热床的左前角
+  Tap the bed's front-right corner: 点击热床的右前角
   Tap the crosshair (point %1$d of 3) — touch %2$d of %3$d: 点击十字准星（第 %1$d
     个点，共 3 个）— 触摸 %2$d / %3$d
+  Tap the light: 点击灯
+  Tap the nozzle tip: 点击喷嘴尖端
+  Tap the part cooling fan: 点击零件冷却风扇
   Tap to assign: 点击分配
   Target: '目标'
   Target Frequency: 目标频率
@@ -3202,6 +3214,7 @@ translations:
   Unavailable: 不可用
   Unavailable on this printer: 此打印机上不可用
   Understanding Results: 了解结果
+  Undo: 撤销
   ? "Uneven belt tension causes print artifacts like layer shifts, VFAs (vertical fine artifacts), and ringing.\n\nPluck each belt by hand and this tool listens through the accelerometer to measure the belt's frequency. Matched frequencies mean balanced tension.\n\nOn CoreXY, belts A and B should be within a few Hz of each other."
   : "皮带张力不均会导致层错位、VFA(垂直细纹)和振纹等打印瑕疵。\n\n用手拨动每条皮带，此工具会通过加速度传感器测量皮带的频率。频率匹配意味着张力均衡。\n\n对于 CoreXY,皮带 A 与 B 应相差在几 Hz 以内。"
   Uninstall: 卸载

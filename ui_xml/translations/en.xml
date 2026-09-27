@@ -505,6 +505,7 @@
   <translation tag="Check the PTFE tube along the drag chain for kinks, and the bend where it enters the extruder sensor" en="Check the PTFE tube along the drag chain for kinks, and the bend where it enters the extruder sensor"/>
   <translation tag="Check the RS-485 cable between printer and CFS" en="Check the RS-485 cable between printer and CFS"/>
   <translation tag="Check the buffer unit on the back of the printer" en="Check the buffer unit on the back of the printer"/>
+  <translation tag="Check the chips, then save" en="Check the chips, then save"/>
   <translation tag="Check the filament path and try again." en="Check the filament path and try again."/>
   <translation tag="Check the path from the slot to the hub for a tangle or drag. If the slot feeds freely, the hub sensor or the feeder motor may have failed" en="Check the path from the slot to the hub for a tangle or drag. If the slot feeds freely, the hub sensor or the feeder motor may have failed"/>
   <translation tag="Check the provided value and try again" en="Check the provided value and try again"/>
@@ -685,11 +686,13 @@
   <translation tag="Could not reach Spoolman at" en="Could not reach Spoolman at"/>
   <translation tag="Could not read the screw adjustments from the printer" en="Could not read the screw adjustments from the printer"/>
   <translation tag="Could not remove the job from the queue" en="Could not remove the job from the queue"/>
+  <translation tag="Could not reset the printer image tags" en="Could not reset the printer image tags"/>
   <translation tag="Could not resolve printer RFCOMM channel" en="Could not resolve printer RFCOMM channel"/>
   <translation tag="Could not save filament" en="Could not save filament"/>
   <translation tag="Could not save the drying state" en="Could not save the drying state"/>
   <translation tag="Could not save the drying state: nothing was heated" en="Could not save the drying state: nothing was heated"/>
   <translation tag="Could not save the mesh as &apos;{}&apos;: {}" en="Could not save the mesh as &apos;{}&apos;: {}"/>
+  <translation tag="Could not save the printer image tags" en="Could not save the printer image tags"/>
   <translation tag="Could not start Bluetooth discovery" en="Could not start Bluetooth discovery"/>
   <translation tag="Could not update filaments" en="Could not update filaments"/>
   <translation tag="Could not verify Spoolman status. Moonraker may still be restarting." en="Could not verify Spoolman status. Moonraker may still be restarting."/>
@@ -2346,6 +2349,7 @@
   <translation tag="Reset endless spool failed" en="Reset endless spool failed"/>
   <translation tag="Reset failed" en="Reset failed"/>
   <translation tag="Reset motor run-time counter" en="Reset motor run-time counter"/>
+  <translation tag="Reset tags" en="Reset tags"/>
   <translation tag="Reset to Default" en="Reset to Default"/>
   <translation tag="Reset to defaults" en="Reset to defaults"/>
   <translation tag="Reset to original values" en="Reset to original values"/>
@@ -2784,17 +2788,25 @@
   <translation tag="TOGGLE: {}" en="TOGGLE: {}"/>
   <translation tag="TOOLS" en="TOOLS"/>
   <translation tag="TPU" en="TPU"/>
+  <translation tag="Tag Parts" en="Tag Parts"/>
+  <translation tag="Tag parts" en="Tag parts"/>
   <translation tag="Takes 3-5 min. Do not interrupt." en="Takes 3-5 min. Do not interrupt."/>
   <translation tag="Tangle sensitivity" en="Tangle sensitivity"/>
   <translation tag="Tap + to add" en="Tap + to add"/>
   <translation tag="Tap Firmware Restart to recover — on K2 this also bounces the rpi MCU bridge" en="Tap Firmware Restart to recover — on K2 this also bounces the rpi MCU bridge"/>
   <translation tag="Tap again to confirm this orientation" en="Tap again to confirm this orientation"/>
+  <translation tag="Tap an empty spot inside the enclosure" en="Tap an empty spot inside the enclosure"/>
   <translation tag="Tap an object to exclude it | {} objects ({} excluded)" en="Tap an object to exclude it | {} objects ({} excluded)"/>
   <translation tag="Tap any tile to open its full controls or toggle its state." en="Tap any tile to open its full controls or toggle its state."/>
   <translation tag="Tap anywhere if this text is right-side up" en="Tap anywhere if this text is right-side up"/>
   <translation tag="Tap anywhere to begin" en="Tap anywhere to begin"/>
   <translation tag="Tap anywhere to begin calibration" en="Tap anywhere to begin calibration"/>
+  <translation tag="Tap the bed&apos;s front-left corner" en="Tap the bed&apos;s front-left corner"/>
+  <translation tag="Tap the bed&apos;s front-right corner" en="Tap the bed&apos;s front-right corner"/>
   <translation tag="Tap the crosshair (point %1$d of 3) — touch %2$d of %3$d" en="Tap the crosshair (point %1$d of 3) — touch %2$d of %3$d"/>
+  <translation tag="Tap the light" en="Tap the light"/>
+  <translation tag="Tap the nozzle tip" en="Tap the nozzle tip"/>
+  <translation tag="Tap the part cooling fan" en="Tap the part cooling fan"/>
   <translation tag="Tap to assign" en="Tap to assign"/>
   <translation tag="Target" en="Target"/>
   <translation tag="Target Frequency" en="Target Frequency"/>
@@ -3055,6 +3067,7 @@
   <translation tag="Unavailable" en="Unavailable"/>
   <translation tag="Unavailable on this printer" en="Unavailable on this printer"/>
   <translation tag="Understanding Results" en="Understanding Results"/>
+  <translation tag="Undo" en="Undo"/>
   <translation tag="Uneven belt tension causes print artifacts like layer shifts, VFAs (vertical fine artifacts), and ringing.&#10;&#10;Pluck each belt by hand and this tool listens through the accelerometer to measure the belt&apos;s frequency. Matched frequencies mean balanced tension.&#10;&#10;On CoreXY, belts A and B should be within a few Hz of each other." en="Uneven belt tension causes print artifacts like layer shifts, VFAs (vertical fine artifacts), and ringing.&#10;&#10;Pluck each belt by hand and this tool listens through the accelerometer to measure the belt&apos;s frequency. Matched frequencies mean balanced tension.&#10;&#10;On CoreXY, belts A and B should be within a few Hz of each other."/>
   <translation tag="Uninstall" en="Uninstall"/>
   <translation tag="Uninstall HelixPrint Plugin" en="Uninstall HelixPrint Plugin"/>
