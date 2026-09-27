@@ -13,7 +13,7 @@ Open the Motion screen by tapping **Motion** on the Controls panel. It has two t
 The current **X**, **Y**, and **Z** coordinates sit in the header of the Motion screen (in portrait they form a row just under the header). Each axis letter is dimmed while that axis is not homed yet.
 
 - **Tap a coordinate** to open a number pad and send the toolhead straight to that position. Values outside the printer's range are refused with "Value must be between A and B" - nothing moves. If the axis isn't homed yet, the printer homes it first and then makes the move; no extra confirmation is needed.
-- **Tap the swap icon** next to the coordinates to switch what they show: **Commanded** (the position you asked for) or **Actual** (the position the printer measures). The icon lights up while Actual is shown. The choice is remembered separately for each printer.
+- **Tap the swap icon** next to the coordinates to switch what they show: **Commanded** (the position you asked for) or **Actual** (where the nozzle really is, with z-offset, tool offsets and bed mesh correction applied, updating while it moves). The icon lights up while Actual is shown. The choice is remembered separately for each printer.
 
 The coordinates are greyed out whenever the printer isn't ready - not connected, or still starting up.
 
@@ -75,13 +75,13 @@ Jog moves stop at the axis limits, and the limits include any G-code offset your
 - **A fresh press** that can't move at all shows "X is at its limit (235.00mm)" (with the axis and limit that apply) so you know why nothing happened.
 - A press that can only make a **partial** move does so silently.
 
-The Z buttons behave a little differently: whichever button would push past a limit is greyed out, so you can see the edge before you press. On printers where the bed moves in Z rather than the head, the greyed button is the opposite one of the pair - what's greyed always matches "closer to the bed" vs. "more clearance", not raw up/down.
+The Z buttons behave a little differently: a button that would move past a Z limit is greyed out, so you can see the edge before you press. Which pair greys out depends on what moves in Z on your printer (see below).
 
 ---
 
 ## Z-Axis Controls
 
-The right column has four Z buttons (two large steps and two small steps, up and down) with a label between them. The label reads either **Bed** or **Print Head** depending on your printer's kinematics - on bed-slinger printers the bed is what moves in Z, while on CoreXY and delta printers the print head moves. The arrow direction always reflects whether the nozzle is moving closer to or farther from the bed, so "up" always means more clearance.
+The right column has four Z buttons (two large steps and two small steps, up and down) with a label between them. The label reads **Bed** on printers whose bed moves up and down (such as the Voron Trident or the Snapmaker U1) and **Print Head** where the head or gantry moves in Z (bed-slingers, the Voron 2.4, deltas). The arrows show the direction of whatever moves: on a **Bed** printer the up arrow raises the bed toward the nozzle, and on a **Print Head** printer it lifts the head away from the bed.
 
 ---
 
