@@ -48,7 +48,6 @@ void LedControlsWidget::detach() {
     }
     widget_obj_ = nullptr;
     parent_screen_ = nullptr;
-    led_control_panel_ = nullptr;
 }
 
 void LedControlsWidget::on_led_controls_clicked(lv_event_t* e) {
@@ -63,7 +62,7 @@ void LedControlsWidget::on_led_controls_clicked(lv_event_t* e) {
 
 void LedControlsWidget::handle_clicked() {
     spdlog::debug("[LedControlsWidget] Clicked - opening LED control overlay");
-    led_control_panel_ = open_led_control_overlay(parent_screen_, led_control_panel_);
+    open_led_control_overlay(parent_screen_);
 }
 
 } // namespace helix

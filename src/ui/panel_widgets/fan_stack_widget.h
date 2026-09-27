@@ -53,7 +53,6 @@ class FanStackWidget : public PanelWidget {
 
     helix::ui::WidgetRef widget_obj_;
     helix::ui::WidgetRef parent_screen_;
-    helix::ui::WidgetRef fan_control_panel_;
 
     // Labels, names, and icons for each fan row (stack mode)
     helix::ui::WidgetRef part_label_;

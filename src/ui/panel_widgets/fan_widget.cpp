@@ -135,7 +135,6 @@ void FanWidget::detach() {
         widget_obj_ = nullptr;
     }
     parent_screen_ = nullptr;
-    fan_control_panel_ = nullptr;
     speed_label_ = nullptr;
     name_label_ = nullptr;
     fan_icon_ = nullptr;
@@ -145,7 +144,7 @@ void FanWidget::detach() {
 
 void FanWidget::handle_clicked() {
     spdlog::debug("[FanWidget] Clicked - opening fan control overlay");
-    fan_control_panel_ = open_fan_control_overlay(parent_screen_, fan_control_panel_);
+    open_fan_control_overlay(parent_screen_);
 }
 
 void FanWidget::resolve_display_name() {

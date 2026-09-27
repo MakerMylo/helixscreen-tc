@@ -156,7 +156,6 @@ class PrinterManagerOverlay : public OverlayBase {
     lv_obj_t* input_shaper_panel_ = nullptr;
     lv_obj_t* retraction_panel_ = nullptr;
     lv_obj_t* timelapse_panel_ = nullptr;
-    lv_obj_t* fan_control_panel_ = nullptr;
 
     //
     // === Static Callbacks ===

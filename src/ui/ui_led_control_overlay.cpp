@@ -39,8 +39,9 @@ void init_led_control_overlay(PrinterState& printer_state) {
 }
 
 namespace helix {
-lv_obj_t* open_led_control_overlay(lv_obj_t* parent_screen, lv_obj_t* panel) {
+lv_obj_t* open_led_control_overlay(lv_obj_t* parent_screen) {
     auto& overlay = get_led_control_overlay();
+    lv_obj_t* panel = overlay.get_root();
     if (!panel && parent_screen) {
         if (!overlay.are_subjects_initialized()) {
             overlay.init_subjects();
@@ -54,8 +55,8 @@ lv_obj_t* open_led_control_overlay(lv_obj_t* parent_screen, lv_obj_t* panel) {
         }
     }
     if (panel) {
-        // Registered before every push: navbar switches clear the registrations,
-        // so a cached panel loses its own. Registering is idempotent.
+        // Registered before every push: a NavigationManager shutdown drops the
+        // registrations, and registering is idempotent.
         NavigationManager::instance().register_overlay_instance(panel, &overlay);
         NavigationManager::instance().push_overlay(panel);
     }
@@ -116,6 +117,8 @@ lv_obj_t* LedControlOverlay::create(lv_obj_t* parent) {
         spdlog::error("[{}] Failed to create overlay from XML", get_name());
         return nullptr;
     }
+
+    lv_obj_add_event_cb(overlay_root_, on_root_deleted, LV_EVENT_DELETE, nullptr);
 
     // Find widget containers needed for dynamic population (lv_obj_clean + repopulate)
     // Section visibility is handled declaratively via bind_flag_if_eq subjects
@@ -281,13 +284,30 @@ void LedControlOverlay::cleanup() {
     deinit_subjects_base(subjects_);
 
     // Null widget pointers — WLED poll callbacks may still be in-flight
+    forget_widget_pointers();
+
+    OverlayBase::cleanup();
+}
+
+void LedControlOverlay::forget_widget_pointers() {
     strip_selector_section_ = nullptr;
     color_presets_container_ = nullptr;
     effects_container_ = nullptr;
     wled_presets_container_ = nullptr;
     macro_buttons_container_ = nullptr;
+    current_color_swatch_ = nullptr;
+}
 
-    OverlayBase::cleanup();
+void LedControlOverlay::on_root_deleted(lv_event_t* e) {
+    // Resolved through the global, not user_data: a printer switch destroys the
+    // overlay before freeing its tree, and the re-created overlay can be opened
+    // on a new root before the old one is freed.
+    if (!g_led_control_overlay ||
+        g_led_control_overlay->overlay_root_ != lv_event_get_target_obj(e)) {
+        return;
+    }
+    g_led_control_overlay->forget_widget_pointers();
+    g_led_control_overlay->overlay_root_ = nullptr;
 }
 
 // ============================================================================
