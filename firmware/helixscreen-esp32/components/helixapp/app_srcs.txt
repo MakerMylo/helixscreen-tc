@@ -248,6 +248,7 @@ src/system/preset_materials.cpp
 src/system/prerender_size_class.cpp
 src/system/prerendered_images.cpp
 src/system/printer_image_manager.cpp
+src/system/printer_image_regions.cpp
 src/system/printer_name_sync.cpp
 src/system/runtime_config.cpp
 src/system/safety_settings_manager.cpp
