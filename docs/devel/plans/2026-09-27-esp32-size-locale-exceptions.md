@@ -23,18 +23,63 @@ nothing references `std::locale`. Three things do today:
 
 ### text_io helpers
 
-One header, `include/text_io.h` (implementation in `src/system/text_io.cpp`), so the 64
-files do not each hand-roll a replacement:
+`include/text_io.h` (namespace `helix::text_io`, implementation `src/system/text_io.cpp`,
+tests `[text_io]`). Desktop builds use the same code: no ESP32-only forks.
 
-- `std::optional<std::string> read_file(const std::string& path)` - whole file, binary-safe
-- `bool write_file(const std::string& path, std::string_view data)`
-- `bool write_file_atomic(const std::string& path, std::string_view data)` - tmp + rename,
-  the shape 19 call sites hand-roll today; each migrated site keeps its own semantics
-- `for_each_line(std::string_view text, F fn, char delim = '\n')` - strips a trailing `\r`
-- `split_ws(std::string_view)` for `istringstream >> token` loops
-- `parse_int` / `parse_double` returning `std::optional`, via `std::from_chars`
+| API | Contract |
+|---|---|
+| `read_file(path)` -> `optional<string>` | whole file, byte for byte; nullopt only if it cannot be opened or a read fails |
+| `read_first_line(path)` -> `optional<string>` | one `std::getline`: `\n` removed, `\r` kept; `""` for an empty file |
+| `file_size(path)` -> `optional<uint64_t>` | `stat()` size |
+| `write_file(path, data)` -> `bool` | create/truncate; errno from the failing call |
+| `write_file_atomic(path, data, Durability::None\|Fsync)` -> `bool` | `path + ".tmp"`, close, `rename`; on failure tmp removed, target untouched, errno kept. `Fsync` also fsyncs the tmp and the directory (config's contract). Does not resolve symlinks: call `helix::paths::write_target()` first where the old code did |
+| `File` = `unique_ptr<FILE>`; `open_file(path, "rb"\|"wb"\|"ab")` | empty on failure, errno set |
+| `write_all(FILE*, sv)` -> `bool` | false on a short write |
+| `close(File&)` -> `bool` | flush + fclose; what `ofstream::good()` after the writes would say |
+| `LineReader r(path, delim='\n')`; `if (!r)`; `r.next(line)`; `r.last_had_delimiter()` | `std::getline` on a file, record by record |
+| `lines(text, delim='\n')` | range of `string_view`, identical to a `while (getline(istringstream))` loop; `break`/`continue` work |
+| `split_ws(sv)` -> `vector<string_view>` | the tokens successive `>> token` reads give |
+| `parse_int<T=long long>(sv, base=10)`, `parse_double(sv)` -> `optional` | whole view must be the number; one leading `+` allowed; no whitespace; `.` always; no `0x` |
 
-Desktop builds use the same code: no ESP32-only forks.
+Includes: `#include "text_io.h"` and `namespace tio = helix::text_io;` at file scope (or
+spell `helix::text_io::`). Remove `<sstream> <fstream> <iostream> <iomanip> <istream>
+<ostream>` once the file has no stream left. Add `#include <fmt/format.h>` only if the file
+does not already get fmt through spdlog.
+
+#### Conversion recipe
+
+Rules that apply to every row: keep the old variable names; where the old loop body used
+`line` as a `std::string` (mutated it, passed it to something taking `std::string&` or
+`const std::string&`), write `std::string line(sv);` as the loop's first statement and
+leave the body untouched. Error paths stay the error paths: every `if (!file)` /
+`is_open()` check maps to the `nullopt` / `false` / empty-`File` check shown.
+
+| Old | New |
+|---|---|
+| `std::ifstream f(p); if (!f) {X} std::stringstream b; b << f.rdbuf(); s = b.str();` (also `ostringstream`, `istreambuf_iterator` pairs) | `auto s = tio::read_file(p); if (!s) {X}` then use `*s` |
+| `std::ifstream f(p); ... json::parse(f)` / `f >> j` | `auto text = tio::read_file(p); if (!text) {X}` then `json::parse(*text)`. With no open check before it: `json::parse(tio::read_file(p).value_or(""))` (an empty input throws `parse_error` as the empty stream did) |
+| `json::parse(std::ifstream(p))` | `json::parse(tio::read_file(p).value_or(""))` |
+| `std::ifstream f(p); if (!f) {X} std::string line; std::getline(f, line);` (sysfs one-liners) | `auto line = tio::read_first_line(p); if (!line) {X}` then use `*line` |
+| `std::ifstream f(p); if (!f) {X} std::string line; while (std::getline(f, line)) {B}` (also with `&& lines_read < max`) | `tio::LineReader f(p); if (!f) {X} std::string line; while (f.next(line)) {B}` (same extra conditions) |
+| `std::getline(f, line); // skip header` on a file | `f.next(line);` |
+| `std::getline(cmd, arg, '\0')` on a file | `tio::LineReader cmd(p, '\0');` then `cmd.next(arg)` |
+| `std::istringstream s(text); std::string line; while (std::getline(s, line[, d])) {B}` | `for (std::string_view sv : tio::lines(text[, d])) { std::string line(sv); B }` (skip the copy when `B` only reads `line` through `string_view`-friendly calls) |
+| `std::istringstream s(text); std::string tok; while (s >> tok) {B}` | `for (std::string_view sv : tio::split_ws(text)) { std::string tok(sv); B }` |
+| `std::istringstream s(text); s >> a >> b >> c;` then `if (s)` | `auto t = tio::split_ws(text);` then `t.size() >= 3` and `tio::parse_double(t[0])` etc.; all must succeed where the old code required the stream to be good |
+| `std::istringstream(text) >> x;` (one number) | `auto t = tio::split_ws(text); if (!t.empty()) if (auto v = tio::parse_double(t[0])) x = *v;` (`parse_int<T>` for integers) |
+| `std::stoull(tok, nullptr, 16)` in a try/catch | `if (auto v = tio::parse_int<unsigned long long>(tok, 16)) ... else <the catch body>` |
+| `std::ofstream o(p); if (!o) {X} o << data; if (!o) {Y}` (whole content known) | `if (!tio::write_file(p, data)) {X}` (merge `X`/`Y`; errno is set) |
+| hand-rolled `path.tmp` + write + `rename` (+ `remove(tmp)` on failure) | `if (!tio::write_file_atomic(target, data)) { log strerror(errno); ... }`. A site that also fsyncs uses `Durability::Fsync` |
+| `std::ofstream o(p); o << a << b;` streamed pieces, or a file written line by line | `auto o = tio::open_file(p, "wb"); if (!o) {X}` then `tio::write_all(o.get(), piece)` per piece, and `if (!tio::close(o)) {Y}` where the old code checked `good()` |
+| `std::ofstream probe(p[, ios::app]); return (bool)probe;` (write probes) | `return static_cast<bool>(tio::open_file(p, "wb"` or `"ab"));` |
+| `std::ifstream f(p, ios::binary\|ios::ate); if (!f) {X} auto n = f.tellg();` (readable + size probe) | `if (!tio::open_file(p, "rb")) {X} auto n = tio::file_size(p).value_or(0);` |
+| `seekg` / `read` / `tellg` random access on a binary file | `auto f = tio::open_file(p, "rb");` then `std::fseek(f.get(), off, SEEK_SET)`, `std::fread(buf, 1, n, f.get()) == n`, `std::ftell`. (`long` offsets: 2GB ceiling on 32-bit targets) |
+| `std::ostringstream os; os << "X=" << i << " Y=" << s; return os.str();` | `return fmt::format("X={} Y={}", i, s);` or build a `std::string` with `+=`; `os.str()` becomes the string itself |
+| `os << double_or_float` with no manipulators | `fmt::format("{:g}", v)`: iostreams print `%g` with precision 6, and plain `{}` prints the shortest round-trip form, which changes G-code text |
+| `os << std::fixed << std::setprecision(N) << v` | `fmt::format("{:.Nf}", v)` (N literal) |
+| `os << bool_value` | `fmt::format("{:d}", b)` (streams print 1/0, `{}` prints true/false) |
+| `os << int8_t/uint8_t/char` | streams print these as characters: `fmt::format("{}", static_cast<char>(c))`; a numeric intent needs `static_cast<int>` |
+| `os << std::endl` | `'\n'` |
 
 ### helix::Regex
 
