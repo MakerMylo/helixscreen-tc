@@ -16,7 +16,7 @@ An idle printer shows a clean image. A chip appearing is the signal that somethi
 
 | Question | Decision |
 |---|---|
-| Live values or state only? | Live values (`205/220°`, `80%`) |
+| Live values or state only? | Live values (`205 / 220°C`, `80%`), formatted by the shared helpers |
 | When does a chip show? | Only while active (table below). Never a permanent readout |
 | Leader lines or pinned chips? | Both, chosen by free space around the fitted image (mode rule below) |
 | 1×1 cell | Image only |
@@ -31,14 +31,14 @@ An idle printer shows a clean image. A chip appearing is the signal that somethi
 
 | Chip | Shows when | Text | Look |
 |---|---|---|---|
-| Nozzle | target > 0, or residual heat after turn-off | `205/220°` heating, `220°` at target | heating colour + pulse, at-temp colour: the temp tiles' rule |
+| Nozzle | target > 0, or residual heat after turn-off | `heater_display()` verbatim: `205 / 220°C` while a target is set | icon tinted and pulsed by `HeaterIconBinder`: the temp tiles' rule |
 | Bed | same | same | same, plus a warm glow over the bed while heating |
 | Chamber | effective target > 0 (printers with a chamber heater) | same | same, via the chamber-mode classifier |
 | Part fan | `fan_speed` > 0 | `80%` | spinning fan icon, speed-scaled |
 | Light | `led_state` on (gated on `printer_has_led`) | icon only | lit bulb |
 
 **Residual heat:** after a heater's target returns to 0, its chip stays, greyed, until the part
-cools below 50°C, as a still-hot warning. It reads the current temperature only (`64°`).
+cools below 50°C, as a still-hot warning. It reads the current temperature only (`64°C`).
 
 **Nozzle + fan merge:** in pinned mode the tagged nozzle and fan points sit ~8px apart at 2×2,
 so they render as one toolhead chip (`220° ✣80%`). In leader-line modes they stay separate.
