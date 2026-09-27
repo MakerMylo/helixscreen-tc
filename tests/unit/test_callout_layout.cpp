@@ -200,3 +200,102 @@ TEST_CASE("pinned: a merged toolhead chip wider than the area is clamped inside"
     REQUIRE(th);
     CHECK(inside(th->rect, in.area_w, in.area_h));
 }
+
+namespace {
+// K1C in a 4x2 widget at 800x480: 320x140 container, fitted image 186 wide.
+CalloutLayoutInput wide() {
+    auto in = base();
+    in.area_w = 320;
+    in.area_h = 140;
+    in.budget = {{CalloutKind::Nozzle, 70, NormPoint{0.51f, 0.28f}},
+                 {CalloutKind::Bed, 70, NormPoint{0.46f, 0.57f}},
+                 {CalloutKind::Fan, 45, NormPoint{0.49f, 0.21f}},
+                 {CalloutKind::Chamber, 70, NormPoint{0.31f, 0.38f}}};
+    in.active = in.budget;
+    return in;
+}
+} // namespace
+
+TEST_CASE("both sides when each band fits a column", "[printer_image][callout_layout]") {
+    auto in = wide();
+    in.area_w = 186 + 2 * (70 + in.gap + in.min_line); // exactly one column per side
+    const auto l = compute_callout_layout(in);
+    REQUIRE(l.mode == CalloutMode::BothSides);
+    CHECK(l.image.x == (in.area_w - l.image.w) / 2); // image stays centred
+    for (const auto& c : l.chips) {
+        CHECK(c.has_line);
+        const bool left = c.rect.x + c.rect.w <= l.image.x;
+        const bool right = c.rect.x >= l.image.x + l.image.w;
+        CHECK((left || right));
+    }
+    // Chamber's point is left of centre, so its chip is on the left.
+    for (const auto& c : l.chips)
+        if (c.kind == CalloutKind::Chamber)
+            CHECK(c.rect.x < l.image.x);
+}
+
+TEST_CASE("one pixel short of both sides falls to one side", "[printer_image][callout_layout]") {
+    auto in = wide();
+    in.area_w = 186 + 2 * (70 + in.gap + in.min_line) - 2;
+    const auto l = compute_callout_layout(in);
+    REQUIRE(l.mode == CalloutMode::OneSide);
+    CHECK(l.image.x == 0); // image moved left
+    for (const auto& c : l.chips) {
+        CHECK(c.has_line);
+        CHECK(c.rect.x >= l.image.w);
+    }
+}
+
+TEST_CASE("column that cannot stack its chips falls through to pinned",
+          "[printer_image][callout_layout]") {
+    auto in = wide();
+    for (auto& c : in.budget)
+        c.anchor->x = 0.3f; // every point left of centre: one side must hold all four
+    in.active = in.budget;
+    in.area_w = 400;
+    in.area_h = 4 * in.chip_h + 3 * in.gap + 2 * in.gap - 1; // one pixel short for four stacked
+    CHECK(compute_callout_layout(in).mode == CalloutMode::Pinned);
+    in.area_h += 1;
+    CHECK(compute_callout_layout(in).mode != CalloutMode::Pinned);
+}
+
+TEST_CASE("mode comes from the budget, so the image does not move when chips change",
+          "[printer_image][callout_layout]") {
+    auto in = wide();
+    in.area_w = 186 + 2 * (70 + in.gap + in.min_line) - 2;
+    const auto full = compute_callout_layout(in);
+    in.active = {{CalloutKind::Bed, 70, NormPoint{0.46f, 0.57f}}};
+    const auto one = compute_callout_layout(in);
+    CHECK(one.mode == full.mode);
+    CHECK(one.image.x == full.image.x);
+    in.active.clear();
+    CHECK(compute_callout_layout(in).image.x == full.image.x);
+}
+
+TEST_CASE("leader line runs from the tagged point to the chip's inner edge",
+          "[printer_image][callout_layout]") {
+    auto in = wide();
+    in.area_w = 186 + 2 * (70 + in.gap + in.min_line);
+    in.active = {{CalloutKind::Bed, 70, NormPoint{0.46f, 0.57f}}};
+    const auto l = compute_callout_layout(in);
+    REQUIRE(l.chips.size() == 1);
+    const auto& c = l.chips[0];
+    CHECK(c.line_x0 == l.image.x + int(0.46f * l.image.w));
+    CHECK(c.line_y0 == l.image.y + int(0.57f * l.image.h));
+    const bool at_inner_edge = c.line_x1 == c.rect.x || c.line_x1 == c.rect.x + c.rect.w;
+    CHECK(at_inner_edge);
+    CHECK(c.line_y1 == c.rect.y + c.rect.h / 2);
+}
+
+TEST_CASE("tall widget uses bands above and below", "[printer_image][callout_layout]") {
+    auto in = wide();
+    in.area_w = 240;
+    in.area_h = 480; // image 240x180 centred: 150px above and below
+    const auto l = compute_callout_layout(in);
+    REQUIRE((l.mode == CalloutMode::BothSides || l.mode == CalloutMode::OneSide));
+    for (const auto& c : l.chips) {
+        const bool above = c.rect.y + c.rect.h <= l.image.y;
+        const bool below = c.rect.y >= l.image.y + l.image.h;
+        CHECK((above || below));
+    }
+}

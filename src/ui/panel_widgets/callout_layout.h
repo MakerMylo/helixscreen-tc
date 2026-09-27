@@ -146,6 +146,111 @@ inline void place_docked(const CalloutLayoutInput& in, const CalloutRect& img,
     }
 }
 
+inline CalloutChipOut chip_at(const CalloutChipIn& c, int x, int y, int h, int ax, int ay) {
+    CalloutChipOut o{c.kind, {x, y, c.w, h}, true};
+    o.line_x0 = ax;
+    o.line_y0 = ay;
+    return o;
+}
+
+/// Stack `chips` (sorted by the point's position along the stacking axis) in a
+/// column at x = col_x (horizontal bands) or a row at y = row_y (vertical bands).
+/// Returns false if they do not fit the axis.
+inline bool stack(const CalloutLayoutInput& in, const CalloutRect& img, bool horizontal_band,
+                  bool left_or_top, int band_pos, std::vector<CalloutChipIn> chips,
+                  std::vector<CalloutChipOut>& out) {
+    if (chips.empty())
+        return true;
+    const auto key = [&](const CalloutChipIn& c) {
+        return horizontal_band ? c.anchor->y : c.anchor->x;
+    };
+    std::sort(chips.begin(), chips.end(), [&](auto& a, auto& b) { return key(a) < key(b); });
+    std::vector<int> start, size;
+    for (const auto& c : chips) {
+        const int a =
+            horizontal_band ? px(c.anchor->y, img.y, img.h) : px(c.anchor->x, img.x, img.w);
+        const int s = horizontal_band ? in.chip_h : c.w;
+        start.push_back(a - s / 2);
+        size.push_back(s);
+    }
+    const int extent = horizontal_band ? in.area_h : in.area_w;
+    int total = in.gap * int(chips.size() - 1);
+    for (int s : size)
+        total += s;
+    if (total > extent - 2 * in.gap)
+        return false;
+    spread_1d(start, size, in.gap, extent - in.gap, in.gap);
+    for (size_t i = 0; i < chips.size(); ++i) {
+        const auto& c = chips[i];
+        const int ax = px(c.anchor->x, img.x, img.w), ay = px(c.anchor->y, img.y, img.h);
+        if (horizontal_band) {
+            const int x = left_or_top ? band_pos : band_pos - c.w;
+            auto o = chip_at(c, x, start[i], in.chip_h, ax, ay);
+            o.line_x1 = left_or_top ? x + c.w : x;
+            o.line_y1 = start[i] + in.chip_h / 2;
+            out.push_back(o);
+        } else {
+            const int y = left_or_top ? band_pos : band_pos - in.chip_h;
+            auto o = chip_at(c, start[i], y, in.chip_h, ax, ay);
+            o.line_x1 = start[i] + c.w / 2;
+            o.line_y1 = left_or_top ? y + in.chip_h : y;
+            out.push_back(o);
+        }
+    }
+    return true;
+}
+
+/// Both sides, else one side. Fit is tested against the BUDGET and only the
+/// ACTIVE chips are placed, so the image never moves as chips come and go.
+/// A part with no tagged point cannot have a line: the pinned path docks it.
+inline bool try_line_modes(const CalloutLayoutInput& in, CalloutLayout& out) {
+    if (in.budget.empty())
+        return false;
+    for (const auto* v : {&in.budget, &in.active})
+        for (const auto& c : *v)
+            if (!c.anchor)
+                return false;
+
+    const CalloutRect centred = out.image;
+    const bool horiz = (in.area_w - centred.w) >= (in.area_h - centred.h);
+    int widest = 0;
+    for (const auto& c : in.budget)
+        widest = std::max(widest, c.w);
+    const int col = (horiz ? widest : in.chip_h) + in.gap + in.min_line;
+    const int far_edge = (horiz ? in.area_w : in.area_h) - in.gap;
+    const auto split = [&](const std::vector<CalloutChipIn>& v, bool near_half) {
+        std::vector<CalloutChipIn> r;
+        for (const auto& c : v)
+            if (((horiz ? c.anchor->x : c.anchor->y) < 0.5f) == near_half)
+                r.push_back(c);
+        return r;
+    };
+
+    std::vector<CalloutChipOut> scratch;
+    const int band = horiz ? centred.x : centred.y;
+    if (band >= col && stack(in, centred, horiz, true, in.gap, split(in.budget, true), scratch) &&
+        stack(in, centred, horiz, false, far_edge, split(in.budget, false), scratch)) {
+        out.chips.clear();
+        stack(in, centred, horiz, true, in.gap, split(in.active, true), out.chips);
+        stack(in, centred, horiz, false, far_edge, split(in.active, false), out.chips);
+        out.mode = CalloutMode::BothSides;
+        return true;
+    }
+
+    const int free_extent = horiz ? in.area_w - centred.w : in.area_h - centred.h;
+    CalloutRect moved = centred;
+    (horiz ? moved.x : moved.y) = 0;
+    scratch.clear();
+    if (free_extent >= col && stack(in, moved, horiz, false, far_edge, in.budget, scratch)) {
+        out.image = moved;
+        out.chips.clear();
+        stack(in, moved, horiz, false, far_edge, in.active, out.chips);
+        out.mode = CalloutMode::OneSide;
+        return true;
+    }
+    return false;
+}
+
 } // namespace callout_detail
 
 [[nodiscard]] inline CalloutLayout compute_callout_layout(const CalloutLayoutInput& in) {
@@ -159,7 +264,8 @@ inline void place_docked(const CalloutLayoutInput& in, const CalloutRect& img,
 
     std::vector<CalloutChipIn> chips = in.active;
     if (in.tagged) {
-        // Phase 2 inserts the leader-line modes here, ahead of pinned.
+        if (try_line_modes(in, out))
+            return out;
         const auto has = [&](CalloutKind k) {
             return std::any_of(chips.begin(), chips.end(),
                                [k](const CalloutChipIn& c) { return c.kind == k; });
