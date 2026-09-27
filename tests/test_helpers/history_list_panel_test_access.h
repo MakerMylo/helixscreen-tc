@@ -43,6 +43,10 @@ struct HistoryListPanelTestAccess {
     static void handle_view_timelapse(HistoryListPanel& p) {
         p.handle_view_timelapse();
     }
+
+    static void update_detail_subjects(HistoryListPanel& p, const PrintHistoryJob& job) {
+        p.update_detail_subjects(job);
+    }
 };
 
 } // namespace helix::ui
