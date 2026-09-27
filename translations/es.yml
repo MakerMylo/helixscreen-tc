@@ -870,6 +870,7 @@ translations:
   Deploy: Desplegar
   Describe the issue (optional): Describa el problema (opcional)
   Detailed: Detallado
+  Detect automatically: 'Detectar automáticamente'
   'Detect filament tangles': 'Detectar enredos de filamento'
   Detecting plate...: Detectando placa...
   Detecting printer type...: Detectando tipo de impresora...
@@ -1733,6 +1734,7 @@ translations:
   Load: Cargar
   Load Cell: 'Celda de carga'
   Load Cells: 'Celdas de carga'
+  Load Extruder: 'Cargar extrusor'
   Load Failed: 'Fallo al cargar'
   Load Filament: Cargar Filamento
   Load a filament first before trying to unload: Cargue primero filamento antes de intentar descargar
@@ -2301,6 +2303,7 @@ translations:
   'Preheat: all {} tools + bed set': 'Precalentar: todas las {} herramientas + cama
     configurada'
   'Preheat: {} + bed set': 'Precalentar: {} + cama configurada'
+  Preload: 'Precargar'
   Preload failed: Error al precargar
   Prepared: Preparado
   Preparing: Preparando
@@ -2542,6 +2545,7 @@ translations:
   Recording Mode: Modo de Grabación
   Recover: Recuperar
   Recover MMU state?: ¿Recuperar el estado del MMU?
+  Recover State: 'Recuperar estado'
   Recovering AFC system...: Recuperando sistema AFC...
   Recovery failed: Error en recuperación
   'Recovery failed: ': 'Recuperación fallida: '
@@ -2557,6 +2561,7 @@ translations:
   Refresh Interval: Intervalo de Actualización
   Refresh RFID: 'Actualizar RFID'
   Relative vibration: Vibración relativa
+  Refresh Spoolman: 'Actualizar Spoolman'
   Reheating...: Recalentando...
   Release all stepper motors. Position will be lost.: Liberar todos los motores paso
     a paso. Se perderá la posición.
@@ -2902,6 +2907,7 @@ translations:
   : Ajuste a mano el tipo y el color del filamento para esta ranura. Si la etiqueta debería poder leerse, vuelva a colocar la bobina con la etiqueta hacia el lector cuando la caja esté inactiva
   Set up: Configurar
   Set up your label printer in Settings: Configure su impresora de etiquetas en Ajustes
+  Set what is really selected and loaded. Nothing moves.: 'Indica qué está realmente seleccionado y cargado. Nada se mueve.'
   Settings: Ajustes
   Settings Snapshot: Instantánea de ajustes
   Settings reset to defaults. Restarting...: Ajustes restablecidos a valores predeterminados.
@@ -3500,6 +3506,7 @@ translations:
   Unknown error: Error desconocido
   Unload: Descargar
   Unload Distance: 'Distancia de descarga'
+  Unload Extruder: 'Descargar extrusor'
   Unload Failed: 'Fallo al descargar'
   Unload Filament: Descargar Filamento
   'Unload at end': 'Descargar al terminar'
@@ -3511,6 +3518,7 @@ translations:
   Unload macro not configured: Macro de descarga no configurado
   Unload the CFS filament before enabling bypass: 'Descargue el filamento del CFS antes de activar el bypass'
   Unload...: Descargar...
+  Unloaded: 'Descargado'
   Unloading: Descargando
   Unloading Start Speed: 'Velocidad inicial de descarga'
   Unloading before bypass...: Descargando antes del bypass...

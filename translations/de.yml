@@ -874,6 +874,7 @@ translations:
   Deploy: Ausfahren
   Describe the issue (optional): Problem beschreiben (optional)
   Detailed: Detailliert
+  Detect automatically: 'Automatisch erkennen'
   'Detect filament tangles': 'Filamentverwicklungen erkennen'
   Detecting plate...: Platte erkennen...
   Detecting printer type...: Druckertyp wird erkannt...
@@ -1744,6 +1745,7 @@ translations:
   Load: Laden
   Load Cell: 'Wägezelle'
   Load Cells: 'Wägezellen'
+  Load Extruder: 'Extruder laden'
   Load Failed: 'Laden fehlgeschlagen'
   Load Filament: Filament laden
   Load a filament first before trying to unload: Laden Sie zuerst Filament, bevor Sie entladen
@@ -2309,6 +2311,7 @@ translations:
   Preheat cancelled: Vorheizen abgebrochen
   'Preheat: all {} tools + bed set': 'Vorheizen: alle {} Werkzeuge + Bett gesetzt'
   'Preheat: {} + bed set': 'Vorheizen: {} + Bett gesetzt'
+  Preload: 'Vorladen'
   Preload failed: Vorladen fehlgeschlagen
   Prepared: Vorbereitet
   Preparing: Vorbereitung
@@ -2550,6 +2553,7 @@ translations:
   Recording Mode: Aufnahmemodus
   Recover: Wiederherstellen
   Recover MMU state?: MMU-Status wiederherstellen?
+  Recover State: 'Status wiederherstellen'
   Recovering AFC system...: AFC-Wiederherstellung...
   Recovery failed: Wiederherstellung fehlgeschlagen
   'Recovery failed: ': 'Wiederherstellung fehlgeschlagen: '
@@ -2565,6 +2569,7 @@ translations:
   Refresh Interval: Aktualisierungsintervall
   Refresh RFID: 'RFID aktualisieren'
   Relative vibration: Relative Vibration
+  Refresh Spoolman: 'Spoolman aktualisieren'
   Reheating...: Erneut aufheizen...
   Release all stepper motors. Position will be lost.: Alle Schrittmotoren freigeben.
     Position geht verloren.
@@ -2910,6 +2915,7 @@ translations:
   : Filamenttyp und Farbe für diesen Slot von Hand einstellen. Sollte der Tag lesbar sein, die Spule bei stillstehender Box mit dem Etikett zum Leser neu einlegen
   Set up: Einrichten
   Set up your label printer in Settings: Etikettendrucker in Einstellungen einrichten
+  Set what is really selected and loaded. Nothing moves.: 'Festlegen, was wirklich ausgewählt und geladen ist. Nichts bewegt sich.'
   Settings: Einstellungen
   Settings Snapshot: Einstellungen-Momentaufnahme
   Settings reset to defaults. Restarting...: Einstellungen auf Standardwerte zurückgesetzt.
@@ -3507,6 +3513,7 @@ translations:
   Unknown error: Unbekannter Fehler
   Unload: Entladen
   Unload Distance: 'Entladeweg'
+  Unload Extruder: 'Extruder entladen'
   Unload Failed: 'Entladen fehlgeschlagen'
   Unload Filament: Filament entladen
   'Unload at end': 'Am Ende entladen'
@@ -3518,6 +3525,7 @@ translations:
   Unload macro not configured: Entlade-Makro nicht konfiguriert
   Unload the CFS filament before enabling bypass: 'Entladen Sie das CFS-Filament, bevor Sie den Bypass aktivieren'
   Unload...: Entladen...
+  Unloaded: 'Entladen'
   Unloading: Entladen
   Unloading Start Speed: 'Startgeschwindigkeit beim Entladen'
   Unloading before bypass...: Entladen vor Bypass...

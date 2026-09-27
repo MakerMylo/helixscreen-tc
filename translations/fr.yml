@@ -875,6 +875,7 @@ translations:
   Deploy: Déployer
   Describe the issue (optional): Décrivez le problème (optionnel)
   Detailed: Détaillé
+  Detect automatically: 'Détecter automatiquement'
   'Detect filament tangles': 'Détecter les nœuds de filament'
   Detecting plate...: Détection du plateau...
   Detecting printer type...: Détection du type d'imprimante...
@@ -1748,6 +1749,7 @@ translations:
   Load: Charger
   Load Cell: 'Cellule de charge'
   Load Cells: 'Cellules de charge'
+  Load Extruder: 'Charger l''extrudeur'
   Load Failed: 'Échec du chargement'
   Load Filament: Charger le filament
   Load a filament first before trying to unload: Chargez d'abord du filament avant d'essayer de le décharger
@@ -2317,6 +2319,7 @@ translations:
   'Preheat: all {} tools + bed set': 'Préchauffage : tous les {} outils + plateau
     réglé'
   'Preheat: {} + bed set': 'Préchauffage : {} + plateau réglé'
+  Preload: 'Précharger'
   Preload failed: Échec du préchargement
   Prepared: Préparé
   Preparing: Préparation
@@ -2560,6 +2563,7 @@ translations:
   Recording Mode: Mode d'enregistrement
   Recover: Récupérer
   Recover MMU state?: Récupérer l'état du MMU ?
+  Recover State: 'Récupérer l''état'
   Recovering AFC system...: Récupération du système AFC...
   Recovery failed: Échec de la récupération
   'Recovery failed: ': 'Échec de la récupération : '
@@ -2576,6 +2580,7 @@ translations:
   Refresh Interval: Intervalle de rafraîchissement
   Refresh RFID: 'Actualiser le RFID'
   Relative vibration: Vibration relative
+  Refresh Spoolman: 'Actualiser Spoolman'
   Reheating...: Réchauffe...
   Release all stepper motors. Position will be lost.: Relâcher tous les moteurs pas
     à pas. La position sera perdue.
@@ -2922,6 +2927,7 @@ translations:
   Set up: Configurer
   Set up your label printer in Settings: Configurez votre imprimante d'étiquettes
     dans les Paramètres
+  Set what is really selected and loaded. Nothing moves.: 'Indiquez ce qui est réellement sélectionné et chargé. Rien ne bouge.'
   Settings: Paramètres
   Settings Snapshot: Instantané des paramètres
   Settings reset to defaults. Restarting...: Paramètres réinitialisés par défaut.
@@ -3530,6 +3536,7 @@ translations:
   Unknown error: Erreur inconnue
   Unload: Décharger
   Unload Distance: 'Distance de déchargement'
+  Unload Extruder: 'Décharger l''extrudeur'
   Unload Failed: 'Échec du déchargement'
   Unload Filament: Décharger le filament
   'Unload at end': 'Décharger à la fin'
@@ -3541,6 +3548,7 @@ translations:
   Unload macro not configured: Macro de déchargement non configurée
   Unload the CFS filament before enabling bypass: 'Déchargez le filament du CFS avant d''activer le bypass'
   Unload...: Décharger...
+  Unloaded: 'Déchargé'
   Unloading: Déchargement
   Unloading Start Speed: 'Vitesse initiale de déchargement'
   Unloading before bypass...: Déchargement avant bypass...
