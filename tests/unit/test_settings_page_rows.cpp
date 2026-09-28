@@ -14,6 +14,8 @@
 #include "ui_nav_manager.h"
 #include "ui_panel_settings.h"
 #include "ui_settings_appearance.h"
+#include "ui_settings_hardware.h"
+#include "ui_settings_safety.h"
 #include "ui_settings_sound.h"
 #include "ui_update_queue.h"
 
@@ -184,6 +186,12 @@ TEST_CASE_METHOD(PageRowsFixture, "Appearance fills the printer-visual dropdowns
     CHECK(lv_dropdown_get_option_count(dd) > 1); // XML ships a lone "Auto" placeholder
     NavigationManager::instance().go_back();
     process_lvgl(5);
+}
+
+TEST_CASE("settings pages: renamed page titles", "[settings][settings_pages]") {
+    CHECK(std::string(helix::settings::get_hardware_settings_overlay().get_name()) == "Devices");
+    CHECK(std::string(helix::settings::get_safety_settings_overlay().get_name()) ==
+          "Safety & Alerts");
 }
 
 TEST_CASE_METHOD(PageRowsFixture, "settings pages: touch calibration row shows calibration status",

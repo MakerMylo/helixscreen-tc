@@ -1,12 +1,11 @@
 <?xml version="1.0"?>
 <!-- Copyright (C) 2025-2026 356C LLC -->
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
-<!-- Safety & Notifications Settings Overlay Panel -->
+<!-- Safety & Alerts Settings Overlay Panel -->
 <!-- E-Stop confirmation, cancel escalation, escalation timeout, print completion alert -->
 <component>
   <view name="settings_safety_overlay"
-        extends="overlay_panel" title="Safety &amp; Notifications" title_tag="Safety &amp; Notifications"
-        bg_color="#screen_bg">
+        extends="overlay_panel" title="Safety &amp; Alerts" title_tag="Safety &amp; Alerts" bg_color="#screen_bg">
     <!-- Content Area - no padding, rows handle their own -->
     <lv_obj name="overlay_content"
             width="100%" flex_grow="1" style_pad_top="0" style_pad_left="0" style_pad_right="0"

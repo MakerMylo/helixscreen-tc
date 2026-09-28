@@ -30,7 +30,7 @@ class HardwareSettingsOverlay : public OverlayBase {
     void register_callbacks() override;
 
     const char* get_name() const override {
-        return "Hardware & Devices";
+        return "Devices";
     }
 
     void on_activate() override;

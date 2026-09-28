@@ -3,7 +3,7 @@
 
 /**
  * @file ui_settings_safety.h
- * @brief Safety & Notifications overlay - e-stop, cancel escalation, completion alerts
+ * @brief Safety & Alerts overlay - e-stop, cancel escalation, completion alerts
  *
  * This overlay allows users to configure:
  * - E-Stop confirmation toggle
@@ -48,7 +48,7 @@ class SafetySettingsOverlay : public OverlayBase {
     void register_callbacks() override;
 
     const char* get_name() const override {
-        return "Safety & Notifications";
+        return "Safety & Alerts";
     }
 
     void on_activate() override;
