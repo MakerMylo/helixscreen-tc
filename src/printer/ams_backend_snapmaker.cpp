@@ -234,8 +234,8 @@ namespace {
 /// read as the direction. The step model and the published action both read
 /// this, so the two cannot disagree.
 std::optional<AmsAction> u1_step_action(bool unload, int phase) {
-    static constexpr std::array kLoad{AmsAction::LOADING, AmsAction::LOADING, AmsAction::HEATING,
-                                      AmsAction::LOADING, AmsAction::PURGING};
+    static constexpr std::array kLoad{AmsAction::LOADING, AmsAction::LOADING, AmsAction::LOADING,
+                                      AmsAction::HEATING, AmsAction::LOADING, AmsAction::PURGING};
     static constexpr std::array kUnload{AmsAction::UNLOADING, AmsAction::UNLOADING,
                                         AmsAction::HEATING, AmsAction::UNLOADING};
     const int count = static_cast<int>(unload ? kUnload.size() : kLoad.size());
@@ -286,26 +286,31 @@ AmsBackendSnapmaker::get_operation_step_model(StepOperationType op) const {
     // Snapmaker owns the whole index space (classify_channel_state maps load/manual/
     // preload states into the LOAD indices and unload states into the UNLOAD ones).
     //
-    //   LOAD  (5 steps): Home 0 -> Select 1 -> Heat 2 (live) -> Feed 3 -> Purge 4
-    //     load_prepare/homing -> Home; load_picking -> Select; load_heating -> Heat;
-    //     load_feeding/extruding -> Feed; load_flushing -> Purge.
-    //     (preload and the manual_sta_* family reuse this load-direction model.)
+    //   LOAD  (6 steps): Home 0 -> Select 1 -> Feed 2 -> Heat 3 (live) -> Extrude 4 -> Purge 5
+    //     load_prepare/homing -> Home; load_picking -> Select; load_feeding -> Feed
+    //     (the module pushes filament to the cold toolhead); load_heating -> Heat;
+    //     load_extruding -> Extrude (into the hot nozzle); load_flushing -> Purge.
+    //     This is filament_feed.py's own order. A load whose head is already
+    //     picked skips Select. Preload (prepare, feeding) and the manual_sta_*
+    //     family (no feeding) reuse this model and skip the steps they lack.
     //   UNLOAD (4 steps): Home 0 -> Select 1 -> Heat 2 (live) -> Retract 3
     //     unload_prepare/homing -> Home; unload_picking -> Select;
     //     unload_heating/heat_finish -> Heat; unload_doing -> Retract.
     //
-    // The Heat step (phase 2) shows a live nozzle temperature. All labels are
+    // The Heat step shows a live nozzle temperature. All labels are
     // wrapped in lv_tr() so they are translated and picked up by the string tooling.
     const bool unload = (op == StepOperationType::UNLOAD);
     OperationStepModel model;
     model.steps.push_back({lv_tr("Home"), 0});
     model.steps.push_back({lv_tr("Select"), 1});
-    model.steps.push_back({lv_tr("Heat nozzle"), 2, false, /*live_temp=*/true});
     if (unload) {
+        model.steps.push_back({lv_tr("Heat nozzle"), 2, false, /*live_temp=*/true});
         model.steps.push_back({lv_tr("Retract"), 3});
     } else {
-        model.steps.push_back({lv_tr("Feed filament"), 3});
-        model.steps.push_back({lv_tr("Purge"), 4});
+        model.steps.push_back({lv_tr("Feed filament"), 2});
+        model.steps.push_back({lv_tr("Heat nozzle"), 3, false, /*live_temp=*/true});
+        model.steps.push_back({lv_tr("Extrude"), 4});
+        model.steps.push_back({lv_tr("Purge"), 5});
     }
     for (int i = 0; i < static_cast<int>(model.steps.size()); ++i) {
         model.steps[static_cast<size_t>(i)].coarse = u1_step_action(unload, i);
