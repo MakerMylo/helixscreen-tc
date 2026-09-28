@@ -3169,8 +3169,8 @@
   <translation tag="Verifying timelapse plugin..." ja="タイムラプスプラグインを確認中..."/>
   <translation tag="Verifying..." ja="検証中..."/>
   <translation tag="Version" ja="バージョン"/>
+  <translation tag="Version and printer info" ja="バージョンとプリンター情報"/>
   <translation tag="Version {}" ja="バージョン {}"/>
-  <translation tag="Version, updates, and printer info" ja="バージョン、アップデート、プリンター情報"/>
   <translation tag="Vertical" ja="垂直"/>
   <translation tag="Vibration" ja="振動"/>
   <translation tag="Vibration compensation active" ja="振動補正が有効です"/>
