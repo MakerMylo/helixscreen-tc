@@ -18,7 +18,8 @@ setup() {
 
 @test "the block carries the rules whose breach costs other sessions" {
     run bash -c 'echo "{}" | scripts/subagent-brief.sh | jq -r .hookSpecificOutput.additionalContext'
-    contains "helix-claim take build:" "$output"
+    contains "helix-claim check build:" "$output"
+    contains "Never release a claim you did not take" "$output"
     contains '-j$(scripts/helix-claim jobs)' "$output"
     contains "zeus-run.sh" "$output"
     contains "foreground" "$output"

@@ -97,13 +97,11 @@ context() {
     contains "push the branch" "$(context)"
 }
 
-@test "a full gate names no zeus mode that zeus-run lacks" {
+@test "a full gate is silent while zeus-run has no sweep mode" {
     printf '#!/usr/bin/env bash\ncase "$1" in\n    test)\n        ;;\nesac\n' > "$TEST_DIR/zeus-run.sh"
     export HELIX_ADVISOR_ZEUS_RUN="$TEST_DIR/zeus-run.sh"
     advise "make unit-sweep"
-    contains "helix-claim jobs -v" "$(context)"
-    lacks "zeus-run.sh sweep" "$(context)"
-    lacks "zeus-run.sh full" "$(context)"
+    [ -z "$output" ]
 }
 
 @test "a mutation run is sent to zeus" {
@@ -194,4 +192,97 @@ context() {
     advise "./build/bin/helix-tests '[ams]'"
     [ -z "$output" ]
     [ ! -e "$JOBS_CALLED" ]
+}
+
+# ---------------------------------------------------------------------------
+# Mentions are not invocations
+# ---------------------------------------------------------------------------
+
+@test "a commit message naming heavy commands is silent" {
+    tight_memory
+    advise 'git commit -m x -m "mutation: make mutate-diff reverted it; make full-test-run green; gdb on helix-tests"'
+    [ -z "$output" ]
+}
+
+@test "a grep for a heavy command is silent" {
+    tight_memory
+    advise "grep -rn addr2line scripts/helix-claim && grep -n 'make full-test-run' CLAUDE.md"
+    [ -z "$output" ]
+}
+
+@test "a loop that only greps bats files is silent" {
+    tight_memory
+    advise 'for f in tests/shell/*.bats; do grep -c @test $f; done'
+    [ -z "$output" ]
+}
+
+@test "a heavy command after a harmless one in the same line is caught" {
+    advise "cd build && make -j mutate-diff"
+    contains "zeus-run.sh mutate" "$(context)"
+}
+
+# ---------------------------------------------------------------------------
+# Spellings of the real offenders
+# ---------------------------------------------------------------------------
+
+@test "a symbolizer by full path or eu- prefix is sent to zeus" {
+    advise "/usr/bin/addr2line -e build/bin/helix-tests 0x1"
+    contains "zeus" "$(context)"
+    advise "eu-addr2line -e build/bin/helix-tests 0x1"
+    contains "zeus" "$(context)"
+}
+
+@test "the native ASAN forms are sent to zeus" {
+    advise "make SANITIZE=address test"
+    contains "zeus-run.sh asan" "$(context)"
+    advise "make test-asan"
+    contains "zeus-run.sh asan" "$(context)"
+}
+
+@test "an ASAN build for another board is not an ASAN run here" {
+    tight_memory
+    advise "make deploy-pi-asan"
+    [ -z "$output" ]
+}
+
+@test "every spelling of an oversized -j is flagged" {
+    tight_share
+    for c in 'make -j$(nproc)' 'make -j 32 test' 'make --jobs=32' 'make --jobs 32'; do
+        advise "$c"
+        contains "fair share, -j6" "$(context)" || fail "missed: $c"
+    done
+}
+
+@test "a computed or bare -j is left to its source" {
+    tight_share
+    for c in 'make -j"$(scripts/helix-claim jobs)"' 'make -j$(scripts/helix-claim jobs) test' 'make -j'; do
+        advise "$c"
+        [ -z "$output" ] || fail "flagged: $c"
+    done
+}
+
+@test "an explicit -j above the share is flagged even on a roomy box" {
+    advise "make -j24 test"
+    contains "fair share, -j16" "$(context)"
+}
+
+@test "xargs over the test binary is a loop" {
+    tight_share
+    advise "seq 200 | xargs -I{} ./build/bin/helix-tests '[x]'"
+    contains "loop" "$(context)"
+}
+
+@test "a docker toolchain target is a container build" {
+    tight_share
+    advise "make docker-toolchain-k1"
+    contains "zeus" "$(context)"
+}
+
+@test "a huge command returns quickly" {
+    local big
+    big=$(printf 'make x %.0s' $(seq 1 15000))   # ~105KB, under the 128KB single-argument limit
+    local start=$SECONDS
+    advise "$big"
+    [ "$status" -eq 0 ]
+    [ $((SECONDS - start)) -lt 5 ] || fail "took $((SECONDS - start))s"
 }
