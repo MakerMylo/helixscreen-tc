@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "serial_snapshot.h"
 
+#include "app_boot.h"
 #include "driver/uart.h"
 #include "esp_heap_caps.h"
 #include "esp_log.h"
@@ -17,6 +18,7 @@
 
 static const char* TAG = "serial_snapshot";
 static atomic_bool s_requested;
+static atomic_bool s_notes_requested;
 
 // Reads the console UART through its driver: without one, nothing delivers
 // received bytes. Log output keeps writing the same UART as before.
@@ -36,6 +38,8 @@ static void reader_task(void* arg) {
             int y = 0;
             if (strcmp(line, "snap") == 0) {
                 atomic_store(&s_requested, true);
+            } else if (strcmp(line, "notes") == 0) {
+                atomic_store(&s_notes_requested, true);
             } else if (sscanf(line, "tap %d %d", &x, &y) == 2) {
                 touch_input_inject_tap(x, y);
             }
@@ -97,6 +101,9 @@ static mz_bool put_buf(const void* buf, int len, void* user) {
 }
 
 void serial_snapshot_poll(void) {
+    if (atomic_exchange(&s_notes_requested, false)) {
+        app_boot_print_notifications();
+    }
     if (!atomic_exchange(&s_requested, false)) {
         return;
     }

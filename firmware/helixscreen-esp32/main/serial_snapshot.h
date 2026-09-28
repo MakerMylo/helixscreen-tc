@@ -3,8 +3,8 @@
 
 // Serial console commands. "snap": the active screen comes back as raw-deflated
 // RGB565, base64 on "SNAP:" lines between HELIX-SNAP markers. "tap X Y": a touch
-// at panel coordinates. scripts/esp32_serial_snapshot.py drives both and writes
-// a PNG.
+// at panel coordinates. "notes": every notification since boot as "NOTE:" lines.
+// scripts/esp32_serial_snapshot.py drives snap and tap and writes a PNG.
 
 #ifdef __cplusplus
 extern "C" {

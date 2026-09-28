@@ -43,6 +43,7 @@
 #include "ui_icon.h"
 #include "ui_keyboard_manager.h"
 #include "ui_nav_manager.h"
+#include "ui_notification_history.h"
 #include "ui_notification_manager.h"
 #include "ui_panel_home.h"
 #include "ui_severity_card.h"
@@ -84,6 +85,7 @@
 #include "setting_group.h"
 #include "src/xml/lv_xml.h"
 #include "subject_initializer.h"
+#include "system/afc_message_dedup.h"
 #include "temperature_sensor_manager.h"
 #include "text_io.h"
 #include "theme_manager.h"
@@ -694,6 +696,19 @@ extern "C" void app_boot_set_touch_available(bool available) {
     s_touch_available = available;
 }
 
+extern "C" void app_boot_print_notifications(void) {
+    static const char* const kSeverity[] = {"INFO", "SUCCESS", "WARNING", "ERROR"};
+    const auto entries = NotificationHistory::instance().get_all();
+    printf("\n=====HELIX-NOTES %u\n", static_cast<unsigned>(entries.size()));
+    for (const auto& e : entries) {
+        const auto sev = static_cast<unsigned>(e.severity);
+        printf("NOTE: %s t=%llums %s%s%s\n", sev < 4 ? kSeverity[sev] : "?",
+               static_cast<unsigned long long>(e.timestamp_ms), e.title, e.title[0] ? ": " : "",
+               e.message);
+    }
+    printf("=====HELIX-NOTES-END\n");
+}
+
 extern "C" void app_boot_ui(void) {
     log_heap_milestone("boot-ui-start");
 
@@ -713,6 +728,9 @@ extern "C" void app_boot_ui(void) {
     helix::Config* config = helix::Config::get_instance();
     config->set_storage(helix::make_file_config_storage("/config/settings.json"));
     config->init("/config/settings.json");
+    // Remembers which AFC message each printer has already shown, so one AFC
+    // latched hours ago toasts once rather than at every boot.
+    helix::AfcMessageDedup::instance().init("/config");
 
     // Task 12 R2: first-boot-only Moonraker host/port seed. If settings.json
     // already has a value (any boot after the user has edited Host in Settings,
