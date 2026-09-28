@@ -225,6 +225,20 @@ what gets saved.
   while its confirmation dialog is open, confirming only tells you the motors stay on and
   does nothing. E-stop remains the way to halt motion during a print.
 
+- **Happy Hare: tell the MMU what is really loaded** - Recover in the AMS Management overlay
+  opens Recover State: pick the gate that is really selected (or Bypass) and whether filament is
+  loaded, or let Happy Hare detect it. Nothing moves; Happy Hare only corrects its tracking, and
+  no tool is remapped. The slot menu gains **Preload** (spool to gate, greyed out during a print
+  or while filament is loaded), the Maintenance section gains **Load Extruder** and **Unload
+  Extruder** for filament already at the toolhead (refused during a print), and Accessories
+  gains **Refresh Spoolman**.
+- **Pinch to zoom the 3D views** - on a capacitive screen, pinching zooms the 3D G-code preview
+  and the 3D bed mesh in on the spot between your fingers, and a two-finger drag moves the zoomed
+  view. Rotate, tap and the exclude-object long-press stay off until every finger has lifted.
+  Resistive screens detect one finger and keep one-finger rotate only.
+- **The OpenAMS filament pressure sensor is on the filament path** - OpenAMS running without AFC
+  shows each unit's FPS as a box labelled FPS; tap it for the current pressure, 0% to 100%.
+
 ### Changed
 
 - **The Controls panel fits small screens** - the Calibration & Tools card holds only
@@ -421,6 +435,42 @@ what gets saved.
   print was still preparing or running. A queued job now opens in the file view with its
   saved options and goes through the same start pipeline as any other print; it leaves the
   queue only once the print has actually started, and a busy printer says so.
+
+- **A Happy Hare fault often showed no recovery popup (#1323)** - a fault during a print, or a
+  load or home that failed outside one, now always opens the popup with Happy Hare's own reason,
+  and Happy Hare's own error notice closes behind it. Outside a print it offers no Resume and
+  leads with Recover, which now lets Happy Hare detect the filament position instead of sending a
+  state it did not recognise. The slot error marks follow Happy Hare's real pause, so resuming or
+  cancelling clears them.
+- **Turning Happy Hare's MMU motors on homed the MMU** - the Motors toggle now only powers the
+  motors.
+- **Snapmaker U1: Unload could be unavailable, or the filament system stuck on Unloading** - a
+  head fed to the nozzle by purging can now be unloaded, picking a tool no longer reads as
+  loaded, an unload or preload that settles straight into its resting state ends properly, and
+  a leftover unload state after a restart no longer opens a runout grace window or ends a load
+  running on another lane.
+- **Stock CFS: re-inserting the same tagged spool asked "Same spool?" (#1710)** - a spool whose
+  tag reads back the same values is now recognised as the same spool, and a spool inserted
+  while the box is busy is judged only after its tag has been read. On AFC, a lane record from
+  an older plugin build no longer replaces a spool edit you made.
+- **A second filament system's slots showed the first system's materials** - on a printer with
+  two filament systems, each slot now shows its own system's material and tool badge.
+- **The heat-first warning judged the wrong slot** - Load and Unload now check the material of
+  the slot you selected, and Purge, Extrude and Retract the loaded slot's, instead of the active
+  slot's. On systems that load several heads at once, the sidebar buttons read **Load...** and
+  **Unload...** because they open a picker.
+- **The MMU's selector, buffer and bypass boxes ignored taps right after the screen opened** -
+  a tap on the filament path now lands on the box you see as soon as the panel has slid in.
+- **Fan and light controls could show frozen dials** - after the fan or light controls had been
+  opened from two different places (the home widget and the Controls panel, say), going back to
+  the first could bring up a stale copy whose dials no longer moved. Every entry point now opens
+  the same live screen.
+- **A large G-code preview could freeze a Raspberry Pi 3 or older** - the 3D preview now caps
+  its detail by what the GPU can draw, and on a Pi 0 to 3 a file too big for that shows as 2D
+  instead of stalling the graphics.
+- **The number keypad was cramped on 480x320 and 480x272 screens** - it is wider there, its keys
+  fill the height, heater keypads are titled with the short heater name, and header titles
+  shorten with dots instead of wrapping.
 
 ### Internal
 
