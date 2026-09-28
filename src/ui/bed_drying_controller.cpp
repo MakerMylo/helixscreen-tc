@@ -11,6 +11,7 @@
 #include "filament_sensor_manager.h"
 #include "i_moonraker_api.h"
 #include "lvgl/src/others/translation/lv_translation.h"
+#include "motion_presets.h"
 #include "panel_widget_manager.h"
 #include "printer_state.h"
 #include "settings_manager.h"
@@ -147,9 +148,13 @@ void BedDryingController::prepare(const Material& material, bool with_appliance,
     pending_material_ = material;
     pending_appliance_ = with_appliance;
 
-    const AxisBounds b = state_.get_axis_bounds();
-    const double x = b.has_x ? (b.x_min + b.x_max) / 2.0 : 0.0;
-    const double y = b.has_y ? b.y_max - kClearanceMarginMm : 0.0;
+    // G1 takes G-code coordinates, and the park stays over the plate: travel
+    // past it can hold tool docks or a purge bucket.
+    const AxisBounds b = state_.get_gcode_axis_bounds();
+    const AxisBounds area =
+        preset_area(state_.get_axis_bounds(), b, api_->hardware().build_volume());
+    const double x = (area.x_min + area.x_max) / 2.0;
+    const double y = area.y_max - kParkMarginMm;
     std::string move = fmt::format("G90\nG1 Z{:.1f} F600", clearance_z(b.z_max));
     if (b.has_x && b.has_y) {
         move += fmt::format("\nG1 X{:.1f} Y{:.1f} F6000", x, y);

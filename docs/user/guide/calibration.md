@@ -16,6 +16,7 @@ The Bed Mesh panel has two parts: a 3D visualization of your bed surface on the 
 
 - **Color gradient**: Blue (low) to Red (high)
 - **Touch to rotate** the 3D view
+- **Pinch** to zoom in on the spot, **two-finger drag** to move a zoomed view around; pinching all the way out returns to the full view
 - When no mesh is loaded, the panel shows a "No mesh loaded" placeholder
 
 **Current Mesh card (right):** shows the active profile name, mesh size (probe-point grid), highest and lowest points, and the overall Z range (variance).
@@ -282,9 +283,9 @@ The **target frequency** is a property of the *free span*, not of the printer: a
 
 ## Pressure Advance
 
-Some printers can measure pressure advance themselves instead of printing a tuning tower you judge by eye. On those, a **Pressure Adv.** button appears on the Controls panel. Today that is the **Snapmaker U1** and the **FlashForge Creator 5 Pro**; on other printers the button stays hidden.
+Some printers can measure pressure advance themselves instead of printing a tuning tower you judge by eye. On those, a **Pressure Adv.** button appears in the Controls panel's **Calibration & Tools** card, and a **Pressure Advance** row under **Advanced > Calibration**. Today that is the **Snapmaker U1** and the **FlashForge Creator 5 Pro**; on other printers both stay hidden.
 
-1. Tap **Pressure Adv.** and pick the tool to measure. Picking a tool mounts it.
+1. Tap either entry and pick the tool to measure. Picking a tool mounts it.
 2. Set the nozzle temperature for the filament that's loaded, or tap a material preset.
 3. Tap **Start** and confirm. Filament must be loaded: the printer heats the nozzle and extrudes a series of short test moves, which takes a few minutes (about 3 on the U1, up to 5 on the Creator 5 Pro).
 4. Read the result. A value outside the usual range for the extruder is flagged so you can measure again.

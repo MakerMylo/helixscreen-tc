@@ -7,6 +7,7 @@
 #include "ui_error_reporting.h"
 #include "ui_event_safety.h"
 #include "ui_jog_pad.h"
+#include "ui_motors_off.h"
 #include "ui_nav_manager.h"
 #include "ui_panel_common.h"
 #include "ui_panel_controls.h"
@@ -24,7 +25,9 @@
 #include "observer_factory.h"
 #include "printer_state.h"
 #include "settings_manager.h"
+#include "standard_macros.h"
 #include "subject_managed_panel.h"
+#include "system_settings_manager.h"
 #include "theme_manager.h"
 #include "toolhead_homing.h"
 #include "unit_conversions.h"
@@ -34,6 +37,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <functional>
 #include <memory>
 
 #include "hv/json.hpp"
@@ -119,15 +123,12 @@ static std::string clean_gcode_error(const std::string& msg) {
         cleaned = cleaned.substr(3);
     }
 
-    // Parse JSON error objects — extract the "msg" field
+    // Parse JSON error objects - extract the "msg" field; anything that does
+    // not parse or lacks a string "msg" is used as-is
     if (!cleaned.empty() && cleaned[0] == '{') {
-        try {
-            auto j = nlohmann::json::parse(cleaned);
-            if (j.contains("msg") && j["msg"].is_string()) {
-                cleaned = j["msg"].get<std::string>();
-            }
-        } catch (...) {
-            // Not valid JSON, use as-is
+        auto j = nlohmann::json::parse(cleaned, nullptr, false);
+        if (!j.is_discarded() && j.contains("msg") && j["msg"].is_string()) {
+            cleaned = j["msg"].get<std::string>();
         }
     }
 
@@ -160,6 +161,10 @@ static void on_jog_mode_turbo(lv_event_t* e);
 static void on_motion_header_settings_clicked(lv_event_t* e);
 static void on_motion_pos_clicked(lv_event_t* e);
 static void on_motion_swap_coords_clicked(lv_event_t* e);
+static void on_motion_tab_clicked(lv_event_t* e);
+static void on_motion_preset_clicked(lv_event_t* e);
+static void on_motion_park_clicked(lv_event_t* e);
+static void on_motion_motors_off_clicked(lv_event_t* e);
 
 // ============================================================================
 // Global Instance (via DEFINE_GLOBAL_PANEL macro)
@@ -265,6 +270,20 @@ void MotionPanel::init_subjects() {
     UI_MANAGED_SUBJECT_INT(motion_z_up_blocked_, 0, "motion_z_up_blocked", subjects_);
     UI_MANAGED_SUBJECT_INT(motion_z_down_blocked_, 0, "motion_z_down_blocked", subjects_);
 
+    // Content tab (0=Jog, 1=Move, 2=Bed) plus the strip state the shared
+    // zone_tab component binds: one active flag per tab, one label each.
+    UI_MANAGED_SUBJECT_INT(motion_tab_subject_, motion_tab_, "motion_tab", subjects_);
+    refresh_tab_labels(); // fills the buffers the label subjects start from
+    for (int i = 0; i < 3; ++i) {
+        char subject_name[32];
+        snprintf(subject_name, sizeof(subject_name), "motion_tab_label_%d", i);
+        UI_MANAGED_SUBJECT_STRING(motion_tab_label_[i], motion_tab_label_buf_[i],
+                                  motion_tab_label_buf_[i], subject_name, subjects_);
+        snprintf(subject_name, sizeof(subject_name), "motion_tab_active_%d", i);
+        UI_MANAGED_SUBJECT_INT(motion_tab_active_[i], i == motion_tab_ ? 1 : 0, subject_name,
+                               subjects_);
+    }
+
     // Register PrinterState observers (RAII - auto-removed on destruction)
     register_position_observers();
 
@@ -355,6 +374,13 @@ void MotionPanel::register_callbacks() {
     lv_xml_register_event_cb(nullptr, "on_motion_swap_coords_clicked",
                              on_motion_swap_coords_clicked);
 
+    // Move tab: tab strip (user_data is the tab index), the nine bed presets
+    // (user_data is the preset key), Park and Motors off.
+    lv_xml_register_event_cb(nullptr, "on_motion_tab_clicked", on_motion_tab_clicked);
+    lv_xml_register_event_cb(nullptr, "on_motion_preset_clicked", on_motion_preset_clicked);
+    lv_xml_register_event_cb(nullptr, "on_motion_park_clicked", on_motion_park_clicked);
+    lv_xml_register_event_cb(nullptr, "on_motion_motors_off_clicked", on_motion_motors_off_clicked);
+
     callbacks_registered_ = true;
     spdlog::debug("[{}] Event callbacks registered", get_name());
 }
@@ -384,17 +410,13 @@ void MotionPanel::on_activate() {
 
     spdlog::debug("[{}] on_activate()", get_name());
 
+    // Every open starts on Jog: a stale Move/Bed selection from a previous
+    // visit would hide the pad the user came here for.
+    set_motion_tab(0);
+
     // Recalculate jog pad size — the wrapper dimensions may differ after re-layout
     if (jog_pad_ && overlay_root_) {
-        lv_obj_t* jog_wrapper = lv_obj_get_parent(jog_pad_);
-        if (jog_wrapper) {
-            lv_obj_update_layout(overlay_root_);
-            lv_coord_t w = lv_obj_get_width(jog_wrapper);
-            lv_coord_t h = lv_obj_get_height(jog_wrapper);
-            lv_coord_t size = LV_MIN(w, h);
-            lv_obj_set_width(jog_pad_, size);
-            lv_obj_set_height(jog_pad_, size);
-        }
+        fit_jog_pad();
         // Jog step distances are settings, and both the header cog and
         // Settings > Printing > Motion can change them while this panel sits on
         // the stack. The ring labels are painted from the draw callback, so a
@@ -463,6 +485,42 @@ void MotionPanel::stop_hold_repeat() {
 // Jog Pad Setup
 // ============================================================================
 
+void MotionPanel::fit_jog_pad() {
+    lv_obj_t* jog_wrapper = lv_obj_get_parent(jog_pad_);
+    if (!jog_wrapper)
+        return;
+
+    lv_obj_update_layout(overlay_root_);
+    const lv_coord_t wrapper_h = lv_obj_get_height(jog_wrapper);
+
+    // Portrait only: the Z column grows beside the wrapper, so the wrapper's
+    // resolved share under-reports the width a square pad could claim. Size
+    // against the row minus the column's floor instead, then clamp the
+    // wrapper to the square so the growing column absorbs the leftover (no
+    // dead band beside a height-bound pad). Landscape keeps its growing
+    // wrapper: the pad centres in it and the Z controls live in a separate
+    // right-hand column.
+    lv_obj_t* pad_row = lv_obj_get_parent(jog_wrapper);
+    lv_coord_t wrapper_w = lv_obj_get_width(jog_wrapper);
+    const bool portrait_pad_row = lv_streq(lv_obj_get_name(pad_row), "pad_row");
+    if (portrait_pad_row) {
+        lv_obj_t* z_column = lv_obj_get_child_by_name(pad_row, "z_column");
+        if (z_column) {
+            const lv_coord_t z_floor = lv_obj_get_style_min_width(z_column, LV_PART_MAIN);
+            wrapper_w = lv_obj_get_content_width(pad_row) - z_floor -
+                        lv_obj_get_style_pad_column(pad_row, LV_PART_MAIN);
+        }
+    }
+
+    const lv_coord_t jog_size = LV_MIN(wrapper_w, wrapper_h);
+    if (portrait_pad_row) {
+        lv_obj_set_width(jog_wrapper, jog_size);
+        lv_obj_set_flex_grow(jog_wrapper, 0);
+    }
+    lv_obj_set_width(jog_pad_, jog_size);
+    lv_obj_set_height(jog_pad_, jog_size);
+}
+
 void MotionPanel::setup_jog_pad() {
     // Find overlay_content to access motion panel widgets
     lv_obj_t* overlay_content = lv_obj_find_by_name(overlay_root_, "overlay_content");
@@ -481,15 +539,10 @@ void MotionPanel::setup_jog_pad() {
     // Get parent container (jog_pad_wrapper, which flex_grows inside left_column)
     lv_obj_t* jog_wrapper = lv_obj_get_parent(jog_pad_container);
 
-    // Force flex layout resolution so dimensions are available
-    lv_obj_update_layout(overlay_root_);
-
-    // Jog pad is square: fit within the wrapper's resolved dimensions.
-    // The jog pad draws axis labels (Y+/Y-) that extend beyond the circle edge,
-    // so we size the widget to fill the wrapper and let the draw code handle overflow.
-    lv_coord_t wrapper_w = lv_obj_get_width(jog_wrapper);
-    lv_coord_t wrapper_h = lv_obj_get_height(jog_wrapper);
-    lv_coord_t jog_size = LV_MIN(wrapper_w, wrapper_h);
+    // Each orientation's placeholder carries the pad's alignment: portrait
+    // left-hugs the pad row (a height-bound square would otherwise float
+    // centred with dead bands), landscape centres it in the wider wrapper.
+    const lv_align_t pad_align = lv_obj_get_style_align(jog_pad_container, LV_PART_MAIN);
 
     // Delete placeholder container
     helix::ui::safe_delete(jog_pad_container);
@@ -498,9 +551,9 @@ void MotionPanel::setup_jog_pad() {
     jog_pad_ = ui_jog_pad_create(jog_wrapper);
     if (jog_pad_) {
         lv_obj_set_name(jog_pad_, "jog_pad");
-        lv_obj_set_width(jog_pad_, jog_size);
-        lv_obj_set_height(jog_pad_, jog_size);
-        lv_obj_set_align(jog_pad_, LV_ALIGN_CENTER);
+        lv_obj_set_align(jog_pad_, pad_align);
+
+        fit_jog_pad();
 
         // Set callbacks - pass 'this' as user_data
         ui_jog_pad_set_jog_callback(jog_pad_, jog_pad_jog_cb, this);
@@ -512,7 +565,7 @@ void MotionPanel::setup_jog_pad() {
         // Apply initial enabled/dimmed state (the observer only fires on change)
         update_jog_pad_enabled();
 
-        spdlog::debug("[{}] Jog pad widget created (size: {}px)", get_name(), jog_size);
+        spdlog::debug("[{}] Jog pad widget created", get_name());
     } else {
         spdlog::error("[{}] Failed to create jog pad widget!", get_name());
     }
@@ -609,6 +662,13 @@ void MotionPanel::register_position_observers() {
 
     // Coordinate source preference: commanded (default) or actual (live).
     // Flipping the persisted setting re-renders the readouts.
+    // Tab labels are translated into subject buffers, so a live language
+    // switch has to re-fill them; XML text around them re-translates itself.
+    language_observer_ = observe_int_sync<MotionPanel>(
+        SystemSettingsManager::instance().subject_language(), this,
+        [](MotionPanel* self, int) { self->refresh_tab_labels(); },
+        SystemSettingsManager::instance().get_subjects_lifetime());
+
     coordinate_mode_observer_ = observe_int_sync<MotionPanel>(
         SettingsManager::instance().subject_motion_show_actual_position(), this,
         [](MotionPanel* self, int show_actual) {
@@ -1143,6 +1203,120 @@ void MotionPanel::request_axis_target(char axis, double mm) {
 }
 
 // ============================================================================
+// Content Tabs (Jog / Move / Bed)
+// ============================================================================
+
+void MotionPanel::set_motion_tab(int tab) {
+    if (tab < 0 || tab > 2) {
+        return;
+    }
+    motion_tab_ = tab;
+    sync_motion_tab_subjects();
+}
+
+void MotionPanel::sync_motion_tab_subjects() {
+    if (!subjects_initialized_) {
+        return;
+    }
+    lv_subject_set_int(&motion_tab_subject_, motion_tab_);
+    for (int i = 0; i < 3; ++i) {
+        lv_subject_set_int(&motion_tab_active_[i], i == motion_tab_ ? 1 : 0);
+    }
+}
+
+bool MotionPanel::moves_allowed() const {
+    auto& ps = get_printer_state();
+    return lv_subject_get_int(ps.get_nav_buttons_enabled_subject()) != 0 &&
+           lv_subject_get_int(ps.get_machine_motion_blocked_subject()) == 0;
+}
+
+/// Run `then` once X and Y are homed: homed runs it directly, anything else
+/// homes first and the move only fires once homing succeeded. Presets move XY
+/// only; Park needs every axis and uses ensure_homed_then directly.
+static void ensure_xy_homed_then(AsyncLifetimeGuard& lifetime, std::function<void()> then) {
+    auto& ps = get_printer_state();
+    if (helix::axis_is_homed(ps, helix::Axis::X) && helix::axis_is_homed(ps, helix::Axis::Y)) {
+        then();
+        return;
+    }
+    helix::ensure_homed_then(
+        get_moonraker_api(), lifetime, std::move(then),
+        lifetime.bg_cb("MotionPanel::xy_home_failed", [](const MoonrakerError& err) {
+            NOTIFY_ERROR(lv_tr("Homing failed: {}"), clean_gcode_error(err.user_message()));
+        }));
+}
+
+void MotionPanel::refresh_tab_labels() {
+    // Literal lv_tr calls, not an array of keys: the translation extractor
+    // only sees string literals inside lv_tr().
+    const char* const tab_labels[] = {lv_tr("Jog"), lv_tr("Move"), lv_tr("Bed")};
+    for (int i = 0; i < 3; ++i) {
+        snprintf(motion_tab_label_buf_[i], sizeof(motion_tab_label_buf_[i]), "%s", tab_labels[i]);
+        if (subjects_initialized_) {
+            lv_subject_copy_string(&motion_tab_label_[i], motion_tab_label_buf_[i]);
+        }
+    }
+}
+
+void MotionPanel::handle_preset(helix::MotionPreset preset) {
+    IMoonrakerAPI* api = get_moonraker_api();
+    if (!api || !moves_allowed()) {
+        return;
+    }
+    // Computed at tap time: bounds can change (settings, calibration) between
+    // the panel opening and the tap.
+    const auto& ps = get_printer_state();
+    const auto area = helix::preset_area(ps.get_axis_bounds(), ps.get_gcode_axis_bounds(),
+                                         api->hardware().build_volume());
+    const auto target = helix::motion_preset_target(
+        preset, area, helix::circular_bed_kinematics(api->hardware().kinematics()));
+    if (!target) {
+        NOTIFY_INFO(lv_tr("Axis limits unknown"));
+        return;
+    }
+    ensure_xy_homed_then(lifetime_, [this, t = *target]() { dispatch_target(t); });
+}
+
+void MotionPanel::handle_park() {
+    IMoonrakerAPI* api = get_moonraker_api();
+    if (!api || !moves_allowed()) {
+        return;
+    }
+    const auto info = StandardMacros::instance().get(StandardMacroSlot::ParkToolhead);
+    if (info.is_empty()) {
+        // No macro configured: the front-centre preset is what parking means.
+        handle_preset(helix::MotionPreset::Front);
+        return;
+    }
+    // A park macro commonly lifts Z too, so it needs every axis homed.
+    const std::string name = info.translated_name();
+    helix::ensure_homed_then(
+        api, lifetime_,
+        [this, name]() {
+            NOTIFY_INFO(lv_tr("Running {}..."), name.c_str());
+            if (!StandardMacros::instance().execute(
+                    StandardMacroSlot::ParkToolhead, get_moonraker_api(), {},
+                    [name]() { NOTIFY_SUCCESS(lv_tr("{} complete"), name.c_str()); },
+                    lifetime_.bg_cb("MotionPanel::park_failed", [name](const MoonrakerError& err) {
+                        NOTIFY_ERROR(lv_tr("Macro failed: {}"),
+                                     clean_gcode_error(err.user_message()));
+                    }))) {
+                NOTIFY_WARNING(lv_tr("{} macro not configured"), name.c_str());
+            }
+        },
+        lifetime_.bg_cb("MotionPanel::park_home_failed", [](const MoonrakerError& err) {
+            NOTIFY_ERROR(lv_tr("Homing failed: {}"), clean_gcode_error(err.user_message()));
+        }));
+}
+
+void MotionPanel::handle_motors_off() {
+    if (!moves_allowed()) {
+        return;
+    }
+    helix::ui::show_motors_off_confirm(get_moonraker_api(), motors_off_dialog_, lifetime_.token());
+}
+
+// ============================================================================
 // Static Callback for XML event_cb (Z-axis buttons)
 // ============================================================================
 
@@ -1244,6 +1418,61 @@ static void on_motion_swap_coords_clicked(lv_event_t* e) {
     LVGL_SAFE_EVENT_CB_BEGIN("[MotionPanel] on_motion_swap_coords_clicked");
     (void)e;
     get_global_motion_panel().toggle_coordinate_source();
+    LVGL_SAFE_EVENT_CB_END();
+}
+
+static void on_motion_tab_clicked(lv_event_t* e) {
+    LVGL_SAFE_EVENT_CB_BEGIN("[MotionPanel] on_motion_tab_clicked");
+    // The XML event_cb path hands user_data through as a heap-owned string
+    // (lv_obj_xml_event_cb_apply lv_strdup's it), same as the AMS zone tabs.
+    const char* ud = static_cast<const char*>(lv_event_get_user_data(e));
+    if (ud) {
+        get_global_motion_panel().set_motion_tab(atoi(ud));
+    }
+    LVGL_SAFE_EVENT_CB_END();
+}
+
+/// Bed-grid preset keys as they appear in motion_panel.xml user_data, in
+/// MotionPreset declaration order (rear row first, front row last).
+static std::optional<helix::MotionPreset> preset_from_key(const char* key) {
+    static const struct {
+        const char* key;
+        helix::MotionPreset preset;
+    } table[] = {
+        {"rear_left", helix::MotionPreset::RearLeft},     {"rear", helix::MotionPreset::Rear},
+        {"rear_right", helix::MotionPreset::RearRight},   {"left", helix::MotionPreset::Left},
+        {"center", helix::MotionPreset::Center},          {"right", helix::MotionPreset::Right},
+        {"front_left", helix::MotionPreset::FrontLeft},   {"front", helix::MotionPreset::Front},
+        {"front_right", helix::MotionPreset::FrontRight},
+    };
+    for (const auto& row : table) {
+        if (std::strcmp(key, row.key) == 0) {
+            return row.preset;
+        }
+    }
+    return std::nullopt;
+}
+
+static void on_motion_preset_clicked(lv_event_t* e) {
+    LVGL_SAFE_EVENT_CB_BEGIN("[MotionPanel] on_motion_preset_clicked");
+    const char* ud = static_cast<const char*>(lv_event_get_user_data(e));
+    if (auto preset = ud ? preset_from_key(ud) : std::nullopt) {
+        get_global_motion_panel().handle_preset(*preset);
+    }
+    LVGL_SAFE_EVENT_CB_END();
+}
+
+static void on_motion_park_clicked(lv_event_t* e) {
+    LVGL_SAFE_EVENT_CB_BEGIN("[MotionPanel] on_motion_park_clicked");
+    (void)e;
+    get_global_motion_panel().handle_park();
+    LVGL_SAFE_EVENT_CB_END();
+}
+
+static void on_motion_motors_off_clicked(lv_event_t* e) {
+    LVGL_SAFE_EVENT_CB_BEGIN("[MotionPanel] on_motion_motors_off_clicked");
+    (void)e;
+    get_global_motion_panel().handle_motors_off();
     LVGL_SAFE_EVENT_CB_END();
 }
 

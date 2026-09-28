@@ -30,6 +30,7 @@
 #include "i_moonraker_client.h" // for helix::CACHED_SNAPSHOT_MARKER
 #include "json_utils.h"
 #include "led/led_controller.h"
+#include "load_cell_manager.h"
 #include "lvgl.h"
 #include "lvgl/src/display/lv_display_private.h" // For rendering_in_progress check
 #include "lvgl_debug_invalidate.h"
@@ -374,7 +375,8 @@ void PrinterState::update_from_notification(const json& notification) {
         // frame was synthesized rather than received.
         const double eventtime =
             (params.size() > 1 && params[1].is_number()) ? params[1].get<double>() : 0.0;
-        const bool from_cached_snapshot = notification.value(helix::CACHED_SNAPSHOT_MARKER, false);
+        const bool from_cached_snapshot =
+            helix::json_util::safe_bool(notification, helix::CACHED_SNAPSHOT_MARKER);
         async_lifetime_.defer("PrinterState::on_status_update", [this, state_json = params[0],
                                                                  eventtime,
                                                                  from_cached_snapshot]() {
@@ -483,7 +485,7 @@ void PrinterState::update_from_status(const json& state, double eventtime,
         if (eo.contains("objects") && eo["objects"].is_array()) {
             std::vector<PrinterExcludedObjectsState::ObjectInfo> objects;
             for (const auto& obj : eo["objects"]) {
-                if (!obj.is_object() || !obj.contains("name"))
+                if (!obj.is_object() || !obj.contains("name") || !obj["name"].is_string())
                     continue;
 
                 PrinterExcludedObjectsState::ObjectInfo info;
@@ -657,6 +659,7 @@ void PrinterState::update_from_status(const json& state, double eventtime,
     helix::sensors::AccelSensorManager::instance().update_from_status(state);
     helix::sensors::ColorSensorManager::instance().update_from_status(state);
     helix::sensors::TemperatureSensorManager::instance().update_from_status(state);
+    helix::sensors::LoadCellManager::instance().update_from_status(state);
 }
 
 void PrinterState::reset_for_new_print() {
@@ -1139,8 +1142,7 @@ void PrinterState::set_kinematics(const std::string& kinematics) {
     last_kinematics_ = kinematics;
 
     // On delta printers, axes cannot be homed individually.
-    capabilities_state_.set_has_individual_xyz_homing(kinematics != "delta" &&
-                                                      kinematics != "rotary_delta");
+    capabilities_state_.set_has_individual_xyz_homing(!circular_bed_kinematics(kinematics));
 
     // Determine if the bed moves on Z based on kinematics type:
     // - CoreXY: bed typically moves on Z (Voron 0/Trident, Bambu, AD5M, etc.)

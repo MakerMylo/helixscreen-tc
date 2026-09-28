@@ -3,6 +3,8 @@
 
 #include "snapmaker_exceptions.h"
 
+#include "text_io.h"
+
 #include <spdlog/fmt/fmt.h>
 
 #include <array>
@@ -78,13 +80,13 @@ std::optional<ExceptionCode> decode_exception_code(const std::string& text) {
         if (i + 19 < text.size() && text[i + 19] == '-') {
             continue;
         }
-        // Each field is exactly four validated digits, so the parses below are
-        // bounded to 0..9999 and cannot throw.
+        // Each field is exactly four validated digits, so each parse below is
+        // bounded to 0..9999.
         ExceptionCode c;
-        c.level = std::stoi(text.substr(i, 4));
-        c.id = std::stoi(text.substr(i + 5, 4));
-        c.index = std::stoi(text.substr(i + 10, 4));
-        c.code = std::stoi(text.substr(i + 15, 4));
+        c.level = helix::text_io::parse_leading<int>(text.substr(i, 4)).value_or(0);
+        c.id = helix::text_io::parse_leading<int>(text.substr(i + 5, 4)).value_or(0);
+        c.index = helix::text_io::parse_leading<int>(text.substr(i + 10, 4)).value_or(0);
+        c.code = helix::text_io::parse_leading<int>(text.substr(i + 15, 4)).value_or(0);
         return c;
     }
     return std::nullopt;
@@ -149,7 +151,9 @@ std::vector<ActiveException> read_active_exceptions(const nlohmann::json& status
     if (!status_carries_exceptions(status)) {
         return out;
     }
-    for (const auto& entry : status.at("exception_manager").at("exceptions")) {
+    // status_carries_exceptions() has proven both keys present.
+    const auto& manager = *status.find("exception_manager");
+    for (const auto& entry : *manager.find("exceptions")) {
         if (auto active = read_exception_entry(entry)) {
             out.push_back(std::move(*active));
         }

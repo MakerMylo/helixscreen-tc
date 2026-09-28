@@ -31,6 +31,8 @@ class IMoonrakerAPI;
  * @see fan_control_overlay.xml for layout definition
  */
 class FanControlOverlay : public OverlayBase {
+    friend class FanControlOverlayTestAccess;
+
   public:
     /**
      * @brief Construct FanControlOverlay with injected dependencies
@@ -100,6 +102,15 @@ class FanControlOverlay : public OverlayBase {
     }
 
   private:
+    /// LV_EVENT_DELETE on the root: drops the dials and cards while their
+    /// widgets are still alive, so a tree deleted by anyone else leaves no
+    /// pointer into freed memory and the next open recreates it.
+    static void on_root_deleted(lv_event_t* e);
+
+    /// Unsubscribe observers, stop spin animations, destroy the dials and
+    /// forget the cards. Their widgets must still be alive.
+    void release_fan_widgets();
+
     /**
      * @brief Populate fan widgets from helix::PrinterState
      *
@@ -201,6 +212,18 @@ class FanControlOverlay : public OverlayBase {
  * @throws std::runtime_error if not initialized
  */
 FanControlOverlay& get_fan_control_overlay();
+
+namespace helix {
+/**
+ * @brief Push the fan control overlay, creating it under @p parent_screen when it has no live tree
+ *
+ * The overlay singleton owns its one widget tree; every caller opens through
+ * here and none keeps or deletes the root.
+ * @param parent_screen Screen to create the overlay on when it has no live tree
+ * @return The pushed root, or nullptr if it could not be created
+ */
+lv_obj_t* open_fan_control_overlay(lv_obj_t* parent_screen);
+} // namespace helix
 
 /**
  * @brief Initialize global FanControlOverlay instance

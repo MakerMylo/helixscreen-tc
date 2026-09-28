@@ -7,6 +7,7 @@
 #include "ui_nav_manager.h"
 #include "ui_slider_scale.h"
 
+#include "exception_policy.h"
 #include "helix-xml/src/xml/lv_xml.h"
 #include "i_moonraker_api.h"
 #include "lvgl/src/others/translation/lv_translation.h"
@@ -61,7 +62,7 @@ RetractionSettingsOverlay& get_global_retraction_settings() {
     if (!g_retraction_settings) {
         spdlog::error(
             "[Retraction Settings] get_global_retraction_settings() called before initialization!");
-        throw std::runtime_error("RetractionSettingsOverlay not initialized");
+        helix::throw_or_abort(std::runtime_error("RetractionSettingsOverlay not initialized"));
     }
     return *g_retraction_settings;
 }

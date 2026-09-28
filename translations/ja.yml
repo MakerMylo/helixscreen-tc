@@ -156,6 +156,7 @@ translations:
   Actions: アクション
   Active: アクティブ
   Active Spool: アクティブスプール
+  Actual: 現在
   Adaptive Bed Mesh: 適応ベッドメッシュ
   Add: 追加
   Add Filament: フィラメントを追加
@@ -468,6 +469,7 @@ translations:
     — Z-Offsetパネルで調整してください
   Cartographer touch calibrate sent: Cartographerタッチキャリブレーション送信済み
   Category: カテゴリー
+  Center: '中央'
   Center QR code in frame: QR コードをフレームの中央に合わせてください
   'Chamb:': 'チャンバ:'
   Chamber: チャンバー
@@ -513,6 +515,7 @@ translations:
   Check the PTFE tube along the drag chain for kinks, and the bend where it enters the extruder sensor: ドラッグチェーンに沿った PTFE チューブの折れと、エクストルーダーセンサー入口の曲がりを確認してください
   Check the RS-485 cable between printer and CFS: プリンターと CFS 間の RS-485 ケーブルを確認してください
   Check the buffer unit on the back of the printer: プリンター背面のバッファーユニットを確認してください
+  Check the chips, then save: チップを確認して保存
   Check the filament path and try again.: フィラメント経路を確認して、もう一度お試しください。
   ? Check the path from the slot to the hub for a tangle or drag. If the slot feeds freely, the hub sensor or the feeder motor may have failed
   : スロットからハブまでの経路に絡まりや抵抗がないか確認してください。スロットが問題なく送り出せる場合は、ハブセンサーまたは送り出しモーターの故障が考えられます
@@ -704,6 +707,7 @@ translations:
   Could not reach Spoolman at: 'Spoolman に接続できません:'
   Could not read the screw adjustments from the printer: プリンターからネジ調整を読み取れませんでした
   Could not remove the job from the queue: キューからジョブを削除できませんでした
+  Could not reset the printer image tags: プリンター画像のタグのリセットに失敗しました
   Could not resolve printer RFCOMM channel: プリンターの RFCOMM チャンネルを解決できませんでした
   Could not save filament: フィラメントを保存できませんでした
   Could not save the drying state: 乾燥の状態を保存できませんでした
@@ -711,6 +715,7 @@ translations:
   'Could not save the drying state: nothing was heated': '乾燥の状態を保存できませんでした: 何も加熱していません'
 
   "Could not save the mesh as '{}': {}": "メッシュを '{}' として保存できませんでした: {}"
+  Could not save the printer image tags: プリンター画像のタグの保存に失敗しました
   Could not start Bluetooth discovery: Bluetooth の検出を開始できませんでした
   Could not update filaments: フィラメントを更新できませんでした
   Could not verify Spoolman status. Moonraker may still be restarting.: Spoolman のステータスを確認できませんでした。Moonraker
@@ -798,6 +803,7 @@ translations:
   Deploy: 展開
   Describe the issue (optional): 問題の詳細（任意）
   Detailed: 詳細
+  Detect automatically: '自動検出'
   'Detect filament tangles': 'フィラメントの絡みを検出'
   Detecting plate...: プレートを検出中...
   Detecting printer type...: プリンタータイプを検出中...
@@ -1249,6 +1255,7 @@ translations:
   Flying Toasters: フライングトースター
   Follow active tool: アクティブツールに追従
   Follow graph screen: グラフ画面に追従
+  Force/weight sensors: '力/重量センサー'
   Forget: 登録解除
   Forget Network?: ネットワークを登録解除しますか？
   Forget network '{}'? You will need the password to reconnect.: ネットワーク '{}' を登録解除しますか？再接続にはパスワードが必要です。
@@ -1264,6 +1271,9 @@ translations:
   : "周波数差: パス A と B の差。2 Hz 未満はこの測定の分解能を下回るため、一致とみなされます。\n\n一致度: 2つのベルトの周波数がどれだけ近いかを、ベルトAの周波数に対する割合で示したもの。95% を超えれば優秀で、90% を下回ると調整が必要です。"
   From Buffer: バッファから
   From Version: 更新前バージョン
+  Front: '手前'
+  Front Left: '左手前'
+  Front Right: '右手前'
   Full: フル
   G-code Console: G-code コンソール
   G-code Preview: G-code プレビュー
@@ -1505,6 +1515,7 @@ translations:
   It's a new spool: 新しいスプールです
   Jammed at the Toolhead: ツールヘッドで詰まり
   Job Queue: ジョブキュー
+  Jog: 'ジョグ'
   Jog Speed XY: XY ジョグ速度
   Jog Speed Z: Z ジョグ速度
   Jog Y until the nozzle is centered over the chute opening, then tap Save.: Yをジョグしてノズルがシュートの開口部の中心に来たら、保存をタップします。
@@ -1556,6 +1567,7 @@ translations:
   LED strip available for lighting control: 照明制御用の LED ストリップが利用可能です
   LEDs: LED
   LEDs controlled by the light button: ライトボタンで制御される LED
+  LOAD CELLS: 'ロードセル'
   LOADED: 装填済み
   LOCKED: ロック中
   LOT-2024-001: LOT-2024-001
@@ -1586,6 +1598,7 @@ translations:
   Layout: レイアウト
   Learn More: 詳細を見る
   LedSelect: LEDを選択
+  Left: '左'
   Length of filament to purge: 'パージするフィラメントの長さ'
   Length of the cooling tube section: '冷却チューブ区間の長さ'
   'Length:': '長さ:'
@@ -1602,6 +1615,9 @@ translations:
   Listening: 聞き取り中
   Live view from your webcam: ウェブカメラのライブ表示
   Load: 装填
+  Load Cell: 'ロードセル'
+  Load Cells: 'ロードセル'
+  Load Extruder: 'エクストルーダーに装填'
   Load Failed: '装填に失敗しました'
   Load Filament: フィラメントを装填
   Load a filament first before trying to unload: 排出する前にまずフィラメントを装填してください
@@ -1681,6 +1697,7 @@ translations:
   Macro to cancel an active print: アクティブな印刷をキャンセルするマクロ
   Macro to clean/wipe the nozzle: ノズルを清掃/ワイプするマクロ
   Macro to load filament into extruder: フィラメントをエクストルーダーに装填するマクロ
+  Macro to park the toolhead at a safe position: 'ヘッドを安全な位置へ移動するマクロ'
   Macro to pause an active print: アクティブな印刷を一時停止するマクロ
   Macro to purge/prime the nozzle: ノズルをパージ/プライムするマクロ
   Macro to resume a paused print: 一時停止した印刷を再開するマクロ
@@ -1739,6 +1756,7 @@ translations:
   Measure and compare belt path frequencies: ベルトパスの周波数を測定・比較
   Measure belt path frequencies: ベルトパスの周波数を測定
   Measure every tool's XYZ offset automatically: 各ツールの XYZ オフセットを自動で測定します
+  Measure pressure advance automatically: 'Pressure Advance を自動で測定します'
   Measured (shaper off): 測定値（シェーパーオフ時）
   Measured filament diameter: 測定したフィラメント直径
   Measured pressure advance: '測定された Pressure Advance'
@@ -1777,6 +1795,7 @@ translations:
   Motors Off: モーターオフ
   'Motors disable failed: {}': 'モーターの無効化に失敗しました: {}'
   Motors disabled: モーターを無効化しました
+  Motors stay on while a print is active: 印刷中はモーターを停止できません
   Mount: 装着
   Move: 移動
   Move out of range: '移動範囲外です'
@@ -2063,6 +2082,7 @@ translations:
   Parameters: パラメータ
   Park: 'パーキング'
   Park the AFC system: 'AFCシステムをパーキング'
+  Park Toolhead: 'ツールヘッドをパーキング'
   Part: パーツ
   Part Cooling Fan: パーツ冷却ファン
   Part Fan: パーツファン
@@ -2140,6 +2160,7 @@ translations:
   Preheat cancelled: 予熱がキャンセルされました
   'Preheat: all {} tools + bed set': '予熱: 全 {} ツール + ベッド設定済み'
   'Preheat: {} + bed set': '予熱: {} + ベッド設定済み'
+  Preload: '事前装填'
   Preload failed: 事前装填に失敗しました
   Prepared: 準備済み
   Preparing: 準備中
@@ -2348,6 +2369,9 @@ translations:
   Ready to Apply: 適用の準備完了
   Ready to calibrate: キャリブレーション準備完了
   Ready to pluck: はじく準備完了
+  Rear: '奥'
+  Rear Left: '左奥'
+  Rear Right: '右奥'
   Reason: 理由
   ? "Reason: {}\n\nThe printer cannot resume this print. Restart from the beginning?"
   : "理由: {}\n\nプリンターはこの印刷を再開できません。最初からやり直しますか？"
@@ -2364,6 +2388,7 @@ translations:
   Recording Mode: 録画モード
   Recover: 回復
   Recover MMU state?: MMU の状態を復旧しますか？
+  Recover State: '状態を回復'
   Recovering AFC system...: AFCシステムを復旧中...
   Recovery failed: 復旧失敗
   'Recovery failed: ': '復旧に失敗しました: '
@@ -2377,6 +2402,7 @@ translations:
   Refresh Interval: 更新間隔
   Refresh RFID: 'RFIDを再読み込み'
   Relative vibration: 相対振動
+  Refresh Spoolman: 'Spoolmanを再読み込み'
   Reheating...: 再加熱中...
   Release all stepper motors. Position will be lost.: すべてのステッピングモーターを解放します。位置情報は失われます。
   Release filament: フィラメントを解放
@@ -2404,6 +2430,8 @@ translations:
 
   Remove the spools now?: 今スプールを取り出しますか?
 
+  Remove your tags for this image?: この画像のタグを削除しますか？
+  Remove your tags for this image? Its chips go back to the shipped positions.: この画像のタグを削除しますか？チップは出荷時の位置に戻ります。
   Rename: 名前を変更
   Rename Fan: ファン名を変更
   Rename Mesh Profile: メッシュプロファイルの名前を変更
@@ -2443,6 +2471,7 @@ translations:
   Reset endless spool failed: 'エンドレススプールのリセットに失敗しました'
   Reset failed: リセットに失敗しました
   Reset motor run-time counter: 'モーターの稼働時間カウンターをリセット'
+  Reset tags: タグをリセット
   Reset to Default: デフォルトにリセット
   Reset to defaults: デフォルトに戻す
   Reset to original values: 元の値にリセット
@@ -2506,6 +2535,7 @@ translations:
   Review your changes: 変更を確認
   Review your configuration below, then click Finish to save: 以下の設定を確認し、「完了」をクリックして保存してください
   Rewinding: 巻き戻し中
+  Right: '右'
   'Role:': '役割:'
   Rotating tips for using your printer: プリンターの使い方のヒントを順に表示
   Rotation: 回転
@@ -2694,6 +2724,7 @@ translations:
   : このスロットのフィラメントの種類と色を手動で設定してください。タグが読み取れるはずの場合は、ボックスが停止しているときにラベルをリーダー側に向けてスプールを入れ直してください
   Set up: セットアップ
   Set up your label printer in Settings: 設定でラベルプリンターをセットアップしてください
+  Set what is really selected and loaded. Nothing moves.: '実際に選択・装填されている状態を設定します。何も動きません。'
   Settings: 設定
   Settings Snapshot: 設定スナップショット
   Settings reset to defaults. Restarting...: 設定をデフォルトにリセットしました。再起動中...
@@ -2901,18 +2932,26 @@ translations:
   'TOGGLE: {}': '切り替え: {}'
   TOOLS: ツール
   TPU: TPU
+  Tag Parts: 部位をタグ付け
+  Tag parts: 部位をタグ付け
   Takes 3-5 min. Do not interrupt.: 3〜5分かかります。中断しないでください。
   'Tangle sensitivity': '絡み検出の感度'
   Tap + to add: + をタップして追加
   Tap Firmware Restart to recover — on K2 this also bounces the rpi MCU bridge: 「ファームウェア再起動」をタップして復旧してください。K2 では rpi MCU ブリッジも再起動されます
   Tap again to confirm this orientation: もう一度タップしてこの向きを確定
+  Tap an empty spot inside the enclosure: 筐体内の空いている場所をタップ
   Tap an object to exclude it | {} objects ({} excluded): 'オブジェクトをタップして除外 | {} 個 ({} 個除外済み)'
   Tap any tile to open its full controls or toggle its state.: タイルをタップすると、全機能のコントロールを開いたり、状態を切り替えたりできます。
   Tap anywhere if this text is right-side up: この文字が正しい向きならどこかをタップ
   Tap anywhere to begin: どこかをタップして開始
   Tap anywhere to begin calibration: どこかをタップしてキャリブレーション開始
+  Tap the bed's front-left corner: ベッドの手前左の角をタップ
+  Tap the bed's front-right corner: ベッドの手前右の角をタップ
   Tap the crosshair (point %1$d of 3) — touch %2$d of %3$d: 十字をタップ（ポイント
     %1$d / 3）— タッチ %2$d / %3$d
+  Tap the light: ライトをタップ
+  Tap the nozzle tip: ノズルの先端をタップ
+  Tap the part cooling fan: パーツ冷却ファンをタップ
   Tap to assign: タップして割当
   Target: '目標'
   Target Frequency: 目標周波数
@@ -3212,6 +3251,7 @@ translations:
   Unavailable: 利用不可
   Unavailable on this printer: このプリンターでは利用できません
   Understanding Results: 結果の理解
+  Undo: 元に戻す
   ? "Uneven belt tension causes print artifacts like layer shifts, VFAs (vertical fine artifacts), and ringing.\n\nPluck each belt by hand and this tool listens through the accelerometer to measure the belt's frequency. Matched frequencies mean balanced tension.\n\nOn CoreXY, belts A and B should be within a few Hz of each other."
   : "ベルト張力が不均一だと、レイヤーシフトや VFA(垂直微細アーティファクト)、リンギングなどの印刷不良が発生します。\n\n各ベルトを手ではじくと、このツールが加速度センサーでベルトの周波数を測定します。周波数が一致していれば張力が均等であることを意味します。\n\nCoreXY では、ベルト A と B は数 Hz 以内に収まっている必要があります。"
   Uninstall: アンインストール
@@ -3232,6 +3272,7 @@ translations:
   Unknown error: 不明なエラー
   Unload: 排出
   Unload Distance: 'アンロード距離'
+  Unload Extruder: 'エクストルーダーから排出'
   Unload Failed: '取り出しに失敗しました'
   Unload Filament: フィラメントを排出
   'Unload at end': '終了時に排出'
@@ -3243,6 +3284,7 @@ translations:
   Unload macro not configured: アンロードマクロが未設定です
   Unload the CFS filament before enabling bypass: 'バイパスを有効にする前に CFS のフィラメントを取り出してください'
   Unload...: 排出...
+  Unloaded: '排出済み'
   Unloading: アンロード中
   Unloading Start Speed: 'アンロード開始速度'
   Unloading before bypass...: バイパス前にアンロード中...

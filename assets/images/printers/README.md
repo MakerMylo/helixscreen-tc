@@ -45,6 +45,8 @@ device silently taking the slow path shows no `[Prerendered]` line at debug leve
 
 ### Generating the renders
 
+Full render and packaging pipeline (size classes, per-platform pruning): `docs/devel/PRE_RENDERED_IMAGES.md`.
+
 ```bash
 make gen-printer-images      # -> build/assets/images/printers/prerendered/*.bin
 make list-printer-images     # what it would write
@@ -81,6 +83,52 @@ magick input.jpg -resize 800x800 -background none -gravity center output.png
 2. Resize per above, save here with a `vendor-model` filename
 3. Point the `printer_database.json` entry's `image` field at it
 4. `scripts/check_printer_images.py` to confirm it resolves
+
+## Tagging parts for live callouts
+
+The home panel's printer widget pins live chips (nozzle, part fan, chamber, light, bed) onto
+the image at points hand-tagged in `assets/images/printers/regions.json`:
+
+```json
+"creality-k1c": {"size": [1601, 1204], "nozzle": [0.513, 0.279], "part_fan": [0.488, 0.206],
+                 "chamber": [0.313, 0.379], "light": [0.321, 0.164],
+                 "bed": [[0.308, 0.571], [0.611, 0.573]]}
+```
+
+- Points are normalized 0..1 over the source PNG. The prerendered tiers and the exact-size
+  cache are aspect-preserving, centred resizes of that PNG, so one set of numbers holds at
+  every rendered size.
+- `bed` is the plate's near edge as seen in the picture: left end, right end.
+- `size`, `nozzle` and `bed` are required; `part_fan`, `chamber` and `light` are optional -
+  omit whichever the printer doesn't have.
+- `size` is the source PNG's width and height. `tests/unit/test_printer_image_regions.cpp`
+  (`[regions]`) fails, naming the image, when a PNG no longer matches its recorded size -
+  **re-cropping a tagged PNG (by hand, or via `scripts/trim_printer_images.sh`) needs
+  re-tagging**, because every point on it shifts silently otherwise.
+
+### Tagging tool
+
+```bash
+python3 -m http.server -d . 8000
+# open http://localhost:8000/tools/printer-regions-tagger.html
+```
+
+Tap-to-tag: nozzle tip, part fan, bed near-left corner, bed near-right corner, an empty spot
+inside the enclosure, the light. Part fan, chamber and light can be skipped. A review step
+renders chips at the tapped points before saving. Progress is kept in the browser; paste the
+tool's output over `regions.json` to ship. Images are listed in telemetry popularity,
+refreshed by hand, then alphabetically.
+
+### Tags users make on the device
+
+Tag parts in the printer image picker runs the same six prompts on the screen, for the image
+the home widget shows, and writes `<config dir>/printer_image_regions.json` in this same
+format. Its entries override `regions.json` for their key only: a shipped image by basename,
+a custom image as `custom:<name>`. Their `size` is the natural size of the image that was
+tagged (the prerendered tier or imported `.bin` the widget draws, not the source PNG), and an
+entry whose `size` no longer matches that image (another screen tier, or re-cut art) is
+ignored until it is re-tagged. Importing a custom image, or deleting it, clears its tags,
+since a new photo of the same aspect has the same size. Reset tags deletes the entry.
 
 ## Custom images
 

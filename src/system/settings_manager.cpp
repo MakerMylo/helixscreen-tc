@@ -14,6 +14,7 @@
 #include "display_settings_manager.h"
 #include "i_moonraker_client.h"
 #include "input_settings_manager.h"
+#include "json_utils.h"
 #include "led/led_controller.h"
 #include "lvgl/src/others/translation/lv_translation.h"
 #include "material_settings_manager.h"
@@ -458,16 +459,16 @@ helix::bed_drying::RunRecord SettingsManager::get_bed_drying_record() const {
     if (!j.is_object()) {
         return r;
     }
-    r.latched = j.value("latched", false);
-    r.start_s = j.value("start_s", 0LL);
-    r.end_s = j.value("end_s", 0LL);
-    r.bed_c = j.value("bed_c", 0);
-    r.idle_restore_s = j.value("idle_restore_s", 0);
-    r.appliance = j.value("appliance", false);
-    r.ended = j.value("ended", false);
-    r.flip_notified = j.value("flip_notified", false);
-    r.placing = j.value("placing", false);
-    r.material = j.value("material", -1);
+    r.latched = helix::json_util::safe_bool(j, "latched");
+    r.start_s = helix::json_util::safe_int64(j, "start_s");
+    r.end_s = helix::json_util::safe_int64(j, "end_s");
+    r.bed_c = helix::json_util::safe_int(j, "bed_c");
+    r.idle_restore_s = helix::json_util::safe_int(j, "idle_restore_s");
+    r.appliance = helix::json_util::safe_bool(j, "appliance");
+    r.ended = helix::json_util::safe_bool(j, "ended");
+    r.flip_notified = helix::json_util::safe_bool(j, "flip_notified");
+    r.placing = helix::json_util::safe_bool(j, "placing");
+    r.material = helix::json_util::safe_int(j, "material", -1);
     return r;
 }
 
@@ -921,13 +922,7 @@ std::string console_filter_path(const char* leaf, ConsoleFilterScope scope) {
 /// Read one layer, treating a malformed list as absent rather than propagating.
 std::vector<std::string> read_console_filter_layer(const char* leaf, ConsoleFilterScope scope) {
     const std::string path = console_filter_path(leaf, scope);
-    try {
-        return Config::get_instance()->get<std::vector<std::string>>(path,
-                                                                     std::vector<std::string>{});
-    } catch (const std::exception& e) {
-        spdlog::warn("[SettingsManager] {} malformed, ignoring: {}", path, e.what());
-        return {};
-    }
+    return Config::get_instance()->get<std::vector<std::string>>(path, std::vector<std::string>{});
 }
 
 /// Global entries first, then the active printer's, with exact duplicates
@@ -988,14 +983,8 @@ void SettingsManager::set_console_filter_user_remove(const std::vector<std::stri
 
 std::vector<std::string> SettingsManager::get_hidden_macros() const {
     Config* config = Config::get_instance();
-    try {
-        return config->get<std::vector<std::string>>(config->df() + "macros/hidden",
-                                                     std::vector<std::string>{});
-    } catch (const std::exception& e) {
-        spdlog::warn("[SettingsManager] {} malformed, ignoring: {}", config->df() + "macros/hidden",
-                     e.what());
-        return {};
-    }
+    return config->get<std::vector<std::string>>(config->df() + "macros/hidden",
+                                                 std::vector<std::string>{});
 }
 
 void SettingsManager::set_hidden_macros(const std::vector<std::string>& names) {

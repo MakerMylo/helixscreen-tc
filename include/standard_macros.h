@@ -55,6 +55,7 @@ enum class StandardMacroSlot {
     ScrewsTilt,     ///< Manual bed screw guidance (SCREWS_TILT_CALCULATE)
     CleanNozzle,    ///< Nozzle cleaning/wiping
     HeatSoak,       ///< Chamber/bed heat soak
+    ParkToolhead,   ///< Park the toolhead (machine-specific park position)
 
     COUNT ///< Number of slots (for iteration)
 };

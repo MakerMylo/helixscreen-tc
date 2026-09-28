@@ -164,6 +164,7 @@ translations:
   Actions: Azioni
   Active: Attivo
   Active Spool: Bobina attiva
+  Actual: Attuale
   Adaptive Bed Mesh: Mesh piano adattiva
   Add: Aggiungi
   Add Filament: Aggiungi filamento
@@ -511,6 +512,7 @@ translations:
     scansione inviata — usa il pannello Z-Offset per regolare
   Cartographer touch calibrate sent: Cartographer calibrazione touch inviata
   Category: Categoria
+  Center: 'Centro'
   Center QR code in frame: Centra il codice QR nell'inquadratura
   'Chamb:': 'Camera:'
   Chamber: Camera
@@ -560,6 +562,7 @@ translations:
   Check the PTFE tube along the drag chain for kinks, and the bend where it enters the extruder sensor: Controllare che il tubo PTFE lungo la catena portacavi non sia piegato, e la curva all'ingresso del sensore dell'estrusore
   Check the RS-485 cable between printer and CFS: Controllare il cavo RS-485 tra stampante e CFS
   Check the buffer unit on the back of the printer: Controllare l'unità buffer sul retro della stampante
+  Check the chips, then save: Controlla le etichette, poi salva
   Check the filament path and try again.: Controllare il percorso del filamento e
     riprovare.
   ? Check the path from the slot to the hub for a tangle or drag. If the slot feeds freely, the hub sensor or the feeder motor may have failed
@@ -769,6 +772,7 @@ translations:
   Could not reach Spoolman at: Impossibile raggiungere Spoolman a
   Could not read the screw adjustments from the printer: Impossibile leggere le regolazioni delle viti dalla stampante
   Could not remove the job from the queue: Impossibile rimuovere il lavoro dalla coda
+  Could not reset the printer image tags: 'Impossibile ripristinare i contrassegni dell''immagine'
   Could not resolve printer RFCOMM channel: Impossibile risolvere il canale RFCOMM
     della stampante
   Could not save filament: Impossibile salvare il filamento
@@ -777,6 +781,7 @@ translations:
   'Could not save the drying state: nothing was heated': "Impossibile salvare lo stato dell'essiccazione: non è stato riscaldato nulla"
 
   "Could not save the mesh as '{}': {}": "Impossibile salvare la mesh come '{}': {}"
+  Could not save the printer image tags: 'Impossibile salvare i contrassegni dell''immagine'
   Could not start Bluetooth discovery: Impossibile avviare la ricerca Bluetooth
   Could not update filaments: Impossibile aggiornare i filamenti
   Could not verify Spoolman status. Moonraker may still be restarting.: Impossibile
@@ -864,6 +869,7 @@ translations:
   Deploy: Rileva
   Describe the issue (optional): Descrivi il problema (facoltativo)
   Detailed: Dettagliato
+  Detect automatically: 'Rileva automaticamente'
   'Detect filament tangles': 'Rileva grovigli del filamento'
   Detecting plate...: Rilevamento piano...
   Detecting printer type...: Rilevamento tipo stampante...
@@ -1338,6 +1344,7 @@ translations:
   Flying Toasters: Tostapane volanti
   Follow active tool: Segui strumento attivo
   Follow graph screen: Segui schermata grafico
+  Force/weight sensors: 'Sensori di forza/peso'
   Forget: Dimentica
   Forget Network?: Dimenticare la rete?
   Forget network '{}'? You will need the password to reconnect.: Dimenticare la rete '{}'? Servirà la password per riconnetterti.
@@ -1353,6 +1360,9 @@ translations:
   : "Differenza di frequenza: differenza tra il Percorso A e B. Qualsiasi valore sotto i 2 Hz è al di sotto di quanto questa misurazione può risolvere, quindi conta come corrispondente.\n\nCorrispondenza: quanto sono vicine le due cinghie, in percentuale della frequenza della cinghia A. Sopra il 95% è eccellente; sotto il 90% vale la pena regolare."
   From Buffer: Dal buffer
   From Version: Dalla versione
+  Front: 'Davanti'
+  Front Left: 'Davanti sinistra'
+  Front Right: 'Davanti destra'
   Full: Completo
   G-code Console: Console G-code
   G-code Preview: Anteprima G-code
@@ -1616,6 +1626,7 @@ translations:
   It's a new spool: È una nuova bobina
   Jammed at the Toolhead: Inceppato nella testina
   Job Queue: Coda lavori
+  Jog: Jog
   Jog Speed XY: Velocità di movimento XY
   Jog Speed Z: Velocità di movimento Z
   Jog Y until the nozzle is centered over the chute opening, then tap Save.: Muovi Y finché l'ugello non è centrato sull'apertura del condotto, poi tocca Salva.
@@ -1674,6 +1685,7 @@ translations:
     dell'illuminazione
   LEDs: LEDs
   LEDs controlled by the light button: LEDs controllati dal pulsante luce
+  LOAD CELLS: 'CELLE DI CARICO'
   LOADED: CARICATO
   LOCKED: BLOCCATO
   LOT-2024-001: LOT-2024-001
@@ -1707,6 +1719,7 @@ translations:
   Layout: Layout
   Learn More: Scopri di più
   LedSelect: Seleziona LED
+  Left: 'Sinistra'
   Length of filament to purge: 'Lunghezza di filamento da spurgare'
   Length of the cooling tube section: 'Lunghezza della sezione del tubo di raffreddamento'
   'Length:': 'Lunghezza:'
@@ -1724,6 +1737,9 @@ translations:
   Listening: In ascolto
   Live view from your webcam: Vista live dalla webcam
   Load: Carica
+  Load Cell: 'Cella di carico'
+  Load Cells: 'Celle di carico'
+  Load Extruder: 'Carica estrusore'
   Load Failed: 'Caricamento non riuscito'
   Load Filament: Carica filamento
   Load a filament first before trying to unload: Prima carica il filamento, poi prova a scaricarlo
@@ -1808,6 +1824,7 @@ translations:
   Macro to cancel an active print: Macro per annullare una stampa attiva
   Macro to clean/wipe the nozzle: Macro per pulire l'ugello
   Macro to load filament into extruder: Macro per caricare filamento nell'estrusore
+  Macro to park the toolhead at a safe position: 'Macro per portare la testa utensile in posizione sicura'
   Macro to pause an active print: Macro per mettere in pausa una stampa attiva
   Macro to purge/prime the nozzle: Macro per spurgare/preparare l'ugello
   Macro to resume a paused print: Macro per riprendere una stampa in pausa
@@ -1868,6 +1885,7 @@ translations:
     cinghia
   Measure belt path frequencies: Misura le frequenze dei percorsi cinghia
   Measure every tool's XYZ offset automatically: Misura automaticamente l'offset XYZ di ogni strumento
+  Measure pressure advance automatically: 'Misura automaticamente il Pressure Advance'
   Measured (shaper off): Misurato (shaper disattivato)
   Measured filament diameter: Diametro filamento misurato
   Measured pressure advance: 'Pressure Advance misurato'
@@ -1907,6 +1925,7 @@ translations:
   Motors Off: Motori spenti
   'Motors disable failed: {}': 'Disabilitazione motori fallita: {}'
   Motors disabled: Motori disabilitati
+  Motors stay on while a print is active: I motori restano attivi durante una stampa
   Mount: Monta
   Move: Sposta
   Move out of range: 'Movimento fuori intervallo'
@@ -2205,6 +2224,7 @@ translations:
   Parameters: Parametri
   Park: 'Parcheggia'
   Park the AFC system: 'Parcheggia il sistema AFC'
+  Park Toolhead: 'Parcheggia la testina'
   Part: Pezzo
   Part Cooling Fan: Ventola raffreddamento pezzo
   Part Fan: Ventola pezzo
@@ -2287,6 +2307,7 @@ translations:
   'Preheat: all {} tools + bed set': 'Preriscaldamento: tutti i {} utensili + piano
     impostati'
   'Preheat: {} + bed set': 'Preriscaldamento: {} + piano impostati'
+  Preload: 'Precarica'
   Preload failed: Precaricamento non riuscito
   Prepared: Preparato
   Preparing: Preparazione
@@ -2506,6 +2527,9 @@ translations:
   Ready to Apply: Pronto per applicare
   Ready to calibrate: Pronto per la calibrazione
   Ready to pluck: Pronto a pizzicare
+  Rear: 'Dietro'
+  Rear Left: 'Dietro sinistra'
+  Rear Right: 'Dietro destra'
   Reason: Motivo
   ? "Reason: {}\n\nThe printer cannot resume this print. Restart from the beginning?"
   : "Motivo: {}\n\nLa stampante non può riprendere questa stampa. Ricominciare dall'inizio?"
@@ -2523,6 +2547,7 @@ translations:
   Recording Mode: Modalità registrazione
   Recover: Recupera
   Recover MMU state?: Ripristinare lo stato dell'MMU?
+  Recover State: 'Recupera stato'
   Recovering AFC system...: Recupero sistema AFC...
   Recovery failed: Recupero fallito
   'Recovery failed: ': 'Recupero fallito: '
@@ -2538,6 +2563,7 @@ translations:
   Refresh Interval: Intervallo aggiornamento
   Refresh RFID: 'Aggiorna RFID'
   Relative vibration: Vibrazione relativa
+  Refresh Spoolman: 'Aggiorna Spoolman'
   Reheating...: Riscaldamento...
   Release all stepper motors. Position will be lost.: Rilascia tutti i motori stepper.
     La posizione verrà persa.
@@ -2566,6 +2592,8 @@ translations:
 
   Remove the spools now?: Togliere le bobine adesso?
 
+  Remove your tags for this image?: Rimuovere i tuoi contrassegni per questa immagine?
+  Remove your tags for this image? Its chips go back to the shipped positions.: Rimuovere i tuoi contrassegni per questa immagine? Le etichette tornano alle posizioni predefinite.
   Rename: Rinomina
   Rename Fan: Rinomina ventola
   Rename Mesh Profile: Rinomina profilo mesh
@@ -2607,6 +2635,7 @@ translations:
   Reset endless spool failed: 'Ripristino della bobina infinita non riuscito'
   Reset failed: Reset fallito
   Reset motor run-time counter: 'Ripristina il contatore delle ore di funzionamento del motore'
+  Reset tags: Ripristina contrassegni
   Reset to Default: Ripristina predefinito
   Reset to defaults: Ripristina predefiniti
   Reset to original values: Ripristina valori originali
@@ -2673,6 +2702,7 @@ translations:
   Review your configuration below, then click Finish to save: Rivedi la configurazione
     qui sotto, poi tocca Fine per salvare
   Rewinding: Riavvolgimento
+  Right: 'Destra'
   'Role:': 'Ruolo:'
   Rotating tips for using your printer: Suggerimenti a rotazione per l'uso
   Rotation: Rotazione
@@ -2882,6 +2912,7 @@ translations:
   : Impostare a mano tipo e colore del filamento per questo slot. Se il tag dovrebbe essere leggibile, reinserire la bobina con l'etichetta rivolta verso il lettore quando la box è inattiva
   Set up: Configura
   Set up your label printer in Settings: Configura la stampante etichette nelle Impostazioni
+  Set what is really selected and loaded. Nothing moves.: 'Imposta cosa è davvero selezionato e caricato. Nulla si muove.'
   Settings: Impostazioni
   Settings Snapshot: Istantanea delle impostazioni
   Settings reset to defaults. Restarting...: Impostazioni ripristinate ai valori predefiniti.
@@ -3111,18 +3142,26 @@ translations:
   'TOGGLE: {}': 'COMMUTA: {}'
   TOOLS: STRUMENTI
   TPU: TPU
+  Tag Parts: Contrassegna componenti
+  Tag parts: Contrassegna componenti
   Takes 3-5 min. Do not interrupt.: Richiede 3-5 min. Non interrompere.
   'Tangle sensitivity': 'Sensibilità ai grovigli'
   Tap + to add: Tocca + per aggiungere
   Tap Firmware Restart to recover — on K2 this also bounces the rpi MCU bridge: Toccare Riavvia firmware per ripristinare. Sulla K2 questo riavvia anche il bridge MCU rpi
   Tap again to confirm this orientation: Tocca di nuovo per confermare questo orientamento
+  Tap an empty spot inside the enclosure: Tocca un punto vuoto dentro la chiusura
   Tap an object to exclude it | {} objects ({} excluded): 'Tocca un oggetto per escluderlo | {} oggetti ({} esclusi)'
   Tap any tile to open its full controls or toggle its state.: Tocca un riquadro per aprirne i controlli completi o per cambiarne lo stato.
   Tap anywhere if this text is right-side up: Tocca ovunque se questo testo è dritto
   Tap anywhere to begin: Tocca ovunque per iniziare
   Tap anywhere to begin calibration: Tocca ovunque per avviare la calibrazione
+  Tap the bed's front-left corner: 'Tocca l''angolo anteriore sinistro del piano'
+  Tap the bed's front-right corner: 'Tocca l''angolo anteriore destro del piano'
   Tap the crosshair (point %1$d of 3) — touch %2$d of %3$d: Tocca il mirino
     (punto %1$d di 3) — tocco %2$d di %3$d
+  Tap the light: Tocca la luce
+  Tap the nozzle tip: 'Tocca la punta dell''ugello'
+  Tap the part cooling fan: Tocca la ventola raffreddamento pezzo
   Tap to assign: Tocca per assegnare
   Target: 'Target'
   Target Frequency: Frequenza obiettivo
@@ -3459,6 +3498,7 @@ translations:
   Unavailable: Non disponibile
   Unavailable on this printer: Non disponibile su questa stampante
   Understanding Results: Capire i risultati
+  Undo: Indietro
   ? "Uneven belt tension causes print artifacts like layer shifts, VFAs (vertical fine artifacts), and ringing.\n\nPluck each belt by hand and this tool listens through the accelerometer to measure the belt's frequency. Matched frequencies mean balanced tension.\n\nOn CoreXY, belts A and B should be within a few Hz of each other."
   : "Una tensione non uniforme della cinghia causa artefatti di stampa come spostamenti di strato, VFA (artefatti verticali fini) e ringing.\n\nPizzica ogni cinghia a mano e questo strumento ascolta tramite l'accelerometro per misurare la frequenza della cinghia. Frequenze corrispondenti indicano una tensione bilanciata.\n\nPer CoreXY, le cinghie A e B dovrebbero differire di pochi Hz."
   Uninstall: Disinstalla
@@ -3481,6 +3521,7 @@ translations:
   Unknown error: Errore sconosciuto
   Unload: Scarica
   Unload Distance: 'Distanza di scarico'
+  Unload Extruder: 'Scarica estrusore'
   Unload Failed: 'Scaricamento non riuscito'
   Unload Filament: Scarica filamento
   'Unload at end': 'Scarica alla fine'
@@ -3492,6 +3533,7 @@ translations:
   Unload macro not configured: Macro scaricamento non configurata
   Unload the CFS filament before enabling bypass: 'Scarica il filamento del CFS prima di attivare il bypass'
   Unload...: Scarica...
+  Unloaded: 'Scaricato'
   Unloading: Scaricamento
   Unloading Start Speed: 'Velocità iniziale di scarico'
   Unloading before bypass...: Scaricamento prima del bypass...

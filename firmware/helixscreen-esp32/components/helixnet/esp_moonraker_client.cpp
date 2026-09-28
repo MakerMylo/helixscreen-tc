@@ -4,9 +4,11 @@
 #include "esp_moonraker_client.h"
 
 #include "esp_log.h"
+#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "helix_version.h" // HELIX_VERSION for server.connection.identify
+#include "json_utils.h"
 
 #include <algorithm>
 #include <utility>
@@ -25,6 +27,7 @@ int64_t now_us() {
 // pong, close) is handled by the component or ignored.
 constexpr uint8_t OP_TEXT = 0x01;
 constexpr uint8_t OP_CONTINUATION = 0x00;
+constexpr uint8_t OP_PONG = 0x0A;
 } // namespace
 
 EspMoonrakerClient::EspMoonrakerClient() {
@@ -309,13 +312,7 @@ void EspMoonrakerClient::set_state(ConnectionState next) {
         }
     }
     if (cb) {
-        try {
-            cb(prev, next);
-        } catch (const std::exception& e) {
-            ESP_LOGE(TAG, "state_change_cb threw: %s", e.what());
-        } catch (...) {
-            ESP_LOGE(TAG, "state_change_cb threw unknown");
-        }
+        cb(prev, next);
     }
 }
 
@@ -335,13 +332,7 @@ void EspMoonrakerClient::emit_event(MoonrakerEventType type, const std::string& 
         return;
     }
     MoonrakerEvent ev{type, message, details, is_error};
-    try {
-        handler(ev);
-    } catch (const std::exception& e) {
-        ESP_LOGE(TAG, "event handler threw: %s", e.what());
-    } catch (...) {
-        ESP_LOGE(TAG, "event handler threw unknown");
-    }
+    handler(ev);
 }
 
 // ---------------------------------------------------------------------------
@@ -375,6 +366,9 @@ void EspMoonrakerClient::ws_event_trampoline(void* arg, esp_event_base_t /*base*
 
 void EspMoonrakerClient::on_ws_connected() {
     ESP_LOGI(TAG, "connected to %s", url_.c_str());
+    pongs_this_connection_ = 0;
+    last_pong_us_ = 0;
+    connected_us_ = esp_timer_get_time();
     // Reset exponential backoff for the next disconnect.
     next_reconnect_delay_ms_ = reconnect_min_delay_ms_;
     // shrink the reassembly buffer back down after a session's peak.
@@ -391,13 +385,7 @@ void EspMoonrakerClient::on_ws_connected() {
     was_connected_ = true;
 
     if (on_connected_) {
-        try {
-            on_connected_();
-        } catch (const std::exception& e) {
-            ESP_LOGE(TAG, "on_connected threw: %s", e.what());
-        } catch (...) {
-            ESP_LOGE(TAG, "on_connected threw unknown");
-        }
+        on_connected_();
     }
 
     std::vector<std::pair<std::string, std::function<void()>>> observers;
@@ -412,18 +400,18 @@ void EspMoonrakerClient::on_ws_connected() {
         if (!fn) {
             continue;
         }
-        try {
-            fn();
-        } catch (const std::exception& e) {
-            ESP_LOGE(TAG, "connected observer '%s' threw: %s", name.c_str(), e.what());
-        } catch (...) {
-            ESP_LOGE(TAG, "connected observer '%s' threw unknown", name.c_str());
-        }
+        fn();
     }
 }
 
 void EspMoonrakerClient::on_ws_disconnected() {
-    ESP_LOGW(TAG, "disconnected from %s", url_.c_str());
+    // A ping/pong timeout with zero pongs means none reached this client at all;
+    // pongs that stopped partway point at the link instead.
+    const int64_t now_us = esp_timer_get_time();
+    ESP_LOGW(TAG, "disconnected from %s (%u pongs this connection, last %llds ago, up %llds)",
+             url_.c_str(), pongs_this_connection_,
+             last_pong_us_ ? static_cast<long long>((now_us - last_pong_us_) / 1000000) : -1LL,
+             static_cast<long long>((now_us - connected_us_) / 1000000));
 
     // Any discovery chain in flight is now invalid: its pending requests are about
     // to be failed with connection_lost below. Clear the guard so the next
@@ -458,12 +446,7 @@ void EspMoonrakerClient::on_ws_disconnected() {
             if (req.error_cb) {
                 MoonrakerError err = MoonrakerError::connection_lost(req.method);
                 auto cb = req.error_cb;
-                cleanup.emplace_back([cb, err]() {
-                    try {
-                        cb(err);
-                    } catch (...) {
-                    }
-                });
+                cleanup.emplace_back([cb, err]() { cb(err); });
             }
         }
         pending_.clear();
@@ -473,18 +456,17 @@ void EspMoonrakerClient::on_ws_disconnected() {
     }
 
     if (on_disconnected_) {
-        try {
-            on_disconnected_();
-        } catch (const std::exception& e) {
-            ESP_LOGE(TAG, "on_disconnected threw: %s", e.what());
-        } catch (...) {
-            ESP_LOGE(TAG, "on_disconnected threw unknown");
-        }
+        on_disconnected_();
     }
 }
 
 void EspMoonrakerClient::on_ws_data(const esp_websocket_event_data_t* d) {
     if (!d) {
+        return;
+    }
+    if (d->op_code == OP_PONG) {
+        ++pongs_this_connection_;
+        last_pong_us_ = esp_timer_get_time();
         return;
     }
     // Only text (0x01) and its continuation frames (0x00) carry JSON-RPC.
@@ -510,7 +492,16 @@ void EspMoonrakerClient::on_ws_data(const esp_websocket_event_data_t* d) {
     const bool complete = (d->payload_offset + d->data_len) >= d->payload_len;
     if (complete) {
         if (!rx_skip_ && !rx_buf_.empty()) {
+            // Every callback runs on this task, and the component reads the
+            // next frame (a PONG included) only after this returns: a slow
+            // handler here reads as a dead link at the 20s ping/pong timeout.
+            const int64_t t0 = esp_timer_get_time();
             dispatch_message(rx_buf_.data(), rx_buf_.size());
+            const int64_t ms = (esp_timer_get_time() - t0) / 1000;
+            if (ms >= SLOW_DISPATCH_LOG_MS) {
+                ESP_LOGW(TAG, "slow dispatch: %lldms for a %u-byte message: %.60s", ms,
+                         static_cast<unsigned>(rx_buf_.size()), rx_buf_.c_str());
+            }
         }
         rx_buf_.clear();
         rx_skip_ = false;
@@ -557,20 +548,10 @@ void EspMoonrakerClient::dispatch_message(const char* buf, size_t len) {
                                method);
                 }
                 if (error_cb) {
-                    try {
-                        error_cb(err);
-                    } catch (const std::exception& e) {
-                        ESP_LOGE(TAG, "error cb for '%s' threw: %s", method.c_str(), e.what());
-                    } catch (...) {
-                    }
+                    error_cb(err);
                 }
             } else if (success_cb) {
-                try {
-                    success_cb(msg);
-                } catch (const std::exception& e) {
-                    ESP_LOGE(TAG, "success cb for '%s' threw: %s", method.c_str(), e.what());
-                } catch (...) {
-                }
+                success_cb(msg);
             }
         }
     }
@@ -616,12 +597,7 @@ void EspMoonrakerClient::dispatch_notification(const json& msg, bool include_met
         msg["params"].is_array() && !msg["params"].empty()) {
         const json& params0 = msg["params"][0];
         if (params0.contains("bed_mesh") && params0["bed_mesh"].is_object()) {
-            try {
-                bed_mesh_cb(params0["bed_mesh"]);
-            } catch (const std::exception& e) {
-                ESP_LOGE(TAG, "bed_mesh callback threw: %s", e.what());
-            } catch (...) {
-            }
+            bed_mesh_cb(params0["bed_mesh"]);
         }
     }
 
@@ -629,12 +605,7 @@ void EspMoonrakerClient::dispatch_notification(const json& msg, bool include_met
         if (!cb) {
             continue;
         }
-        try {
-            cb(msg);
-        } catch (const std::exception& e) {
-            ESP_LOGE(TAG, "callback for '%s' threw: %s", method.c_str(), e.what());
-        } catch (...) {
-        }
+        cb(msg);
     }
 }
 
@@ -713,10 +684,7 @@ void EspMoonrakerClient::process_timeouts() {
                        "Printer command '" + t.method + "' timed out", false, t.method);
         }
         if (t.cb) {
-            try {
-                t.cb(t.err);
-            } catch (...) {
-            }
+            t.cb(t.err);
         }
     }
 
@@ -757,7 +725,7 @@ int EspMoonrakerClient::send_envelope(const json& envelope) {
     if (!is_connected()) {
         return -1;
     }
-    std::string payload = envelope.dump();
+    std::string payload = helix::json_util::safe_dump(envelope);
     int sent = esp_websocket_client_send_text(ws_, payload.data(), static_cast<int>(payload.size()),
                                               pdMS_TO_TICKS(SEND_TIMEOUT_MS));
     return sent;
@@ -803,10 +771,7 @@ RequestId EspMoonrakerClient::send_jsonrpc(const std::string& method, const json
     if (!is_connected()) {
         // Fail fast so callers don't wait on a request that never times out.
         if (error_cb) {
-            try {
-                error_cb(MoonrakerError::connection_lost(method));
-            } catch (...) {
-            }
+            error_cb(MoonrakerError::connection_lost(method));
         }
         return INVALID_REQUEST_ID;
     }
@@ -845,10 +810,7 @@ RequestId EspMoonrakerClient::track_and_send(const std::string& method, const js
             err.type = MoonrakerErrorType::CONNECTION_LOST;
             err.method = method;
             err.message = "Request queue full — too many pending requests";
-            try {
-                error_cb(err);
-            } catch (...) {
-            }
+            error_cb(err);
         }
         return INVALID_REQUEST_ID;
     }
@@ -874,10 +836,7 @@ RequestId EspMoonrakerClient::track_and_send(const std::string& method, const js
             }
         }
         if (cb_copy) {
-            try {
-                cb_copy(MoonrakerError::connection_lost(method));
-            } catch (...) {
-            }
+            cb_copy(MoonrakerError::connection_lost(method));
         }
         return INVALID_REQUEST_ID;
     }
@@ -903,9 +862,9 @@ void EspMoonrakerClient::get_gcode_store(
                 entries.reserve(store.size());
                 for (const auto& item : store) {
                     GcodeStoreEntry entry;
-                    entry.message = item.value("message", "");
-                    entry.time = item.value("time", 0.0);
-                    entry.type = item.value("type", "response");
+                    entry.message = helix::json_util::safe_string(item, "message");
+                    entry.time = helix::json_util::safe_double(item, "time", 0.0);
+                    entry.type = helix::json_util::safe_string(item, "type", "response");
                     entries.push_back(std::move(entry));
                 }
             }
@@ -1271,7 +1230,7 @@ void EspMoonrakerClient::discover_printer(std::function<void()> on_complete,
             }
             if (resp.contains("result")) {
                 spdlog::info("[helixnet] identified to Moonraker (connection_id: {})",
-                             resp["result"].value("connection_id", 0));
+                             helix::json_util::safe_int(resp["result"], "connection_id", 0));
             }
             discovery_gate_klippy(done, fail, generation);
         },
@@ -1363,12 +1322,7 @@ void EspMoonrakerClient::discovery_query_objects(DiscoveryDone done, DiscoveryFa
                          snapshot.fans().size(), snapshot.leds().size(),
                          snapshot.filament_sensor_names().size());
             if (hw_cb) {
-                try {
-                    hw_cb(snapshot);
-                } catch (const std::exception& e) {
-                    ESP_LOGE(TAG, "on_hardware_discovered threw: %s", e.what());
-                } catch (...) {
-                }
+                hw_cb(snapshot);
             }
 
             discovery_subscribe(std::move(done), std::move(fail), generation);
@@ -1410,7 +1364,8 @@ void EspMoonrakerClient::discovery_subscribe(DiscoveryDone done, DiscoveryFail f
                 // Subscribe returned an error object but the request itself
                 // succeeded — desktop treats this as non-fatal; discovery still
                 // completes so the UI can come up.
-                spdlog::error("[helixnet] subscribe returned error: {}", resp["error"].dump());
+                spdlog::error("[helixnet] subscribe returned error: {}",
+                              helix::json_util::safe_dump(resp["error"]));
                 emit_event(MoonrakerEventType::DISCOVERY_FAILED,
                            "Failed to subscribe to printer updates", false);
             }
@@ -1431,12 +1386,7 @@ void EspMoonrakerClient::discovery_subscribe(DiscoveryDone done, DiscoveryFail f
                 snap = hardware_;
             }
             if (done_cb) {
-                try {
-                    done_cb(snap, initial_status);
-                } catch (const std::exception& e) {
-                    ESP_LOGE(TAG, "on_discovery_complete threw: %s", e.what());
-                } catch (...) {
-                }
+                done_cb(snap, initial_status);
             }
 
             // Permanent telemetry, not scaffolding: uxTaskGetStackHighWaterMark
@@ -1456,10 +1406,7 @@ void EspMoonrakerClient::discovery_subscribe(DiscoveryDone done, DiscoveryFail f
 
             discovery_in_flight_.store(false);
             if (*done) {
-                try {
-                    (*done)();
-                } catch (...) {
-                }
+                (*done)();
             }
         },
         [this, done, fail, generation](const MoonrakerError& err) {
@@ -1483,10 +1430,7 @@ void EspMoonrakerClient::discovery_fail(const DiscoveryFail& fail, MoonrakerEven
     emit_event(ev, reason, true);
     discovery_in_flight_.store(false);
     if (fail && *fail) {
-        try {
-            (*fail)(reason);
-        } catch (...) {
-        }
+        (*fail)(reason);
     }
 }
 
@@ -1608,10 +1552,7 @@ void EspMoonrakerClient::add_connected_observer(const std::string& handler_name,
         }
     }
     if (fire_now && immediate) {
-        try {
-            immediate();
-        } catch (...) {
-        }
+        immediate();
     }
 }
 

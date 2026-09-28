@@ -31,9 +31,11 @@
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <charconv>
 #include <lvgl.h>
+#include <optional>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -226,9 +228,37 @@ void AmsBackendSnapmaker::on_started() {
 // State Queries
 // ============================================================================
 
+namespace {
+/// What each U1 step projects to, by the phase index classify_channel_state()
+/// emits for its direction. Home and Select only position the head, so they
+/// read as the direction. The step model and the published action both read
+/// this, so the two cannot disagree.
+std::optional<AmsAction> u1_step_action(bool unload, int phase) {
+    static constexpr std::array kLoad{AmsAction::LOADING, AmsAction::LOADING, AmsAction::HEATING,
+                                      AmsAction::LOADING, AmsAction::PURGING};
+    static constexpr std::array kUnload{AmsAction::UNLOADING, AmsAction::UNLOADING,
+                                        AmsAction::HEATING, AmsAction::UNLOADING};
+    const int count = static_cast<int>(unload ? kUnload.size() : kLoad.size());
+    if (phase < 0 || phase >= count) {
+        return std::nullopt;
+    }
+    return unload ? kUnload[static_cast<size_t>(phase)] : kLoad[static_cast<size_t>(phase)];
+}
+} // namespace
+
 AmsSystemInfo AmsBackendSnapmaker::get_system_info() const {
     std::lock_guard<std::mutex> lock(mutex_);
-    return system_info_;
+    AmsSystemInfo info = system_info_;
+    info.action = published_action_locked();
+    return info;
+}
+
+std::optional<AmsAction> AmsBackendSnapmaker::step_action_locked() const {
+    // system_info_.action stays the operation's direction, because the frame
+    // parser closes an operation by matching LOADING / UNLOADING; the step
+    // under way is what gets published.
+    return u1_step_action(system_info_.action == AmsAction::UNLOADING,
+                          system_info_.operation_phase);
 }
 
 SlotInfo AmsBackendSnapmaker::get_slot_info(int slot_index) const {
@@ -268,14 +298,17 @@ AmsBackendSnapmaker::get_operation_step_model(StepOperationType op) const {
     // wrapped in lv_tr() so they are translated and picked up by the string tooling.
     const bool unload = (op == StepOperationType::UNLOAD);
     OperationStepModel model;
-    model.steps.push_back({lv_tr("Home"), 0, false, false});
-    model.steps.push_back({lv_tr("Select"), 1, false, false});
+    model.steps.push_back({lv_tr("Home"), 0});
+    model.steps.push_back({lv_tr("Select"), 1});
     model.steps.push_back({lv_tr("Heat nozzle"), 2, false, /*live_temp=*/true});
     if (unload) {
-        model.steps.push_back({lv_tr("Retract"), 3, false, false});
+        model.steps.push_back({lv_tr("Retract"), 3});
     } else {
-        model.steps.push_back({lv_tr("Feed filament"), 3, false, false});
-        model.steps.push_back({lv_tr("Purge"), 4, false, false});
+        model.steps.push_back({lv_tr("Feed filament"), 3});
+        model.steps.push_back({lv_tr("Purge"), 4});
+    }
+    for (int i = 0; i < static_cast<int>(model.steps.size()); ++i) {
+        model.steps[static_cast<size_t>(i)].coarse = u1_step_action(unload, i);
     }
     return model;
 }
@@ -2139,9 +2172,10 @@ void AmsBackendSnapmaker::handle_status_update(const nlohmann::json& notificatio
                         auto hex = color_arr[i].get<std::string>();
                         // RGBA hex string → RGB uint32: take first 6 chars
                         if (hex.size() >= 6) {
-                            try {
-                                slot->color_rgb = std::stoul(hex.substr(0, 6), nullptr, 16);
-                            } catch (...) {
+                            const auto rgb =
+                                helix::text_io::parse_leading<unsigned long>(hex.substr(0, 6), 16);
+                            if (rgb) {
+                                slot->color_rgb = *rgb;
                             }
                         }
                         changed = true;
@@ -2176,19 +2210,19 @@ void AmsBackendSnapmaker::handle_status_update(const nlohmann::json& notificatio
             // bypass_sensor, custom names) is unrelated to per-tool runout.
             if (sensor_name.size() < 2 || sensor_name[0] != 'e')
                 continue;
-            int tool_idx = -1;
-            try {
-                size_t digit_end = 1;
-                while (digit_end < sensor_name.size() &&
-                       std::isdigit(static_cast<unsigned char>(sensor_name[digit_end]))) {
-                    ++digit_end;
-                }
-                if (digit_end == 1)
-                    continue; // no digits
-                tool_idx = std::stoi(std::string(sensor_name.substr(1, digit_end - 1)));
-            } catch (...) {
+            size_t digit_end = 1;
+            while (digit_end < sensor_name.size() &&
+                   std::isdigit(static_cast<unsigned char>(sensor_name[digit_end]))) {
+                ++digit_end;
+            }
+            if (digit_end == 1)
+                continue; // no digits
+            const auto parsed_tool_idx =
+                helix::text_io::parse_leading<int>(sensor_name.substr(1, digit_end - 1));
+            if (!parsed_tool_idx) {
                 continue;
             }
+            const int tool_idx = *parsed_tool_idx;
             if (tool_idx < 0 || tool_idx >= NUM_TOOLS)
                 continue;
             if (!it.value().is_object())
@@ -2688,7 +2722,11 @@ AmsBackendSnapmaker::classify_error(const std::string& raw_line,
 
     // Firmware counts extruders from 0; every slot number the user reads is
     // 1-based, matching the machine's own labels and the slicer's filament list.
-    const int slot = std::stoi(digits) + 1;
+    const auto parsed_slot_no = helix::text_io::parse_leading<int>(digits);
+    if (!parsed_slot_no) {
+        return std::nullopt;
+    }
+    const int slot = *parsed_slot_no + 1;
 
     spdlog::warn("{} Resume refused: extruder {} has no filament type assigned", backend_log_tag(),
                  digits);
@@ -2833,7 +2871,11 @@ std::string AmsBackendSnapmaker::build_preference_gcode(const std::string& actio
         // taken without holding mutex_ across the send that follows: a frame
         // updating a different tool in that window loses to this write, which
         // is the user-write-wins ordering.
-        const size_t tool = static_cast<size_t>(std::stoul(suffix));
+        const auto parsed_tool = helix::text_io::parse_leading<unsigned long>(suffix);
+        if (!parsed_tool) {
+            return {};
+        }
+        const size_t tool = static_cast<size_t>(*parsed_tool);
         auto list = print_preferences().end_unload_filament;
         // A tool past the reported list is a stale id from before the firmware
         // reported fewer toolheads.

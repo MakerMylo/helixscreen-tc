@@ -9,6 +9,7 @@
 #include "ams_tool_map_sync.h"
 #include "color_utils.h"
 #include "i_moonraker_api.h"
+#include "json_utils.h"
 #include "lane_legacy_migration.h"
 #include "lane_source_store.h"
 #include "lvgl/src/others/translation/lv_translation.h"
@@ -122,7 +123,12 @@ void AmsBackendToolChanger::on_started() {
 
 AmsSystemInfo AmsBackendToolChanger::get_system_info() const {
     std::lock_guard<std::mutex> lock(mutex_);
-    return system_info_;
+    AmsSystemInfo info = system_info_;
+    // system_info_.action stays the hand-kept swap state apply_tool_sensor_locked()
+    // reads back to tell a closing grip from a resting gripper; the step under
+    // way is what gets published.
+    info.action = published_action_locked();
+    return info;
 }
 
 AmsType AmsBackendToolChanger::get_type() const {
@@ -225,7 +231,7 @@ namespace {
 ///
 /// What actually prevents that: get_operation_step_model() snapshots the
 /// latches into step_model_feeder_reported_ / step_model_direction_reported_,
-/// and step_index_for_phase_locked() resolves against that SAME snapshot
+/// and resolve_step_locked() resolves against that SAME snapshot
 /// rather than the live latches. Once a model exists, its index is pinned to
 /// the exact sequence it was built from until the next model build refreshes
 /// the snapshot.
@@ -284,6 +290,12 @@ const char* tc_step_label(TcStep step) {
     return "";
 }
 
+/// The coarse action a step projects to. The swap itself is the operation, so
+/// every step reads SELECTING except docking, which puts the old tool away.
+AmsAction tc_step_action(TcStep step) {
+    return step == TcStep::Dock ? AmsAction::UNLOADING : AmsAction::SELECTING;
+}
+
 } // namespace
 
 AmsBackend::OperationStepModel
@@ -291,7 +303,7 @@ AmsBackendToolChanger::get_operation_step_model(StepOperationType op) const {
     std::lock_guard<std::mutex> lock(mutex_);
 
     OperationStepModel model;
-    // Snapshot the latches this model is built from: step_index_for_phase_locked()
+    // Snapshot the latches this model is built from: resolve_step_locked()
     // must resolve every frame's index against this SAME sequence, not
     // whatever the latches read by the time a later frame arrives.
     step_model_feeder_reported_ = feeder_state_reported_;
@@ -301,7 +313,8 @@ AmsBackendToolChanger::get_operation_step_model(StepOperationType op) const {
         tc_step_sequence(op, step_model_feeder_reported_, step_model_direction_reported_);
     int index = 0;
     for (TcStep step : sequence) {
-        model.steps.push_back({lv_tr(tc_step_label(step)), index++, false, /*live_temp=*/false});
+        model.steps.push_back({lv_tr(tc_step_label(step)), index++, false, /*live_temp=*/false,
+                               tc_step_action(step)});
     }
     // No phases to show. NOT the legacy Heat/Feed/Purge bar: nothing heats, no
     // filament feeds and nothing purges on a machine that swaps a whole hot end.
@@ -320,8 +333,8 @@ lv_subject_t* AmsBackendToolChanger::get_operation_step_index_subject(StepOperat
     return AmsState::instance().get_ams_operation_phase_subject();
 }
 
-int AmsBackendToolChanger::step_index_for_phase_locked(const std::string& operation,
-                                                       bool mid_operation) const {
+AmsBackendToolChanger::ResolvedStep
+AmsBackendToolChanger::resolve_step_locked(const std::string& operation, bool mid_operation) const {
     // Against the operation the sidebar is CURRENTLY rendering: load, unload and
     // swap have different-length sequences, so an index is only meaningful
     // relative to one of them. And, once a model has actually been built,
@@ -338,7 +351,7 @@ int AmsBackendToolChanger::step_index_for_phase_locked(const std::string& operat
     const auto sequence = tc_step_sequence(AmsState::instance().get_active_step_operation(),
                                            has_feeder, names_direction);
     if (sequence.empty()) {
-        return -1;
+        return {};
     }
 
     TcStep wanted;
@@ -364,7 +377,7 @@ int AmsBackendToolChanger::step_index_for_phase_locked(const std::string& operat
         // complete before the carriage has moved. Snapmaker and AD5X park at -1
         // when idle for the same reason.
         if (!has_feeder || !mid_operation) {
-            return -1;
+            return {};
         }
         if (feeder_open_) {
             wanted = TcStep::Release;
@@ -375,18 +388,18 @@ int AmsBackendToolChanger::step_index_for_phase_locked(const std::string& operat
             // the gap between dispatching the swap and the machine moving, not
             // the grip that ends one. Claiming the last step here paints the bar
             // complete for the second before anything happens.
-            return -1;
+            return {};
         }
     } else {
-        return -1; // uninitialized / error / anything this build does not know
+        return {}; // uninitialized / error / anything this build does not know
     }
 
     for (size_t i = 0; i < sequence.size(); ++i) {
         if (sequence[i] == wanted) {
-            return static_cast<int>(i);
+            return {static_cast<int>(i), tc_step_action(wanted)};
         }
     }
-    return -1;
+    return {};
 }
 
 // ============================================================================
@@ -689,7 +702,9 @@ void AmsBackendToolChanger::apply_tool_sensor_locked(
     // pin_watch-only frame, whose reading has no operation at all - would
     // otherwise stomp the phase to -1 in the middle of a swap.
     if (!op.empty()) {
-        system_info_.operation_phase = step_index_for_phase_locked(op, was_mid_operation);
+        const ResolvedStep step = resolve_step_locked(op, was_mid_operation);
+        system_info_.operation_phase = step.index;
+        step_action_ = step.action;
     }
 
     // Now that the closing grip has had its chance to be recognised: the next
@@ -800,7 +815,8 @@ void AmsBackendToolChanger::parse_toolchanger_state(const nlohmann::json& tc_dat
     // Parse tool list: toolchanger.tool_numbers and toolchanger.tool_names
     // This can be used to dynamically update the tool list
     if (tc_data.contains("tool_numbers") && tc_data["tool_numbers"].is_array()) {
-        spdlog::trace("[AMS ToolChanger] Tool numbers: {}", tc_data["tool_numbers"].dump());
+        spdlog::trace("[AMS ToolChanger] Tool numbers: {}",
+                      helix::json_util::safe_dump(tc_data["tool_numbers"]));
     }
 }
 
@@ -1024,7 +1040,7 @@ uint64_t AmsBackendToolChanger::begin_dispatch_locked(AmsAction action) {
     operation_confirmed_ = false;
 
     // Same escape path, and the gripper latch is the more damaging half of it.
-    // step_index_for_phase_locked() reads it to tell the grip that ENDS a swap
+    // resolve_step_locked() reads it to tell the grip that ENDS a swap
     // from the closed gripper that precedes one, so a value carried over from
     // the previous operation resolves this dispatch's first closed-gripper
     // frame to the final step - the bar paints itself complete before the

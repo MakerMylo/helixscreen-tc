@@ -5,7 +5,9 @@ one size itself responsively. The nozzle-temps widget is the exemplar to copy:
 `src/ui/panel_widgets/nozzle_temps_widget.{h,cpp}`,
 `src/ui/panel_widgets/nozzle_layout.h`, and its three XML components. The eighteen
 centred-icon tiles run the same pattern one instance deeper; see
-[The tile instance of the pattern](#the-tile-instance-of-the-pattern) below.
+[The tile instance of the pattern](#the-tile-instance-of-the-pattern) below, and the
+printer image's live callouts are a third instance
+([The printer image callouts instance](#the-printer-image-callouts-instance)).
 
 **Related**: `LAYOUT_SYSTEM.md` (the home grid that sizes tiles),
 `LVGL9_XML_GUIDE.md` (bindings), `ARCHITECTURE.md` (subjects).
@@ -129,7 +131,93 @@ On the XML side, the rung styles `styles.tile_icon_xs` .. `styles.tile_icon_xl`,
 `#icon_font_*` TOKEN, never a literal face, because a literal face a platform did not
 link renders tofu. The seven single-icon action tiles share
 `ui_xml/components/home_action_tile.xml`, whose `tile_icon_subject` prop installs the
-per-instance rung binding (empty installs none).
+per-instance rung binding (empty installs none). The Controls panel's calibration cells and
+Motors Off use the same component; its props are listed in
+[LVGL9_XML_GUIDE.md](LVGL9_XML_GUIDE.md#home_action_tile).
+
+### The printer image callouts instance
+
+`PrinterImageWidget` (`src/ui/panel_widgets/printer_image_widget.{h,cpp}`) runs the pattern
+over live chips on the home printer picture: temperature chips for the nozzle, bed and
+chamber, the part fan's speed, and a light chip (prestonbrown/helixscreen#1397). The pure
+decision is `helix::compute_callout_layout()` (`src/ui/panel_widgets/callout_layout.h`),
+which returns a `CalloutMode`, the image rect, and each chip's rect and leader line.
+
+- **The mode ladder.** Image only (one cell on both axes, or an image too short for three
+  chip heights); both sides (each side band of the centred image fits a chip column, each
+  chip on the side nearer its point); one side (the image moves to the near edge and every
+  chip stacks in the far band); pinned (tagged image, no band: chips sit on their points,
+  nozzle + fan merge into one toolhead chip, and chips that would overlap slide apart);
+  docked (untagged image: chips in the free band, else along the bottom edge, never a
+  line). A tile taller than the image's aspect runs the same ladder with bands above and
+  below.
+- **The budget decides the mode; the active chips get positions.** `CalloutLayoutInput`
+  carries both: `budget` is every chip this printer can ever show at its widest text,
+  `active` is what shows now. Fitting against the budget is what keeps the image still
+  as chips come and go. A capability (`printer_has_led`, `printer_has_chamber_heater`)
+  changes the budget, so its observer relayouts even when no chip text changes.
+- **Chips are measured with the composer they render.** `apply_callout_layout()` measures
+  in the chips' own fonts, takes padding and border from the live chip's style, and
+  `around_text()` is the single expression for everything in a chip except its text. It
+  sizes the chip and bounds the label's `max_width`, so a chip clamped narrower than its
+  text ends in dots instead of spilling.
+- **Geometry is set only from the deferred timer.** Observers publish subjects and call
+  `schedule_callout_layout()`; the one-shot timer measures and places. Nothing forces a
+  layout pass during a grid rebuild (#983, #1025). Unchanged coordinates are not
+  rewritten, since every style write invalidates and temperatures relayout every tick.
+- **One side and the exact-size image cache.** A moved image declares a pixel rect whose
+  coords only follow at the next layout pass, and the cache check runs from timers that
+  can fire first, so the cache reads the DECLARED size
+  (`src/ui/panel_widgets/printer_image_widget.cpp#declared_image_size`), never the coords.
+  A generated copy whose size no longer matches the declared rect is dropped and the check
+  rescheduled. An exact copy is shown 1:1: `show_exact_copy()` sets the inner align to
+  CENTER, then `LV_SCALE_NONE`, then the source, because LVGL keeps the scale CONTAIN
+  computed until the align changes and refuses a scale while CONTAIN is still set.
+- **Pinned chips slide apart.** After the pinned chips are placed on their points (and
+  after the toolhead merge and docking), `callout_detail::slide_apart()`
+  (`src/ui/panel_widgets/callout_layout.h#slide_apart`) groups pinned chips whose x-ranges
+  intersect into columns and spreads each column vertically with the same `spread_1d()`
+  the side bands use, between the top edge and the docked row. A chip moves only within
+  its column, only as far as `spread_1d()` needs, and never horizontally; a lone chip
+  moves only to clear the docked row. A column too tall to stack there gives up its
+  lowest-priority chip (light, fan, chamber, then bed; never the nozzle or toolhead) to
+  the docked row, and the layout runs again until every column fits.
+- **Leader lines are elbows.** Each line is three points: the tagged point, an elbow, and
+  the middle of the chip's inner edge. From the point it runs at 45 degrees toward the
+  chip's height, then straight into the chip: level into a side-band chip, vertical into a
+  chip above or below the image. When 45 degrees would leave less than `min_line` of
+  straight run, the diagonal steepens to keep that stub, and it never runs back past the
+  point. `callout_detail::leader_elbow()`
+  (`src/ui/panel_widgets/callout_layout.h#leader_elbow`) is the rule;
+  `stack()` records the elbow in `CalloutChipOut::line_xm` / `line_ym`.
+- **Leader lines keep their points alive.** `<leader_line>` (`include/ui_leader_line.h`)
+  is a bare `lv_line`, and `lv_line` keeps the pointer it is given, so each line's three
+  points live in the widget (`callout_line_pts_`, one set per `CalloutKind` that can draw
+  a line) for as long as the line exists.
+- **A chip's shown int has three values.** `callout_<kind>_shown` is 0 hidden, 1 active,
+  2 residual: a heater that is off but still above 50C. XML hides a chip on `eq 0`, and
+  `activity_chip` takes the chip's shown subject as `shown_subject` and binds a
+  `#text_subtle` style on its label for 2, so a residual chip's text is greyed with no C++
+  styling (the chip text is already `#text_muted`).
+- **Where the points come from.** Each shipped image's nozzle, bed edge, part fan, chamber
+  and light are hand-tagged, normalized over the source PNG, in
+  `assets/images/printers/regions.json`; `assets/images/printers/README.md` documents the
+  format and `tools/printer-regions-tagger.html` is the tagging tool. `[regions]` fails,
+  naming the image, when a PNG no longer matches its recorded size.
+- **Users tag their own.** Tag parts in the printer image picker opens
+  `PrinterImageTaggerOverlay` (`src/ui/ui_overlay_printer_image_tagger.cpp`), which walks
+  `helix::ImageTagSession` through the same six prompts on the image the widget displays and
+  saves to `<config dir>/printer_image_regions.json` through `save_user_image_regions()`.
+  Both files are keyed by `printer_image_region_key()`, which gives a custom photo
+  `custom:<name>`. `lookup_image_regions()` prefers a user entry, but only when its `size`
+  matches the displayed image's natural size, so tags made on another screen tier, or on
+  shipped art that has since been re-cut, fall back to the shipped entry or to docked chips.
+  The size cannot tell one custom photo from another of the same aspect, so
+  `PrinterImageManager::import_image()` and `delete_custom_image()` clear that image's tags.
+  A save or reset changes memory only after the file is written. A user file that does not
+  parse is moved aside to `printer_image_regions.json.bad` on load, so tagging carries on;
+  one that cannot be read, or moved, is never written over. Save and Reset tags bump
+  `PrinterImageManager::notify_image_changed()`, which relayouts the widget.
 
 ### Engine contracts this pattern relies on
 

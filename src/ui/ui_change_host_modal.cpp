@@ -14,6 +14,7 @@
 #include "lvgl/lvgl.h"
 #include "moonraker_manager.h"
 #include "printer_state.h"
+#include "text_io.h"
 #include "theme_manager.h"
 #include "utils/network_validation.h"
 
@@ -267,13 +268,12 @@ void ChangeHostModal::handle_save() {
     }
 
     // Validate port before saving (defensive — should already be validated)
-    int port = 7125;
-    try {
-        port = std::stoi(port_clean);
-    } catch (const std::exception& e) {
-        spdlog::error("[ChangeHostModal] Invalid port '{}': {}", port_clean, e.what());
+    const auto parsed_port = helix::text_io::parse_leading<int>(port_clean);
+    if (!parsed_port) {
+        spdlog::error("[ChangeHostModal] Invalid port '{}'", port_clean);
         return;
     }
+    const int port = *parsed_port;
 
     // Save to config
     Config* config = Config::get_instance();

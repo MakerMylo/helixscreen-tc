@@ -24,15 +24,17 @@ TEST_CASE("file storage round-trips a document atomically", "[config][storage]")
     std::string path = (dir / "settings.json").string();
     auto storage = helix::make_file_config_storage(path);
 
-    REQUIRE_FALSE(storage->load().has_value()); // missing = nullopt
+    std::string read_error;
+    REQUIRE_FALSE(storage->load(read_error).has_value()); // missing = nullopt
+    REQUIRE(read_error.empty());
     REQUIRE(storage->store("{\"config_version\": 19}\n"));
-    auto doc = storage->load();
+    auto doc = storage->load(read_error);
     REQUIRE(doc.has_value());
     REQUIRE(doc->find("config_version") != std::string::npos);
     REQUIRE_FALSE(fs::exists(path + ".tmp")); // no temp litter after store
 
     storage->preserve_corrupt();
-    REQUIRE_FALSE(storage->load().has_value());
+    REQUIRE_FALSE(storage->load(read_error).has_value());
     REQUIRE(fs::exists(path + ".corrupt"));
 
     fs::remove_all(dir);
@@ -50,10 +52,12 @@ TEST_CASE("file storage load() distinguishes absent from present-but-unreadable"
     std::string path = (dir / "settings.json").string();
     auto storage = helix::make_file_config_storage(path);
 
-    // Absent: no throw, nullopt.
-    REQUIRE_FALSE(storage->load().has_value());
+    // Absent: nullopt and no read error.
+    std::string read_error;
+    REQUIRE_FALSE(storage->load(read_error).has_value());
+    REQUIRE(read_error.empty());
 
-    // Present but unreadable: must throw, NOT return nullopt — otherwise
+    // Present but unreadable: a read error, not a bare nullopt. Otherwise
     // Config::init() can't tell this apart from "absent" and would silently
     // reset a locked-down existing config to defaults instead of preserving
     // it for diagnosis + attempting backup restore.
@@ -62,7 +66,8 @@ TEST_CASE("file storage load() distinguishes absent from present-but-unreadable"
         f << R"({"config_version": 19})";
     }
     REQUIRE(::chmod(path.c_str(), 0) == 0);
-    REQUIRE_THROWS_AS(storage->load(), std::exception);
+    REQUIRE_FALSE(storage->load(read_error).has_value());
+    REQUIRE_FALSE(read_error.empty());
 
     ::chmod(path.c_str(), 0644);
     fs::remove_all(dir);
@@ -86,7 +91,7 @@ TEST_CASE("Config routes load and save through an injected backend", "[config][s
     REQUIRE(mock_raw->doc->find("test_marker") != std::string::npos);
 }
 
-TEST_CASE("Config routes a load() throw into corrupt-preserve, not first-boot defaults",
+TEST_CASE("Config routes an unreadable load() into corrupt-preserve, not first-boot defaults",
           "[config][storage]") {
     auto mock = std::make_unique<helix::test::MockConfigStorage>(
         std::string(R"({"config_version": 19, "wizard_completed": true})"));

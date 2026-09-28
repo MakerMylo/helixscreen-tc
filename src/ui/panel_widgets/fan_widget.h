@@ -115,9 +115,6 @@ class FanWidget : public PanelWidget {
     // Fan picker context menu (edit-mode gear only)
     FanPicker picker_{*this};
 
-    // Cached fan-control overlay opened on normal tap
-    helix::ui::WidgetRef fan_control_panel_;
-
     void auto_select_first_fan();
     void bind_speed_observer();
     void on_speed_changed(int speed_pct);

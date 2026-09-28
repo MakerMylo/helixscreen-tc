@@ -54,7 +54,12 @@ What works today:
 - Live printer status and bed mesh over WiFi through Moonraker
 - WiFi setup on first boot: the panel broadcasts its own setup hotspot — join it from your phone to configure the network
 - Over-the-air updates, with a fallback slot to recover a bad flash
-- All nine languages and the printer image set, packed to fit the panel's storage
+- Seven languages (English, German, French, Spanish, Russian, Portuguese, Italian); Chinese and Japanese need a font the panel has no room for
+- Printer pictures for the DIY and Klipper-converted machines an add-on panel usually drives (Voron, RatRig, Sovol SV08, Zero G and others); other printers show a generic picture
+- Notification history: tap the bell to see past alerts
+- Temperature graphs that start from the printer's recent history
+
+A panel flashed with an earlier alpha build needs one reflash over USB: this build changes the flash layout, and a layout change cannot arrive over the air. WiFi and settings are kept.
 
 Not yet available on this target: the camera feed and QR features, the 2D G-code view, and the 3D bed mesh view.
 

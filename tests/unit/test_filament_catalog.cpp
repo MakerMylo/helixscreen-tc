@@ -11,8 +11,8 @@
 #include <map>
 #include <sstream>
 #include <string>
-#include <utility>
 #include <unistd.h>
+#include <utility>
 
 #include "../catch_amalgamated.hpp"
 #include "hv/json.hpp"

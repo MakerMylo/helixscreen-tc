@@ -3,6 +3,7 @@
 
 #include "ams_types.h"
 #include "data_root_resolver.h"
+#include "exception_policy.h"
 #include "filament_database.h"
 #include "filament_slot_override.h"
 #include "filament_variants.h"
@@ -183,14 +184,13 @@ void write_cache_slot(const std::string& cache_path, const std::string& backend_
     nlohmann::json doc = nlohmann::json::object();
     if (helix::fs::exists(cache_path)) {
         if (auto text = helix::text_io::read_file(cache_path)) {
-            try {
-                doc = nlohmann::json::parse(*text);
-                if (!doc.is_object())
-                    doc = nlohmann::json::object();
-            } catch (const std::exception& e) {
+            doc = nlohmann::json::parse(*text, nullptr, /*allow_exceptions=*/false);
+            if (doc.is_discarded()) {
                 spdlog::warn("[FilamentSlotOverrideStore] cache parse failed "
-                             "({}), starting fresh: {}",
-                             cache_path, e.what());
+                             "({}), starting fresh",
+                             cache_path);
+                doc = nlohmann::json::object();
+            } else if (!doc.is_object()) {
                 doc = nlohmann::json::object();
             }
         }
@@ -260,12 +260,9 @@ std::unordered_map<int, FilamentSlotOverride> read_cache(const std::string& cach
     if (!text)
         return result;
 
-    nlohmann::json doc;
-    try {
-        doc = nlohmann::json::parse(*text);
-    } catch (const std::exception& e) {
-        spdlog::warn("[FilamentSlotOverrideStore] cache parse failed ({}): {}", cache_path,
-                     e.what());
+    nlohmann::json doc = nlohmann::json::parse(*text, nullptr, /*allow_exceptions=*/false);
+    if (doc.is_discarded()) {
+        spdlog::warn("[FilamentSlotOverrideStore] cache parse failed ({})", cache_path);
         return result;
     }
     if (!doc.is_object()) {
@@ -282,7 +279,8 @@ std::unordered_map<int, FilamentSlotOverride> read_cache(const std::string& cach
     if (!doc.contains("version") || doc["version"] != 1) {
         spdlog::warn("[FilamentSlotOverrideStore] cache schema version mismatch ({}): {}",
                      cache_path,
-                     doc.contains("version") ? doc["version"].dump() : std::string("<missing>"));
+                     doc.contains("version") ? helix::json_util::safe_dump(doc["version"])
+                                             : std::string("<missing>"));
         return result;
     }
 
@@ -294,29 +292,20 @@ std::unordered_map<int, FilamentSlotOverride> read_cache(const std::string& cach
 
     const auto& slots = backend_entry["slots"];
     for (auto it = slots.begin(); it != slots.end(); ++it) {
-        int slot_index = 0;
-        try {
-            slot_index = std::stoi(it.key());
-        } catch (...) {
+        const auto slot_index = helix::text_io::parse_leading<int>(it.key());
+        if (!slot_index) {
             continue;
         }
         // Symmetric with from_lane_data_record / save_async / clear_async:
         // negative slot indices are never valid and must be silently skipped.
-        if (slot_index < 0)
+        if (*slot_index < 0)
             continue;
         if (!it.value().is_object())
             continue;
-        // Per-record, not per-file. The try above covers only json::parse, so
-        // without this a single unreadable slot would abort the whole cache read
-        // and silently discard every other slot the user has configured. from_
-        // json is null-tolerant on its own; this is the structural backstop that
-        // keeps that property from being a precondition of the caller.
-        try {
-            result[slot_index] = from_json(it.value());
-        } catch (const std::exception& e) {
-            spdlog::warn("[FilamentSlotOverrideStore] skipping unreadable cache slot {}: {}",
-                         it.key(), e.what());
-        }
+        // from_json is null-tolerant on its own; the is_object gate is the
+        // structural backstop that keeps that property from being a
+        // precondition of the caller.
+        result[*slot_index] = from_json(it.value());
     }
     return result;
 }
@@ -334,20 +323,16 @@ std::optional<int> implied_slot_from_key(const std::string& key) {
     if (key.rfind("lane", 0) == 0) {
         const std::string num = key.substr(4);
         if (all_digits(num)) {
-            try {
-                const int n = std::stoi(num);
-                if (n >= 1)
-                    return n - 1; // laneN is 1-based; lane0 is not a shape we write
-            } catch (...) {
-            }
+            const auto n = helix::text_io::parse_leading<int>(num);
+            if (n && *n >= 1)
+                return *n - 1; // laneN is 1-based; lane0 is not a shape we write
         }
     } else if (!key.empty() && key[0] == 'T') {
         const std::string num = key.substr(1);
         if (all_digits(num)) {
-            try {
-                return std::stoi(num);
-            } catch (...) {
-            }
+            const auto n = helix::text_io::parse_leading<int>(num);
+            if (n)
+                return n;
         }
     }
     return std::nullopt;
@@ -479,11 +464,11 @@ std::optional<std::pair<int, FilamentSlotOverride>> from_lane_data_record(const 
         return std::nullopt;
     int slot_index = 0;
     if (j["lane"].is_string()) {
-        try {
-            slot_index = std::stoi(j["lane"].get<std::string>());
-        } catch (...) {
+        const auto parsed = helix::text_io::parse_leading<int>(j["lane"].get<std::string>());
+        if (!parsed) {
             return std::nullopt;
         }
+        slot_index = *parsed;
     } else if (j["lane"].is_number_integer()) {
         slot_index = j["lane"].get<int>();
     } else {
@@ -502,12 +487,12 @@ std::optional<std::pair<int, FilamentSlotOverride>> from_lane_data_record(const 
         } else if (s.size() >= 2 && (s.substr(0, 2) == "0x" || s.substr(0, 2) == "0X")) {
             s = s.substr(2);
         }
-        try {
-            o.color_rgb = static_cast<uint32_t>(std::stoul(s, nullptr, 16));
+        const auto rgb = helix::text_io::parse_leading<unsigned long>(s, 16);
+        if (rgb) {
+            o.color_rgb = static_cast<uint32_t>(*rgb);
             o.color_set = true;
-        } catch (...) {
-            // Leave color_rgb at default + color_set=false on parse failure.
         }
+        // else leave color_rgb at default + color_set=false on parse failure.
     }
     // Prefer our precise identity; fall back to `material` for foreign records
     // (Mainsail, AFC, Happy Hare) and for records written before helix_material
@@ -567,16 +552,8 @@ LaneDataAnomalies scan_lane_data_anomalies(const nlohmann::json& namespace_doc) 
         if (!it.value().is_object())
             continue; // other scalar siblings are not our concern
         const auto& v = it.value();
-        // A record this scan cannot read is exactly what "unparseable" means, so
-        // a throw and a nullopt land in the same bucket. Scoping it per-record
-        // keeps a purely diagnostic pass from ever costing the caller data.
-        std::optional<std::pair<int, FilamentSlotOverride>> parsed;
-        try {
-            parsed = from_lane_data_record(v);
-        } catch (const std::exception&) {
-            ++a.unparseable;
-            continue;
-        }
+        // A record this scan cannot read is exactly what "unparseable" means.
+        const auto parsed = from_lane_data_record(v);
         if (!parsed) {
             ++a.unparseable; // object with no valid "lane" field
             continue;
@@ -934,30 +911,23 @@ std::unordered_map<int, FilamentSlotOverride> try_migrate_legacy(IMoonrakerAPI* 
     int legacy_entries_seen = 0;
     for (auto it = legacy_doc.begin(); it != legacy_doc.end(); ++it) {
         ++legacy_entries_seen;
-        int slot_index = 0;
-        try {
-            slot_index = std::stoi(it.key());
-        } catch (...) {
+        const auto slot_index = helix::text_io::parse_leading<int>(it.key());
+        if (!slot_index) {
             continue; // non-int keys silently skipped (matches cache reader)
         }
-        if (slot_index < 0)
+        if (*slot_index < 0)
             continue;
         if (!it.value().is_object())
             continue; // malformed entry → skip
 
-        // Same per-record scoping as read_cache: an unreadable legacy entry is
-        // one lost slot, never an aborted migration. Skipping here still counts
-        // it in legacy_entries_seen, so an all-unreadable blob takes the
-        // "dropped N malformed legacy entries" path below and gets cleaned up
-        // rather than re-scanned on every subsequent startup.
-        try {
-            FilamentSlotOverride o = from_json(it.value());
-            o.updated_at = std::chrono::system_clock::now();
-            migrated[slot_index] = o;
-        } catch (const std::exception& e) {
-            spdlog::warn("[FilamentSlotOverrideStore:{}] skipping unreadable legacy entry {}: {}",
-                         backend_id, it.key(), e.what());
-        }
+        // An unreadable legacy entry is one lost slot, never an aborted
+        // migration. Skipping here still counts it in legacy_entries_seen, so
+        // an all-unreadable blob takes the "dropped N malformed legacy entries"
+        // path below and gets cleaned up rather than re-scanned on every
+        // subsequent startup.
+        FilamentSlotOverride o = from_json(it.value());
+        o.updated_at = std::chrono::system_clock::now();
+        migrated[*slot_index] = o;
     }
 
     // All-malformed case: legacy had entries but none survived parsing. We
@@ -1102,19 +1072,9 @@ void try_migrate_lane_keys_to_tool_keys(IMoonrakerAPI* api, const std::string& b
         if (!it.value().is_object())
             continue;
         // A record we cannot read is a record we cannot prove we authored, so
-        // skipping it is the same conservative answer as the key check below.
-        // Scoped per-record so an unreadable third-party entry can't abort the
-        // migration — or, worse, unwind into load_blocking's boundary and throw
-        // away the overrides that were already parsed successfully.
-        std::optional<std::pair<int, FilamentSlotOverride>> parsed;
-        try {
-            parsed = from_lane_data_record(it.value());
-        } catch (const std::exception& e) {
-            spdlog::warn("[FilamentSlotOverrideStore:{}] key migration skipping unreadable "
-                         "record {}: {}",
-                         backend_id, key, e.what());
-            continue;
-        }
+        // skipping it is the same conservative answer as the key check below:
+        // an unreadable third-party entry must not abort the migration.
+        const auto parsed = from_lane_data_record(it.value());
         if (!parsed)
             continue;
         const int idx = parsed->first;
@@ -1208,15 +1168,12 @@ void try_migrate_lane_keys_to_tool_keys(IMoonrakerAPI* api, const std::string& b
 
 } // namespace
 
-// Exception boundary for AMS initialization.
+// Per-record isolation for AMS initialization.
 //
 // lane_data is a SHARED Moonraker namespace: AFC, Happy Hare, Mainsail and the
 // user's own hand edits all write records into it, and every one of them can
-// produce a field that is present-but-null. nlohmann throws type_error.302 on
-// such a field (it does NOT throw for a missing key), and none of the four AMS
-// backends that call this wraps the call — so before this boundary existed, one
-// null "material" written by somebody else's plugin unwound the entire backend
-// init instead of costing a single slot.
+// produce a field that is present-but-null. Every read here is null-tolerant,
+// so one unreadable record costs a single slot, never the whole backend init.
 //
 std::unordered_map<int, LaneDataRecord>
 parse_namespace_document(const nlohmann::json& namespace_doc, LaneKeyStyle key_style,
@@ -1255,18 +1212,8 @@ parse_namespace_document(const nlohmann::json& namespace_doc, LaneKeyStyle key_s
         }
         // Per-record, not per-namespace: a record we cannot read costs that one
         // slot. Anything wider would let a co-author's malformed entry erase
-        // every override the user has on the printer. warn (not debug) because
-        // unlike the nullopt case below this means the record threw, which is
-        // worth surfacing even though we recover from it.
-        std::optional<std::pair<int, FilamentSlotOverride>> parsed;
-        try {
-            parsed = from_lane_data_record(it.value());
-        } catch (const std::exception& e) {
-            spdlog::warn("[FilamentSlotOverrideStore:{}] skipping unreadable lane_data record "
-                         "{}: {}",
-                         log_tag, key, e.what());
-            continue;
-        }
+        // every override the user has on the printer.
+        const auto parsed = from_lane_data_record(it.value());
         if (!parsed) {
             spdlog::debug("[FilamentSlotOverrideStore:{}] from_lane_data_record failed for {}",
                           log_tag, key);
@@ -1294,19 +1241,18 @@ parse_namespace_document(const nlohmann::json& namespace_doc, LaneKeyStyle key_s
     return records;
 }
 
-// The per-record handlers inside load_blocking_impl scope the common cases to
-// one lost slot. This catch is the backstop for everything else: worst case the
-// user sees no overrides, which is the fresh-install state and fully
-// recoverable, rather than an AMS subsystem that failed to come up.
+// load_blocking_impl reads every record without throwing. Where the build has
+// exceptions, anything else escaping it is contained here: worst case the user
+// sees no overrides, which is the fresh-install state and fully recoverable,
+// rather than an AMS subsystem that failed to come up.
 std::unordered_map<int, FilamentSlotOverride> FilamentSlotOverrideStore::load_blocking() {
-    try {
-        return load_blocking_impl();
-    } catch (const std::exception& e) {
-        spdlog::warn("[FilamentSlotOverrideStore:{}] load aborted ({}); continuing with no "
-                     "overrides",
-                     backend_id_, e.what());
+    std::unordered_map<int, FilamentSlotOverride> result;
+    if (!helix::contain_exceptions(fmt::format("[FilamentSlotOverrideStore:{}] load", backend_id_),
+                                   [&] { result = load_blocking_impl(); })) {
+        spdlog::warn("[FilamentSlotOverrideStore:{}] continuing with no overrides", backend_id_);
         return {};
     }
+    return result;
 }
 
 void FilamentSlotOverrideStore::reload_async(ReloadCallback cb) {
@@ -1494,15 +1440,7 @@ std::unordered_map<int, FilamentSlotOverride> FilamentSlotOverrideStore::load_bl
             // Per-record scope: the heal is opportunistic maintenance, so a
             // record it cannot read is skipped rather than allowed to abort the
             // pass over the records that follow it.
-            std::optional<std::pair<int, FilamentSlotOverride>> parsed;
-            try {
-                parsed = from_lane_data_record(rec);
-            } catch (const std::exception& e) {
-                spdlog::warn("[FilamentSlotOverrideStore:{}] skipping heal of unreadable "
-                             "record {}: {}",
-                             backend_id_, key, e.what());
-                continue;
-            }
+            const auto parsed = from_lane_data_record(rec);
             if (!parsed)
                 continue;
             // `identity` prefers helix_material, falling back to material,

@@ -37,6 +37,7 @@
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <cerrno>
 #include <cstdio>
@@ -205,6 +206,12 @@ namespace {
 constexpr const char* ZMOD_CHANGE_MACRO = "gcode_macro END_CHANGE_FILAMENT";
 /// last_data.channel when no change is running.
 constexpr int ZMOD_CHANGE_IDLE_CHANNEL = 99;
+
+/// What each synthesized phase projects to, by the phase index the tracker
+/// publishes. The step model and the tracker's action both read these, so the
+/// two cannot disagree.
+constexpr std::array kIfsUnloadPhases{AmsAction::HEATING, AmsAction::CUTTING, AmsAction::UNLOADING};
+constexpr std::array kIfsLoadPhases{AmsAction::HEATING, AmsAction::LOADING, AmsAction::PURGING};
 } // namespace
 
 std::vector<std::string>
@@ -1057,12 +1064,11 @@ bool AmsBackendAd5xIfs::parse_ifs_tool_map_locked(const nlohmann::json& ifs_obje
     std::array<int, TOOL_MAP_SIZE> parsed{};
     parsed.fill(UNMAPPED_PORT);
     for (auto entry = it->begin(); entry != it->end(); ++entry) {
-        int tool = 0;
-        try {
-            tool = std::stoi(entry.key());
-        } catch (...) {
+        const auto tool_number = helix::text_io::parse_leading<int>(entry.key());
+        if (!tool_number) {
             continue; // not a tool number
         }
+        const int tool = *tool_number;
         if (tool < 0 || tool >= TOOL_MAP_SIZE) {
             continue;
         }
@@ -2766,11 +2772,16 @@ AmsBackendAd5xIfs::get_operation_step_model(StepOperationType op) const {
     // nozzle temperature. Labels are wrapped in lv_tr() so they are translated
     // and picked up by the string-extraction tooling (mirrors Snapmaker).
     const bool unload = (op == StepOperationType::UNLOAD);
+    const auto& phases = unload ? kIfsUnloadPhases : kIfsLoadPhases;
     OperationStepModel model;
-    model.steps.push_back({lv_tr("Heat nozzle"), 0, false, /*live_temp=*/true});
-    model.steps.push_back(
-        {unload ? lv_tr("Cut filament") : lv_tr("Feed filament"), 1, false, false});
-    model.steps.push_back({unload ? lv_tr("Retract") : lv_tr("Purge"), 2, false, false});
+    model.steps.push_back({lv_tr("Heat nozzle"), 0, false, /*live_temp=*/true, phases[0]});
+    if (unload) {
+        model.steps.push_back({lv_tr("Cut filament"), 1, false, false, phases[1]});
+        model.steps.push_back({lv_tr("Retract"), 2, false, false, phases[2]});
+    } else {
+        model.steps.push_back({lv_tr("Feed filament"), 1, false, false, phases[1]});
+        model.steps.push_back({lv_tr("Purge"), 2, false, false, phases[2]});
+    }
     return model;
 }
 
@@ -3510,12 +3521,9 @@ AmsError AmsBackendAd5xIfs::write_adventurer_json(int slot_index, const std::str
                 return;
             }
 
-            json doc;
-            try {
-                doc = json::parse(content);
-            } catch (const json::parse_error& e) {
-                spdlog::warn("{} Failed to parse Adventurer5M.json for write: {}",
-                             backend_log_tag(), e.what());
+            json doc = json::parse(content, nullptr, false);
+            if (doc.is_discarded()) {
+                spdlog::warn("{} Failed to parse Adventurer5M.json for write", backend_log_tag());
                 *result =
                     AmsErrorHelper::command_failed("write_adventurer_json", "JSON parse error");
                 done->store(true);
@@ -3592,9 +3600,8 @@ AmsError AmsBackendAd5xIfs::write_adventurer_json_local(int slot_index, const st
         if (content.empty()) {
             doc = json::object();
         } else {
-            try {
-                doc = json::parse(content);
-            } catch (const json::parse_error&) {
+            doc = json::parse(content, nullptr, false);
+            if (doc.is_discarded()) {
                 spdlog::warn("{} Adventurer5M.json at {} is unparseable; rewriting from scratch",
                              backend_log_tag(), local_adventurer_json_path_);
                 doc = json::object();
@@ -3854,11 +3861,9 @@ void AmsBackendAd5xIfs::parse_filament_json(const std::string& content) {
     // SPEED), among many fields we don't use. Build a {tube_length, ifs_speed}
     // pair per material; resolve missing fields against the "default" entry,
     // and missing "default" against the literal 1000/1200.
-    json root;
-    try {
-        root = json::parse(content);
-    } catch (const std::exception& e) {
-        spdlog::warn("[AMS AD5X-IFS] filament.json parse failed: {}", e.what());
+    json root = json::parse(content, nullptr, false);
+    if (root.is_discarded()) {
+        spdlog::warn("[AMS AD5X-IFS] filament.json parse failed");
         return;
     }
     if (!root.is_object()) {
@@ -3876,11 +3881,8 @@ void AmsBackendAd5xIfs::parse_filament_json(const std::string& content) {
         if (it->is_number_float())
             return static_cast<int>(it->get<double>());
         if (it->is_string()) {
-            try {
-                return std::stoi(it->get<std::string>());
-            } catch (...) {
-                return fallback;
-            }
+            return helix::text_io::parse_leading<int>(it->get_ref<const std::string&>())
+                .value_or(fallback);
         }
         return fallback;
     };
@@ -4264,21 +4266,18 @@ bool AmsBackendAd5xIfs::on_gcode_response_line(const std::string& line) {
                         }
                         if (parsed_hex) {
                             colors_[idx] = *parsed_hex;
-                            try {
-                                const uint32_t color_value =
-                                    static_cast<uint32_t>(std::stoul(*parsed_hex, nullptr, 16));
-                                last_firmware_color_[slot0] = color_value;
+                            // Don't advance the baseline on the off-chance the
+                            // parse failed — the next GET_ZCOLOR poll will
+                            // recover.
+                            const auto color_value =
+                                helix::text_io::parse_leading<unsigned long>(*parsed_hex, 16);
+                            if (color_value) {
+                                last_firmware_color_[slot0] = static_cast<uint32_t>(*color_value);
                                 spdlog::info(
                                     "{} External CHANGE_ZCOLOR applied HEX='{}' to slot {} "
                                     "(#1065 gcode-path extraction)",
                                     backend_log_tag(), *parsed_hex, slot0);
                                 mutated = true;
-                            } catch (...) {
-                                // std::stoul on a regex-validated 6-hex-digit
-                                // string can't realistically throw; defensive
-                                // only. Don't advance the baseline on the
-                                // off-chance the parse failed — the next
-                                // GET_ZCOLOR poll will recover.
                             }
                         }
                         identity_statement_fresh_[idx] = true;
@@ -4976,12 +4975,11 @@ bool AmsBackendAd5xIfs::read_ifs_materials_object(const json& obj, ZColorSilentR
         // Moonraker serialises dict keys as strings, so "1".."4" - but accept
         // an integer key too, same tolerance helix::zmod_color::parse_slots
         // gives the ID field (it is somebody else's serializer either way).
-        int id = 0;
-        try {
-            id = std::stoi(slot_it.key());
-        } catch (...) {
+        const auto id_number = helix::text_io::parse_leading<int>(slot_it.key());
+        if (!id_number) {
             continue;
         }
+        const int id = *id_number;
         if (id < 1 || id > NUM_PORTS || !slot_it.value().is_object()) {
             continue;
         }
@@ -5738,32 +5736,27 @@ AmsBackendAd5xIfs::parse_zcolor_silent(const std::vector<std::string>& lines, co
         if (slashes != std::string::npos) {
             body = body.substr(slashes + 2);
         }
-        try {
-            json obj = json::parse(body);
-            if (obj.is_object()) {
-                const bool had_chan = result.ifs_chan.has_value();
-                read_ifs_status_object(obj, result);
-                if (!had_chan && result.ifs_chan.has_value()) {
-                    // Diagnostic: log the seated channel + presence view so the
-                    // next field bundle proves Chan's loaded-idle behavior.
-                    // safe_int, not .value(): the catch below is parse_error
-                    // only, so a line like {"Chan":1,"State":null} would throw
-                    // type_error.302 straight past it — breaking the promise
-                    // that comment makes. Every other read here is already
-                    // find + is_*() guarded; this was the lone gap.
-                    std::string ports_str;
-                    if (auto ports_it = obj.find("Ports");
-                        ports_it != obj.end() && ports_it->is_array()) {
-                        ports_str = ports_it->dump();
-                    }
-                    spdlog::info("[AMS AD5X-IFS] IFS_STATUS trigger={} Chan={} State={} Ports={}",
-                                 reason, *result.ifs_chan,
-                                 helix::json_util::safe_int(obj, "State", -1), ports_str);
+        json obj = json::parse(body, nullptr, false);
+        // Not valid JSON (malformed line, partial buffer) — ignore. Never
+        // throw on a bad gcode-response line.
+        if (!obj.is_discarded() && obj.is_object()) {
+            const bool had_chan = result.ifs_chan.has_value();
+            read_ifs_status_object(obj, result);
+            if (!had_chan && result.ifs_chan.has_value()) {
+                // Diagnostic: log the seated channel + presence view so the
+                // next field bundle proves Chan's loaded-idle behavior.
+                // safe_int, not .value(): a line like {"Chan":1,"State":null}
+                // would make .value() throw type_error.302 — nothing here
+                // catches a type error on a gcode-response line.
+                std::string ports_str;
+                if (auto ports_it = obj.find("Ports");
+                    ports_it != obj.end() && ports_it->is_array()) {
+                    ports_str = helix::json_util::safe_dump(*ports_it);
                 }
+                spdlog::info("[AMS AD5X-IFS] IFS_STATUS trigger={} Chan={} State={} Ports={}",
+                             reason, *result.ifs_chan, helix::json_util::safe_int(obj, "State", -1),
+                             ports_str);
             }
-        } catch (const json::parse_error&) {
-            // Not valid JSON (malformed line, partial buffer) — ignore. Never
-            // throw on a bad gcode-response line.
         }
     }
 
@@ -5781,31 +5774,27 @@ AmsBackendAd5xIfs::parse_zcolor_silent(const std::vector<std::string>& lines, co
 
             helix::RegexMatch em;
             if (helix::regex_search(extruder_part, em, extruder_slot_re)) {
-                try {
-                    int n = std::stoi(em[1].str());
-                    if (n >= 1 && n <= NUM_PORTS) {
-                        result.extruder_slot = n - 1; // 0-based
-                    }
-                } catch (...) {
+                const auto n = helix::text_io::parse_leading<int>(em[1].str());
+                if (n && *n >= 1 && *n <= NUM_PORTS) {
+                    result.extruder_slot = *n - 1; // 0-based
                 }
             }
             helix::RegexMatch cm;
             if (helix::regex_search(extruder_part, cm, channel_paren_re)) {
-                try {
-                    result.current_channel = std::stoi(cm[1].str());
-                } catch (...) {
+                const auto chan = helix::text_io::parse_leading<int>(cm[1].str());
+                if (chan) {
+                    result.current_channel = *chan;
                 }
             }
             continue;
         }
 
         if (helix::regex_match(line, m, slot_re)) {
-            int n;
-            try {
-                n = std::stoi(m[1].str());
-            } catch (...) {
+            const auto parsed_n = helix::text_io::parse_leading<int>(m[1].str());
+            if (!parsed_n) {
                 continue;
             }
+            const int n = *parsed_n;
             if (n < 1 || n > NUM_PORTS) {
                 continue; // slot number out of range — skip (e.g. "// 99: nonsense")
             }
@@ -5843,11 +5832,9 @@ AmsBackendAd5xIfs::parse_zcolor_silent(const std::vector<std::string>& lines, co
 }
 
 void AmsBackendAd5xIfs::parse_adventurer_json(const std::string& content) {
-    json doc;
-    try {
-        doc = json::parse(content);
-    } catch (const json::parse_error& e) {
-        spdlog::warn("{} Failed to parse Adventurer5M.json: {}", backend_log_tag(), e.what());
+    json doc = json::parse(content, nullptr, false);
+    if (doc.is_discarded()) {
+        spdlog::warn("{} Failed to parse Adventurer5M.json", backend_log_tag());
         return;
     }
 
@@ -6235,41 +6222,24 @@ bool AmsBackendAd5xIfs::apply_phase_action_locked() {
         return false;
     }
 
-    AmsAction synth;
     std::string detail;
-    // Step index for the right-side vertical operation tracker. Mirrors the
-    // phase_id values get_operation_step_model() emits: unload
-    // HEATING→0 / CUTTING→1 / UNLOADING→2 ; load HEATING→0 / LOADING→1 / PURGING→2.
-    // AmsState::sync_from_backend() copies this into the ams_operation_phase
-    // subject the tracker observes.
-    int phase_index;
+    // Step index for the right-side vertical operation tracker, the phase_id
+    // get_operation_step_model() emits. AmsState::sync_from_backend() copies it
+    // into the ams_operation_phase subject the tracker observes, and the action
+    // is that step's projection.
     const int tgt = phase_tracker_.target_deci;
-
-    if (phase_tracker_.is_unload) {
-        // HEATING → CUTTING → UNLOADING
-        if (!phase_tracker_.reached_target_once) {
-            synth = AmsAction::HEATING;
-            phase_index = 0;
-        } else if (!phase_tracker_.seen_head_drop) {
-            synth = AmsAction::CUTTING;
-            phase_index = 1;
-        } else {
-            synth = AmsAction::UNLOADING;
-            phase_index = 2;
-        }
+    int phase_index;
+    if (!phase_tracker_.reached_target_once) {
+        phase_index = 0;
+    } else if (!(phase_tracker_.is_unload ? phase_tracker_.seen_head_drop
+                                          : phase_tracker_.seen_head_rise)) {
+        phase_index = 1;
     } else {
-        // HEATING → LOADING → PURGING
-        if (!phase_tracker_.reached_target_once) {
-            synth = AmsAction::HEATING;
-            phase_index = 0;
-        } else if (!phase_tracker_.seen_head_rise) {
-            synth = AmsAction::LOADING;
-            phase_index = 1;
-        } else {
-            synth = AmsAction::PURGING;
-            phase_index = 2;
-        }
+        phase_index = 2;
     }
+    const AmsAction synth =
+        (phase_tracker_.is_unload ? kIfsUnloadPhases
+                                  : kIfsLoadPhases)[static_cast<size_t>(phase_index)];
     system_info_.operation_phase = phase_index;
 
     // Build the per-phase operation_detail. Dynamic (contains live temps), so it

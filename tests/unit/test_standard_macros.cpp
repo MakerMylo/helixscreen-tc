@@ -1,6 +1,7 @@
 // Copyright (C) 2025-2026 356C LLC
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "../helix_test_fixture.h"
 #include "config.h"
 #include "printer_discovery.h"
 #include "standard_macros.h"
@@ -474,6 +475,7 @@ TEST_CASE("StandardMacros - all() returns all slots", "[standard_macros]") {
     REQUIRE(all_slots[8].slot == StandardMacroSlot::ScrewsTilt);
     REQUIRE(all_slots[9].slot == StandardMacroSlot::CleanNozzle);
     REQUIRE(all_slots[10].slot == StandardMacroSlot::HeatSoak);
+    REQUIRE(all_slots[11].slot == StandardMacroSlot::ParkToolhead);
 
     // This test exists to make an enum insertion LOUD. It is safe to renumber
     // here only because persistence keys on slot_name, never the index:
@@ -554,6 +556,66 @@ TEST_CASE("StandardMacros - ScrewsTilt slot", "[standard_macros][screws_tilt]") 
         REQUIRE(macros.get(StandardMacroSlot::BedMesh).detected_macro == "BED_MESH_CALIBRATE");
         REQUIRE(macros.get(StandardMacroSlot::ScrewsTilt).is_empty());
     }
+}
+
+// ============================================================================
+// ParkToolhead slot
+// ============================================================================
+
+TEST_CASE("StandardMacros - ParkToolhead slot", "[standard_macros][park_toolhead]") {
+    auto& macros = StandardMacros::instance();
+    macros.reset();
+
+    SECTION("Detects each conventional park name") {
+        for (const char* name : {"PARK", "PARK_TOOLHEAD", "TOOLHEAD_PARK"}) {
+            helix::PrinterDiscovery hw;
+            json objects = json::array({"extruder", std::string("gcode_macro ") + name});
+            hw.parse_objects(objects);
+            macros.init(hw);
+
+            REQUIRE(macros.get(StandardMacroSlot::ParkToolhead).detected_macro == name);
+        }
+    }
+
+    SECTION("An underscore-prefixed park macro is never detected") {
+        // A leading underscore is the config author marking a macro internal;
+        // invoking one is machine motion nobody sanctioned. Detection is
+        // exact-name everywhere, so neither spelling can match a pattern.
+        helix::PrinterDiscovery hw;
+        json objects = {"extruder", "gcode_macro _PARK", "gcode_macro _PARK_TOOLHEAD"};
+        hw.parse_objects(objects);
+        macros.init(hw);
+
+        REQUIRE(macros.get(StandardMacroSlot::ParkToolhead).detected_macro.empty());
+    }
+
+    SECTION("slot_from_name round-trips the settings key") {
+        REQUIRE(StandardMacros::slot_from_name("park_toolhead") == StandardMacroSlot::ParkToolhead);
+        REQUIRE(StandardMacros::slot_to_name(StandardMacroSlot::ParkToolhead) == "park_toolhead");
+    }
+}
+
+TEST_CASE_METHOD(HelixTestFixture, "ParkToolhead user override round-trips through config",
+                 "[standard_macros][park_toolhead]") {
+    auto& macros = StandardMacros::instance();
+
+    // The way Settings persists a pick: the config path, read back by init().
+    helix::Config::get_instance()->set<std::string>("/standard_macros/park_toolhead", "MY_PARK");
+
+    macros.reset();
+    helix::PrinterDiscovery hw;
+    json objects = {"extruder", "gcode_macro MY_PARK"};
+    hw.parse_objects(objects);
+    macros.init(hw);
+
+    REQUIRE(macros.get(StandardMacroSlot::ParkToolhead).configured_macro == "MY_PARK");
+    REQUIRE(macros.get(StandardMacroSlot::ParkToolhead).get_macro() == "MY_PARK");
+    REQUIRE(macros.get(StandardMacroSlot::ParkToolhead).get_source() == MacroSource::CONFIGURED);
+
+    // set_macro saves every slot; the park pick must survive a save of another one.
+    macros.set_macro(StandardMacroSlot::Purge, "PURGE");
+    REQUIRE(helix::Config::get_instance()->get<std::string>("/standard_macros/park_toolhead", "") ==
+            "MY_PARK");
 }
 
 // ============================================================================

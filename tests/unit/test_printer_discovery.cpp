@@ -685,6 +685,17 @@ TEST_CASE("PrinterDiscovery detects new AFC object types", "[printer_discovery][
         }
     }
 
+    SECTION("Natural sort: a suffix too long for an int sorts last instead of throwing") {
+        json objects = {"AFC", "AFC_lane lane2", "AFC_lane lane99999999999", "AFC_lane lane1"};
+        hw.parse_objects(objects);
+
+        auto lanes = hw.afc_lane_names();
+        REQUIRE(lanes.size() == 3);
+        REQUIRE(lanes[0] == "lane1");
+        REQUIRE(lanes[1] == "lane2");
+        REQUIRE(lanes[2] == "lane99999999999");
+    }
+
     SECTION("Natural sort: buffer names with numeric suffixes") {
         json objects = {"AFC", "AFC_buffer TN", "AFC_buffer TN2", "AFC_buffer TN1",
                         "AFC_buffer TN10"};
@@ -1855,6 +1866,29 @@ TEST_CASE("PrinterDiscovery: build volume parsed from configfile.settings steppe
     REQUIRE(discovery.build_volume().y_min == 0.0f);
     REQUIRE(discovery.build_volume().y_max == 350.0f);
     REQUIRE(discovery.build_volume().z_max == 340.0f);
+}
+
+TEST_CASE("PrinterDiscovery: bed_mesh mesh_min/max declares the plate",
+          "[printer_discovery][build_volume]") {
+    helix::PrinterDiscovery discovery;
+    json settings = {{"stepper_x", {{"position_min", 0.0}, {"position_max", 271.0}}},
+                     {"stepper_y", {{"position_min", 0.0}, {"position_max", 335.0}}},
+                     {"bed_mesh", {{"mesh_min", {3.0, 3.0}}, {"mesh_max", {267.0, 267.0}}}}};
+    REQUIRE(discovery.parse_build_volume(settings));
+    CHECK(discovery.build_volume().y_max == 335.0f);
+    CHECK(discovery.build_volume().plate_x_min == 3.0f);
+    CHECK(discovery.build_volume().plate_x_max == 267.0f);
+    CHECK(discovery.build_volume().plate_y_min == 3.0f);
+    CHECK(discovery.build_volume().plate_y_max == 267.0f);
+
+    // A round bed's mesh is mesh_radius, and a malformed mesh_min is ignored.
+    json delta = {{"stepper_x", {{"position_min", -100.0}, {"position_max", 100.0}}},
+                  {"stepper_y", {{"position_min", -100.0}, {"position_max", 100.0}}},
+                  {"bed_mesh", {{"mesh_radius", 90.0}, {"mesh_min", "3,3"}}}};
+    helix::PrinterDiscovery round;
+    REQUIRE(round.parse_build_volume(delta));
+    CHECK(round.build_volume().plate_x_max == 0.0f);
+    CHECK(round.build_volume().plate_y_max == 0.0f);
 }
 
 TEST_CASE("PrinterDiscovery: sensor toggle command follows a SET_FILAMENT_SENSOR wrapper",

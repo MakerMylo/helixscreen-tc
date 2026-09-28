@@ -1080,12 +1080,8 @@ void PrintStartController::persist_remap_state() {
                      std::strerror(errno));
         return;
     }
-    try {
-        if (tio::write_file(path, helix::json_util::safe_dump(j, 2))) {
-            spdlog::debug("[PrintStartController] Persisted remap state to {}", path);
-        }
-    } catch (const std::exception& e) {
-        spdlog::warn("[PrintStartController] Failed to persist remap state: {}", e.what());
+    if (tio::write_file(path, helix::json_util::safe_dump(j, 2))) {
+        spdlog::debug("[PrintStartController] Persisted remap state to {}", path);
     }
 }
 
@@ -1108,57 +1104,77 @@ void PrintStartController::recover_pending_remap() {
         return;
     }
 
-    try {
-        auto text = tio::read_file(path);
-        if (!text) {
-            return;
-        }
+    auto text = tio::read_file(path);
+    if (!text) {
+        return;
+    }
 
-        auto j = nlohmann::json::parse(*text);
-        int backend_idx = j.value("backend_index", -1);
-        auto mapping = j.value("tool_mapping", std::vector<int>{});
-
-        if (backend_idx < 0 || mapping.empty()) {
-            spdlog::debug("[PrintStartController] Invalid pending remap file — removing");
-            clear_persisted_remap_state();
-            return;
-        }
-
-        // Load saved state and decide between immediate vs deferred restore.
-        saved_tool_mapping_ = std::move(mapping);
-        saved_backend_index_ = backend_idx;
-
-        // If a print is still active, the user's remap is still LOAD-BEARING —
-        // reverting now would silently swap filament routing under a running
-        // print. Defer the restore until the print reaches a terminal state.
-        // observe_lifecycle_for_restore registers an observer that arms on
-        // the first live lifecycle value and fires restore_filament_mapping on
-        // the terminal value that follows, so the attach-fire on the current
-        // PRINTING/PAUSED value arms it rather than firing early.
-        // RAW_PRINT_STATE_OK: suppresses the observer's registration-fire
-        // while a job runs; a preparing job has no mapping to restore.
-        auto current_state = printer_state_.get_print_job_state();
-        // The mapping is restored on a TERMINAL state; this only suppresses the
-        // observer's immediate registration-fire while a job is running. The wire
-        // question is the right one: a preparing job has no mapping to restore.
-        bool print_active = printer_has_job(current_state);
-
-        if (print_active) {
-            spdlog::info("[PrintStartController] Crash recovery: found pending remap "
-                         "({} tools, backend {}) — print still active (state={}), "
-                         "deferring restore until print ends",
-                         saved_tool_mapping_.size(), saved_backend_index_,
-                         static_cast<int>(current_state));
-            observe_lifecycle_for_restore();
-        } else {
-            spdlog::info("[PrintStartController] Crash recovery: found pending remap "
-                         "({} tools, backend {}) — restoring",
-                         saved_tool_mapping_.size(), saved_backend_index_);
-            restore_filament_mapping();
-        }
-    } catch (const std::exception& e) {
-        spdlog::warn("[PrintStartController] Failed to load pending remap: {}", e.what());
+    auto j = nlohmann::json::parse(*text, nullptr, false);
+    if (j.is_discarded()) {
+        spdlog::warn("[PrintStartController] Failed to load pending remap: invalid JSON");
         clear_persisted_remap_state();
+        return;
+    }
+    int backend_idx = helix::json_util::safe_int(j, "backend_index", -1);
+    std::vector<int> mapping;
+    bool mapping_bad = false;
+    if (const auto* tm = helix::json_util::find_member(j, "tool_mapping")) {
+        if (!tm->is_array()) {
+            mapping_bad = true;
+        } else {
+            mapping.reserve(tm->size());
+            for (const auto& e : *tm) {
+                if (!e.is_number()) {
+                    mapping_bad = true;
+                    break;
+                }
+                mapping.push_back(e.get<int>());
+            }
+        }
+    }
+    if (mapping_bad) {
+        spdlog::warn("[PrintStartController] Failed to load pending remap: bad tool_mapping");
+        clear_persisted_remap_state();
+        return;
+    }
+
+    if (backend_idx < 0 || mapping.empty()) {
+        spdlog::debug("[PrintStartController] Invalid pending remap file — removing");
+        clear_persisted_remap_state();
+        return;
+    }
+
+    // Load saved state and decide between immediate vs deferred restore.
+    saved_tool_mapping_ = std::move(mapping);
+    saved_backend_index_ = backend_idx;
+
+    // If a print is still active, the user's remap is still LOAD-BEARING —
+    // reverting now would silently swap filament routing under a running
+    // print. Defer the restore until the print reaches a terminal state.
+    // observe_lifecycle_for_restore registers an observer that arms on
+    // the first live lifecycle value and fires restore_filament_mapping on
+    // the terminal value that follows, so the attach-fire on the current
+    // PRINTING/PAUSED value arms it rather than firing early.
+    // RAW_PRINT_STATE_OK: suppresses the observer's registration-fire
+    // while a job runs; a preparing job has no mapping to restore.
+    auto current_state = printer_state_.get_print_job_state();
+    // The mapping is restored on a TERMINAL state; this only suppresses the
+    // observer's immediate registration-fire while a job is running. The wire
+    // question is the right one: a preparing job has no mapping to restore.
+    bool print_active = printer_has_job(current_state);
+
+    if (print_active) {
+        spdlog::info("[PrintStartController] Crash recovery: found pending remap "
+                     "({} tools, backend {}) — print still active (state={}), "
+                     "deferring restore until print ends",
+                     saved_tool_mapping_.size(), saved_backend_index_,
+                     static_cast<int>(current_state));
+        observe_lifecycle_for_restore();
+    } else {
+        spdlog::info("[PrintStartController] Crash recovery: found pending remap "
+                     "({} tools, backend {}) — restoring",
+                     saved_tool_mapping_.size(), saved_backend_index_);
+        restore_filament_mapping();
     }
 }
 

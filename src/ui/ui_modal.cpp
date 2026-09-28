@@ -12,6 +12,7 @@
 #include "ui_utils.h"
 
 #include "display_settings_manager.h"
+#include "exception_policy.h"
 #include "helix-xml/src/xml/lv_xml.h"
 #include "lvgl/src/others/translation/lv_translation.h"
 #include "settings_manager.h"
@@ -1642,19 +1643,17 @@ lv_obj_t* helix::ui::modal_alert(const char* title, const char* message, ModalSe
 lv_obj_t* helix::ui::show_low_ram_resonance_warning(size_t total_mb, lv_obj_t** dialog_handle,
                                                     std::function<void()> on_confirm,
                                                     const ConfirmOptions& options) {
-    std::string msg;
-    try {
+    // A mistranslated {} must never abort through the LVGL C dispatch frame:
+    // the unformatted wording stands in if formatting fails.
+    std::string msg = lv_tr("This device has very little RAM. Resonance calibration is "
+                            "memory-intensive and may cause a \"Timer Too Close\" error. "
+                            "Continue anyway?");
+    helix::contain_exceptions("[Modal] Low-RAM warning format", [&] {
         msg = fmt::format(lv_tr("This device has only {} MB of RAM. Resonance calibration is "
                                 "memory-intensive and can make the printer firmware report a "
                                 "\"Timer Too Close\" error or restart mid-test. Continue anyway?"),
                           total_mb);
-    } catch (const std::exception& e) {
-        // A mistranslated {} must never abort through the LVGL C dispatch frame.
-        spdlog::warn("[Modal] low-RAM warning format failed: {}", e.what());
-        msg = lv_tr("This device has very little RAM. Resonance calibration is "
-                    "memory-intensive and may cause a \"Timer Too Close\" error. "
-                    "Continue anyway?");
-    }
+    });
     // The re-entry scaffold lives HERE, once: the caller's stored handle is
     // cleared on every close path, so a second entry while the dialog is open
     // is the caller's only remaining guard.

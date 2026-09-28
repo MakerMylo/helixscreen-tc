@@ -202,6 +202,143 @@ decide_all() {
     [ "$status" -eq 0 ]
 }
 
+@test "flags each call that aborts a firmware built without exceptions" {
+    decide_all
+    cat > "$ROOT/src/printer/compiled.cpp" <<'CPP'
+int a = j.value("speed", 0);
+auto b = j.at("name");
+auto c = json::parse(text);
+int d = std::stoi(s);
+float e = std::any_cast<float>(value);
+CPP
+    run_gate
+    [ "$status" -eq 1 ]
+    contains "src/printer/compiled.cpp:1: json .value" "$output"
+    contains "src/printer/compiled.cpp:2: json .at" "$output"
+    contains "src/printer/compiled.cpp:3: one-argument json::parse" "$output"
+    contains "src/printer/compiled.cpp:4: std::sto*" "$output"
+    contains "src/printer/compiled.cpp:5: value-form std::any_cast" "$output"
+}
+
+@test "the non-throwing forms, comments and excluded files pass the aborting-call check" {
+    decide_all
+    cat > "$ROOT/src/printer/compiled.cpp" <<'CPP'
+auto c = json::parse(text, nullptr, false);
+const float* e = std::any_cast<float>(&value);
+auto o = maybe.value();
+// j.value("speed", 0) would throw here
+CPP
+    printf 'int d = std::stoi(s);\n' > "$ROOT/src/printer/excluded_one.cpp"
+    run_gate
+    [ "$status" -eq 0 ]
+}
+
+@test "flags try, catch and throw in a firmware-compiled file" {
+    decide_all
+    cat > "$ROOT/src/printer/compiled.cpp" <<'CPP'
+void f() {
+    try {
+        g();
+    } catch (const std::exception& e) {
+        throw std::runtime_error("x");
+    }
+}
+CPP
+    run_gate
+    [ "$status" -eq 1 ]
+    contains "src/printer/compiled.cpp:2: try" "$output"
+    contains "src/printer/compiled.cpp:4: catch" "$output"
+    contains "src/printer/compiled.cpp:5: throw" "$output"
+    contains "exception_policy.h" "$output"
+}
+
+@test "a desktop-only net inside __cpp_exceptions passes; its #else branch is checked" {
+    decide_all
+    cat > "$ROOT/src/printer/compiled.cpp" <<'CPP'
+#if defined(__cpp_exceptions)
+    try {
+        g();
+    } catch (...) {
+    }
+#else
+    g();
+#endif
+#ifdef __cpp_exceptions
+    throw std::runtime_error("desktop");
+#else
+    try {
+#endif
+CPP
+    run_gate
+    [ "$status" -eq 1 ]
+    contains "src/printer/compiled.cpp:12: try" "$output"
+    lacks "compiled.cpp:2:" "$output"
+    lacks "compiled.cpp:10:" "$output"
+}
+
+@test "branches the firmware does not compile pass, decided by its own compile definitions" {
+    decide_all
+    cat > "$ROOT/CMakeLists.txt" <<'CMAKE'
+target_compile_definitions(${COMPONENT_LIB} PRIVATE
+    # comment lines are skipped
+    HELIX_HAS_VIEWER=0
+    HELIX_HAS_ACE=1)
+CMAKE
+    cat > "$ROOT/src/printer/compiled.cpp" <<'CPP'
+#if defined(ESP_PLATFORM)
+    v = esp_random();
+#else
+    try { v = rd(); } catch (...) {}
+#endif
+#if HELIX_HAS_VIEWER
+    try { build(); } catch (...) {}
+#endif
+#if !HELIX_HAS_ACE
+    throw 1;
+#endif
+    helix::throw_or_abort(std::runtime_error("never"));
+    log("do not throw here"); // a throw in a comment
+CPP
+    run_gate
+    [ "$status" -eq 0 ]
+}
+
+@test "a branch under a macro the gate cannot evaluate is checked" {
+    decide_all
+    cat > "$ROOT/src/printer/compiled.cpp" <<'CPP'
+#if SOME_UNKNOWN_FEATURE && OTHER
+    try { g(); } catch (...) {}
+#endif
+CPP
+    run_gate
+    [ "$status" -eq 1 ]
+    contains "src/printer/compiled.cpp:2: try" "$output"
+}
+
+@test "headers are checked too: any of them can reach the firmware through an include" {
+    decide_all
+    mkdir -p "$ROOT/include"
+    printf 'inline int n(const std::string& s) { return std::stoi(s); }\n' > "$ROOT/include/sorting.h"
+    run_gate
+    [ "$status" -eq 1 ]
+    contains "include/sorting.h:1: std::sto*" "$output"
+}
+
+@test "an #else after a compiled #if branch is not compiled, whatever an #elif said" {
+    decide_all
+    cat > "$ROOT/src/printer/compiled.cpp" <<'CPP'
+#if defined(ESP_PLATFORM)
+    v = 1;
+#elif SOMETHING
+    v = 2;
+#else
+    try { g(); } catch (...) {}
+#endif
+CPP
+    run_gate
+    [ "$status" -eq 0 ]
+}
+
 @test "passes when every src/ file is in the manifest or exclusions" {
     # decide the new file: add it to the manifest
     decide_all

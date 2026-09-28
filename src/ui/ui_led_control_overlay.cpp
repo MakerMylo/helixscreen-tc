@@ -8,6 +8,7 @@
 #include "ui_event_safety.h"
 #include "ui_global_panel_helper.h"
 #include "ui_led_chip_factory.h"
+#include "ui_nav_manager.h"
 #include "ui_update_queue.h"
 #include "ui_utils.h"
 
@@ -36,6 +37,32 @@ DEFINE_GLOBAL_OVERLAY_STORAGE(LedControlOverlay, g_led_control_overlay, get_led_
 void init_led_control_overlay(PrinterState& printer_state) {
     INIT_GLOBAL_OVERLAY(LedControlOverlay, g_led_control_overlay, printer_state);
 }
+
+namespace helix {
+lv_obj_t* open_led_control_overlay(lv_obj_t* parent_screen) {
+    auto& overlay = get_led_control_overlay();
+    lv_obj_t* panel = overlay.get_root();
+    if (!panel && parent_screen) {
+        if (!overlay.are_subjects_initialized()) {
+            overlay.init_subjects();
+        }
+        overlay.register_callbacks();
+
+        panel = overlay.create(parent_screen);
+        if (!panel) {
+            spdlog::error("[LedControlOverlay] Failed to create LED control overlay");
+            return nullptr;
+        }
+    }
+    if (panel) {
+        // Registered before every push: a NavigationManager shutdown drops the
+        // registrations, and registering is idempotent.
+        NavigationManager::instance().register_overlay_instance(panel, &overlay);
+        NavigationManager::instance().push_overlay(panel);
+    }
+    return panel;
+}
+} // namespace helix
 
 // ============================================================================
 // CONSTRUCTOR / DESTRUCTOR
@@ -90,6 +117,8 @@ lv_obj_t* LedControlOverlay::create(lv_obj_t* parent) {
         spdlog::error("[{}] Failed to create overlay from XML", get_name());
         return nullptr;
     }
+
+    lv_obj_add_event_cb(overlay_root_, on_root_deleted, LV_EVENT_DELETE, nullptr);
 
     // Find widget containers needed for dynamic population (lv_obj_clean + repopulate)
     // Section visibility is handled declaratively via bind_flag_if_eq subjects
@@ -255,13 +284,30 @@ void LedControlOverlay::cleanup() {
     deinit_subjects_base(subjects_);
 
     // Null widget pointers — WLED poll callbacks may still be in-flight
+    forget_widget_pointers();
+
+    OverlayBase::cleanup();
+}
+
+void LedControlOverlay::forget_widget_pointers() {
     strip_selector_section_ = nullptr;
     color_presets_container_ = nullptr;
     effects_container_ = nullptr;
     wled_presets_container_ = nullptr;
     macro_buttons_container_ = nullptr;
+    current_color_swatch_ = nullptr;
+}
 
-    OverlayBase::cleanup();
+void LedControlOverlay::on_root_deleted(lv_event_t* e) {
+    // Resolved through the global, not user_data: a printer switch destroys the
+    // overlay before freeing its tree, and the re-created overlay can be opened
+    // on a new root before the old one is freed.
+    if (!g_led_control_overlay ||
+        g_led_control_overlay->overlay_root_ != lv_event_get_target_obj(e)) {
+        return;
+    }
+    g_led_control_overlay->forget_widget_pointers();
+    g_led_control_overlay->overlay_root_ = nullptr;
 }
 
 // ============================================================================

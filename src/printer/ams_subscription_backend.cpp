@@ -267,7 +267,7 @@ void AmsSubscriptionBackend::emit_event(const std::string& event, const std::str
 
 AmsAction AmsSubscriptionBackend::get_current_action() const {
     std::lock_guard<std::mutex> lock(mutex_);
-    return system_info_.action;
+    return published_action_locked();
 }
 
 int AmsSubscriptionBackend::get_current_tool() const {

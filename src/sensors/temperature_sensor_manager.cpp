@@ -6,6 +6,7 @@
 #include "ui_update_queue.h"
 
 #include "device_display_name.h"
+#include "json_utils.h"
 #include "spdlog/spdlog.h"
 #include "static_subject_registry.h"
 #include "unit_conversions.h"
@@ -257,15 +258,16 @@ void TemperatureSensorManager::load_config(const nlohmann::json& config) {
             continue;
         }
 
-        std::string klipper_name = sensor_json["klipper_name"].get<std::string>();
+        std::string klipper_name = helix::json_util::as_string(sensor_json["klipper_name"]);
         auto* sensor = find_config(klipper_name);
 
         if (sensor) {
             if (sensor_json.contains("role")) {
-                sensor->role = temp_role_from_string(sensor_json["role"].get<std::string>());
+                sensor->role =
+                    temp_role_from_string(helix::json_util::as_string(sensor_json["role"]));
             }
             if (sensor_json.contains("enabled")) {
-                sensor->enabled = sensor_json["enabled"].get<bool>();
+                sensor->enabled = helix::json_util::as_bool(sensor_json["enabled"]);
             }
             spdlog::debug("[TemperatureSensorManager] Loaded config for {}: role={}, enabled={}",
                           klipper_name, temp_role_to_string(sensor->role), sensor->enabled);

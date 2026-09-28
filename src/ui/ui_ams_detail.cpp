@@ -650,7 +650,15 @@ void ams_detail_setup_path_canvas(lv_obj_t* canvas, lv_obj_t* slot_grid, int uni
         }
     }
 
-    ui_filament_path_canvas_set_buffer_info(canvas, buffer_present, buffer_state);
+    // A buffer that reports pressure is a filament pressure sensor.
+    bool pressure_sensor = false;
+    if (effective_unit < static_cast<int>(info.units.size())) {
+        const auto& health = info.units[effective_unit].buffer_health;
+        pressure_sensor = health.has_value() && health->fps_reported;
+    }
+    // i18n: do not translate - hardware abbreviations
+    ui_filament_path_canvas_set_buffer_info(canvas, buffer_present, buffer_state,
+                                            pressure_sensor ? "FPS" : "BUF");
 
     // Set proportional bias for backends with continuous sync feedback
     if (backend->supports_sync_feedback_visualization(info)) {
@@ -717,6 +725,7 @@ bool ams_dispatch_backend_action(AmsContextMenu::MenuAction action, int slot,
     case MenuAction::RECOVER_POSITION:
     case MenuAction::SELECT_GATE:
     case MenuAction::CHECK_GATE:
+    case MenuAction::PRELOAD:
     case MenuAction::CLEAR_SPOOL:
         break;
     default:
@@ -767,6 +776,14 @@ bool ams_dispatch_backend_action(AmsContextMenu::MenuAction action, int slot,
         AmsError error = backend->check_gate(slot);
         if (error.result != AmsResult::SUCCESS) {
             notify_ams_error(error, lv_tr("Check slot failed"));
+        }
+        break;
+    }
+
+    case MenuAction::PRELOAD: {
+        AmsError error = backend->preload_lane(slot);
+        if (error.result != AmsResult::SUCCESS) {
+            notify_ams_error(error, lv_tr("Preload failed"));
         }
         break;
     }

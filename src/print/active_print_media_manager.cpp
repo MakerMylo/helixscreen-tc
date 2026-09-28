@@ -7,6 +7,7 @@
 #include "ui_update_queue.h"
 
 #include "app_globals.h"
+#include "exception_policy.h"
 #include "gcode_parser.h"
 #include "json_utils.h"
 #include "memory_monitor.h"
@@ -50,7 +51,7 @@ void deinit_active_print_media_manager() {
 
 ActivePrintMediaManager& get_active_print_media_manager() {
     if (!g_instance) {
-        throw std::runtime_error("ActivePrintMediaManager not initialized");
+        helix::throw_or_abort(std::runtime_error("ActivePrintMediaManager not initialized"));
     }
     return *g_instance;
 }

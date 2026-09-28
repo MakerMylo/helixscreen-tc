@@ -161,6 +161,7 @@ translations:
   Actions: Действия
   Active: Активно
   Active Spool: Активная катушка
+  Actual: Текущая
   Adaptive Bed Mesh: Адаптивная сетка стола
   Add: Добавить
   Add Filament: Добавить филамент
@@ -506,6 +507,7 @@ translations:
     калибровка отправлена — используйте панель Z-Offset для настройки
   Cartographer touch calibrate sent: Cartographer тактильная калибровка отправлена
   Category: Категория
+  Center: 'Центр'
   Center QR code in frame: Расположите QR-код в центре кадра
   'Chamb:': 'Камера:'
   Chamber: Камера
@@ -555,6 +557,7 @@ translations:
   Check the PTFE tube along the drag chain for kinks, and the bend where it enters the extruder sensor: Проверьте трубку PTFE вдоль кабель-канала на перегибы, а также изгиб на входе в датчик экструдера
   Check the RS-485 cable between printer and CFS: Проверьте кабель RS-485 между принтером и CFS
   Check the buffer unit on the back of the printer: Проверьте буферный блок на задней панели принтера
+  Check the chips, then save: Проверьте метки и сохраните
   Check the filament path and try again.: Проверьте путь филамента и попробуйте снова.
   ? Check the path from the slot to the hub for a tangle or drag. If the slot feeds freely, the hub sensor or the feeder motor may have failed
   : Проверьте путь от слота до хаба на запутывание или трение. Если слот подаёт свободно, возможно, неисправен датчик хаба или подающий двигатель
@@ -762,6 +765,7 @@ translations:
   Could not reach Spoolman at: Не удалось связаться со Spoolman по адресу
   Could not read the screw adjustments from the printer: Не удалось получить данные регулировки винтов от принтера
   Could not remove the job from the queue: Не удалось удалить задание из очереди
+  Could not reset the printer image tags: Не удалось сбросить отметки изображения
   Could not resolve printer RFCOMM channel: Не удалось определить RFCOMM-канал принтера
   Could not save filament: Не удалось сохранить филамент
   Could not save the drying state: Не удалось сохранить состояние сушки
@@ -769,6 +773,7 @@ translations:
   'Could not save the drying state: nothing was heated': 'Не удалось сохранить состояние сушки: ничего не нагревалось'
 
   "Could not save the mesh as '{}': {}": "Не удалось сохранить сетку как '{}': {}"
+  Could not save the printer image tags: Не удалось сохранить отметки изображения
   Could not start Bluetooth discovery: Не удалось запустить поиск Bluetooth
   Could not update filaments: Не удалось обновить филаменты
   Could not verify Spoolman status. Moonraker may still be restarting.: Не удалось
@@ -856,6 +861,7 @@ translations:
   Deploy: Развернуть
   Describe the issue (optional): Опишите проблему (необязательно)
   Detailed: Подробно
+  Detect automatically: 'Определить автоматически'
   'Detect filament tangles': 'Обнаруживать спутывание филамента'
   Detecting plate...: Обнаружение пластины...
   Detecting printer type...: Определение типа принтера...
@@ -1324,6 +1330,7 @@ translations:
   Flying Toasters: Летающие тостеры
   Follow active tool: Следовать активному инструменту
   Follow graph screen: Следовать экрану графика
+  Force/weight sensors: 'Датчики силы/веса'
   Forget: Забыть
   Forget Network?: Забыть сеть?
   Forget network '{}'? You will need the password to reconnect.: Забыть сеть «{}»? Для повторного подключения потребуется пароль.
@@ -1339,6 +1346,9 @@ translations:
   : "Разница частот: разница между путями A и B. Значения менее 2 Гц ниже точности этого измерения, поэтому считаются совпадением.\n\nСовпадение: насколько близки два ремня, в процентах от частоты ремня A. Выше 95% — отлично; ниже 90% стоит отрегулировать."
   From Buffer: Из буфера
   From Version: С версии
+  Front: 'Спереди'
+  Front Left: 'Спереди слева'
+  Front Right: 'Спереди справа'
   Full: Полный
   G-code Console: Консоль G-code
   G-code Preview: Просмотр G-code
@@ -1600,6 +1610,7 @@ translations:
   It's a new spool: Это новая катушка
   Jammed at the Toolhead: Замятие в печатающей головке
   Job Queue: Очередь заданий
+  Jog: 'Джог'
   Jog Speed XY: Скорость перемещения XY
   Jog Speed Z: Скорость перемещения Z
   Jog Y until the nozzle is centered over the chute opening, then tap Save.: Двигайте Y, пока сопло не встанет по центру отверстия жёлоба, затем нажмите «Сохранить».
@@ -1657,6 +1668,7 @@ translations:
     освещением
   LEDs: LED
   LEDs controlled by the light button: LED, управляемые кнопкой света
+  LOAD CELLS: 'ТЕНЗОДАТЧИКИ'
   LOADED: ЗАГРУЖЕН
   LOCKED: ЗАБЛОКИРОВАНО
   LOT-2024-001: LOT-2024-001
@@ -1689,6 +1701,7 @@ translations:
   Layout: Раскладка
   Learn More: Подробнее
   LedSelect: Выбрать LED
+  Left: 'Слева'
   Length of filament to purge: 'Длина продуваемого филамента'
   Length of the cooling tube section: 'Длина участка трубки охлаждения'
   'Length:': 'Длина:'
@@ -1706,6 +1719,9 @@ translations:
   Listening: Прослушивание
   Live view from your webcam: Прямая трансляция с веб-камеры
   Load: Загрузить
+  Load Cell: 'Тензодатчик'
+  Load Cells: 'Тензодатчики'
+  Load Extruder: 'Загрузить экструдер'
   Load Failed: 'Не удалось загрузить'
   Load Filament: Загрузить филамент
   Load a filament first before trying to unload: Сначала загрузите филамент, прежде чем пытаться его выгрузить
@@ -1790,6 +1806,7 @@ translations:
   Macro to cancel an active print: Макрос для отмены текущей печати
   Macro to clean/wipe the nozzle: Макрос для очистки/протирки сопла
   Macro to load filament into extruder: Макрос для загрузки филамента в экструдер
+  Macro to park the toolhead at a safe position: 'Макрос для парковки печатающей головы в безопасное положение'
   Macro to pause an active print: Макрос для паузы текущей печати
   Macro to purge/prime the nozzle: Макрос для продувки/подготовки сопла
   Macro to resume a paused print: Макрос для возобновления приостановленной печати
@@ -1849,6 +1866,7 @@ translations:
   Measure and compare belt path frequencies: Измерить и сравнить частоты путей ремня
   Measure belt path frequencies: Измерить частоты путей ремня
   Measure every tool's XYZ offset automatically: Автоматически измеряет смещение XYZ каждого инструмента
+  Measure pressure advance automatically: 'Автоматически измеряет Pressure Advance'
   Measured (shaper off): Измерено (шейпер выключен)
   Measured filament diameter: Измеренный диаметр филамента
   Measured pressure advance: 'Измеренный Pressure Advance'
@@ -1887,6 +1905,7 @@ translations:
   Motors Off: Отключить моторы
   'Motors disable failed: {}': 'Ошибка отключения моторов: {}'
   Motors disabled: Моторы отключены
+  Motors stay on while a print is active: Моторы остаются включены во время печати
   Mount: Установить
   Move: Двигать
   Move out of range: 'Движение за пределами диапазона'
@@ -2183,6 +2202,7 @@ translations:
   Parameters: Параметры
   Park: 'Парковка'
   Park the AFC system: 'Припарковать систему AFC'
+  Park Toolhead: 'Припарковать печатающую головку'
   Part: Деталь
   Part Cooling Fan: Вентилятор охлаждения детали
   Part Fan: Вент. детали
@@ -2263,6 +2283,7 @@ translations:
   Preheat cancelled: Предварительный нагрев отменён
   'Preheat: all {} tools + bed set': 'Преднагрев: все {} инструменты + стол заданы'
   'Preheat: {} + bed set': 'Преднагрев: {} + стол заданы'
+  Preload: 'Предзагрузка'
   Preload failed: Ошибка предварительной загрузки
   Prepared: Готово
   Preparing: Подготовка
@@ -2483,6 +2504,9 @@ translations:
   Ready to Apply: Готово к применению
   Ready to calibrate: Готов к калибровке
   Ready to pluck: Готово к щипку
+  Rear: 'Сзади'
+  Rear Left: 'Сзади слева'
+  Rear Right: 'Сзади справа'
   Reason: Причина
   ? "Reason: {}\n\nThe printer cannot resume this print. Restart from the beginning?"
   : "Причина: {}\n\nПринтер не может возобновить эту печать. Начать заново?"
@@ -2500,6 +2524,7 @@ translations:
   Recording Mode: Режим записи
   Recover: Восстановить
   Recover MMU state?: Восстановить состояние MMU?
+  Recover State: 'Восстановить состояние'
   Recovering AFC system...: Восстановление системы AFC...
   Recovery failed: Восстановление не удалось
   'Recovery failed: ': 'Восстановление не удалось: '
@@ -2515,6 +2540,7 @@ translations:
   Refresh Interval: Интервал обновления
   Refresh RFID: 'Обновить RFID'
   Relative vibration: Относительная вибрация
+  Refresh Spoolman: 'Обновить Spoolman'
   Reheating...: Разогрев...
   Release all stepper motors. Position will be lost.: Отпустить все шаговые моторы.
     Позиция будет потеряна.
@@ -2543,6 +2569,8 @@ translations:
 
   Remove the spools now?: Снять катушки сейчас?
 
+  Remove your tags for this image?: Удалить ваши отметки для этого изображения?
+  Remove your tags for this image? Its chips go back to the shipped positions.: Удалить ваши отметки для этого изображения? Метки вернутся на исходные места.
   Rename: Переименовать
   Rename Fan: Переименовать вентилятор
   Rename Mesh Profile: Переименовать профиль сетки
@@ -2583,6 +2611,7 @@ translations:
   Reset endless spool failed: 'Не удалось сбросить бесконечную катушку'
   Reset failed: Ошибка сброса
   Reset motor run-time counter: 'Сбросить счётчик наработки мотора'
+  Reset tags: Сбросить отметки
   Reset to Default: Сбросить до умолчания
   Reset to defaults: Сбросить по умолчанию
   Reset to original values: Сбросить к исходным значениям
@@ -2649,6 +2678,7 @@ translations:
   Review your configuration below, then click Finish to save: Проверьте конфигурацию
     ниже, затем нажмите «Готово» для сохранения
   Rewinding: Перемотка
+  Right: 'Справа'
   'Role:': 'Тип:'
   Rotating tips for using your printer: Сменяющиеся советы по печати
   Rotation: Поворот
@@ -2855,6 +2885,7 @@ translations:
   : Задайте тип и цвет филамента для этого слота вручную. Если метка должна читаться, переустановите катушку этикеткой к считывателю, когда блок простаивает
   Set up: Настроить
   Set up your label printer in Settings: Настройте принтер этикеток в Настройках
+  Set what is really selected and loaded. Nothing moves.: 'Укажите, что на самом деле выбрано и загружено. Ничего не двигается.'
   Settings: Настройки
   Settings Snapshot: Снимок настроек
   Settings reset to defaults. Restarting...: Настройки сброшены к значениям по умолчанию.
@@ -3081,19 +3112,27 @@ translations:
   'TOGGLE: {}': 'ПЕРЕКЛЮЧИТЬ: {}'
   TOOLS: ИНСТРУМЕНТЫ
   TPU: TPU
+  Tag Parts: Отметить узлы
+  Tag parts: Отметить узлы
   Takes 3-5 min. Do not interrupt.: Занимает 3-5 мин. Не прерывайте.
   'Tangle sensitivity': 'Чувствительность к спутыванию'
   Tap + to add: Нажмите +, чтобы добавить
   Tap Firmware Restart to recover — on K2 this also bounces the rpi MCU bridge: Нажмите «Перезапуск прошивки» для восстановления. На K2 это также перезапускает мост MCU rpi
   Tap again to confirm this orientation: Нажмите ещё раз для подтверждения ориентации
+  Tap an empty spot inside the enclosure: Нажмите на пустое место внутри корпуса
   Tap an object to exclude it | {} objects ({} excluded): 'Коснитесь объекта, чтобы исключить его | {} объектов ({} исключено)'
   Tap any tile to open its full controls or toggle its state.: 'Нажмите на любую плитку, чтобы открыть её полные элементы управления или переключить состояние.'
   Tap anywhere if this text is right-side up: Нажмите в любом месте, если текст расположен
     правильно
   Tap anywhere to begin: Нажмите в любом месте для начала
   Tap anywhere to begin calibration: Нажмите в любом месте для начала калибровки
+  Tap the bed's front-left corner: Нажмите на передний левый угол стола
+  Tap the bed's front-right corner: Нажмите на передний правый угол стола
   Tap the crosshair (point %1$d of 3) — touch %2$d of %3$d: Нажмите на
     перекрестие (точка %1$d из 3) — касание %2$d из %3$d
+  Tap the light: Нажмите на подсветку
+  Tap the nozzle tip: Нажмите на кончик сопла
+  Tap the part cooling fan: Нажмите на вентилятор охлаждения детали
   Tap to assign: Нажмите для назначения
   Target: 'Цель'
   Target Frequency: Целевая частота
@@ -3420,6 +3459,7 @@ translations:
   Unavailable: Недоступно
   Unavailable on this printer: Недоступно на этом принтере
   Understanding Results: Понимание результатов
+  Undo: Шаг назад
   ? "Uneven belt tension causes print artifacts like layer shifts, VFAs (vertical fine artifacts), and ringing.\n\nPluck each belt by hand and this tool listens through the accelerometer to measure the belt's frequency. Matched frequencies mean balanced tension.\n\nOn CoreXY, belts A and B should be within a few Hz of each other."
   : "Неравномерное натяжение ремня вызывает дефекты печати, такие как смещения слоёв, VFA (вертикальные мелкие артефакты) и ringing.\n\nДёрните каждый ремень рукой, и этот инструмент измерит частоту ремня с помощью акселерометра. Совпадающие частоты означают сбалансированное натяжение.\n\nДля CoreXY ремни A и B должны отличаться на несколько Гц."
   Uninstall: Удалить
@@ -3442,6 +3482,7 @@ translations:
   Unknown error: Неизвестная ошибка
   Unload: Выгрузить
   Unload Distance: 'Расстояние выгрузки'
+  Unload Extruder: 'Выгрузить экструдер'
   Unload Failed: 'Не удалось выгрузить'
   Unload Filament: Выгрузить филамент
   'Unload at end': 'Выгружать в конце'
@@ -3453,6 +3494,7 @@ translations:
   Unload macro not configured: Макрос выгрузки не настроен
   Unload the CFS filament before enabling bypass: 'Выгрузите филамент CFS перед включением обхода'
   Unload...: Выгрузить...
+  Unloaded: 'Выгружен'
   Unloading: Выгрузка
   Unloading Start Speed: 'Начальная скорость выгрузки'
   Unloading before bypass...: Выгрузка перед байпасом...

@@ -367,8 +367,11 @@ void ui_filament_path_canvas_set_buffer_fault_state(lv_obj_t* obj, int state);
  * @param obj The filament_path_canvas widget
  * @param present true to draw the buffer element
  * @param state 0=neutral (even coil), 1=compressed (tight coil), 2=tension (stretched coil)
+ * @param label Text drawn in the box: "BUF", or "FPS" for a filament pressure
+ *              sensor. A static string; the canvas keeps the pointer.
  */
-void ui_filament_path_canvas_set_buffer_info(lv_obj_t* obj, bool present, int state);
+void ui_filament_path_canvas_set_buffer_info(lv_obj_t* obj, bool present, int state,
+                                             const char* label = "BUF");
 
 /**
  * @brief Set proportional buffer bias for smooth color interpolation
@@ -491,5 +494,16 @@ namespace helix::ui {
  * NOTE: argument order is width-then-height.
  */
 bool hub_box_hit(lv_point_t p, int32_t cx, int32_t cy, int32_t w, int32_t h, int32_t margin);
+
+/**
+ * @brief Hit-test against a box the renderer recorded in absolute coordinates.
+ *
+ * The widget can move after the render that recorded @p box (an overlay sliding
+ * in, a scrolled parent) and its drawn pixels move with it, so @p p is shifted
+ * by how far the widget's origin has travelled from @p rendered_origin to
+ * @p current_origin before the test.
+ */
+bool recorded_box_hit(lv_point_t p, const lv_area_t& box, lv_point_t rendered_origin,
+                      lv_point_t current_origin, int32_t margin);
 } // namespace helix::ui
 #endif

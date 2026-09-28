@@ -23,6 +23,7 @@
 #include "printer_discovery.h"
 #include "settings_manager.h"
 #include "system/afc_message_dedup.h"
+#include "text_io.h"
 
 #include <spdlog/fmt/fmt.h>
 #include <spdlog/spdlog.h>
@@ -45,7 +46,8 @@ int trailing_number(const std::string& s) {
     auto pos = s.find_last_not_of("0123456789");
     if (pos == std::string::npos || pos == s.size() - 1)
         return INT_MAX;
-    return std::stoi(s.substr(pos + 1));
+    // An out-of-int-range suffix sorts last, same as a non-numeric name.
+    return helix::text_io::parse_leading<int>(s.substr(pos + 1)).value_or(INT_MAX);
 }
 
 // Natural sort by trailing number, then lexicographic tiebreak.
@@ -964,13 +966,10 @@ std::vector<int> parse_afc_lane_map(const nlohmann::json& map_value) {
         if (!std::all_of(digits.begin(), digits.end(),
                          [](unsigned char c) { return std::isdigit(c) != 0; }))
             return;
-        try {
-            const int tool = std::stoi(digits);
-            if (tool >= 0 && tool <= AFC_MAX_TOOL_NUMBER)
-                out.push_back(tool);
-        } catch (...) {
-            // Out of int range — skip
-        }
+        // Out of int range — skip
+        const auto tool = helix::text_io::parse_leading<int>(digits);
+        if (tool && *tool >= 0 && *tool <= AFC_MAX_TOOL_NUMBER)
+            out.push_back(*tool);
     };
 
     std::vector<int> tools;
@@ -4081,11 +4080,8 @@ void AmsBackendAfc::parse_lane_data(const nlohmann::json& lane_data) {
         if (key.size() >= 2 && key[0] == 'T' &&
             std::all_of(key.begin() + 1, key.end(),
                         [](unsigned char c) { return std::isdigit(c) != 0; })) {
-            try {
-                tool = std::stoi(key.substr(1));
-            } catch (...) {
-                tool = -1; // out of int range — not a usable tool number
-            }
+            // Out of int range — not a usable tool number
+            tool = helix::text_io::parse_leading<int>(key.substr(1)).value_or(-1);
         }
 
         if (tool < 0 || tool > AFC_MAX_TOOL_NUMBER) {
@@ -6460,102 +6456,99 @@ AmsError AmsBackendAfc::execute_device_action(const std::string& action_id, cons
             return AmsError(AmsResult::WRONG_STATE, "Bowden length value required",
                             lv_tr("Missing value"), lv_tr("Provide a bowden length value"));
         }
-        try {
-            float length = std::any_cast<float>(value);
-            std::lock_guard<std::mutex> lock(mutex_);
-            float max_len = std::max(2000.0f, bowden_length_ * 1.5f);
-            if (length < 100.0f || length > max_len) {
-                return AmsError(
-                    AmsResult::WRONG_STATE,
-                    fmt::format("Bowden length must be 100-{:.0f}mm", max_len),
-                    lv_tr("Invalid value"),
-                    fmt::format(lv_tr("Enter a length between 100 and {:.0f}mm"), max_len));
-            }
-            // AFC uses SET_BOWDEN_LENGTH HUB={hub_name} LENGTH={mm}
-            if (!hub_names_.empty()) {
-                std::string hub_name = hub_names_[0];
-                return execute_gcode("SET_BOWDEN_LENGTH HUB=" + hub_name +
-                                     " LENGTH=" + std::to_string(static_cast<int>(length)));
-            }
-            return AmsErrorHelper::not_supported("No AFC hubs configured");
-        } catch (const std::bad_any_cast&) {
+        const float* length_p = std::any_cast<float>(&value);
+        if (!length_p) {
             return AmsError(AmsResult::WRONG_STATE, "Invalid bowden length type",
                             lv_tr("Invalid value type"), lv_tr("Provide a numeric value"));
         }
+        const float length = *length_p;
+        std::lock_guard<std::mutex> lock(mutex_);
+        float max_len = std::max(2000.0f, bowden_length_ * 1.5f);
+        if (length < 100.0f || length > max_len) {
+            return AmsError(AmsResult::WRONG_STATE,
+                            fmt::format("Bowden length must be 100-{:.0f}mm", max_len),
+                            lv_tr("Invalid value"),
+                            fmt::format(lv_tr("Enter a length between 100 and {:.0f}mm"), max_len));
+        }
+        // AFC uses SET_BOWDEN_LENGTH HUB={hub_name} LENGTH={mm}
+        if (!hub_names_.empty()) {
+            std::string hub_name = hub_names_[0];
+            return execute_gcode("SET_BOWDEN_LENGTH HUB=" + hub_name +
+                                 " LENGTH=" + std::to_string(static_cast<int>(length)));
+        }
+        return AmsErrorHelper::not_supported("No AFC hubs configured");
     } else if (action_id.rfind("bowden_T", 0) == 0) {
         // Per-extruder bowden length (toolchanger): bowden_T0, bowden_T1, etc.
         if (!value.has_value()) {
             return AmsError(AmsResult::WRONG_STATE, "Bowden length value required",
                             lv_tr("Missing value"), lv_tr("Provide a bowden length value"));
         }
-        try {
-            float length = std::any_cast<float>(value);
-            std::lock_guard<std::mutex> lock(mutex_);
-            float max_len = std::max(2000.0f, bowden_length_ * 1.5f);
-            if (length < 100.0f || length > max_len) {
-                return AmsError(
-                    AmsResult::WRONG_STATE,
-                    fmt::format("Bowden length must be 100-{:.0f}mm", max_len),
-                    lv_tr("Invalid value"),
-                    fmt::format(lv_tr("Enter a length between 100 and {:.0f}mm"), max_len));
-            }
-            // Extract tool index from action_id (e.g., "bowden_T0" -> 0)
-            int tool_idx = std::stoi(action_id.substr(8));
-            if (tool_idx >= 0 && tool_idx < static_cast<int>(extruders_.size())) {
-                // Find the hub for this extruder by matching unit membership
-                std::string hub_name;
-                const std::string& ext_name = extruders_[tool_idx].name;
-                for (const auto& unit : unit_infos_) {
-                    auto it = std::find(unit.extruders.begin(), unit.extruders.end(), ext_name);
-                    if (it != unit.extruders.end() && !unit.hubs.empty()) {
-                        hub_name = unit.hubs[0];
-                        break;
-                    }
-                }
-                // Fall back to first known hub
-                if (hub_name.empty() && !hub_names_.empty()) {
-                    hub_name = hub_names_[0];
-                }
-                if (hub_name.empty()) {
-                    return AmsErrorHelper::not_supported("No AFC hub found for extruder");
-                }
-                return execute_gcode("SET_BOWDEN_LENGTH HUB=" + hub_name +
-                                     " LENGTH=" + std::to_string(static_cast<int>(length)));
-            }
-            return AmsErrorHelper::not_supported("Invalid extruder index: " +
-                                                 std::to_string(tool_idx));
-        } catch (const std::bad_any_cast&) {
+        const float* length_p = std::any_cast<float>(&value);
+        if (!length_p) {
             return AmsError(AmsResult::WRONG_STATE, "Invalid bowden length type",
                             lv_tr("Invalid value type"), lv_tr("Provide a numeric value"));
         }
+        const float length = *length_p;
+        std::lock_guard<std::mutex> lock(mutex_);
+        float max_len = std::max(2000.0f, bowden_length_ * 1.5f);
+        if (length < 100.0f || length > max_len) {
+            return AmsError(AmsResult::WRONG_STATE,
+                            fmt::format("Bowden length must be 100-{:.0f}mm", max_len),
+                            lv_tr("Invalid value"),
+                            fmt::format(lv_tr("Enter a length between 100 and {:.0f}mm"), max_len));
+        }
+        // Extract tool index from action_id (e.g., "bowden_T0" -> 0)
+        const int tool_idx = helix::text_io::parse_leading<int>(action_id.substr(8)).value_or(-1);
+        if (tool_idx >= 0 && tool_idx < static_cast<int>(extruders_.size())) {
+            // Find the hub for this extruder by matching unit membership
+            std::string hub_name;
+            const std::string& ext_name = extruders_[tool_idx].name;
+            for (const auto& unit : unit_infos_) {
+                auto it = std::find(unit.extruders.begin(), unit.extruders.end(), ext_name);
+                if (it != unit.extruders.end() && !unit.hubs.empty()) {
+                    hub_name = unit.hubs[0];
+                    break;
+                }
+            }
+            // Fall back to first known hub
+            if (hub_name.empty() && !hub_names_.empty()) {
+                hub_name = hub_names_[0];
+            }
+            if (hub_name.empty()) {
+                return AmsErrorHelper::not_supported("No AFC hub found for extruder");
+            }
+            return execute_gcode("SET_BOWDEN_LENGTH HUB=" + hub_name +
+                                 " LENGTH=" + std::to_string(static_cast<int>(length)));
+        }
+        return AmsErrorHelper::not_supported("Invalid extruder index: " + std::to_string(tool_idx));
     } else if (action_id == "speed_fwd" || action_id == "speed_rev") {
         if (!value.has_value()) {
             return AmsError(AmsResult::WRONG_STATE, "Speed multiplier value required",
                             lv_tr("Missing value"), lv_tr("Provide a speed multiplier value"));
         }
-        try {
-            float multiplier = std::any_cast<float>(value);
-            if (multiplier < 0.5f || multiplier > 2.0f) {
-                return AmsError(AmsResult::WRONG_STATE, "Speed multiplier must be 0.5-2.0x",
-                                lv_tr("Invalid value"),
-                                lv_tr("Enter a multiplier between 0.5 and 2.0"));
-            }
-            // AFC SET_LONG_MOVE_SPEED is per-lane; apply to all lanes
-            std::string param = (action_id == "speed_fwd") ? "FWD_SPEED" : "RWD_FACTOR";
-            if (slots_.slot_count() == 0) {
-                return AmsErrorHelper::not_supported("No AFC lanes configured");
-            }
-            for (int i = 0; i < slots_.slot_count(); ++i) {
-                AmsError err = execute_gcode("SET_LONG_MOVE_SPEED LANE=" + slots_.name_of(i) + " " +
-                                             param + "=" + std::to_string(multiplier));
-                if (!err)
-                    return err; // Return first error
-            }
-            return AmsErrorHelper::success();
-        } catch (const std::bad_any_cast&) {
+        const float* multiplier_p = std::any_cast<float>(&value);
+        if (!multiplier_p) {
             return AmsError(AmsResult::WRONG_STATE, "Invalid speed multiplier type",
                             lv_tr("Invalid value type"), lv_tr("Provide a numeric value"));
         }
+        const float multiplier = *multiplier_p;
+        if (multiplier < 0.5f || multiplier > 2.0f) {
+            return AmsError(AmsResult::WRONG_STATE, "Speed multiplier must be 0.5-2.0x",
+                            lv_tr("Invalid value"),
+                            lv_tr("Enter a multiplier between 0.5 and 2.0"));
+        }
+        // AFC SET_LONG_MOVE_SPEED is per-lane; apply to all lanes
+        std::string param = (action_id == "speed_fwd") ? "FWD_SPEED" : "RWD_FACTOR";
+        if (slots_.slot_count() == 0) {
+            return AmsErrorHelper::not_supported("No AFC lanes configured");
+        }
+        for (int i = 0; i < slots_.slot_count(); ++i) {
+            AmsError err = execute_gcode("SET_LONG_MOVE_SPEED LANE=" + slots_.name_of(i) + " " +
+                                         param + "=" + std::to_string(multiplier));
+            if (!err)
+                return err; // Return first error
+        }
+        return AmsErrorHelper::success();
     } else if (action_id == "test_lanes") {
         return execute_gcode("AFC_TEST_LANES");
     } else if (action_id == "change_blade") {
@@ -6612,24 +6605,23 @@ AmsError AmsBackendAfc::execute_device_action(const std::string& action_id, cons
         return err;
     } else if (action_id.rfind("led_extruder_T", 0) == 0) {
         // Per-extruder toolhead LED toggle: led_extruder_T0, led_extruder_T1, etc.
-        try {
-            int tool_idx = std::stoi(action_id.substr(14));
-            std::lock_guard<std::mutex> lock(mutex_);
-            if (tool_idx < 0 || tool_idx >= static_cast<int>(extruders_.size())) {
-                return AmsErrorHelper::not_supported("Invalid extruder index: " +
-                                                     std::to_string(tool_idx));
-            }
-            bool currently_on = toolhead_led_state_[tool_idx];
-            int turn_on = currently_on ? 0 : 1;
-            auto err = execute_gcode(fmt::format("AFC_SET_EXTRUDER_LED EXTRUDER={} TURN_ON={}",
-                                                 extruders_[tool_idx].name, turn_on));
-            if (err) {
-                toolhead_led_state_[tool_idx] = !currently_on;
-            }
-            return err;
-        } catch (const std::exception&) {
+        const int tool_idx = helix::text_io::parse_leading<int>(action_id.substr(14)).value_or(-1);
+        if (tool_idx < 0) {
             return AmsErrorHelper::not_supported("Invalid LED action: " + action_id);
         }
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (tool_idx >= static_cast<int>(extruders_.size())) {
+            return AmsErrorHelper::not_supported("Invalid extruder index: " +
+                                                 std::to_string(tool_idx));
+        }
+        bool currently_on = toolhead_led_state_[tool_idx];
+        int turn_on = currently_on ? 0 : 1;
+        auto err = execute_gcode(fmt::format("AFC_SET_EXTRUDER_LED EXTRUDER={} TURN_ON={}",
+                                             extruders_[tool_idx].name, turn_on));
+        if (err) {
+            toolhead_led_state_[tool_idx] = !currently_on;
+        }
+        return err;
     }
 
     // Per-lane dist_hub actions
@@ -6638,21 +6630,21 @@ AmsError AmsBackendAfc::execute_device_action(const std::string& action_id, cons
         if (!value.has_value()) {
             return AmsError(AmsResult::WRONG_STATE, "Value required", lv_tr("Missing value"), "");
         }
-        try {
-            float val = std::any_cast<float>(value);
-            AmsError err =
-                execute_gcode(fmt::format("SET_HUB_DIST LANE={} LENGTH={:g}", lane_name, val));
-            if (!err)
-                return err;
-            AmsError save_err = execute_gcode("SAVE_HUB_DIST LANE=" + lane_name);
-            if (!save_err) {
-                spdlog::warn("[AMS AFC] SAVE_HUB_DIST failed (runtime value was set)");
-            }
-            return AmsErrorHelper::success();
-        } catch (const std::bad_any_cast&) {
+        const float* val_p = std::any_cast<float>(&value);
+        if (!val_p) {
             return AmsError(AmsResult::WRONG_STATE, lv_tr("Invalid value type"),
                             lv_tr("Expected float"), "");
         }
+        const float val = *val_p;
+        AmsError err =
+            execute_gcode(fmt::format("SET_HUB_DIST LANE={} LENGTH={:g}", lane_name, val));
+        if (!err)
+            return err;
+        AmsError save_err = execute_gcode("SAVE_HUB_DIST LANE=" + lane_name);
+        if (!save_err) {
+            spdlog::warn("[AMS AFC] SAVE_HUB_DIST failed (runtime value was set)");
+        }
+        return AmsErrorHelper::success();
     }
 
     // ---- Toolhead distance actions (single + multi-extruder) ----
@@ -6665,10 +6657,9 @@ AmsError AmsBackendAfc::execute_device_action(const std::string& action_id, cons
                 return {field, 0};
             }
             if (id.rfind(field + "_T", 0) == 0) {
-                try {
-                    int idx = std::stoi(id.substr(field.size() + 2));
-                    return {field, idx};
-                } catch (...) {
+                const auto idx = helix::text_io::parse_leading<int>(id.substr(field.size() + 2));
+                if (idx) {
+                    return {field, *idx};
                 }
             }
         }
@@ -6680,47 +6671,47 @@ AmsError AmsBackendAfc::execute_device_action(const std::string& action_id, cons
         if (!value.has_value()) {
             return AmsError(AmsResult::WRONG_STATE, "Value required", lv_tr("Missing value"), "");
         }
-        try {
-            float val = std::any_cast<float>(value);
-
-            // UPDATE_TOOLHEAD_SENSORS / SAVE_EXTRUDER_VALUES are mux commands
-            // keyed on the AFC_extruder SECTION name (AFC_extruder.py:364-369,
-            // muxed on self.name = the section suffix), not on the Klipper
-            // extruder name. Rebuilding "extruder<N>" here addressed a mux key
-            // that does not exist on a renamed config, so both commands failed.
-            // Same key the sibling AFC_SET_EXTRUDER_LED action already uses.
-            std::string ext_name;
-            {
-                std::lock_guard<std::mutex> lock(mutex_);
-                ext_name = afc_extruder_section_for_tool_unlocked(th_tool);
-            }
-            if (ext_name.empty()) {
-                ext_name = (th_tool > 0) ? "extruder" + std::to_string(th_tool) : "extruder";
-            }
-
-            std::string param;
-            if (th_field == "tool_stn")
-                param = "TOOL_STN";
-            else if (th_field == "tool_stn_unload")
-                param = "TOOL_STN_UNLOAD";
-            else if (th_field == "tool_sensor_after_extruder")
-                param = "TOOL_AFTER_EXTRUDER";
-
-            std::string cmd =
-                fmt::format("UPDATE_TOOLHEAD_SENSORS EXTRUDER={} {}={:g}", ext_name, param, val);
-            AmsError err = execute_gcode(cmd);
-            if (!err)
-                return err;
-
-            AmsError save_err = execute_gcode("SAVE_EXTRUDER_VALUES EXTRUDER=" + ext_name);
-            if (!save_err) {
-                spdlog::warn("[AMS AFC] SAVE_EXTRUDER_VALUES failed (runtime value was set)");
-            }
-            return AmsErrorHelper::success();
-        } catch (const std::bad_any_cast&) {
+        const float* val_p = std::any_cast<float>(&value);
+        if (!val_p) {
             return AmsError(AmsResult::WRONG_STATE, lv_tr("Invalid value type"),
                             lv_tr("Expected float"), "");
         }
+        const float val = *val_p;
+
+        // UPDATE_TOOLHEAD_SENSORS / SAVE_EXTRUDER_VALUES are mux commands
+        // keyed on the AFC_extruder SECTION name (AFC_extruder.py:364-369,
+        // muxed on self.name = the section suffix), not on the Klipper
+        // extruder name. Rebuilding "extruder<N>" here addressed a mux key
+        // that does not exist on a renamed config, so both commands failed.
+        // Same key the sibling AFC_SET_EXTRUDER_LED action already uses.
+        std::string ext_name;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            ext_name = afc_extruder_section_for_tool_unlocked(th_tool);
+        }
+        if (ext_name.empty()) {
+            ext_name = (th_tool > 0) ? "extruder" + std::to_string(th_tool) : "extruder";
+        }
+
+        std::string param;
+        if (th_field == "tool_stn")
+            param = "TOOL_STN";
+        else if (th_field == "tool_stn_unload")
+            param = "TOOL_STN_UNLOAD";
+        else if (th_field == "tool_sensor_after_extruder")
+            param = "TOOL_AFTER_EXTRUDER";
+
+        std::string cmd =
+            fmt::format("UPDATE_TOOLHEAD_SENSORS EXTRUDER={} {}={:g}", ext_name, param, val);
+        AmsError err = execute_gcode(cmd);
+        if (!err)
+            return err;
+
+        AmsError save_err = execute_gcode("SAVE_EXTRUDER_VALUES EXTRUDER=" + ext_name);
+        if (!save_err) {
+            spdlog::warn("[AMS AFC] SAVE_EXTRUDER_VALUES failed (runtime value was set)");
+        }
+        return AmsErrorHelper::success();
     }
 
     // ---- Config-backed hub actions (afc_config_) ----
@@ -6739,46 +6730,42 @@ AmsError AmsBackendAfc::execute_device_action(const std::string& action_id, cons
         const std::string& hub_section = hubs[0];
 
         if (action_id == "hub_cut_enabled") {
-            try {
-                bool val = std::any_cast<bool>(value);
-                afc_config_->parser().set(hub_section, "cut", val ? "True" : "False");
-                afc_config_->mark_dirty();
-                return AmsErrorHelper::success();
-            } catch (const std::bad_any_cast&) {
+            const bool* val_p = std::any_cast<bool>(&value);
+            if (!val_p) {
                 return AmsError(AmsResult::WRONG_STATE, "Invalid value type for toggle",
                                 lv_tr("Expected boolean"), "");
             }
+            afc_config_->parser().set(hub_section, "cut", *val_p ? "True" : "False");
+            afc_config_->mark_dirty();
+            return AmsErrorHelper::success();
         } else if (action_id == "hub_cut_dist") {
-            try {
-                float val = std::any_cast<float>(value);
-                afc_config_->parser().set(hub_section, "cut_dist", fmt::format("{:g}", val));
-                afc_config_->mark_dirty();
-                return AmsErrorHelper::success();
-            } catch (const std::bad_any_cast&) {
+            const float* val_p = std::any_cast<float>(&value);
+            if (!val_p) {
                 return AmsError(AmsResult::WRONG_STATE, "Invalid value type for slider",
                                 lv_tr("Expected float"), "");
             }
+            afc_config_->parser().set(hub_section, "cut_dist", fmt::format("{:g}", *val_p));
+            afc_config_->mark_dirty();
+            return AmsErrorHelper::success();
         } else if (action_id == "hub_bowden_length") {
-            try {
-                float val = std::any_cast<float>(value);
-                afc_config_->parser().set(hub_section, "afc_bowden_length",
-                                          fmt::format("{:g}", val));
-                afc_config_->mark_dirty();
-                return AmsErrorHelper::success();
-            } catch (const std::bad_any_cast&) {
+            const float* val_p = std::any_cast<float>(&value);
+            if (!val_p) {
                 return AmsError(AmsResult::WRONG_STATE, "Invalid value type for slider",
                                 lv_tr("Expected float"), "");
             }
+            afc_config_->parser().set(hub_section, "afc_bowden_length",
+                                      fmt::format("{:g}", *val_p));
+            afc_config_->mark_dirty();
+            return AmsErrorHelper::success();
         } else if (action_id == "assisted_retract") {
-            try {
-                bool val = std::any_cast<bool>(value);
-                afc_config_->parser().set(hub_section, "assisted_retract", val ? "True" : "False");
-                afc_config_->mark_dirty();
-                return AmsErrorHelper::success();
-            } catch (const std::bad_any_cast&) {
+            const bool* val_p = std::any_cast<bool>(&value);
+            if (!val_p) {
                 return AmsError(AmsResult::WRONG_STATE, "Invalid value type for toggle",
                                 lv_tr("Expected boolean"), "");
             }
+            afc_config_->parser().set(hub_section, "assisted_retract", *val_p ? "True" : "False");
+            afc_config_->mark_dirty();
+            return AmsErrorHelper::success();
         }
     }
 
@@ -6795,38 +6782,35 @@ AmsError AmsBackendAfc::execute_device_action(const std::string& action_id, cons
             return AmsError(AmsResult::WRONG_STATE, "Macro vars config not loaded",
                             lv_tr("Configuration not available"), lv_tr("Wait for config to load"));
         }
-        try {
-            float val = std::any_cast<float>(value);
-            macro_vars_config_->parser().set("gcode_macro AFC_MacroVars", it->second,
-                                             fmt::format("{:g}", val));
-            macro_vars_config_->mark_dirty();
-            return AmsErrorHelper::success();
-        } catch (const std::bad_any_cast&) {
+        const float* val_p = std::any_cast<float>(&value);
+        if (!val_p) {
             return AmsError(AmsResult::WRONG_STATE, "Invalid value type for slider",
                             lv_tr("Expected float"), "");
         }
+        macro_vars_config_->parser().set("gcode_macro AFC_MacroVars", it->second,
+                                         fmt::format("{:g}", *val_p));
+        macro_vars_config_->mark_dirty();
+        return AmsErrorHelper::success();
     }
 
     // ---- Purge/wipe toggles — immediate via AFC_TOGGLE_MACRO G-code ----
     if (action_id == "purge_enabled") {
-        try {
-            bool val = std::any_cast<bool>(value);
-            execute_gcode(fmt::format("AFC_TOGGLE_MACRO POOP={}", val ? 1 : 0));
-            return AmsErrorHelper::success();
-        } catch (const std::bad_any_cast&) {
+        const bool* val_p = std::any_cast<bool>(&value);
+        if (!val_p) {
             return AmsError(AmsResult::WRONG_STATE, lv_tr("Invalid value type"),
                             lv_tr("Expected boolean"), "");
         }
+        execute_gcode(fmt::format("AFC_TOGGLE_MACRO POOP={}", *val_p ? 1 : 0));
+        return AmsErrorHelper::success();
     }
     if (action_id == "brush_enabled") {
-        try {
-            bool val = std::any_cast<bool>(value);
-            execute_gcode(fmt::format("AFC_TOGGLE_MACRO WIPE={}", val ? 1 : 0));
-            return AmsErrorHelper::success();
-        } catch (const std::bad_any_cast&) {
+        const bool* val_p = std::any_cast<bool>(&value);
+        if (!val_p) {
             return AmsError(AmsResult::WRONG_STATE, lv_tr("Invalid value type"),
                             lv_tr("Expected boolean"), "");
         }
+        execute_gcode(fmt::format("AFC_TOGGLE_MACRO WIPE={}", *val_p ? 1 : 0));
+        return AmsErrorHelper::success();
     }
 
     // ---- Purge length — config-backed, no runtime G-code available ----
@@ -6835,19 +6819,18 @@ AmsError AmsBackendAfc::execute_device_action(const std::string& action_id, cons
             return AmsError(AmsResult::WRONG_STATE, "AFC config not loaded",
                             lv_tr("Configuration not available"), lv_tr("Wait for config to load"));
         }
-        try {
-            float val = std::any_cast<float>(value);
-            afc_config_->parser().set("AFC_poop", "purge_length", fmt::format("{:g}", val));
-            afc_config_->mark_dirty();
-            afc_config_->save("AFC/AFC.cfg", [](bool ok, const std::string& err) {
-                if (!ok)
-                    spdlog::error("[AMS AFC] Failed to save purge_length: {}", err);
-            });
-            return AmsErrorHelper::success();
-        } catch (const std::bad_any_cast&) {
+        const float* val_p = std::any_cast<float>(&value);
+        if (!val_p) {
             return AmsError(AmsResult::WRONG_STATE, lv_tr("Invalid value type"),
                             lv_tr("Expected float"), "");
         }
+        afc_config_->parser().set("AFC_poop", "purge_length", fmt::format("{:g}", *val_p));
+        afc_config_->mark_dirty();
+        afc_config_->save("AFC/AFC.cfg", [](bool ok, const std::string& err) {
+            if (!ok)
+                spdlog::error("[AMS AFC] Failed to save purge_length: {}", err);
+        });
+        return AmsErrorHelper::success();
     }
 
     return AmsErrorHelper::not_supported("Unknown action: " + action_id);

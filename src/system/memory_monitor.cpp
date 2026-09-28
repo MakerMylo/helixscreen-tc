@@ -5,6 +5,7 @@
 
 #include "ui_update_queue.h"
 
+#include "exception_policy.h"
 #include "text_io.h"
 
 #include <spdlog/spdlog.h>
@@ -119,14 +120,14 @@ void MemoryMonitor::start(int interval_ms) {
                  thresholds_.warn_available_kb / 1024, thresholds_.critical_available_kb / 1024,
                  thresholds_.growth_5min_kb / 1024, tier, sys_info.total_mb());
 
-    // Wrap — EAGAIN under thread exhaustion throws std::system_error ([L083]).
-    try {
-        monitor_thread_ = std::thread([this]() { monitor_loop(); });
-        spdlog::debug("[MemoryMonitor] Started (interval={}ms)", interval_ms);
-    } catch (const std::system_error& e) {
-        spdlog::error("[MemoryMonitor] Failed to spawn monitor thread: {}", e.what());
+    // EAGAIN under thread exhaustion throws std::system_error ([L083]).
+    if (!helix::contain_exceptions("[MemoryMonitor] Spawning the monitor thread", [&] {
+            monitor_thread_ = std::thread([this]() { monitor_loop(); });
+        })) {
         running_.store(false);
+        return;
     }
+    spdlog::debug("[MemoryMonitor] Started (interval={}ms)", interval_ms);
 }
 
 void MemoryMonitor::stop() {
@@ -492,11 +493,11 @@ void MemoryMonitor::fire_warning(MemoryPressureLevel level, const std::string& r
     size_t responders_threw = 0;
 
     for (const auto& [id, responder] : responders) {
-        try {
-            responder(level);
+        const auto& respond = responder; // a lambda cannot capture a structured binding in C++17
+        if (helix::contain_exceptions(fmt::format("[MemoryMonitor] Pressure responder {}", id),
+                                      [&] { respond(level); })) {
             ++responders_fired;
-        } catch (const std::exception& e) {
-            spdlog::error("[MemoryMonitor] Pressure responder {} threw: {}", id, e.what());
+        } else {
             ++responders_threw;
         }
     }

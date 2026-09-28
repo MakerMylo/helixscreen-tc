@@ -160,6 +160,8 @@ bed_mesh_renderer_t* bed_mesh_renderer_create(void) {
     renderer->view_state.layer_offset_x = 0;
     renderer->view_state.layer_offset_y = 0;
 
+    bed_mesh_projection_reset_zoom(&renderer->view_state);
+
     spdlog::debug("[Bed Mesh Renderer] Created bed mesh renderer");
     return renderer;
 }
@@ -277,6 +279,22 @@ void bed_mesh_renderer_set_rotation(bed_mesh_renderer_t* renderer, double angle_
     }
 }
 
+// NAMESPACE_OK: joins bed_mesh_renderer_set_rotation, this file's global-scope C API
+void bed_mesh_renderer_apply_two_finger(bed_mesh_renderer_t* renderer, double pan_dx, double pan_dy,
+                                        double zoom, double anchor_x, double anchor_y,
+                                        int canvas_width, int canvas_height) {
+    if (!renderer) {
+        return;
+    }
+    bed_mesh_projection_pan(&renderer->view_state, pan_dx, pan_dy);
+    bed_mesh_projection_zoom_at(&renderer->view_state, zoom, anchor_x, anchor_y, canvas_width,
+                                canvas_height);
+    // Zoom and pan change every projected vertex (READY_TO_RENDER -> MESH_LOADED)
+    if (renderer->state == RendererState::READY_TO_RENDER) {
+        renderer->state = RendererState::MESH_LOADED;
+    }
+}
+
 void bed_mesh_renderer_set_bounds(bed_mesh_renderer_t* renderer, double bed_x_min, double bed_x_max,
                                   double bed_y_min, double bed_y_max, double mesh_x_min,
                                   double mesh_x_max, double mesh_y_min, double mesh_y_max) {
@@ -318,6 +336,9 @@ void bed_mesh_renderer_set_bounds(bed_mesh_renderer_t* renderer, double bed_x_mi
                   bed_x_min, bed_x_max, bed_y_min, bed_y_max, mesh_x_min, mesh_x_max, mesh_y_min,
                   mesh_y_max, renderer->bed_center_x, renderer->bed_center_y,
                   renderer->coord_scale);
+
+    // The auto-fit that follows projects through the magnify, so it must see the fitted view.
+    bed_mesh_projection_reset_zoom(&renderer->view_state);
 
     // Reset FOV scale and centering to trigger auto-calibration on next render
     // This ensures the view zooms to fit the new bed bounds
@@ -1660,6 +1681,7 @@ void bed_mesh_renderer_set_render_mode(bed_mesh_renderer_t* renderer, BedMeshRen
     if (!renderer)
         return;
     renderer->render_mode = mode;
+    bed_mesh_projection_reset_zoom(&renderer->view_state);
 
     // If forcing a mode, update the fallback flag immediately
     if (mode == BedMeshRenderMode::Force2D) {

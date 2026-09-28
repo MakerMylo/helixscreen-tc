@@ -42,8 +42,10 @@ _LANDSCAPE = [
 ]
 
 _PORTRAIT = [
+    # Height-bound square after the Z column takes its floor width first;
+    # the coordinate row claims the rest of the column; the tabs sit in the header.
     ("272x480", 204),
-    ("320x480", 244),
+    ("320x480", 232),
 ]
 
 # 1/100 mm: the widest realistic readout, 3 digits + 2 decimals per axis.
@@ -189,6 +191,21 @@ def test_portrait_strips_stack_and_fit(size, pad_floor, tmp_path):
             assert _right(pad_row) - _right(z_col) <= 6, (
                 f"{size}: {_right(pad_row) - _right(z_col)}px of dead space "
                 f"right of the Z column")
+            # And none between them: the wrapper is clamped to the pad square
+            # so the growing Z column, not empty row width, takes the rest.
+            # The wrapper-width bound also catches the overlap direction: a
+            # wrapper that lost the clamp lets the pad spill across the gap.
+            assert z_col["x"] - _right(pad) <= 8, (
+                f"{size}: {z_col['x'] - _right(pad)}px of dead space between "
+                f"the pad and the Z column - the wrapper is not clamped to "
+                f"the pad square")
+            wrapper = _geom(app, "jog_pad_wrapper")
+            assert pad["w"] <= wrapper["w"] + 2, (
+                f"{size}: pad is {pad['w']}px wide but its wrapper is only "
+                f"{wrapper['w']}px - the pad spills out of the row's share")
+            assert z_col["x"] + 2 >= _right(pad), (
+                f"{size}: the Z column starts at {z_col['x']} under the pad's "
+                f"right edge {_right(pad)} - the pad overlaps the Z column")
 
             content = _geom(app, "overlay_content")
             assert all(v == 0 for v in content["scroll"].values()), (
@@ -199,6 +216,34 @@ def test_portrait_strips_stack_and_fit(size, pad_floor, tmp_path):
             assert _bottom(bottom) <= panel["y"] + panel["h"], (
                 f"{size}: bottom row bottom {_bottom(bottom)} exceeds the "
                 f"panel bottom {panel['y'] + panel['h']} - portrait does not fit")
+
+            # Jog owns the bottom row: the Move actions are not in it.
+            with pytest.raises(HelixCtlError):
+                app.geom("move_park")
+
+            # On Move, Park and Motors off sit in the bottom row beside QGL
+            # and the grid's own action row stays hidden, so the grid fills
+            # the height that row used to claim.
+            app.set("motion_tab", 1)
+            app.wait_idle()
+            with pytest.raises(HelixCtlError):
+                app.geom("move_actions")
+            with pytest.raises(HelixCtlError):
+                app.geom("jog_mode_fine")
+            park = _geom(app, "move_park")
+            motors = _geom(app, "move_motors_off")
+            qgl = _geom(app, "btn_qgl")
+            assert park["y"] == motors["y"] == qgl["y"] == bottom["y"], (
+                f"{size}: Park/Motors off (y={park['y']}/{motors['y']}) are not "
+                f"in the bottom row (y={bottom['y']})")
+            assert _right(park) <= motors["x"] and _right(motors) <= qgl["x"], (
+                f"{size}: bottom row order is Park({park['x']}-{_right(park)}) "
+                f"Motors off({motors['x']}-{_right(motors)}) "
+                f"QGL({qgl['x']}-{_right(qgl)})")
+            grid = _geom(app, "move_grid")
+            assert _bottom(grid) <= bottom["y"], (
+                f"{size}: grid bottom {_bottom(grid)} runs past the bottom row "
+                f"top {bottom['y']}")
     finally:
         _restore_size(before)
 

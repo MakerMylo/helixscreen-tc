@@ -110,7 +110,7 @@ For an exact layer count and a reliable time-remaining estimate, HelixScreen nee
 | **Reactive Binding** | Built-in | Manual | Manual |
 | **3D G-code preview** | Yes | 2D layers | No |
 | **3D bed mesh** | Yes | 2D heatmap | 2D heatmap |
-| **Status** | Pre-1.0, actively developed | Mature (maintenance) | Unmaintained |
+| **Status** | Actively developed | Mature (maintenance) | Unmaintained |
 
 **HelixScreen advantages:**
 - Low memory footprint (~15MB on embedded targets vs ~50MB for KlipperScreen on the same hardware)

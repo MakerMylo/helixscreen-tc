@@ -155,6 +155,7 @@ translations:
   Actions: 操作
   Active: 活动
   Active Spool: 当前料盘
+  Actual: 当前
   Adaptive Bed Mesh: 自适应热床网格
   Add: 添加
   Add Filament: 添加耗材
@@ -467,6 +468,7 @@ translations:
     — 使用Z偏移面板进行调整
   Cartographer touch calibrate sent: Cartographer触摸校准已发送
   Category: 类别
+  Center: '中心'
   Center QR code in frame: 将 QR 码对准画面中央
   'Chamb:': '腔:'
   Chamber: 腔体
@@ -512,6 +514,7 @@ translations:
   Check the PTFE tube along the drag chain for kinks, and the bend where it enters the extruder sensor: 请检查拖链沿线的 PTFE 管是否折弯，以及进入挤出机传感器处的弯曲
   Check the RS-485 cable between printer and CFS: 请检查打印机与 CFS 之间的 RS-485 线缆
   Check the buffer unit on the back of the printer: 请检查打印机背面的缓冲单元
+  Check the chips, then save: 检查标签后保存
   Check the filament path and try again.: 检查耗材路径并重试。
   ? Check the path from the slot to the hub for a tangle or drag. If the slot feeds freely, the hub sensor or the feeder motor may have failed
   : 请检查从槽位到集线器的通路是否缠绕或阻力过大。若槽位送料顺畅，可能是集线器传感器或送料电机故障
@@ -702,6 +705,7 @@ translations:
   Could not reach Spoolman at: 无法连接 Spoolman：
   Could not read the screw adjustments from the printer: 无法从打印机读取螺丝调整数据
   Could not remove the job from the queue: 无法从队列中移除任务
+  Could not reset the printer image tags: 重置打印机图片标记失败
   Could not resolve printer RFCOMM channel: 无法解析打印机 RFCOMM 通道
   Could not save filament: 无法保存耗材
   Could not save the drying state: 无法保存烘干状态
@@ -709,6 +713,7 @@ translations:
   'Could not save the drying state: nothing was heated': 无法保存烘干状态:未进行任何加热
 
   "Could not save the mesh as '{}': {}": "无法将网格保存为 '{}'：{}"
+  Could not save the printer image tags: 保存打印机图片标记失败
   Could not start Bluetooth discovery: 无法启动蓝牙发现
   Could not update filaments: 无法更新耗材
   Could not verify Spoolman status. Moonraker may still be restarting.: 无法验证 Spoolman
@@ -796,6 +801,7 @@ translations:
   Deploy: 部署
   Describe the issue (optional): 描述问题（可选）
   Detailed: 详细
+  Detect automatically: '自动检测'
   'Detect filament tangles': '检测耗材打结'
   Detecting plate...: 正在检测热床板...
   Detecting printer type...: 正在检测打印机类型...
@@ -1245,6 +1251,7 @@ translations:
   Flying Toasters: 飞行烤面包机
   Follow active tool: 跟随当前工具
   Follow graph screen: 跟随图表屏幕
+  Force/weight sensors: '力/重量传感器'
   Forget: 忘记
   Forget Network?: 忘记网络？
   Forget network '{}'? You will need the password to reconnect.: 忘记网络 '{}'？重新连接时需要密码。
@@ -1260,6 +1267,9 @@ translations:
   : "频率差: 路径 A 与 B 之间的差异。低于 2 Hz 的差异超出此测量的分辨能力，因此视为匹配。\n\n匹配度: 两条皮带的接近程度，以皮带 A 频率的百分比表示。高于 95% 为优秀;低于 90% 则值得调整。"
   From Buffer: 来自缓冲区
   From Version: 起始版本
+  Front: '前'
+  Front Left: '左前'
+  Front Right: '右前'
   Full: 完整
   G-code Console: G-code 控制台
   G-code Preview: G-code 预览
@@ -1500,6 +1510,7 @@ translations:
   It's a new spool: 这是新料盘
   Jammed at the Toolhead: 工具头处堵塞
   Job Queue: 任务队列
+  Jog: '点动'
   Jog Speed XY: XY 移动速度
   Jog Speed Z: Z 移动速度
   Jog Y until the nozzle is centered over the chute opening, then tap Save.: 点动 Y 轴，直到喷嘴位于排料口开口中心，然后点击保存。
@@ -1551,6 +1562,7 @@ translations:
   LED strip available for lighting control: LED 灯带可用于照明控制
   LEDs: LED
   LEDs controlled by the light button: 由灯光按钮控制的 LED
+  LOAD CELLS: '称重传感器'
   LOADED: 已加载
   LOCKED: 已锁定
   LOT-2024-001: LOT-2024-001
@@ -1580,6 +1592,7 @@ translations:
   Layout: 布局
   Learn More: 了解更多
   LedSelect: 选择 LED
+  Left: '左'
   Length of filament to purge: '要排出的耗材长度'
   Length of the cooling tube section: '冷却管段的长度'
   'Length:': 长度：
@@ -1596,6 +1609,9 @@ translations:
   Listening: 正在监听
   Live view from your webcam: 摄像头实时画面
   Load: 加载
+  Load Cell: '称重传感器'
+  Load Cells: '称重传感器'
+  Load Extruder: '加载挤出机'
   Load Failed: '装载失败'
   Load Filament: 加载耗材
   Load a filament first before trying to unload: 请先装载耗材，再尝试卸载
@@ -1675,6 +1691,7 @@ translations:
   Macro to cancel an active print: 取消当前打印的宏
   Macro to clean/wipe the nozzle: 清洁/擦拭喷嘴的宏
   Macro to load filament into extruder: 将耗材加载到挤出机的宏
+  Macro to park the toolhead at a safe position: '将工具头停靠到安全位置的宏'
   Macro to pause an active print: 暂停当前打印的宏
   Macro to purge/prime the nozzle: 排料/预挤喷嘴的宏
   Macro to resume a paused print: 恢复暂停打印的宏
@@ -1733,6 +1750,7 @@ translations:
   Measure and compare belt path frequencies: 测量和比较皮带路径频率
   Measure belt path frequencies: 测量皮带路径频率
   Measure every tool's XYZ offset automatically: 自动测量每个工具的 XYZ 偏移
+  Measure pressure advance automatically: '自动测量压力提前'
   Measured (shaper off): 实测（关闭整形）
   Measured filament diameter: 测量的耗材直径
   Measured pressure advance: '测得的压力提前'
@@ -1771,6 +1789,7 @@ translations:
   Motors Off: 关闭电机
   'Motors disable failed: {}': '禁用电机失败: {}'
   Motors disabled: 电机已禁用
+  Motors stay on while a print is active: 打印期间电机保持开启
   Mount: 装上
   Move: 移动
   Move out of range: '移动超出范围'
@@ -2056,6 +2075,7 @@ translations:
   Parameters: 参数
   Park: '停放'
   Park the AFC system: '停放 AFC 系统'
+  Park Toolhead: '停放工具头'
   Part: 零件
   Part Cooling Fan: 零件冷却风扇
   Part Fan: 零件风扇
@@ -2132,6 +2152,7 @@ translations:
   Preheat cancelled: 预热已取消
   'Preheat: all {} tools + bed set': '预热: 全部 {} 工具 + 热床已设置'
   'Preheat: {} + bed set': '预热: {} + 热床已设置'
+  Preload: '预装载'
   Preload failed: 预装载失败
   Prepared: 已就绪
   Preparing: 准备中
@@ -2339,6 +2360,9 @@ translations:
   Ready to Apply: 准备应用
   Ready to calibrate: 准备校准
   Ready to pluck: 准备拨动
+  Rear: '后'
+  Rear Left: '左后'
+  Rear Right: '右后'
   Reason: 原因
   ? "Reason: {}\n\nThe printer cannot resume this print. Restart from the beginning?"
   : "原因：{}\n\n打印机无法恢复此次打印。要从头重新开始吗？"
@@ -2355,6 +2379,7 @@ translations:
   Recording Mode: 录制模式
   Recover: 恢复
   Recover MMU state?: 恢复 MMU 状态？
+  Recover State: '恢复状态'
   Recovering AFC system...: AFC系统恢复中...
   Recovery failed: 恢复失败
   'Recovery failed: ': '恢复失败: '
@@ -2368,6 +2393,7 @@ translations:
   Refresh Interval: 刷新间隔
   Refresh RFID: '刷新 RFID'
   Relative vibration: 相对振动
+  Refresh Spoolman: '刷新 Spoolman'
   Reheating...: 正在重新加热...
   Release all stepper motors. Position will be lost.: 释放所有步进电机。位置信息将丢失。
   Release filament: 松开耗材
@@ -2395,6 +2421,8 @@ translations:
 
   Remove the spools now?: 现在取下料盘吗?
 
+  Remove your tags for this image?: 删除此图片的标记？
+  Remove your tags for this image? Its chips go back to the shipped positions.: 删除此图片的标记？标签将回到出厂位置。
   Rename: 重命名
   Rename Fan: 重命名风扇
   Rename Mesh Profile: 重命名网格配置
@@ -2434,6 +2462,7 @@ translations:
   Reset endless spool failed: '重置无限料盘失败'
   Reset failed: 重置失败
   Reset motor run-time counter: '重置电机运行时间计数器'
+  Reset tags: 重置标记
   Reset to Default: 重置为默认
   Reset to defaults: 重置为默认值
   Reset to original values: 重置为原始值
@@ -2497,6 +2526,7 @@ translations:
   Review your changes: 查看您的更改
   Review your configuration below, then click Finish to save: 请检查以下配置，然后点击完成以保存
   Rewinding: 回卷中
+  Right: '右'
   'Role:': 角色：
   Rotating tips for using your printer: 轮播的打印机使用提示
   Rotation: 旋转
@@ -2685,6 +2715,7 @@ translations:
   : 请手动设置该槽位的耗材类型和颜色。若标签本应可读，请在料盒空闲时将料盘取出并使标签朝向读取器重新装入
   Set up: 设置
   Set up your label printer in Settings: 在设置中配置标签打印机
+  Set what is really selected and loaded. Nothing moves.: '设置实际选择和加载的状态。不会移动任何部件。'
   Settings: 设置
   Settings Snapshot: 设置快照
   Settings reset to defaults. Restarting...: 设置已重置为默认值。正在重启...
@@ -2893,18 +2924,26 @@ translations:
   'TOGGLE: {}': '切换: {}'
   TOOLS: 工具
   TPU: TPU
+  Tag Parts: 标记部件
+  Tag parts: 标记部件
   Takes 3-5 min. Do not interrupt.: 需要 3-5 分钟。请勿中断。
   'Tangle sensitivity': '打结灵敏度'
   Tap + to add: 点击 + 添加
   Tap Firmware Restart to recover — on K2 this also bounces the rpi MCU bridge: 点按“重启固件”以恢复。在 K2 上这也会重启 rpi MCU 桥接
   Tap again to confirm this orientation: 再次点击确认此方向
+  Tap an empty spot inside the enclosure: 点击机箱内的空白处
   Tap an object to exclude it | {} objects ({} excluded): '点按对象以排除 | {} 个对象（已排除 {} 个）'
   Tap any tile to open its full controls or toggle its state.: 点击任意磁贴以打开其完整控制项或切换其状态。
   Tap anywhere if this text is right-side up: 如果文字方向正确请点击任意位置
   Tap anywhere to begin: 点击任意位置开始
   Tap anywhere to begin calibration: 点击任意位置开始校准
+  Tap the bed's front-left corner: 点击热床的左前角
+  Tap the bed's front-right corner: 点击热床的右前角
   Tap the crosshair (point %1$d of 3) — touch %2$d of %3$d: 点击十字准星（第 %1$d
     个点，共 3 个）— 触摸 %2$d / %3$d
+  Tap the light: 点击灯
+  Tap the nozzle tip: 点击喷嘴尖端
+  Tap the part cooling fan: 点击零件冷却风扇
   Tap to assign: 点击分配
   Target: '目标'
   Target Frequency: 目标频率
@@ -3202,6 +3241,7 @@ translations:
   Unavailable: 不可用
   Unavailable on this printer: 此打印机上不可用
   Understanding Results: 了解结果
+  Undo: 撤销
   ? "Uneven belt tension causes print artifacts like layer shifts, VFAs (vertical fine artifacts), and ringing.\n\nPluck each belt by hand and this tool listens through the accelerometer to measure the belt's frequency. Matched frequencies mean balanced tension.\n\nOn CoreXY, belts A and B should be within a few Hz of each other."
   : "皮带张力不均会导致层错位、VFA(垂直细纹)和振纹等打印瑕疵。\n\n用手拨动每条皮带，此工具会通过加速度传感器测量皮带的频率。频率匹配意味着张力均衡。\n\n对于 CoreXY,皮带 A 与 B 应相差在几 Hz 以内。"
   Uninstall: 卸载
@@ -3222,6 +3262,7 @@ translations:
   Unknown error: 未知错误
   Unload: 卸载
   Unload Distance: '卸载距离'
+  Unload Extruder: '卸载挤出机'
   Unload Failed: '卸载失败'
   Unload Filament: 卸载耗材
   'Unload at end': '结束时卸载'
@@ -3233,6 +3274,7 @@ translations:
   Unload macro not configured: 卸载宏未配置
   Unload the CFS filament before enabling bypass: '启用旁通前请先卸载 CFS 耗材'
   Unload...: 卸载...
+  Unloaded: '已卸载'
   Unloading: 卸载中
   Unloading Start Speed: '卸载起始速度'
   Unloading before bypass...: 旁通前正在卸载...

@@ -70,6 +70,24 @@ ParkTarget park_y_for_span(float target_span_mm, std::optional<float> span_offse
                            const AxisBounds& bounds);
 
 /**
+ * @brief Midpoint of one axis's kinematic range
+ *
+ * @param known The axis's has-bit. A range the printer has not sent yet has
+ *        no midpoint, and a caller that guesses one aims machine motion at
+ *        fabricated coordinates.
+ * @param lo, hi The axis range.
+ * @return nullopt if the axis is unknown or the range is degenerate
+ *         (lo >= hi) - a degenerate range describes no envelope to sit in
+ *         the middle of.
+ */
+inline std::optional<float> axis_center(bool known, float lo, float hi) {
+    if (!known || lo >= hi) {
+        return std::nullopt;
+    }
+    return (lo + hi) / 2.0f;
+}
+
+/**
  * @brief Gantry X that centres the toolhead in its kinematic envelope
  *
  * Y sets the free span on a CoreXY (see park_y_for_span()); X sets neither
