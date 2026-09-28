@@ -33,6 +33,7 @@
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
+#include <chrono>
 #include <cstring>
 #include <queue>
 #include <unordered_map>
@@ -219,6 +220,25 @@ void PanelWidgetManager::notify_config_changed(const std::string& panel_id) {
         it->second();
     }
 }
+
+namespace {
+// Widget builds that stall the UI thread, split into XML creation and the rest
+// (placement, gating, attach). Silent below the threshold, so only a slow
+// device or a pathological widget ever logs.
+void log_if_slow_build(const char* what, std::chrono::steady_clock::time_point t0,
+                       std::chrono::steady_clock::time_point t_split) {
+    using std::chrono::duration_cast;
+    using std::chrono::milliseconds;
+    constexpr long SLOW_BUILD_MS = 100;
+    const auto now = std::chrono::steady_clock::now();
+    const long total = static_cast<long>(duration_cast<milliseconds>(now - t0).count());
+    if (total < SLOW_BUILD_MS)
+        return;
+    spdlog::info("[PanelWidgetManager] slow build '{}': {}ms (xml {}ms, rest {}ms)", what, total,
+                 static_cast<long>(duration_cast<milliseconds>(t_split - t0).count()),
+                 static_cast<long>(duration_cast<milliseconds>(now - t_split).count()));
+}
+} // namespace
 
 std::vector<std::unique_ptr<PanelWidget>>
 PanelWidgetManager::populate_widgets(const std::string& panel_id, lv_obj_t* container,
@@ -1174,6 +1194,7 @@ PanelWidgetManager::populate_widgets(const std::string& panel_id, lv_obj_t* cont
         {
 #endif
             auto& slot = enabled_widgets[p.slot_index];
+            const auto t_create = std::chrono::steady_clock::now();
 
             // Create XML component
             auto* widget = static_cast<lv_obj_t*>(
@@ -1184,6 +1205,8 @@ PanelWidgetManager::populate_widgets(const std::string& panel_id, lv_obj_t* cont
                              slot.widget_id, slot.component_name);
                 continue;
             }
+
+            const auto t_attach = std::chrono::steady_clock::now();
 
             // Place in grid cell
             lv_obj_set_grid_cell(widget, LV_GRID_ALIGN_STRETCH, p.col, p.colspan,
@@ -1264,6 +1287,7 @@ PanelWidgetManager::populate_widgets(const std::string& panel_id, lv_obj_t* cont
 
                 result.push_back(std::move(slot.instance));
             }
+            log_if_slow_build(slot.widget_id.c_str(), t_create, t_attach);
 
             // Propagate width to AMS mini status (pure XML widget, no PanelWidget)
             if (slot.widget_id == "ams") {
@@ -1300,7 +1324,9 @@ PanelWidgetManager::populate_widgets(const std::string& panel_id, lv_obj_t* cont
     // size.
     install_grid_descriptors(container, std::move(dsc));
     lv_obj_set_layout(container, LV_LAYOUT_GRID);
+    const auto t_layout = std::chrono::steady_clock::now();
     lv_obj_update_layout(container);
+    log_if_slow_build("(grid layout)", t_layout, t_layout);
 
     populating_ = false;
     return result;
