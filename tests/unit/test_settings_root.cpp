@@ -11,6 +11,7 @@
 #include "display_settings_manager.h"
 #include "ethernet_backend_mock.h"
 #include "helix-xml/src/xml/lv_xml.h"
+#include "platform_info.h"
 #include "printer_state.h"
 #include "settings_manager.h"
 #include "system_settings_manager.h"
@@ -226,6 +227,39 @@ TEST_CASE_METHOD(RootFixture, "settings root: connection status reads Wi-Fi fres
     wifi_mock->set_connected_state(false);
     get_global_settings_panel().refresh_status_lines();
     REQUIRE(wait_until([&]() { return status_text(root_, "row_connection") == "Ethernet"; }));
+}
+
+TEST_CASE_METHOD(RootFixture, "settings root: Android shows the printer host as its connection",
+                 "[settings][settings_root]") {
+    // Neither backend exists on Android (wifi_backend.cpp, ethernet_backend.cpp
+    // both compile to nullptr under __ANDROID__), so the row must show the
+    // printer host instead of probing hardware this build has no access to.
+    lv_subject_t* host_subject = lv_xml_get_subject(nullptr, "printer_host_value");
+    REQUIRE(host_subject != nullptr);
+    const std::string saved_host = lv_subject_get_string(host_subject);
+    lv_subject_copy_string(host_subject, "192.168.1.42:7125");
+
+    EthernetManager* before =
+        SettingsPanelTestAccess::ethernet_manager(get_global_settings_panel());
+
+    helix::set_platform_override(1); // force Android
+    get_global_settings_panel().refresh_status_lines();
+    helix::set_platform_override(-1);
+
+    CHECK(status_text(root_, "row_connection") == "192.168.1.42:7125");
+
+    // The Android branch must not construct a new EthernetManager (it would
+    // otherwise log an error creating a backend the platform has no use for).
+    EthernetManager* after = SettingsPanelTestAccess::ethernet_manager(get_global_settings_panel());
+    CHECK(before == after);
+
+    // No async probe was issued either: give any stray one a moment to land,
+    // then confirm the status still reads the host rather than having been
+    // overwritten by a Wi-Fi/Ethernet result.
+    process_lvgl(50);
+    CHECK(status_text(root_, "row_connection") == "192.168.1.42:7125");
+
+    lv_subject_copy_string(host_subject, saved_host.c_str());
 }
 
 TEST_CASE_METHOD(RootFixture, "settings root: Updates status reads firmware-managed",

@@ -508,9 +508,9 @@ void SettingsPanel::populate_info_rows() {
 }
 
 namespace {
-// A subject owned by an overlay not yet created (e.g. update_current_version,
-// registered by the About overlay) may not exist; the caller's fallback stands
-// in for it, matching the formatter's neutral input.
+// A subject owned by an overlay not yet created (e.g. update_new_version,
+// registered by the Updates overlay) may not exist; the caller's fallback
+// stands in for it, matching the formatter's neutral input.
 int status_int_subject(const char* name, int fallback) {
     lv_subject_t* s = lv_xml_get_subject(nullptr, name);
     return s ? lv_subject_get_int(s) : fallback;
@@ -545,36 +545,48 @@ void SettingsPanel::refresh_status_lines() {
         devices(lv_subject_get_int(get_printer_state().get_hardware_status_level_subject()))
             .c_str());
 
-    // Wi-Fi status is a cheap in-memory read; Ethernet's is not (sysfs scans,
-    // or a blocking netd Unix-socket round-trip on daemon-managed firmwares —
-    // see EthernetBackendNetd), so it must go through get_info_async() rather
-    // than a synchronous get_info() call on this (the LVGL) thread. Show the
-    // last resolved Ethernet state immediately so a wired-only printer does not
-    // read "Not connected" on every return to this panel, then refresh it from
-    // the deferred callback once the probe lands.
-    auto wifi = get_wifi_manager();
-    lv_subject_copy_string(
-        &settings_status_connection_subject_,
-        connection(last_ethernet_up_, wifi->is_connected(), wifi->get_connected_ssid()).c_str());
+    if (helix::is_android_platform()) {
+        // Android manages Wi-Fi and Ethernet itself — both backends compile to
+        // nullptr there (wifi_backend.cpp, ethernet_backend.cpp under
+        // __ANDROID__) — so probing either just logs errors/warnings for
+        // nothing. Show the printer host instead, the same value
+        // printer_host_value already carries.
+        lv_subject_copy_string(&settings_status_connection_subject_,
+                               lv_subject_get_string(&printer_host_value_subject_));
+    } else {
+        // Wi-Fi status is a cheap in-memory read; Ethernet's is not (sysfs scans,
+        // or a blocking netd Unix-socket round-trip on daemon-managed firmwares —
+        // see EthernetBackendNetd), so it must go through get_info_async() rather
+        // than a synchronous get_info() call on this (the LVGL) thread. Show the
+        // last resolved Ethernet state immediately so a wired-only printer does not
+        // read "Not connected" on every return to this panel, then refresh it from
+        // the deferred callback once the probe lands.
+        auto wifi = get_wifi_manager();
+        lv_subject_copy_string(
+            &settings_status_connection_subject_,
+            connection(last_ethernet_up_, wifi->is_connected(), wifi->get_connected_ssid())
+                .c_str());
 
-    if (!ethernet_manager_) {
-        ethernet_manager_ = std::make_unique<EthernetManager>();
-    }
-    auto tok = lifetime_.token();
-    // Only ethernet_up crosses the worker thread. Wi-Fi is read fresh inside
-    // the deferred (main-thread) lambda rather than snapshotted here, so a
-    // probe that lands after a later refresh's own probe still applies the
-    // CURRENT Wi-Fi state instead of overwriting it with a stale one.
-    ethernet_manager_->get_info_async([this, tok](const EthernetInfo& info) {
-        bool ethernet_up = info.connected;
-        tok.defer("SettingsPanel::apply_connection_status", [this, ethernet_up]() {
-            last_ethernet_up_ = ethernet_up;
-            auto wifi = get_wifi_manager();
-            lv_subject_copy_string(
-                &settings_status_connection_subject_,
-                connection(ethernet_up, wifi->is_connected(), wifi->get_connected_ssid()).c_str());
+        if (!ethernet_manager_) {
+            ethernet_manager_ = std::make_unique<EthernetManager>();
+        }
+        auto tok = lifetime_.token();
+        // Only ethernet_up crosses the worker thread. Wi-Fi is read fresh inside
+        // the deferred (main-thread) lambda rather than snapshotted here, so a
+        // probe that lands after a later refresh's own probe still applies the
+        // CURRENT Wi-Fi state instead of overwriting it with a stale one.
+        ethernet_manager_->get_info_async([this, tok](const EthernetInfo& info) {
+            bool ethernet_up = info.connected;
+            tok.defer("SettingsPanel::apply_connection_status", [this, ethernet_up]() {
+                last_ethernet_up_ = ethernet_up;
+                auto wifi = get_wifi_manager();
+                lv_subject_copy_string(
+                    &settings_status_connection_subject_,
+                    connection(ethernet_up, wifi->is_connected(), wifi->get_connected_ssid())
+                        .c_str());
+            });
         });
-    });
+    }
 
     lv_subject_copy_string(
         &settings_status_language_time_subject_,
@@ -584,8 +596,7 @@ void SettingsPanel::refresh_status_lines() {
 
     lv_subject_copy_string(&settings_status_updates_subject_,
                            updates(status_int_subject("update_status", 0),
-                                   status_string_subject("update_new_version", ""),
-                                   status_string_subject("update_current_version", helix_version()),
+                                   status_string_subject("update_new_version", ""), helix_version(),
                                    lv_subject_get_int(&updates_firmware_managed_subject_) != 0)
                                .c_str());
 }

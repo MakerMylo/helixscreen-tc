@@ -103,9 +103,6 @@ void AboutSettingsOverlay::init_subjects() {
         UI_MANAGED_SUBJECT_STRING(print_hours_value_subject_, print_hours_value_buf_,
                                   "\xe2\x80\x94", "print_hours_value", subjects_);
 
-        UI_MANAGED_SUBJECT_STRING(update_current_version_subject_, update_current_version_buf_,
-                                  helix_version(), "update_current_version", subjects_);
-
         // Copyright with compile-year range
         const char* compile_year = __DATE__ + 7; // last 4 chars of "Mon DD YYYY"
         snprintf(about_copyright_buf_, sizeof(about_copyright_buf_),
