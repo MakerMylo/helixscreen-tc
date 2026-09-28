@@ -5,6 +5,7 @@
 #include "../lvgl_ui_test_fixture.h"
 #include "helix-xml/src/xml/lv_xml.h"
 #include "settings_manager.h"
+#include "system_settings_manager.h"
 
 #include <string>
 #include <vector>
@@ -91,4 +92,72 @@ TEST_CASE_METHOD(RootFixture, "settings root: Updates hides only when no update 
     set_int("updates_firmware_managed", 0);
     set_int("show_update_settings", 1);
     CHECK_FALSE(lv_obj_has_flag(find("row_updates"), LV_OBJ_FLAG_HIDDEN));
+}
+
+TEST_CASE_METHOD(RootFixture, "settings root: Updates shows on updates_unavailable alone",
+                 "[settings][settings_root]") {
+    set_int("show_update_settings", 0);
+    set_int("updates_firmware_managed", 0);
+    set_int("updates_unavailable", 1);
+    CHECK_FALSE(lv_obj_has_flag(find("row_updates"), LV_OBJ_FLAG_HIDDEN));
+}
+
+namespace {
+std::string status_text(lv_obj_t* root, const char* row) {
+    lv_obj_t* r = lv_obj_find_by_name(root, row);
+    REQUIRE(r != nullptr);
+    lv_obj_t* s = lv_obj_find_by_name(r, "status");
+    REQUIRE(s != nullptr);
+    return lv_label_get_text(s);
+}
+} // namespace
+
+TEST_CASE_METHOD(RootFixture, "settings root: status lines follow values on return",
+                 "[settings][settings_root]") {
+    set_int("settings_sounds_enabled", 1);
+    set_int("settings_volume", 40);
+    get_global_settings_panel().refresh_status_lines();
+    process_lvgl(5);
+    CHECK(status_text(root_, "row_sound") == "Volume 40%");
+
+    set_int("settings_volume", 0);
+    CHECK(status_text(root_, "row_sound") == "Volume 40%"); // no observer: stale until return
+    get_global_settings_panel().on_activate();
+    process_lvgl(5);
+    CHECK(status_text(root_, "row_sound") == "Muted");
+}
+
+TEST_CASE_METHOD(RootFixture, "settings root: rows without state show no status",
+                 "[settings][settings_root]") {
+    for (const char* row :
+         {"row_touch_input", "row_printing", "row_safety", "row_system", "row_help"}) {
+        CAPTURE(row);
+        lv_obj_t* r = find(row);
+        REQUIRE(r != nullptr);
+        lv_obj_t* wrap = lv_obj_find_by_name(r, "status_wrap");
+        REQUIRE(wrap != nullptr);
+        CHECK(lv_obj_has_flag(wrap, LV_OBJ_FLAG_HIDDEN));
+    }
+}
+
+TEST_CASE_METHOD(RootFixture, "settings root: refresh survives a missing Wi-Fi manager",
+                 "[settings][settings_root]") {
+    // helix-tests builds have no Wi-Fi manager unless a test installs one.
+    get_global_settings_panel().refresh_status_lines();
+    process_lvgl(5);
+    const std::string s = status_text(root_, "row_connection");
+    CHECK((s == "Not connected" || s == "Ethernet"));
+}
+
+TEST_CASE_METHOD(RootFixture, "settings root: Updates status reads firmware-managed",
+                 "[settings][settings_root]") {
+    set_int("updates_firmware_managed", 1);
+    get_global_settings_panel().refresh_status_lines();
+    process_lvgl(5);
+    CHECK(status_text(root_, "row_updates") == "Managed by firmware");
+}
+
+TEST_CASE("SystemSettingsManager names the current language natively",
+          "[settings][settings_root]") {
+    CHECK_FALSE(helix::SystemSettingsManager::instance().get_language_display_name().empty());
 }

@@ -16,6 +16,7 @@
 #include "translation_loader.h"
 
 #include <algorithm>
+#include <string_view>
 
 using namespace helix;
 
@@ -184,6 +185,23 @@ int SystemSettingsManager::get_language_index() const {
 
 const char* SystemSettingsManager::get_language_options() {
     return LANGUAGE_OPTIONS_TEXT;
+}
+
+std::string SystemSettingsManager::get_language_display_name() const {
+    std::string_view options(LANGUAGE_OPTIONS_TEXT);
+    size_t pos = 0;
+    for (int i = 0; i < get_language_index() && pos != std::string_view::npos; ++i) {
+        pos = options.find('\n', pos);
+        if (pos != std::string_view::npos) {
+            ++pos;
+        }
+    }
+    if (pos == std::string_view::npos) {
+        return "";
+    }
+    size_t end = options.find('\n', pos);
+    return std::string(
+        options.substr(pos, end == std::string_view::npos ? std::string_view::npos : end - pos));
 }
 
 std::string SystemSettingsManager::language_index_to_code(int index) {

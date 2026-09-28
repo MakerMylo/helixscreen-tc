@@ -21,15 +21,15 @@ class ChangeHostModal;
  * Notifications, System, and About information.
  *
  * ## Key Features:
- * - Dark mode toggle with immediate theme switching
- * - Display sleep timeout configuration
+ * - Grouped root list (Screen, Printer, HelixScreen) navigating to sub-panel overlays
+ * - Live one-line status under each stateful row, refreshed on return via on_activate()
  * - LED light control (via Moonraker)
- * - Sound and notification settings (placeholder)
  * - System info display (version, printer, Klipper)
  *
  * ## Architecture:
- * Uses SettingsManager for reactive data binding and persistence.
- * Toggle switches automatically sync with SettingsManager subjects.
+ * Uses SettingsManager for reactive data binding and persistence. Each domain
+ * settings manager (Display, Audio, System, ...) owns its own subjects; this
+ * panel only reads them to compose the root rows' status text.
  *
  * @see SettingsManager for data layer
  * @see PanelBase for base class documentation
@@ -76,6 +76,16 @@ class SettingsPanel : public PanelBase {
      */
     void setup(lv_obj_t* panel, lv_obj_t* parent_screen) override;
 
+    /**
+     * @brief Refresh every root row's live status line
+     *
+     * Called on every return to the root (on_activate()), and directly by
+     * tests. Reads each domain's current values and writes the formatted
+     * one-liner into that row's settings_status_* subject.
+     */
+    void on_activate() override;
+    void refresh_status_lines();
+
     const char* get_name() const override {
         return "Settings Panel";
     }
@@ -87,12 +97,6 @@ class SettingsPanel : public PanelBase {
     //
     // === Widget References ===
     //
-
-    // Toggle switches
-    lv_obj_t* gcode_3d_switch_ = nullptr;
-    // Dropdowns
-    lv_obj_t* display_sleep_dropdown_ = nullptr;
-    // LED chip selection moved to LedSettingsOverlay
 
     // Restart prompt dialog
     lv_obj_t* restart_prompt_dialog_ = nullptr;
@@ -132,6 +136,23 @@ class SettingsPanel : public PanelBase {
 
     // Static buffers for string subjects
     char printer_host_value_buf_[96]; // e.g., "192.168.1.100:7125"
+
+    // Live status line shown under each stateful root row (settings_panel.xml),
+    // refreshed by refresh_status_lines().
+    lv_subject_t settings_status_display_subject_;
+    lv_subject_t settings_status_appearance_subject_;
+    lv_subject_t settings_status_sound_subject_;
+    lv_subject_t settings_status_devices_subject_;
+    lv_subject_t settings_status_connection_subject_;
+    lv_subject_t settings_status_language_time_subject_;
+    lv_subject_t settings_status_updates_subject_;
+    char settings_status_display_buf_[64];
+    char settings_status_appearance_buf_[64];
+    char settings_status_sound_buf_[64];
+    char settings_status_devices_buf_[64];
+    char settings_status_connection_buf_[64];
+    char settings_status_language_time_buf_[64];
+    char settings_status_updates_buf_[64];
 
     // Note: Machine Limits overlay is now managed by MachineLimitsOverlay class
     // See ui_settings_machine_limits.h

@@ -18,14 +18,17 @@
     <setting_group name="group_screen">
       <setting_group_header title="SCREEN" title_tag="SCREEN"/>
       <setting_action_row name="row_display"
-                          label="Display" label_tag="Display" icon="light" callback="on_display_clicked"/>
+                          label="Display" label_tag="Display" icon="light" callback="on_display_clicked"
+                          bind_description="settings_status_display" description_min_bp="0"/>
       <setting_action_row name="row_appearance"
-                          label="Appearance" label_tag="Appearance" icon="palette" callback="on_appearance_clicked"/>
+                          label="Appearance" label_tag="Appearance" icon="palette" callback="on_appearance_clicked"
+                          bind_description="settings_status_appearance" description_min_bp="0"/>
       <setting_action_row name="row_touch_input"
                           label="Touch &amp; Input" label_tag="Touch &amp; Input" icon="cursor_move"
                           callback="on_touch_input_clicked"/>
       <setting_action_row name="row_sound"
-                          label="Sound" label_tag="Sound" icon="volume_high" callback="on_sound_clicked">
+                          label="Sound" label_tag="Sound" icon="volume_high" callback="on_sound_clicked"
+                          bind_description="settings_status_sound" description_min_bp="0">
         <bind_flag_if_eq subject="printer_has_speaker" flag="hidden" ref_value="0"/>
       </setting_action_row>
     </setting_group>
@@ -34,22 +37,26 @@
       <setting_action_row name="row_printing"
                           label="Printing" label_tag="Printing" icon="printer_3d" callback="on_printing_clicked"/>
       <setting_action_row name="row_devices"
-                          label="Devices" label_tag="Devices" icon="sysinfo" callback="on_devices_clicked"/>
+                          label="Devices" label_tag="Devices" icon="sysinfo" callback="on_devices_clicked"
+                          bind_description="settings_status_devices" description_min_bp="0"/>
       <setting_action_row name="row_safety"
                           label="Safety &amp; Alerts" label_tag="Safety &amp; Alerts" icon="alert_octagon"
                           callback="on_safety_clicked"/>
       <setting_action_row name="row_connection"
-                          label="Connection" label_tag="Connection" icon="lan" callback="on_connection_clicked"/>
+                          label="Connection" label_tag="Connection" icon="lan" callback="on_connection_clicked"
+                          bind_description="settings_status_connection" description_min_bp="0"/>
     </setting_group>
     <setting_group name="group_helixscreen">
       <setting_group_header title="HELIXSCREEN" title_tag="HELIXSCREEN"/>
       <setting_action_row name="row_language_time"
                           label="Language &amp; Time" label_tag="Language &amp; Time" icon="translate"
-                          callback="on_language_time_clicked"/>
+                          callback="on_language_time_clicked" bind_description="settings_status_language_time"
+                          description_min_bp="0"/>
       <setting_action_row name="row_system"
                           label="System" label_tag="System" icon="settings" callback="on_system_clicked"/>
       <setting_action_row name="row_updates"
-                          label="Updates" label_tag="Updates" icon="download" callback="on_updates_clicked">
+                          label="Updates" label_tag="Updates" icon="download" callback="on_updates_clicked"
+                          bind_description="settings_status_updates" description_min_bp="0">
         <bind_flag_if cond="show_update_settings eq 0 and updates_firmware_managed eq 0 and updates_unavailable eq 0"
                       flag="hidden"/>
       </setting_action_row>

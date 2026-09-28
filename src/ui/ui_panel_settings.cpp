@@ -59,6 +59,7 @@
 #include "device_display_name.h"
 #include "display_manager.h"
 #include "display_settings_manager.h"
+#include "ethernet_manager.h"
 #include "filament_sensor_manager.h"
 #include "format_utils.h"
 #include "hardware_validator.h"
@@ -76,6 +77,7 @@
 #include "runtime_config.h"
 #include "safety_settings_manager.h"
 #include "settings_manager.h"
+#include "settings_root_status.h"
 #include "sound_manager.h"
 #include "standard_macros.h"
 #include "static_panel_registry.h"
@@ -84,6 +86,7 @@
 #include "system_settings_manager.h"
 #include "theme_manager.h"
 #include "ui/ui_lazy_panel_helper.h"
+#include "wifi_manager.h"
 #include "wizard_config_paths.h"
 
 #include <spdlog/spdlog.h>
@@ -328,6 +331,24 @@ void SettingsPanel::init_subjects() {
     UI_MANAGED_SUBJECT_STRING(touch_cal_status_subject_, touch_cal_status_buf_, status_text,
                               "touch_cal_status", subjects_);
 
+    // Live status line under each stateful root row; refresh_status_lines()
+    // fills these in, first from setup() and then on every return to the root.
+    UI_MANAGED_SUBJECT_STRING(settings_status_display_subject_, settings_status_display_buf_, "",
+                              "settings_status_display", subjects_);
+    UI_MANAGED_SUBJECT_STRING(settings_status_appearance_subject_, settings_status_appearance_buf_,
+                              "", "settings_status_appearance", subjects_);
+    UI_MANAGED_SUBJECT_STRING(settings_status_sound_subject_, settings_status_sound_buf_, "",
+                              "settings_status_sound", subjects_);
+    UI_MANAGED_SUBJECT_STRING(settings_status_devices_subject_, settings_status_devices_buf_, "",
+                              "settings_status_devices", subjects_);
+    UI_MANAGED_SUBJECT_STRING(settings_status_connection_subject_, settings_status_connection_buf_,
+                              "", "settings_status_connection", subjects_);
+    UI_MANAGED_SUBJECT_STRING(settings_status_language_time_subject_,
+                              settings_status_language_time_buf_, "",
+                              "settings_status_language_time", subjects_);
+    UI_MANAGED_SUBJECT_STRING(settings_status_updates_subject_, settings_status_updates_buf_, "",
+                              "settings_status_updates", subjects_);
+
     // Register XML event callbacks for dropdowns, toggles, and action rows
     register_xml_callbacks({
         // Dropdowns
@@ -450,10 +471,14 @@ void SettingsPanel::setup(lv_obj_t* panel, lv_obj_t* parent_screen) {
         return;
     }
 
-    // Setup all handlers and bindings
     populate_info_rows();
 
     spdlog::debug("[{}] Setup complete", get_name());
+}
+
+void SettingsPanel::on_activate() {
+    PanelBase::on_activate();
+    refresh_status_lines();
 }
 
 // ============================================================================
@@ -475,6 +500,68 @@ void SettingsPanel::populate_info_rows() {
         std::string host_display = host + ":" + std::to_string(port);
         lv_subject_copy_string(&printer_host_value_subject_, host_display.c_str());
     }
+}
+
+namespace {
+// A subject owned by an overlay not yet created (e.g. update_current_version,
+// registered by the About overlay) may not exist; the caller's fallback stands
+// in for it, matching the formatter's neutral input.
+int status_int_subject(const char* name, int fallback) {
+    lv_subject_t* s = lv_xml_get_subject(nullptr, name);
+    return s ? lv_subject_get_int(s) : fallback;
+}
+std::string status_string_subject(const char* name, const char* fallback) {
+    lv_subject_t* s = lv_xml_get_subject(nullptr, name);
+    return s ? std::string(lv_subject_get_string(s)) : std::string(fallback);
+}
+} // namespace
+
+void SettingsPanel::refresh_status_lines() {
+    using namespace helix::settings::status;
+
+    lv_subject_copy_string(&settings_status_display_subject_,
+                           display(status_int_subject("settings_brightness", 0),
+                                   status_int_subject("settings_display_sleep", 0),
+                                   status_int_subject("settings_has_dimming", 0) != 0)
+                               .c_str());
+
+    lv_subject_copy_string(&settings_status_appearance_subject_,
+                           appearance(status_int_subject("settings_dark_mode", 0) != 0,
+                                      DisplaySettingsManager::instance().get_theme_name())
+                               .c_str());
+
+    lv_subject_copy_string(&settings_status_sound_subject_,
+                           sound(status_int_subject("settings_sounds_enabled", 0) != 0,
+                                 status_int_subject("settings_volume", 0))
+                               .c_str());
+
+    lv_subject_copy_string(
+        &settings_status_devices_subject_,
+        devices(lv_subject_get_int(get_printer_state().get_hardware_status_level_subject()))
+            .c_str());
+
+    // EthernetInfo::connected already implies an interface exists, so one
+    // synchronous get_info() call is enough for "wired-up" — the async form
+    // used elsewhere exists to keep a scan off the UI thread, not to avoid this.
+    bool ethernet_up = EthernetManager().get_info().connected;
+    auto wifi = get_wifi_manager();
+    bool wifi_connected = wifi && wifi->is_connected();
+    std::string ssid = wifi ? wifi->get_connected_ssid() : std::string();
+    lv_subject_copy_string(&settings_status_connection_subject_,
+                           connection(ethernet_up, wifi_connected, ssid).c_str());
+
+    lv_subject_copy_string(
+        &settings_status_language_time_subject_,
+        language_time(SystemSettingsManager::instance().get_language_display_name(),
+                      status_int_subject("settings_time_format", 0))
+            .c_str());
+
+    lv_subject_copy_string(&settings_status_updates_subject_,
+                           updates(status_int_subject("update_status", 0),
+                                   status_string_subject("update_new_version", ""),
+                                   status_string_subject("update_current_version", helix_version()),
+                                   lv_subject_get_int(&updates_firmware_managed_subject_) != 0)
+                               .c_str());
 }
 
 void SettingsPanel::populate_led_chips() {

@@ -124,7 +124,6 @@ void SystemSettingsOverlay::on_activate() {
     OverlayBase::on_activate();
 
     init_telemetry_toggle();
-    init_touch_cal_description();
     init_log_level_dropdown();
 }
 
@@ -147,19 +146,6 @@ void SystemSettingsOverlay::init_telemetry_toggle() {
             }
             spdlog::trace("[{}] Telemetry toggle initialized", get_name());
         }
-    }
-}
-
-void SystemSettingsOverlay::init_touch_cal_description() {
-    if (!overlay_root_)
-        return;
-
-    // Touch calibration row description is already bound to the
-    // touch_cal_status subject via SettingsPanel's setup_action_handlers().
-    // For the system overlay, we bind it here if the row exists.
-    lv_obj_t* touch_cal_row = lv_obj_find_by_name(overlay_root_, "row_touch_calibration");
-    if (touch_cal_row) {
-        spdlog::trace("[{}] Touch calibration row present", get_name());
     }
 }
 
