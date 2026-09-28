@@ -16,6 +16,9 @@ setup() {
 }
 
 teardown() {
+    for f in child gc; do
+        [ -s "$BATS_TEST_TMPDIR/$f" ] && kill -KILL "$(cat "$BATS_TEST_TMPDIR/$f")" 2>/dev/null
+    done
     for p in ${OWNER:-} ${WRAP:-}; do kill "$p" 2>/dev/null; done
     return 0
 }
@@ -52,7 +55,72 @@ wait_for_file() {
     local rc=0; wait "$WRAP" || rc=$?
     [ "$rc" -eq 143 ]
     [ ! -e "$CF" ]
-    ! kill -0 "$(cat "$BATS_TEST_TMPDIR/child")" 2>/dev/null
+    refute kill -0 "$(cat "$BATS_TEST_TMPDIR/child")" 2>/dev/null
+}
+
+@test "SIGTERM to the wrapper kills the command's grandchildren too" {
+    "$CLAIM" run heavy:t -- sh -c "sleep 300 & echo \$! > '$BATS_TEST_TMPDIR/gc'; wait" &
+    WRAP=$!
+    wait_for_file "$BATS_TEST_TMPDIR/gc"
+    kill -TERM "$WRAP"
+    local rc=0; wait "$WRAP" || rc=$?
+    [ "$rc" -eq 143 ]
+    sleep 0.2
+    refute kill -0 "$(cat "$BATS_TEST_TMPDIR/gc")" 2>/dev/null
+    [ ! -e "$CF" ]
+}
+
+@test "SIGINT to the wrapper stops the command and releases" {
+    # A background job starts with SIGINT ignored; restore it as a terminal would.
+    env --default-signal=INT "$CLAIM" run heavy:t -- sh -c "echo \$\$ > '$BATS_TEST_TMPDIR/child'; exec sleep 60" &
+    WRAP=$!
+    wait_for_file "$BATS_TEST_TMPDIR/child"
+    kill -INT "$WRAP"
+    local rc=0; wait "$WRAP" || rc=$?
+    [ "$rc" -eq 130 ]
+    sleep 0.2
+    refute kill -0 "$(cat "$BATS_TEST_TMPDIR/child")" 2>/dev/null
+    [ ! -e "$CF" ]
+}
+
+@test "the claim stays LIVE while the command outlives a SIGKILLed wrapper" {
+    "$CLAIM" run heavy:t -- sh -c "echo \$\$ > '$BATS_TEST_TMPDIR/child'; exec sleep 60" &
+    WRAP=$!
+    wait_for_file "$BATS_TEST_TMPDIR/child"
+    kill -KILL "$WRAP"
+    wait "$WRAP" || true
+    run "$CLAIM" check heavy:t
+    [ "$status" -eq 1 ]
+    contains "LIVE" "$output"
+    kill -KILL "$(cat "$BATS_TEST_TMPDIR/child")"
+    sleep 0.2
+    run "$CLAIM" check heavy:t
+    [ "$status" -eq 0 ]
+}
+
+@test "stdin reaches the command" {
+    run bash -c "echo hi | '$CLAIM' run heavy:t -- cat 2>/dev/null"
+    [ "$status" -eq 0 ]
+    [ "$output" = hi ]
+}
+
+@test "the claim chatter stays off the command's stdout" {
+    run bash -c "'$CLAIM' run heavy:t -- echo out 2>/dev/null"
+    [ "$output" = out ]
+    sleep 120 &
+    OWNER=$!
+    "$CLAIM" take heavy:t "someone else" --pid "$OWNER" >/dev/null
+    run bash -c "'$CLAIM' run heavy:t -- echo out 2>/dev/null"
+    [ -z "$output" ]
+}
+
+@test "an option with no value exits instead of spinning" {
+    run timeout 2 "$CLAIM" run heavy:t --note
+    [ "$status" -ne 0 ] && [ "$status" -ne 124 ]
+    run timeout 2 "$CLAIM" take device:x op --pid
+    [ "$status" -ne 0 ] && [ "$status" -ne 124 ]
+    run timeout 2 "$CLAIM" take device:x op --note
+    [ "$status" -ne 0 ] && [ "$status" -ne 124 ]
 }
 
 @test "a refused take leaves the command unrun" {
@@ -60,7 +128,7 @@ wait_for_file() {
     OWNER=$!
     "$CLAIM" take heavy:t "someone else" --pid "$OWNER" >/dev/null
     run "$CLAIM" run heavy:t -- touch "$BATS_TEST_TMPDIR/ran"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 75 ]
     contains "REFUSED" "$output"
     [ ! -e "$BATS_TEST_TMPDIR/ran" ]
     contains "someone else" "$(cat "$CF")"

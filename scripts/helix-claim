@@ -144,20 +144,24 @@ fmt_age() {
     else printf '%ds' "$s"; fi
 }
 
-# RSS of a pid plus all its descendants, in KB. A heavy job is a make or a
-# shard runner whose own RSS is nothing next to its children's.
-tree_rss_kb() {
-    ps -eo pid=,ppid=,rss= 2>/dev/null | awk -v root="$1" '
-        { rss[$1] = $3; kids[$2] = kids[$2] " " $1 }
+# A pid and all its descendants, one per line, the root first.
+tree_pids() {
+    ps -eo pid=,ppid= 2>/dev/null | awk -v root="$1" '
+        { kids[$2] = kids[$2] " " $1 }
         END {
-            n = split(root, q, " "); total = 0
+            n = 1; q[1] = root
             for (i = 1; i <= n; i++) {
-                total += rss[q[i]]
+                print q[i]
                 m = split(kids[q[i]], k, " ")
                 for (j = 1; j <= m; j++) q[++n] = k[j]
             }
-            print total + 0
         }'
+}
+
+# RSS of a pid plus all its descendants, in KB. A heavy job is a make or a
+# shard runner whose own RSS is nothing next to its children's.
+tree_rss_kb() {
+    ps -o rss= -p "$(tree_pids "$1" | paste -sd,)" 2>/dev/null | awk '{ t += $1 } END { print t + 0 }'
 }
 
 # Only a LIVE heavy: claim has a job behind it worth measuring.
@@ -193,8 +197,8 @@ take)
     note=""; pid=""
     while [ $# -gt 0 ]; do
         case $1 in
-            --note) note=${2:-}; shift 2;;
-            --pid)  pid=${2:-};  shift 2;;
+            --note) [ $# -ge 2 ] || die "--note needs a value"; note=$2; shift 2;;
+            --pid)  [ $# -ge 2 ] || die "--pid needs a value";  pid=$2;  shift 2;;
             *) die "unknown option: $1";;
         esac
     done
@@ -297,15 +301,17 @@ jobs)
     printf '%s\n' "$j"
     ;;
 run)
-    # The claim's owner is this wrapper, so it reads LIVE exactly as long as the
-    # job runs and STALE if the wrapper is killed outright.
+    # The claim's owner is the command itself: it is started stopped, claimed
+    # under its own pid, then continued. exec keeps that pid and its start time,
+    # so the claim reads LIVE exactly as long as the work runs, whatever happens
+    # to this wrapper.
     res=${1:-}; shift 2>/dev/null || true
     usage="usage: helix-claim run heavy:<what> [--note X] -- <cmd> [args...]"
     case "$res" in heavy:?*) ;; *) die "$usage";; esac
     note=""
     while [ $# -gt 0 ]; do
         case $1 in
-            --note) note=${2:-}; shift 2;;
+            --note) [ $# -ge 2 ] || die "$usage"; note=$2; shift 2;;
             --) shift; break;;
             *) die "unknown option: $1";;
         esac
@@ -313,18 +319,32 @@ run)
     [ $# -gt 0 ] || die "$usage"
     self="${BASH_SOURCE[0]}"
     op=$(printf '%s' "$*" | tr -d '"\\' | cut -c1-80)
-    "$self" take "$res" "$op" --note "$note" --pid $$ || exit 1
-    trap '"$self" release-if-owned-by $$ "$res"' EXIT
-    # A background child lets a signal to this wrapper be handled at once
-    # rather than after the job ends. Bash starts it with SIGINT ignored and
-    # stdin on /dev/null; undo both so it behaves as a foreground command.
+    # A background command's stdin defaults to /dev/null; hand it the caller's.
     exec 3<&0
-    ( trap - INT QUIT; exec "$@" <&3 3<&- ) &
+    ( kill -STOP "$BASHPID"; exec "$@" <&3 3<&- ) &
     child=$!
     exec 3<&-
-    trap 'kill -TERM $child 2>/dev/null; wait $child; exit 143' TERM HUP
-    trap 'kill -INT $child 2>/dev/null; wait $child; exit 130' INT
-    wait $child
+    for _ in $(seq 500); do
+        st=$(cat "/proc/$child/stat" 2>/dev/null) || break
+        st=${st##*) }; [ "${st%% *}" = T ] && break
+        sleep 0.01
+    done
+    "$self" take "$res" "$op" --note "$note" --pid "$child" >&2
+    rc=$?
+    if [ "$rc" -ne 0 ]; then
+        kill -KILL "$child" 2>/dev/null
+        [ "$rc" -eq 1 ] && exit 75 || exit "$rc"
+    fi
+    trap '"$self" release-if-owned-by "$child" "$res"' EXIT
+    # A signal reaches the whole tree: make's recipe shells die without passing
+    # it on, which would leave the shards running under a released claim.
+    # shellcheck disable=SC2046  # one pid per word
+    stop_tree() { kill "-$1" $(tree_pids "$child") 2>/dev/null; wait "$child"; exit "$2"; }
+    trap 'stop_tree TERM 143' TERM
+    trap 'stop_tree HUP 129' HUP
+    trap 'stop_tree INT 130' INT
+    kill -CONT "$child"
+    wait "$child"
     exit $?
     ;;
 resources)
@@ -448,8 +468,9 @@ helix-claim - advisory claims on resources shared between agent sessions
   release <resource> [--force]                drop your claim; refuses one another
                                               live session holds unless forced
   release-if-owned-by <pid> <resource>        drop it only if that pid claimed it
-  run heavy:<what> [--note X] -- <cmd...>     hold heavy:<what> while cmd runs;
-                                              refuses (cmd unrun) if it is held
+  run heavy:<what> [--note X] -- <cmd...>     hold heavy:<what> while cmd runs and
+                                              exit with its status; exits 75 with
+                                              cmd unrun if the claim is held
   resources [--no-zeus]                       memory, load, fair -j, live claims,
                                               top memory users, and zeus
 
