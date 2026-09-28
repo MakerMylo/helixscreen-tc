@@ -18,7 +18,6 @@
 #include "ui_overlay_timelapse_settings.h"
 #include "ui_overlay_timelapse_videos.h"
 #include "ui_panel_advanced.h"
-#include "ui_panel_tools.h"
 #include "ui_panel_bed_mesh.h"
 #include "ui_panel_belt_tension.h"
 #include "ui_panel_calibration_pid.h"
@@ -37,6 +36,7 @@
 #include "ui_panel_screws_tilt.h"
 #include "ui_panel_settings.h"
 #include "ui_panel_spoolman.h"
+#include "ui_panel_tools.h"
 #include "ui_printer_status_icon.h"
 #include "ui_probe_overlay.h"
 #include "ui_update_queue.h"
@@ -76,6 +76,7 @@
 #include "temperature_sensor_manager.h"
 #include "temperature_service.h"
 #include "timelapse_state.h"
+#include "tool_config.h"
 #include "tool_state.h"
 #include "toolchanger_vars.h"
 #include "usb_manager.h"
@@ -202,6 +203,10 @@ void SubjectInitializer::init_ams_subjects() {
     // The tool changer's saved variables (pickup stats, load memory): read by
     // the Tools panel's path widgets, so before any panel XML exists.
     helix::ToolchangerVars::instance().init_subjects();
+    // The user's tool count override and toolhead colours (Settings > Devices
+    // > Tool Changer): read by the same widgets.
+    helix::ToolConfig::instance().init_subjects();
+    helix::ToolConfig::instance().load();
 
     // Initialize AmsState subjects BEFORE panels so XML bindings can find ams_gate_count
     // Note: In mock mode, init_subjects() also creates the mock backend internally

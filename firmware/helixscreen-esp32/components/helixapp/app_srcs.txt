@@ -203,6 +203,7 @@ src/printer/plr_offer.cpp
 src/printer/standard_macros.cpp
 src/printer/toolchanger_addon.cpp
 src/printer/toolchanger_vars.cpp
+src/printer/tool_config.cpp
 src/printer/tool_filament_sensors.cpp
 src/printer/zmod_color_status.cpp
 src/printer/toolhead_homing.cpp
@@ -534,6 +535,7 @@ src/ui/ui_settings_security.cpp
 src/ui/ui_settings_sensors.cpp
 src/ui/ui_settings_sound.cpp
 src/ui/ui_settings_system.cpp
+src/ui/ui_settings_tools.cpp
 src/ui/ui_settings_telemetry_data.cpp
 src/ui/ui_settings_touch.cpp
 src/ui/ui_settings_updates.cpp

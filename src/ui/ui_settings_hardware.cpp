@@ -12,6 +12,7 @@
 #include "ui_settings_led.h"
 #include "ui_settings_macro_buttons.h"
 #include "ui_settings_sensors.h"
+#include "ui_settings_tools.h"
 #include "ui_spoolman_overlay.h"
 
 #include "app_globals.h"
@@ -82,6 +83,7 @@ void HardwareSettingsOverlay::register_callbacks() {
     register_xml_callbacks({
         {"on_camera_view_clicked", on_camera_view_clicked},
         {"on_ams_settings_clicked", on_ams_settings_clicked},
+        {"on_tools_settings_clicked", on_tools_settings_clicked},
         {"on_fans_settings_clicked", on_fans_settings_clicked},
         {"on_filament_sensors_clicked", on_filament_sensors_clicked},
         {"on_led_settings_clicked", on_led_settings_clicked},
@@ -203,6 +205,13 @@ void HardwareSettingsOverlay::on_ams_settings_clicked(lv_event_t* /*e*/) {
         overlay.init_subjects();
         overlay.register_callbacks();
     }
+    overlay.show(get_hardware_settings_overlay().parent_screen_);
+    LVGL_SAFE_EVENT_CB_END();
+}
+
+void HardwareSettingsOverlay::on_tools_settings_clicked(lv_event_t* /*e*/) {
+    LVGL_SAFE_EVENT_CB_BEGIN("[HardwareSettingsOverlay] on_tools_settings_clicked");
+    auto& overlay = helix::settings::get_tools_settings_overlay();
     overlay.show(get_hardware_settings_overlay().parent_screen_);
     LVGL_SAFE_EVENT_CB_END();
 }

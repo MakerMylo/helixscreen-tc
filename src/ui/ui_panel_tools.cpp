@@ -11,12 +11,14 @@
 
 #include "ams_state.h"
 #include "app_globals.h"
+#include "display_numbering.h"
 #include "exception_policy.h"
 #include "i_moonraker_api.h"
 #include "lvgl/src/others/translation/lv_translation.h"
 #include "observer_factory.h"
 #include "printer_state.h"
 #include "static_panel_registry.h"
+#include "tool_config.h"
 #include "tool_state.h"
 
 #include <spdlog/fmt/fmt.h>
@@ -59,6 +61,7 @@ ToolsPanel::~ToolsPanel() {
     tools_observer_.reset();
     slots_observer_.reset();
     extruders_observer_.reset();
+    config_observer_.reset();
     deinit_subjects_base(subjects_);
 }
 
@@ -98,6 +101,11 @@ void ToolsPanel::setup(lv_obj_t* panel, lv_obj_t* parent_screen) {
         [](ToolsPanel* self, int) { self->bind_temperatures(); },
         printer_state_.get_subjects_lifetime());
 
+    auto& config = helix::ToolConfig::instance();
+    config_observer_ = observe_int_sync<ToolsPanel>(
+        config.get_version_subject(), this, [](ToolsPanel* self, int) { self->refresh_columns(); },
+        config.get_subjects_lifetime());
+
     refresh_columns();
     bind_temperatures();
     spdlog::debug("[{}] Setup complete", get_name());
@@ -132,7 +140,10 @@ void ToolsPanel::refresh_columns() {
         return;
     }
     const auto& tools = helix::ToolState::instance().tools();
-    const size_t count = tools.size();
+    // The user's count when set (Settings > Tool Changer), else what Klipper
+    // reported. Columns past the reported tools show as absent.
+    const auto count = static_cast<size_t>(
+        helix::ToolConfig::instance().effective_tool_count(static_cast<int>(tools.size())));
     names_.ensure_size(count);
     materials_.ensure_size(count);
     temps_.ensure_size(count);
@@ -146,6 +157,9 @@ void ToolsPanel::refresh_column(int tool) {
     const auto& tools = helix::ToolState::instance().tools();
     const auto idx = static_cast<size_t>(tool);
     if (idx >= tools.size()) {
+        // Configured but not reported by the printer.
+        names_.set_string(idx, tool_label(tool));
+        materials_.set_string(idx, "--");
         return;
     }
     names_.set_string(idx, tools[idx].name);
@@ -218,7 +232,8 @@ void ToolsPanel::refresh_temps() {
     if (!subjects_initialized_ || !ui_alive_) {
         return;
     }
-    for (size_t i = 0; i < watches_.size(); ++i) {
+    // One entry per reported tool; configured-only columns have no extruder.
+    for (size_t i = 0; i < watches_.size() && i < temps_.size(); ++i) {
         const auto& w = watches_[i];
         std::string text;
         if (w.extruder.empty()) {

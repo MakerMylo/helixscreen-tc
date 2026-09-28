@@ -1588,7 +1588,8 @@ nlohmann::json MoonrakerClientMock::toolchanger_vars_json() {
     nlohmann::json loaded = nlohmann::json::object();
     const int n = mock_tool_count();
     for (int i = 0; i < n; ++i) {
-        const std::string key = "T" + std::to_string(i);
+        const std::string key =
+            "T" + std::to_string(i); // DISPLAY_NUMBERING_OK: save_variables dict key, not a label
         if (i == 3) {
             continue; // never recorded
         }

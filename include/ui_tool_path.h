@@ -23,10 +23,11 @@
  * XML attributes:
  *   tool_index="3"          the tool this instance draws (0-based)
  *   tool_subject="name"     follow an int subject for the index instead
- *   mode="vertical|horizontal|swatch"
+ *   mode="vertical|horizontal|swatch|hue"
  *       vertical   (default) bowden above, nozzle below - the panel column
  *       horizontal bowden from the left - the actions overlay
  *       swatch     just the filament colour as a rounded block
+ *       hue        just the toolhead's own colour (ToolConfig) as a block
  *
  * The widget observes the slot colour and status, the tool set, the saved
  * variables and the sensor readings, and repaints itself; nothing else needs

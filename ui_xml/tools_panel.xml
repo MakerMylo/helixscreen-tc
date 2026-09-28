@@ -40,6 +40,9 @@
           <bind_style_if name="tools_col_idle" cond="active_tool ne ${i}"/>
           <bind_style_if name="tools_col_active" cond="active_tool eq ${i}"/>
 
+          <!-- The toolhead's own colour (Settings > Devices > Tool Changer). -->
+          <tool_path name="tools_hue_${i}" tool_index="${i}" mode="hue" width="100%" height="#tools_hue_h"/>
+
           <!-- Tap the name to pick the tool up. Highlighted while it is the
                one on the carriage. -->
           <ui_button name="tools_select_${i}"

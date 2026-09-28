@@ -23,7 +23,8 @@
  * opens ToolActionsOverlay for that tool.
  *
  * What the columns bind to (all pools, sized before tools_count is published):
- * - tools_count          (int)    number of columns
+ * - tools_count          (int)    number of columns (ToolConfig's override,
+ *                                 else the tools Klipper reported)
  * - tools_name_N         (string) the tool's G-code name ("T0")
  * - tools_material_N     (string) the slot's material, or "--"
  * - tools_temp_N         (string) "182°" / "182 / 250°" while heating
@@ -91,6 +92,7 @@ class ToolsPanel : public PanelBase {
     ObserverGuard tools_observer_;
     ObserverGuard slots_observer_;
     ObserverGuard extruders_observer_;
+    ObserverGuard config_observer_;
     /// One temp + one target observer per tool's extruder, rebound when the
     /// extruder set or the tool set changes.
     struct ExtruderWatch {

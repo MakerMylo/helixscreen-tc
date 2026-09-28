@@ -5,33 +5,37 @@
   Tools panel tokens (tool changer per-tool columns and the actions overlay).
 
   Responsive px tokens, registered by theme_manager per breakpoint like
-  ams_tokens.xml; referenced as #tools_path_h and #tools_swatch_w/_h.
+  ams_tokens.xml; referenced as #tools_hue_h, #tools_act_side_w and #tools_act_color.
 -->
 <component>
   <consts>
-    <!-- Height of the sideways path drawing in the actions overlay. -->
-    <px name="tools_path_h_micro" value="84"/>
-    <px name="tools_path_h_tiny" value="84"/>
-    <px name="tools_path_h_small" value="100"/>
-    <px name="tools_path_h_medium" value="120"/>
-    <px name="tools_path_h_large" value="140"/>
-    <px name="tools_path_h_xlarge" value="160"/>
-    <px name="tools_path_h_xxlarge" value="180"/>
+    <!-- Toolhead colour bar across the top of each column. -->
+    <px name="tools_hue_h_micro" value="4"/>
+    <px name="tools_hue_h_tiny" value="4"/>
+    <px name="tools_hue_h_small" value="5"/>
+    <px name="tools_hue_h_medium" value="6"/>
+    <px name="tools_hue_h_large" value="6"/>
+    <px name="tools_hue_h_xlarge" value="8"/>
+    <px name="tools_hue_h_xxlarge" value="8"/>
 
-    <!-- Filament colour block beside the material name. -->
-    <px name="tools_swatch_w_micro" value="28"/>
-    <px name="tools_swatch_w_tiny" value="28"/>
-    <px name="tools_swatch_w_small" value="32"/>
-    <px name="tools_swatch_w_medium" value="36"/>
-    <px name="tools_swatch_w_large" value="40"/>
-    <px name="tools_swatch_w_xlarge" value="44"/>
-    <px name="tools_swatch_w_xxlarge" value="48"/>
-    <px name="tools_swatch_h_micro" value="18"/>
-    <px name="tools_swatch_h_tiny" value="18"/>
-    <px name="tools_swatch_h_small" value="22"/>
-    <px name="tools_swatch_h_medium" value="24"/>
-    <px name="tools_swatch_h_large" value="26"/>
-    <px name="tools_swatch_h_xlarge" value="28"/>
-    <px name="tools_swatch_h_xxlarge" value="30"/>
+    <!-- Width of the side columns (rate + filament form on the left, the
+         action buttons on the right) in the actions overlay. -->
+    <px name="tools_act_side_w_micro" value="150"/>
+    <px name="tools_act_side_w_tiny" value="170"/>
+    <px name="tools_act_side_w_small" value="200"/>
+    <px name="tools_act_side_w_medium" value="240"/>
+    <px name="tools_act_side_w_large" value="270"/>
+    <px name="tools_act_side_w_xlarge" value="300"/>
+    <px name="tools_act_side_w_xxlarge" value="340"/>
+
+    <!-- Colour block in the filament form. -->
+    <px name="tools_act_color_micro" value="28"/>
+    <px name="tools_act_color_tiny" value="30"/>
+    <px name="tools_act_color_small" value="32"/>
+    <px name="tools_act_color_medium" value="36"/>
+    <px name="tools_act_color_large" value="40"/>
+    <px name="tools_act_color_xlarge" value="44"/>
+    <px name="tools_act_color_xxlarge" value="48"/>
+
   </consts>
 </component>

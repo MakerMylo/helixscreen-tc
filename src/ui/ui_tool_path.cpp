@@ -16,6 +16,7 @@
 #include "helix-xml/src/xml/parsers/lv_xml_obj_parser.h"
 #include "observer_factory.h"
 #include "theme_manager.h"
+#include "tool_config.h"
 #include "tool_filament_sensors.h"
 #include "tool_state.h"
 #include "toolchanger_vars.h"
@@ -31,7 +32,7 @@ namespace helix::ui {
 
 namespace {
 
-enum class Mode { Vertical, Horizontal, Swatch };
+enum class Mode { Vertical, Horizontal, Swatch, Hue };
 
 struct ToolPathData {
     int tool_index = 0;
@@ -45,6 +46,7 @@ struct ToolPathData {
     ObserverGuard tools_observer;
     ObserverGuard vars_observer;
     ObserverGuard sensors_observer;
+    ObserverGuard config_observer;
     ObserverGuard tool_subject_observer;
 };
 
@@ -61,6 +63,7 @@ struct Snapshot {
     lv_color_t filament{};
     bool mounted = false; ///< on the carriage (ToolState active)
     bool tool_exists = false;
+    lv_color_t body{};        ///< the toolhead's own colour (ToolConfig)
     bool at_entry = false;    ///< filament in the bowden / entry segment
     bool at_toolhead = false; ///< filament through the gears to the nozzle
     bool has_entry_sensor = false;
@@ -74,6 +77,7 @@ Snapshot take_snapshot(int tool) {
     if (tool < 0) {
         return s;
     }
+    s.body = lv_color_hex(helix::ToolConfig::instance().color(tool));
 
     // Tool identity
     const auto& tools = helix::ToolState::instance().tools();
@@ -117,7 +121,6 @@ Snapshot take_snapshot(int tool) {
 struct Palette {
     lv_color_t idle;
     lv_color_t bg;
-    lv_color_t nozzle;
     lv_color_t accent;
     lv_color_t muted;
 };
@@ -127,10 +130,24 @@ Palette palette() {
     Palette p;
     p.idle = theme_manager_get_color(dark ? "filament_idle_dark" : "filament_idle_light");
     p.bg = theme_manager_get_color("card_bg");
-    p.nozzle = lv_color_hex(fpath::NOZZLE_UNLOADED_COLOR);
     p.accent = theme_manager_get_color("primary");
     p.muted = theme_manager_get_color("text_muted");
     return p;
+}
+
+/// The toolhead's own colour as a block: the column's header bar and the
+/// settings rows. Nothing about the filament.
+void draw_hue(lv_layer_t* layer, const lv_area_t& a, const Snapshot& s) {
+    lv_draw_rect_dsc_t dsc;
+    lv_draw_rect_dsc_init(&dsc);
+    dsc.radius = LV_MAX(2, lv_area_get_height(&a) / 4);
+    dsc.bg_opa = LV_OPA_COVER;
+    dsc.bg_color = s.body;
+    dsc.border_width = 1;
+    dsc.border_color = fpath::ph_darken(s.body, 40);
+    dsc.border_opa = LV_OPA_COVER;
+    lv_area_t box = a;
+    lv_draw_rect(layer, &dsc, &box);
 }
 
 void draw_swatch(lv_layer_t* layer, const lv_area_t& a, const Snapshot& s, const Palette& p) {
@@ -182,7 +199,10 @@ void draw_path(lv_layer_t* layer, const lv_area_t& a, const Snapshot& s, const P
     // Sizes scale with the box: the glyph is roughly 4*scale wide and
     // 6.5*scale tall (top of the block to the nozzle tip), the tube a fraction
     // of the glyph.
-    const int32_t scale = horizontal ? LV_CLAMP(h / 8, 6, 22) : LV_CLAMP(w / 7, 6, 22);
+    // Horizontal (the actions overlay) has a whole column to itself, so it
+    // may grow larger than a column glyph; it is bounded by both axes.
+    const int32_t scale =
+        horizontal ? LV_CLAMP(LV_MIN(h / 8, w / 10), 6, 40) : LV_CLAMP(w / 7, 6, 22);
     const int32_t line_w = LV_CLAMP(scale / 2, 3, 10);
     const int32_t pip_r = LV_CLAMP(scale / 2 + 1, 4, 9);
 
@@ -196,7 +216,9 @@ void draw_path(lv_layer_t* layer, const lv_area_t& a, const Snapshot& s, const P
     Run run;
     run.horizontal = horizontal;
     if (horizontal) {
-        glyph_cy = a.y1 + 4 + scale * 2;
+        // Centre the drawing (block top to a short extrudate) in the box.
+        const int32_t drawing_h = scale * 2 + (fpath::toolhead_tip_y(0, scale) + scale * 2);
+        glyph_cy = a.y1 + LV_MAX(4 + scale * 2, (h - drawing_h) / 2 + scale * 2);
         glyph_cx = a.x1 + w * 3 / 4;
         run.fixed = glyph_cy + scale; // the block's mid-height
         run.from = a.x1 + pip_r;
@@ -245,19 +267,33 @@ void draw_path(lv_layer_t* layer, const lv_area_t& a, const Snapshot& s, const P
         i = j + 1;
     }
 
-    // The toolhead itself, over the end of the tube. Docked tools are dimmed
-    // as the AMS canvas dims them.
-    lv_color_t noz = s.mounted ? p.nozzle : fpath::ph_darken(p.nozzle, 60);
-    if (s.at_toolhead) {
-        noz = fil;
+    // The toolhead's own colour (Settings > Tool Changer) is a plate behind
+    // the glyph: the renderers draw every toolhead style in metallic grey and
+    // tint only the nozzle tip, and the tip belongs to the filament. Docked
+    // tools are dimmed as the AMS canvas dims them.
+    {
+        const int32_t half_w =
+            scale * 29 / 10; // the glyph body is ~2.4*scale half-wide with its side
+        lv_draw_rect_dsc_t plate;
+        lv_draw_rect_dsc_init(&plate);
+        plate.radius = LV_MAX(3, scale / 2);
+        plate.bg_opa = s.mounted ? LV_OPA_COVER : LV_OPA_50;
+        plate.bg_color = s.mounted ? s.body : fpath::ph_darken(s.body, 30);
+        plate.border_width = 1;
+        plate.border_color = fpath::ph_darken(s.body, 50);
+        plate.border_opa = plate.bg_opa;
+        lv_area_t box = {glyph_cx - half_w, glyph_cy - scale * 3, glyph_cx + half_w,
+                         glyph_cy + scale * 23 / 10};
+        lv_draw_rect(layer, &plate, &box);
     }
-    const lv_opa_t opa = s.mounted ? LV_OPA_COVER : LV_OPA_50;
-    fpath::draw_toolhead(layer, glyph_cx, glyph_cy, noz, scale, opa);
+    const lv_color_t tip = s.at_toolhead ? fil : lv_color_hex(fpath::NOZZLE_UNLOADED_COLOR);
+    const lv_opa_t opa = s.mounted ? LV_OPA_COVER : LV_OPA_60;
+    fpath::draw_toolhead(layer, glyph_cx, glyph_cy, tip, scale, opa);
 
     // Below the nozzle tip: the extrudate run, coloured when filament is at
     // the toolhead.
     const int32_t tip_y = fpath::toolhead_tip_y(glyph_cy, scale);
-    const int32_t bottom = a.y2 - (horizontal ? 2 : pip_r);
+    const int32_t bottom = horizontal ? LV_MIN(a.y2 - 2, tip_y + 2 + scale * 2) : a.y2 - pip_r;
     if (bottom > tip_y + 4) {
         LaneStyle st = lane_style(s.at_toolhead, fil, p.idle, p.bg, LV_MAX(2, line_w - 1));
         draw_lane_vline(layer, glyph_cx, tip_y + 2, bottom, st);
@@ -280,6 +316,8 @@ void tool_path_draw_cb(lv_event_t* e) {
     const Palette p = palette();
     if (data->mode == Mode::Swatch) {
         draw_swatch(layer, coords, s, p);
+    } else if (data->mode == Mode::Hue) {
+        draw_hue(layer, coords, s);
     } else {
         draw_path(layer, coords, s, p, data->mode);
     }
@@ -297,6 +335,7 @@ void setup_observers(lv_obj_t* obj, ToolPathData* data) {
     data->tools_observer.reset();
     data->vars_observer.reset();
     data->sensors_observer.reset();
+    data->config_observer.reset();
 
     const int slot = data->tool_index;
     auto repaint = [](lv_obj_t* o, int /*value*/) { invalidate(o); };
@@ -317,6 +356,9 @@ void setup_observers(lv_obj_t* obj, ToolPathData* data) {
     auto& sensors = helix::FilamentSensorManager::instance();
     data->sensors_observer = observe_int_sync<lv_obj_t>(sensors.get_states_version_subject(), obj,
                                                         repaint, sensors.get_subjects_lifetime());
+    auto& config = helix::ToolConfig::instance();
+    data->config_observer = observe_int_sync<lv_obj_t>(config.get_version_subject(), obj, repaint,
+                                                       config.get_subjects_lifetime());
 }
 
 void follow_tool_subject(lv_obj_t* obj, ToolPathData* data, const char* subject_name) {
@@ -400,6 +442,8 @@ void tool_path_xml_apply(lv_xml_parser_state_t* state, const char** attrs) {
                 data->mode = Mode::Horizontal;
             } else if (std::strcmp(value, "swatch") == 0) {
                 data->mode = Mode::Swatch;
+            } else if (std::strcmp(value, "hue") == 0) {
+                data->mode = Mode::Hue;
             } else {
                 data->mode = Mode::Vertical;
             }

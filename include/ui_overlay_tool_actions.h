@@ -2,15 +2,19 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 
+#include "ui_color_picker.h"
 #include "ui_observer_guard.h"
 
+#include "ams_types.h"
 #include "async_lifetime_guard.h"
 #include "moonraker_error.h"
 #include "overlay_base.h"
 #include "subject_managed_panel.h"
 
 #include <lvgl.h>
+#include <memory>
 #include <string>
+#include <vector>
 
 /**
  * @file ui_overlay_tool_actions.h
@@ -27,7 +31,7 @@
  *   Pick up / Dock   klipper-toolchanger's tool change (ToolState) / UNSELECT_TOOL
  *   Load / Unload    LOAD_TOOL TOOL=n / UNLOAD_TOOL TOOL=n
  *   Extrude/Retract  TOOL_EXTRUDE TOOL=n LENGTH=l / TOOL_RETRACT TOOL=n LENGTH=l
- *   Change           the shared AMS slot editor for slot n
+ *   Save             AmsState::commit_slot_edit with the form's material and colour
  *
  * The macro names live in helix::tool_macros so a printer with different
  * names changes one table.
@@ -35,10 +39,13 @@
  * Subjects:
  * - tool_act_index        (int)    the tool shown; <tool_path> follows it
  * - tool_act_title        (string) "T3"
- * - tool_act_stats        (string) pickup/drop-off record, one line
+ * - tool_act_stats        (string) "Pick up 10/10 · Drop off 9/10"
+ * - tool_act_rate         (string) "95%" or "--"
+ * - tool_act_rate_state   (int)    0 unknown, 1 good (> 95%), 2 needs a look
  * - tool_act_mount_label  (string) "Pick up" or "Dock"
- * - tool_act_material     (string) the slot's material
- * - tool_act_loaded       (string) "loaded" / "empty" / "unknown" by memory
+ * - tool_act_color_name   (string) the form's colour, by name
+ * - tool_act_loaded       (string) "loaded" / "empty" / "" by memory
+ * - tool_act_dirty        (int)    the form differs from the slot (Save enabled)
  * - tool_act_busy         (int)    an action is in flight
  * - tool_act_status       (string) last result line
  */
@@ -52,6 +59,9 @@ inline constexpr const char* kRetract = "TOOL_RETRACT";
 inline constexpr const char* kDock = "UNSELECT_TOOL";
 inline constexpr int kExtrudeLengthMm = 10;
 } // namespace tool_macros
+
+/// Above this many percent of clean changes the rate reads as good (green).
+inline constexpr int kToolRateGoodPct = 95;
 
 class ToolActionsOverlay : public OverlayBase {
   public:
@@ -88,10 +98,18 @@ class ToolActionsOverlay : public OverlayBase {
     void unload();
     void extrude();
     void retract();
-    void change_filament();
+
+    // Filament form
+    void material_changed(int index);
+    void pick_color();
+    void save_filament();
 
   private:
     void refresh();
+    void refresh_form_from_slot();
+    void update_dirty();
+    void paint_color_block();
+    void populate_material_dropdown();
     void send(const std::string& gcode, const char* what);
     void set_busy(bool busy);
     void set_status(const std::string& text);
@@ -101,23 +119,38 @@ class ToolActionsOverlay : public OverlayBase {
     static void on_unload_clicked(lv_event_t* e);
     static void on_extrude_clicked(lv_event_t* e);
     static void on_retract_clicked(lv_event_t* e);
-    static void on_change_clicked(lv_event_t* e);
+    static void on_material_changed(lv_event_t* e);
+    static void on_pick_color_clicked(lv_event_t* e);
+    static void on_save_clicked(lv_event_t* e);
 
     int tool_ = 0;
     bool busy_ = false;
 
+    // The form: what the slot says, and what the user has changed it to.
+    SlotInfo slot_original_;
+    std::string form_material_;
+    uint32_t form_color_ = 0;
+    std::string form_color_name_;
+    bool form_has_color_ = false;
+    std::vector<std::string> material_options_;
+    std::unique_ptr<ColorPicker> color_picker_;
+
     char title_buf_[32] = "";
-    char stats_buf_[128] = "";
+    char stats_buf_[96] = "";
+    char rate_buf_[16] = "";
     char mount_buf_[32] = "";
-    char material_buf_[48] = "";
+    char color_name_buf_[48] = "";
     char loaded_buf_[32] = "";
     char status_buf_[160] = "";
     lv_subject_t index_;
     lv_subject_t title_;
     lv_subject_t stats_;
+    lv_subject_t rate_;
+    lv_subject_t rate_state_;
     lv_subject_t mount_label_;
-    lv_subject_t material_;
+    lv_subject_t color_name_;
     lv_subject_t loaded_;
+    lv_subject_t dirty_;
     lv_subject_t busy_subject_;
     lv_subject_t status_;
     SubjectManager subjects_;

@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<!-- Copyright (C) 2025-2026 356C LLC -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- One toolhead in the Tool Changer settings: colour block, tool name, the -->
+<!-- colour's name (with "default" when the user has not chosen one) and a -->
+<!-- reset button. Tapping the row opens the colour picker. Built by -->
+<!-- ToolsSettingsOverlay; the block draws itself from ToolConfig. -->
+<component>
+  <api>
+    <prop name="tool_index" type="string" default="0"/>
+    <prop name="tool_name" type="string" default="T0"/>
+    <prop name="color_name" type="string" default=""/>
+  </api>
+  <consts>
+    <const name="row_height" value="56"/>
+  </consts>
+  <view name="tools_settings_row"
+        extends="lv_obj" width="100%" height="content" style_min_width="100%" style_min_height="#row_height"
+        style_pad_left="#space_md" style_pad_right="#space_md" style_pad_top="#space_sm" style_pad_bottom="#space_sm"
+        style_bg_opa="0" style_border_width="0" flex_flow="row" style_flex_main_place="start"
+        style_flex_cross_place="center" style_pad_column="#space_md" scrollable="false" clickable="true">
+
+    <tool_path name="color_block"
+               tool_index="$tool_index" mode="hue" width="#tools_act_color" height="#tools_act_color"
+               clickable="false" event_bubble="true"/>
+
+    <lv_obj height="content"
+            flex_flow="column" flex_grow="1" style_pad_gap="2" style_bg_opa="0" style_border_width="0"
+            scrollable="false" clickable="false" event_bubble="true">
+      <text_body name="name_label" text="$tool_name" clickable="false" event_bubble="true"/>
+      <text_small name="color_label"
+                  text="$color_name" style_text_color="#text_muted" style_opa="180" clickable="false"
+                  event_bubble="true"/>
+    </lv_obj>
+
+    <ui_button name="reset_button" text="Reset" translation_tag="Reset" variant="ghost" icon="restore"
+               event_bubble="false"/>
+  </view>
+</component>
