@@ -12,11 +12,16 @@ name: Release
 # Every release is published as a FULL release, never a prerelease, whatever
 # the version string says: `releases/latest` (which all three consumers use)
 # skips prereleases, and this fork has no channels to route.
+#
+# Two ways to cut one: push a `v*` tag, or press "Run workflow" on the Actions
+# tab (workflow_dispatch), which releases the chosen branch's VERSION.txt and
+# creates the tag itself. The second needs no local git at all.
 
 on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
 
 concurrency:
   group: release-${{ github.ref }}
@@ -43,17 +48,28 @@ jobs:
     - name: Initialize submodules
       uses: ./.github/actions/init-submodules
 
-    - name: Check tag matches VERSION.txt
+    - name: Resolve the version
+      id: version
       run: |
         set -eu
-        VERSION="${GITHUB_REF_NAME#v}"
         FILE_VERSION="$(tr -d '[:space:]' < VERSION.txt)"
-        if [ "$VERSION" != "$FILE_VERSION" ]; then
-          echo "::error::Tag ${GITHUB_REF_NAME} does not match VERSION.txt (${FILE_VERSION}). Update VERSION.txt, commit, then tag that commit."
-          exit 1
+        if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+          VERSION="${GITHUB_REF_NAME#v}"
+          if [ "$VERSION" != "$FILE_VERSION" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match VERSION.txt (${FILE_VERSION}). Update VERSION.txt, commit, then tag that commit."
+            exit 1
+          fi
+        else
+          # Run workflow: release what VERSION.txt says, refusing to reuse a
+          # version that already has a tag.
+          VERSION="$FILE_VERSION"
+          if git ls-remote --exit-code --tags origin "refs/tags/v${VERSION}" >/dev/null 2>&1; then
+            echo "::error::v${VERSION} is already released. Bump VERSION.txt and commit first."
+            exit 1
+          fi
         fi
         echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-      id: version
+        echo "tag=v${VERSION}" >> "$GITHUB_OUTPUT"
 
     - name: Check the bundled installer is current
       run: |
@@ -146,7 +162,10 @@ jobs:
     - name: Write release notes
       run: |
         set -eu
-        TAG_MESSAGE=$(git tag -l --format='%(contents)' "$GITHUB_REF_NAME" 2>/dev/null | head -500)
+        TAG_MESSAGE=""
+        if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+          TAG_MESSAGE=$(git tag -l --format='%(contents)' "$GITHUB_REF_NAME" 2>/dev/null | head -500)
+        fi
         if [ -n "$TAG_MESSAGE" ]; then
           printf '%s\n' "$TAG_MESSAGE" > release-notes.md
         else
@@ -165,6 +184,8 @@ jobs:
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v3
       with:
+        tag_name: ${{ steps.version.outputs.tag }}
+        target_commitish: ${{ github.sha }}
         name: ${{ steps.version.outputs.version }}
         body_path: release-notes.md
         draft: false

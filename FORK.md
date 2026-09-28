@@ -26,8 +26,10 @@ path: ~/helixscreen
 ## Cutting a release
 
 Releases are built by GitHub Actions (`.github/workflows/release.yml`, Pi 64-bit
-only, about two hours cold). Bump `VERSION.txt`, commit, tag the commit with the
-same version prefixed by `v`, push the tag:
+only, about two hours cold). Bump `VERSION.txt` and commit; then either press
+**Run workflow** on the Release workflow in the Actions tab (it tags the commit
+for you), or tag the commit with the same version prefixed by `v` and push the
+tag:
 
 ```bash
 echo 1.1.0-tc.2 > VERSION.txt
