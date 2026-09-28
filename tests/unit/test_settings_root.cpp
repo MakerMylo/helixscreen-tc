@@ -3,7 +3,11 @@
 #include "ui_update_queue.h"
 
 #include "../lvgl_ui_test_fixture.h"
+#include "../test_helpers/scoped_runtime_config.h"
+#include "app_globals.h"
+#include "display_settings_manager.h"
 #include "helix-xml/src/xml/lv_xml.h"
+#include "printer_state.h"
 #include "settings_manager.h"
 #include "system_settings_manager.h"
 
@@ -14,8 +18,21 @@
 
 namespace {
 struct RootFixture : LVGLUITestFixture {
+    // Declared first so it is torn down LAST (reverse declaration order):
+    // refresh_status_lines() reads get_wifi_manager() (a process-lifetime
+    // singleton) and constructs a member EthernetManager, and without
+    // test_mode both pick real platform backends — WifiBackend::create()'s
+    // start_async() hands the singleton a worker thread with no join site
+    // here (prestonbrown/helixscreen#1531). Forcing the mock backends keeps
+    // every case in this file hermetic and gives EthernetBackendMock's
+    // connected=true a deterministic "Ethernet" status to assert against.
+    ScopedRuntimeConfig scoped_config_;
     lv_obj_t* root_ = nullptr;
     RootFixture() {
+        get_runtime_config()->test_mode = true;
+        get_runtime_config()->use_real_wifi = false;
+        get_runtime_config()->use_real_ethernet = false;
+
         // The test binary's stub app_globals_init_subjects() (tests/ui_test_utils.cpp)
         // never runs PrinterCapabilitiesState::init_subjects(), so printer_has_speaker
         // is otherwise absent and the Sound row's gate resolves to nothing.
@@ -140,13 +157,16 @@ TEST_CASE_METHOD(RootFixture, "settings root: rows without state show no status"
     }
 }
 
-TEST_CASE_METHOD(RootFixture, "settings root: refresh survives a missing Wi-Fi manager",
+TEST_CASE_METHOD(RootFixture,
+                 "settings root: connection status resolves via the async Ethernet probe",
                  "[settings][settings_root]") {
-    // helix-tests builds have no Wi-Fi manager unless a test installs one.
+    // Wi-Fi is mocked disconnected (WifiBackendMock starts with no SSID) and
+    // EthernetBackendMock::get_info() always reports connected=true, so the
+    // resolved status is deterministically "Ethernet". get_info_async() hands
+    // the result back on an HttpExecutor worker thread, not synchronously, so
+    // this can't be a plain process_lvgl(5) check.
     get_global_settings_panel().refresh_status_lines();
-    process_lvgl(5);
-    const std::string s = status_text(root_, "row_connection");
-    CHECK((s == "Not connected" || s == "Ethernet"));
+    REQUIRE(wait_until([&]() { return status_text(root_, "row_connection") == "Ethernet"; }));
 }
 
 TEST_CASE_METHOD(RootFixture, "settings root: Updates status reads firmware-managed",
@@ -155,6 +175,30 @@ TEST_CASE_METHOD(RootFixture, "settings root: Updates status reads firmware-mana
     get_global_settings_panel().refresh_status_lines();
     process_lvgl(5);
     CHECK(status_text(root_, "row_updates") == "Managed by firmware");
+}
+
+TEST_CASE_METHOD(RootFixture, "settings root: refresh reads every stateful row's source",
+                 "[settings][settings_root]") {
+    set_int("settings_brightness", 65);
+    set_int("settings_display_sleep", 600);
+    set_int("settings_has_dimming", 1);
+    set_int("settings_dark_mode", 1);
+    set_int("settings_time_format", 1);
+
+    lv_subject_t* hw_level = get_printer_state().get_hardware_status_level_subject();
+    const int saved_hw_level = lv_subject_get_int(hw_level);
+    lv_subject_set_int(hw_level, 1);
+
+    get_global_settings_panel().refresh_status_lines();
+    process_lvgl(5);
+
+    CHECK(status_text(root_, "row_display") == "65% · sleep 10 min");
+    CHECK(status_text(root_, "row_appearance") ==
+          "Dark · " + DisplaySettingsManager::instance().get_theme_name());
+    CHECK(status_text(root_, "row_devices") == "Needs attention");
+    CHECK(status_text(root_, "row_language_time") == "English · 24-hour");
+
+    lv_subject_set_int(hw_level, saved_hw_level);
 }
 
 TEST_CASE("SystemSettingsManager names the current language natively",

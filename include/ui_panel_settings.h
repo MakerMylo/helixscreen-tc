@@ -5,6 +5,7 @@
 
 #include "ui_panel_base.h"
 
+#include "async_lifetime_guard.h"
 #include "subject_managed_panel.h" // For SubjectManager
 
 #include <memory>
@@ -12,6 +13,8 @@
 #include <vector>
 
 class ChangeHostModal;
+class EthernetManager; // NAMESPACE_OK: matches its own definition (ethernet_manager.h), global by
+                       // design
 
 /**
  * @file ui_panel_settings.h
@@ -153,6 +156,15 @@ class SettingsPanel : public PanelBase {
     char settings_status_connection_buf_[64];
     char settings_status_language_time_buf_[64];
     char settings_status_updates_buf_[64];
+
+    // Ethernet's status probe blocks (sysfs scans, or a netd Unix-socket
+    // round-trip on daemon-managed firmwares), so refresh_status_lines() never
+    // calls it synchronously; get_info_async() hands the result back on an
+    // HttpExecutor worker thread. lifetime_ gates the deferred write so a probe
+    // that outlives this panel's subjects (e.g. across a deinit_subjects() /
+    // init_subjects() cycle) is safely dropped instead of writing stale data.
+    std::unique_ptr<EthernetManager> ethernet_manager_;
+    helix::AsyncLifetimeGuard lifetime_;
 
     // Note: Machine Limits overlay is now managed by MachineLimitsOverlay class
     // See ui_settings_machine_limits.h

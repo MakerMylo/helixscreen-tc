@@ -455,6 +455,11 @@ void SettingsPanel::deinit_subjects() {
 
     spdlog::debug("[{}] Deinitializing subjects", get_name());
 
+    // Expire any in-flight Ethernet probe first: get_info_async()'s deferred
+    // write targets settings_status_connection_subject_ below, which
+    // subjects_.deinit_all() is about to tear down.
+    lifetime_.invalidate();
+
     // Deinit all subjects via SubjectManager (handles 7 string subjects)
     subjects_.deinit_all();
 
@@ -540,15 +545,30 @@ void SettingsPanel::refresh_status_lines() {
         devices(lv_subject_get_int(get_printer_state().get_hardware_status_level_subject()))
             .c_str());
 
-    // EthernetInfo::connected already implies an interface exists, so one
-    // synchronous get_info() call is enough for "wired-up" — the async form
-    // used elsewhere exists to keep a scan off the UI thread, not to avoid this.
-    bool ethernet_up = EthernetManager().get_info().connected;
+    // Wi-Fi status is a cheap in-memory read; Ethernet's is not (sysfs scans,
+    // or a blocking netd Unix-socket round-trip on daemon-managed firmwares —
+    // see EthernetBackendNetd), so it must go through get_info_async() rather
+    // than a synchronous get_info() call on this (the LVGL) thread. Show the
+    // Wi-Fi-only result immediately so the row is never blank, then upgrade it
+    // to Ethernet from the deferred callback once the probe lands.
     auto wifi = get_wifi_manager();
-    bool wifi_connected = wifi && wifi->is_connected();
-    std::string ssid = wifi ? wifi->get_connected_ssid() : std::string();
+    bool wifi_connected = wifi->is_connected();
+    std::string ssid = wifi->get_connected_ssid();
     lv_subject_copy_string(&settings_status_connection_subject_,
-                           connection(ethernet_up, wifi_connected, ssid).c_str());
+                           connection(/*ethernet_up=*/false, wifi_connected, ssid).c_str());
+
+    if (!ethernet_manager_) {
+        ethernet_manager_ = std::make_unique<EthernetManager>();
+    }
+    auto tok = lifetime_.token();
+    ethernet_manager_->get_info_async([this, tok, wifi_connected, ssid](const EthernetInfo& info) {
+        bool ethernet_up = info.connected;
+        tok.defer("SettingsPanel::apply_connection_status",
+                  [this, ethernet_up, wifi_connected, ssid]() {
+                      lv_subject_copy_string(&settings_status_connection_subject_,
+                                             connection(ethernet_up, wifi_connected, ssid).c_str());
+                  });
+    });
 
     lv_subject_copy_string(
         &settings_status_language_time_subject_,
