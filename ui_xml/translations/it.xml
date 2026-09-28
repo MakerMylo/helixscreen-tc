@@ -2929,6 +2929,7 @@
   <translation tag="The unit is already running another operation. Wait for it to finish, or reset the CFS if it stays stuck" it="L&apos;unità sta già eseguendo un&apos;altra operazione. Attendere il completamento, oppure reimpostare il CFS se resta bloccato"/>
   <translation tag="The unit reported a fault with no further detail. Restart the printer if it repeats" it="L&apos;unità ha segnalato un guasto senza ulteriori dettagli. Riavviare la stampante se si ripete"/>
   <translation tag="The unit&apos;s onboard storage has failed. The CFS mainboard needs replacing" it="La memoria interna dell&apos;unità è guasta. La scheda madre del CFS va sostituita"/>
+  <translation tag="The unload did not start: unload by hand, then start again" it="Lo scarico non è partito: scarica a mano, poi ricomincia"/>
   <translation tag="Theme" it="Tema"/>
   <translation tag="Theme Colors" it="Colori tema"/>
   <translation tag="Theme Preset" it="Preset tema"/>

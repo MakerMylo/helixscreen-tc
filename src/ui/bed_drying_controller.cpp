@@ -12,6 +12,7 @@
 #include "i_moonraker_api.h"
 #include "lvgl/src/others/translation/lv_translation.h"
 #include "motion_presets.h"
+#include "observer_factory.h"
 #include "panel_widget_manager.h"
 #include "printer_state.h"
 #include "settings_manager.h"
@@ -49,6 +50,7 @@ BedDryingController::BedDryingController(PrinterState& state, IMoonrakerAPI* api
     : state_(state), api_(api), tc_(tc), clock_(clock ? std::move(clock) : Clock(wall_clock_s)) {}
 
 BedDryingController::~BedDryingController() {
+    cancel_unload_wait();
     cancel_timer();
     lifetime_.invalidate();
     if (subjects_initialized_) {
@@ -65,6 +67,62 @@ void BedDryingController::init_subjects() {
     UI_MANAGED_SUBJECT_STRING(bed_drying_text_, text_buf_, "", "bed_drying_text", subjects_);
     UI_MANAGED_SUBJECT_INT(bed_drying_ack_, 0, "bed_drying_ack", subjects_);
     subjects_initialized_ = true;
+}
+
+void BedDryingController::await_unload(std::function<void()> on_done,
+                                       std::function<void(bool started)> on_failed) {
+    cancel_unload_wait();
+    unload_done_ = std::move(on_done);
+    unload_failed_ = std::move(on_failed);
+    unload_seen_busy_ = false;
+    auto& ams = AmsState::instance();
+    unload_watch_ = ui::observe_int_sync<BedDryingController>(
+        ams.get_ams_action_subject(), this,
+        [](BedDryingController* self, int value) {
+            const auto action = static_cast<AmsAction>(value);
+            const bool busy = ams_action_is_busy(action);
+            const UnloadProgress progress =
+                unload_progress(self->unload_seen_busy_, busy, action == AmsAction::ERROR);
+            self->unload_seen_busy_ = self->unload_seen_busy_ || busy;
+            if (progress != UnloadProgress::Waiting) {
+                self->finish_unload_wait(progress == UnloadProgress::Done);
+            }
+        },
+        ams.get_subjects_lifetime());
+    unload_timer_ = lv_timer_create(
+        [](lv_timer_t* t) {
+            auto* self = static_cast<BedDryingController*>(lv_timer_get_user_data(t));
+            self->unload_timer_ = nullptr; // one-shot: LVGL deletes it after this
+            if (!self->unload_seen_busy_) {
+                spdlog::warn("[BedDrying] The unload never started; not moving the plate");
+                self->finish_unload_wait(false);
+            }
+        },
+        kUnloadStartWindowMs, this);
+    lv_timer_set_repeat_count(unload_timer_, 1);
+}
+
+void BedDryingController::cancel_unload_wait() {
+    unload_watch_.reset();
+    if (unload_timer_) {
+        ui::lv_timer_cancel_safe(unload_timer_);
+        unload_timer_ = nullptr;
+    }
+    unload_done_ = nullptr;
+    unload_failed_ = nullptr;
+}
+
+void BedDryingController::finish_unload_wait(bool done) {
+    auto on_done = std::move(unload_done_);
+    auto on_failed = std::move(unload_failed_);
+    const bool started = unload_seen_busy_;
+    cancel_unload_wait();
+    spdlog::info("[BedDrying] Unload {}", done ? "finished" : "did not finish");
+    if (done && on_done) {
+        on_done();
+    } else if (!done && on_failed) {
+        on_failed(started);
+    }
 }
 
 long long BedDryingController::now() const {

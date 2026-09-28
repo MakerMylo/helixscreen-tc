@@ -55,6 +55,16 @@ TEST_CASE("the unload is offered unless a sensor says the toolhead is empty", "[
     CHECK(unload_offer(std::nullopt) == UnloadOffer::Offered);
 }
 
+TEST_CASE("a filament-system unload is done only once it has been busy and gone idle",
+          "[bed_drying]") {
+    CHECK(unload_progress(false, false, false) == UnloadProgress::Waiting);
+    CHECK(unload_progress(false, true, false) == UnloadProgress::Waiting);
+    CHECK(unload_progress(true, true, false) == UnloadProgress::Waiting);
+    CHECK(unload_progress(true, false, false) == UnloadProgress::Done);
+    CHECK(unload_progress(false, false, true) == UnloadProgress::Failed);
+    CHECK(unload_progress(true, false, true) == UnloadProgress::Failed);
+}
+
 TEST_CASE("toolhead loaded: only a toolhead sensor can say empty", "[bed_drying]") {
     CHECK(toolhead_loaded_from(false, true, true) == std::optional<bool>(false));
     CHECK(toolhead_loaded_from(true, std::nullopt, false) == std::optional<bool>(true));

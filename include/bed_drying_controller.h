@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "ui_observer_guard.h"
+
 #include "async_lifetime_guard.h"
 #include "bed_drying.h"
 #include "i_moonraker_api.h"
@@ -78,6 +80,19 @@ class BedDryingController {
     /// The spools are off the plate: clear the latch and the persisted run.
     void confirm_removed();
 
+    /// How long a filament-system unload may take to show as busy before the
+    /// flow gives up on it.
+    static constexpr uint32_t kUnloadStartWindowMs = 30000;
+
+    /// Wait for the filament system's unload before the plate moves: @p on_done
+    /// once its action has gone busy and back to idle, @p on_failed on ERROR
+    /// (started = true) or when it never goes busy within kUnloadStartWindowMs
+    /// (started = false). A second call replaces the first wait.
+    void await_unload(std::function<void()> on_done, std::function<void(bool started)> on_failed);
+
+    /// Drop the wait without running either callback.
+    void cancel_unload_wait();
+
     /// Advance the run to @p now_s (wall clock seconds). Driven by a 1 s timer.
     void tick(long long now_s);
 
@@ -116,6 +131,7 @@ class BedDryingController {
     void publish();
     void set_latch(bool on);
     void cancel_timer();
+    void finish_unload_wait(bool done);
 
     PrinterState& state_;
     IMoonrakerAPI* api_;
@@ -137,6 +153,13 @@ class BedDryingController {
 
     lv_timer_t* timer_ = nullptr;
     std::function<void()> on_ready_to_remove_;
+
+    ObserverGuard unload_watch_;
+    lv_timer_t* unload_timer_ = nullptr;
+    bool unload_seen_busy_ = false;
+    std::function<void()> unload_done_;
+    std::function<void(bool)> unload_failed_;
+
     AsyncLifetimeGuard lifetime_;
 };
 

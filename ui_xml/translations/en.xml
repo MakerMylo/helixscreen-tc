@@ -2929,6 +2929,7 @@
   <translation tag="The unit is already running another operation. Wait for it to finish, or reset the CFS if it stays stuck" en="The unit is already running another operation. Wait for it to finish, or reset the CFS if it stays stuck"/>
   <translation tag="The unit reported a fault with no further detail. Restart the printer if it repeats" en="The unit reported a fault with no further detail. Restart the printer if it repeats"/>
   <translation tag="The unit&apos;s onboard storage has failed. The CFS mainboard needs replacing" en="The unit&apos;s onboard storage has failed. The CFS mainboard needs replacing"/>
+  <translation tag="The unload did not start: unload by hand, then start again" en="The unload did not start: unload by hand, then start again"/>
   <translation tag="Theme" en="Theme"/>
   <translation tag="Theme Colors" en="Theme Colors"/>
   <translation tag="Theme Preset" en="Theme Preset"/>

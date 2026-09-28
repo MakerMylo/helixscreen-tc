@@ -3293,6 +3293,7 @@ translations:
   The unit is already running another operation. Wait for it to finish, or reset the CFS if it stays stuck: La unidad ya está ejecutando otra operación. Espere a que termine, o reinicie el CFS si se queda bloqueado
   The unit reported a fault with no further detail. Restart the printer if it repeats: La unidad informó de un fallo sin más detalles. Reinicie la impresora si se repite
   The unit's onboard storage has failed. The CFS mainboard needs replacing: El almacenamiento interno de la unidad ha fallado. Hay que sustituir la placa base del CFS
+  'The unload did not start: unload by hand, then start again': 'La descarga no empezó: descarga a mano y vuelve a empezar'
   Theme: Tema
   Theme Colors: Colores del Tema
   Theme Preset: Preajuste de Tema
