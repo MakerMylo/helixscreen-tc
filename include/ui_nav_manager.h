@@ -40,6 +40,7 @@ enum class PanelId {
     Filament,    ///< Panel 3: Filament
     Settings,    ///< Panel 4: Settings
     Advanced,    ///< Panel 5: Advanced
+    Tools,       ///< Panel 6: Tools (tool changer per-tool view)
     Count        ///< Total number of panels
 };
 

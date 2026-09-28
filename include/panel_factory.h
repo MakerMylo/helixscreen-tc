@@ -32,8 +32,8 @@ class PanelFactory {
   public:
     /// Panel names for lookup
     static constexpr const char* PANEL_NAMES[UI_PANEL_COUNT] = {
-        "home_panel",     "print_select_panel", "controls_panel",
-        "filament_panel", "settings_panel",     "advanced_panel"};
+        "home_panel",     "print_select_panel", "controls_panel", "filament_panel",
+        "settings_panel", "advanced_panel",     "tools_panel"};
 
     /**
      * @brief Find all panels by name in the container

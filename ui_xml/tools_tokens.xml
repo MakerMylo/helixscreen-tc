@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<!-- Copyright (C) 2025-2026 356C LLC -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!--
+  Tools panel tokens (tool changer per-tool columns and the actions overlay).
+
+  Responsive px tokens, registered by theme_manager per breakpoint like
+  ams_tokens.xml; referenced as #tools_hue_h, #tools_act_side_w and #tools_act_color.
+-->
+<component>
+  <consts>
+    <!-- Toolhead colour bar across the top of each column. -->
+    <px name="tools_hue_h_micro" value="4"/>
+    <px name="tools_hue_h_tiny" value="4"/>
+    <px name="tools_hue_h_small" value="5"/>
+    <px name="tools_hue_h_medium" value="6"/>
+    <px name="tools_hue_h_large" value="6"/>
+    <px name="tools_hue_h_xlarge" value="8"/>
+    <px name="tools_hue_h_xxlarge" value="8"/>
+
+    <!-- Width of the side columns (rate + filament form on the left, the
+         action buttons on the right) in the actions overlay. -->
+    <px name="tools_act_side_w_micro" value="150"/>
+    <px name="tools_act_side_w_tiny" value="170"/>
+    <px name="tools_act_side_w_small" value="200"/>
+    <px name="tools_act_side_w_medium" value="240"/>
+    <px name="tools_act_side_w_large" value="270"/>
+    <px name="tools_act_side_w_xlarge" value="300"/>
+    <px name="tools_act_side_w_xxlarge" value="340"/>
+
+    <!-- Colour block in the filament form. -->
+    <px name="tools_act_color_micro" value="28"/>
+    <px name="tools_act_color_tiny" value="30"/>
+    <px name="tools_act_color_small" value="32"/>
+    <px name="tools_act_color_medium" value="36"/>
+    <px name="tools_act_color_large" value="40"/>
+    <px name="tools_act_color_xlarge" value="44"/>
+    <px name="tools_act_color_xxlarge" value="48"/>
+
+  </consts>
+</component>

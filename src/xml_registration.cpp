@@ -779,6 +779,8 @@ void register_xml_components() {
     register_xml("theme_save_as_modal.xml");
     register_xml("fan_settings_row.xml");
     register_xml("fan_settings_overlay.xml");
+    register_xml("tools_settings_row.xml");
+    register_xml("tools_settings_overlay.xml");
     register_xml("fan_rename_modal.xml");
     register_xml("sensors_overlay.xml");
     // Probe type-specific panels (registered before probe_overlay)
@@ -825,6 +827,9 @@ void register_xml_components() {
 
     // Additional panels
     register_xml("advanced_panel.xml");
+    // Tools panel (tool changer per-tool view) and its actions overlay
+    register_xml("tool_actions_overlay.xml");
+    register_xml("tools_panel.xml");
     register_xml("print_select_panel.xml");
 
     // Developer-only showcase panels (ENABLE_DEV_PANELS). Their C++ classes are

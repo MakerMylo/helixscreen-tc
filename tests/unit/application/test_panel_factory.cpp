@@ -24,7 +24,7 @@ using namespace helix;
 // ============================================================================
 
 TEST_CASE("PanelFactory has correct panel count", "[application][panels]") {
-    REQUIRE(UI_PANEL_COUNT == 6);
+    REQUIRE(UI_PANEL_COUNT == 7);
 }
 
 TEST_CASE("Panel enum values are sequential", "[application][panels]") {
@@ -34,6 +34,7 @@ TEST_CASE("Panel enum values are sequential", "[application][panels]") {
     REQUIRE(static_cast<int>(PanelId::Filament) == 3);
     REQUIRE(static_cast<int>(PanelId::Settings) == 4);
     REQUIRE(static_cast<int>(PanelId::Advanced) == 5);
+    REQUIRE(static_cast<int>(PanelId::Tools) == 6);
 }
 
 TEST_CASE("PanelFactory PANEL_NAMES has correct entries", "[application][panels]") {
@@ -50,6 +51,8 @@ TEST_CASE("PanelFactory PANEL_NAMES has correct entries", "[application][panels]
                         "settings_panel") == 0);
     REQUIRE(std::strcmp(PanelFactory::PANEL_NAMES[static_cast<int>(PanelId::Advanced)],
                         "advanced_panel") == 0);
+    REQUIRE(std::strcmp(PanelFactory::PANEL_NAMES[static_cast<int>(PanelId::Tools)],
+                        "tools_panel") == 0);
 }
 
 TEST_CASE("PanelFactory PANEL_NAMES count matches UI_PANEL_COUNT", "[application][panels]") {

@@ -50,6 +50,7 @@
 #include "sound_manager.h"
 #include "spoolman_manager.h"
 #include "tool_state.h"
+#include "toolchanger_vars.h"
 #include "wizard_config_paths.h"
 
 #include <spdlog/spdlog.h>
@@ -344,6 +345,7 @@ void MoonrakerManager::process_notifications() {
                         get_printer_state().update_from_status(params[0], eventtime,
                                                                from_cached_snapshot);
                         helix::ToolState::instance().update_from_status(params[0]);
+                        helix::ToolchangerVars::instance().update_from_status(params[0]);
                     }
                 }
             }

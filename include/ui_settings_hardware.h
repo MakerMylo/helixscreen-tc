@@ -49,6 +49,7 @@ class HardwareSettingsOverlay : public OverlayBase {
 
     static void on_camera_view_clicked(lv_event_t* e);
     static void on_ams_settings_clicked(lv_event_t* e);
+    static void on_tools_settings_clicked(lv_event_t* e);
     static void on_fans_settings_clicked(lv_event_t* e);
     static void on_filament_sensors_clicked(lv_event_t* e);
     static void on_led_settings_clicked(lv_event_t* e);

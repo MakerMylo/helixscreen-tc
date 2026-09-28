@@ -164,6 +164,7 @@ void FilamentSensorManager::init_subjects() {
     UI_MANAGED_SUBJECT_INT(master_enabled_subject_, master_enabled_ ? 1 : 0,
                            "filament_master_enabled", subjects_);
     UI_MANAGED_SUBJECT_INT(sensor_count_, 0, "filament_sensor_count", subjects_);
+    UI_MANAGED_SUBJECT_INT(states_version_, 0, "filament_sensor_states_version", subjects_);
 
     subjects_initialized_ = true;
 
@@ -663,6 +664,20 @@ FilamentSensorManager::get_sensor_state(FilamentSensorRole role) const {
     }
 
     return it->second; // Return thread-safe copy
+}
+
+std::optional<FilamentSensorState>
+FilamentSensorManager::get_sensor_state_by_name(const std::string& klipper_name) const {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    auto it = states_.find(klipper_name);
+    if (it == states_.end()) {
+        return std::nullopt;
+    }
+    return it->second;
+}
+
+lv_subject_t* FilamentSensorManager::get_states_version_subject() {
+    return &states_version_;
 }
 
 bool FilamentSensorManager::has_any_runout() const {
@@ -1581,6 +1596,10 @@ void FilamentSensorManager::update_subjects() {
     }
     lv_subject_set_int(&any_runout_, any_runout_value);
     lv_subject_set_int(&motion_active_, is_motion_active() ? 1 : 0);
+    // Named-sensor views (a tool changer's per-tool pips) re-read by name on
+    // this; it moves on every update_subjects() call, which is every reading
+    // change plus the first status frame.
+    lv_subject_set_int(&states_version_, lv_subject_get_int(&states_version_) + 1);
 
     spdlog::trace("[FilamentSensorManager] Subjects updated: runout={}, toolhead={}, entry={}, "
                   "probe={}, any_runout={}",

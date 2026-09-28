@@ -6,6 +6,7 @@
 #include "ui_component_keypad.h"
 #include "ui_nav_manager.h"
 #include "ui_panel_advanced.h"
+#include "ui_panel_tools.h"
 #include "ui_panel_controls.h"
 #include "ui_panel_filament.h"
 #include "ui_panel_home.h"
@@ -85,6 +86,10 @@ void PanelFactory::setup_one_panel(int panel_id) {
     case PanelId::Advanced:
         get_global_advanced_panel().setup(obj, m_screen);
         inst = &get_global_advanced_panel();
+        break;
+    case PanelId::Tools:
+        helix::ui::get_global_tools_panel().setup(obj, m_screen);
+        inst = &helix::ui::get_global_tools_panel();
         break;
     default:
         return;
@@ -207,6 +212,12 @@ void PanelFactory::setup_panels(lv_obj_t* screen) {
     });
     HELIX_BOOT_YIELD();
 
+    timed_setup("tools", [&] {
+        helix::ui::get_global_tools_panel().setup(m_panels[static_cast<int>(PanelId::Tools)],
+                                                  screen);
+    });
+    HELIX_BOOT_YIELD();
+
     spdlog::debug(
         "[PanelFactory] all six setup() calls took {:.1f}ms total",
         std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - panels_t0)
@@ -221,6 +232,7 @@ void PanelFactory::setup_panels(lv_obj_t* screen) {
     nav.register_panel_instance(PanelId::Filament, &get_global_filament_panel());
     nav.register_panel_instance(PanelId::Settings, &get_global_settings_panel());
     nav.register_panel_instance(PanelId::Advanced, &get_global_advanced_panel());
+    nav.register_panel_instance(PanelId::Tools, &helix::ui::get_global_tools_panel());
 
     // Activate initial panel now that all instances are registered
     // (set_panels() couldn't do this because instances weren't registered yet)

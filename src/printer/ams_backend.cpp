@@ -567,6 +567,16 @@ static std::string to_lower(const std::string& s) {
 // printer.mmu.tool / toolchanger.tool_number).
 static std::unique_ptr<AmsBackendMock>
 create_mock_with_features(int gate_count, IMoonrakerClient* mock_client = nullptr) {
+    // A tool changer has one slot per tool; the client mock owns how many
+    // tools it presents (HELIX_MOCK_TOOL_COUNT), and the slots must match or
+    // the AMS topology overrides ToolState with the wrong count.
+    {
+        const char* ams_env = std::getenv("HELIX_MOCK_AMS");
+        const std::string ams = ams_env ? to_lower(ams_env) : std::string();
+        if (ams == "toolchanger" || ams == "tool_changer" || ams == "tc") {
+            gate_count = MoonrakerClientMock::mock_tool_count();
+        }
+    }
     auto mock = std::make_unique<AmsBackendMock>(gate_count);
 
     // Find the moonraker mock to subscribe to. get_moonraker_client_mock() is

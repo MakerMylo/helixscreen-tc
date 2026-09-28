@@ -606,6 +606,18 @@ void register_object_handlers(std::unordered_map<std::string, MethodHandler>& re
                                            {"power", 0.0},
                                            {"pressure_advance", 0.04}};
             }
+            for (int i = 4; i < 8; ++i) {
+                const std::string ext = "extruder" + std::to_string(i);
+                if (objects.contains(ext)) {
+                    status_obj[ext] = {{"temperature", 28.0 + i},
+                                       {"target", 0.0},
+                                       {"power", 0.0},
+                                       {"pressure_advance", 0.04}};
+                }
+            }
+            if (objects.contains("save_variables") && MoonrakerClientMock::mock_toolchanger_selected()) {
+                status_obj["save_variables"] = MoonrakerClientMock::toolchanger_vars_json();
+            }
 
             // toolhead
             if (objects.contains("toolhead")) {
@@ -706,8 +718,12 @@ void register_object_handlers(std::unordered_map<std::string, MethodHandler>& re
             // Toolchanger + per-tool objects — emit when discovered so
             // ToolState parsers can populate AmsState.
             if (objects.contains("toolchanger")) {
+                json numbers = json::array();
+                for (int i = 0; i < MoonrakerClientMock::mock_tool_count(); ++i) {
+                    numbers.push_back(i);
+                }
                 status_obj["toolchanger"] = {
-                    {"status", "ready"}, {"tool_number", 0}, {"tool_numbers", json::array({0})}};
+                    {"status", "ready"}, {"tool_number", 0}, {"tool_numbers", numbers}};
             }
             for (auto it = objects.begin(); it != objects.end(); ++it) {
                 if (it.key().rfind("tool ", 0) == 0) {

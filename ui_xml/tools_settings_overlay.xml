@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<!-- Copyright (C) 2025-2026 356C LLC -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- Tool Changer settings: how many tools the Tools panel shows and what -->
+<!-- colour each toolhead is drawn in. The count dropdown is fixed markup; the -->
+<!-- colour rows are built by ToolsSettingsOverlay from tools_settings_row, one -->
+<!-- per column, and rebuilt when the count changes. Every change saves at once -->
+<!-- (ToolConfig), as the other settings pages do. -->
+<component>
+  <view name="tools_settings_overlay"
+        extends="overlay_panel" title="Tool Changer" title_tag="Tool Changer" bg_color="#screen_bg">
+    <lv_obj name="overlay_content"
+            width="100%" flex_grow="1" style_pad_top="0" style_pad_left="0" style_pad_right="0"
+            style_pad_bottom="#space_md" scrollable="true" scroll_elastic="false" flex_flow="column"
+            style_pad_gap="#space_sm">
+
+      <!-- ================================================================== -->
+      <!-- TOOLS: the count override                                            -->
+      <!-- ================================================================== -->
+      <setting_group name="tools_cfg_count_section">
+        <setting_group_header title="TOOLS" title_tag="Tools" icon="toolbox_outline"/>
+        <setting_dropdown_row name="row_tools_cfg_count"
+                              label="Number of tools" label_tag="Number of tools" icon="view_grid"
+                              description="Auto shows the tools Klipper reports. Set a number to show that many columns."
+                              description_tag="Auto shows the tools Klipper reports. Set a number to show that many columns."
+                              options="Auto" callback="on_tools_cfg_count_changed"/>
+        <lv_obj width="100%"
+                height="content" style_pad_left="#space_lg" style_pad_right="#space_lg" style_pad_top="0"
+                style_pad_bottom="#space_sm" scrollable="false">
+          <text_small name="tools_cfg_detected" width="100%" long_mode="wrap" bind_text="tools_cfg_detected"
+                      style_text_color="#text_muted"/>
+        </lv_obj>
+      </setting_group>
+
+      <!-- ================================================================== -->
+      <!-- TOOLHEAD COLOURS: one row per tool, tap the row to pick             -->
+      <!-- ================================================================== -->
+      <setting_group name="tools_cfg_colors_section">
+        <setting_group_header title="TOOLHEAD COLOURS" title_tag="Toolhead Colours" icon="palette"/>
+        <lv_obj width="100%"
+                height="content" style_pad_left="#space_lg" style_pad_right="#space_lg" style_pad_top="0"
+                style_pad_bottom="0" scrollable="false">
+          <text_small width="100%" long_mode="wrap" style_text_color="#text_muted"
+                      text="The colour of each physical toolhead, used for its glyph and column. The filament keeps its own colour."
+                      translation_tag="The colour of each physical toolhead, used for its glyph and column. The filament keeps its own colour."/>
+        </lv_obj>
+        <lv_obj name="tools_cfg_colors_list"
+                width="100%" height="content" style_pad_left="#space_lg" style_pad_right="#space_lg"
+                style_pad_top="#space_sm" style_pad_bottom="#space_md" scrollable="false" flex_flow="column"
+                style_pad_gap="0"/>
+      </setting_group>
+    </lv_obj>
+  </view>
+</component>

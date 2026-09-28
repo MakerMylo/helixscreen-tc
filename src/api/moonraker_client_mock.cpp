@@ -1092,9 +1092,11 @@ void MoonrakerClientMock::populate_capabilities() {
         // (the U1's flow calibrator depends on it), so the PA calibration
         // screen is reachable in --test. Stock Klipper has none.
         mock_objects.push_back("filament_parameters");
-        for (int i = 0; i < 4; ++i) {
+        for (int i = 0; i < mock_tool_count(); ++i) {
             mock_objects.push_back("tool T" + std::to_string(i));
         }
+        // The macros' pickup record and load memory (helix::ToolchangerVars).
+        mock_objects.push_back("save_variables");
         // klipper-toolchanger's example config: the nozzle-contact probe and
         // the all-in-one calibration macro it drives. The macro's presence is
         // what makes the Tool Offsets calibration screen reachable.
@@ -1567,6 +1569,38 @@ bool MoonrakerClientMock::mock_hardware_persona() {
 
 bool MoonrakerClientMock::is_mock_toolchanger() const {
     return mock_toolchanger_selected();
+}
+
+int MoonrakerClientMock::mock_tool_count() {
+    const char* env = std::getenv("HELIX_MOCK_TOOL_COUNT");
+    if (!env || !env[0]) {
+        return 4;
+    }
+    const int n = std::atoi(env);
+    return n < 1 ? 1 : (n > 8 ? 8 : n);
+}
+
+nlohmann::json MoonrakerClientMock::toolchanger_vars_json() {
+    // A record with something to look at: one tool with a failed drop-off,
+    // one that needed a jiggle, one never used. Half the tools hold filament
+    // by memory; T3 has no entry, so the UI must show "unknown" for it.
+    nlohmann::json stats = nlohmann::json::object();
+    nlohmann::json loaded = nlohmann::json::object();
+    const int n = mock_tool_count();
+    for (int i = 0; i < n; ++i) {
+        const std::string key =
+            "T" + std::to_string(i); // DISPLAY_NUMBERING_OK: save_variables dict key, not a label
+        if (i == 3) {
+            continue; // never recorded
+        }
+        stats[key] = {{"ups", 40 + i * 7},
+                      {"downs", 40 + i * 7},
+                      {"ups_failed", i == 1 ? 2 : 0},
+                      {"downs_failed", i == 2 ? 1 : 0},
+                      {"jiggled", i == 0 ? 3 : 0}};
+        loaded[key] = (i % 2 == 0) ? 1 : 0;
+    }
+    return {{"variables", {{"tc_stats", stats}, {"tc_loaded", loaded}, {"tc_last_tool", 0}}}};
 }
 
 MoonrakerClientMock::MedusaVariant MoonrakerClientMock::mock_medusa_variant() {
@@ -2266,7 +2300,12 @@ void MoonrakerClientMock::populate_hardware() {
     // heater) per tool, which is also how PrinterDiscovery names its tools when
     // the fork variant ships no [tool N] objects.
     if (is_mock_toolchanger() || is_mock_medusahc()) {
-        for (const char* ext : {"extruder1", "extruder2", "extruder3"}) {
+        std::vector<std::string> extra_extruders;
+        const int n = is_mock_toolchanger() ? mock_tool_count() : 4;
+        for (int i = 1; i < n; ++i) {
+            extra_extruders.push_back("extruder" + std::to_string(i));
+        }
+        for (const std::string& ext : extra_extruders) {
             // Klipper exposes secondary extruders as both a heater and a sensor
             // under the bare name (matching the MULTI_EXTRUDER case convention).
             if (std::find(discovery_.heaters().begin(), discovery_.heaters().end(), ext) ==
@@ -5813,6 +5852,14 @@ void MoonrakerClientMock::temperature_simulation_loop() {
             status_obj["extruder1"] = {{"temperature", 150.0}, {"target", 250.0}};
             status_obj["extruder2"] = {{"temperature", 248.0}, {"target", 250.0}};
             status_obj["extruder3"] = {{"temperature", 200.0}, {"target", 0.0}};
+            // Beyond four tools: idle, so the extra columns read as parked.
+            for (int i = 4; i < mock_tool_count(); ++i) {
+                status_obj["extruder" + std::to_string(i)] = {{"temperature", 28.0 + i},
+                                                              {"target", 0.0}};
+            }
+        }
+        if (is_mock_toolchanger()) {
+            status_obj["save_variables"] = toolchanger_vars_json();
         }
 
         // MedusaHC swap simulation. gcode_script() starts a swap by arming the

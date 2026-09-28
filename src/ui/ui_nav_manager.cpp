@@ -192,7 +192,8 @@ bool NavigationManager::is_destroyed() {
 
 const char* NavigationManager::panel_id_to_name(PanelId id) {
     static const char* names[] = {"home_panel",     "print_select_panel", "controls_panel",
-                                  "filament_panel", "settings_panel",     "advanced_panel"};
+                                  "filament_panel", "settings_panel",     "advanced_panel",
+                                  "tools_panel"};
     if (static_cast<int>(id) < UI_PANEL_COUNT) {
         return names[static_cast<int>(id)];
     }
@@ -200,7 +201,7 @@ const char* NavigationManager::panel_id_to_name(PanelId id) {
 }
 
 bool NavigationManager::panel_requires_connection(PanelId panel) {
-    return panel == PanelId::Controls || panel == PanelId::Filament;
+    return panel == PanelId::Controls || panel == PanelId::Filament || panel == PanelId::Tools;
 }
 
 bool NavigationManager::is_printer_connected() const {
@@ -908,7 +909,8 @@ void NavigationManager::backdrop_click_event_cb(lv_event_t* e) {
             // Click is in navbar area - find which button and trigger navigation
             const char* button_names[] = {"nav_btn_home",     "nav_btn_print_select",
                                           "nav_btn_controls", "nav_btn_filament",
-                                          "nav_btn_settings", "nav_btn_advanced"};
+                                          "nav_btn_settings", "nav_btn_advanced",
+                                          "nav_btn_tools"};
 
             for (int i = 0; i < UI_PANEL_COUNT; i++) {
                 lv_obj_t* btn = lv_obj_find_by_name(mgr.navbar_widget_, button_names[i]);
@@ -1240,7 +1242,8 @@ void NavigationManager::wire_events(lv_obj_t* navbar) {
     lv_obj_remove_flag(navbar, LV_OBJ_FLAG_CLICKABLE);
 
     const char* button_names[] = {"nav_btn_home",     "nav_btn_print_select", "nav_btn_controls",
-                                  "nav_btn_filament", "nav_btn_settings",     "nav_btn_advanced"};
+                                  "nav_btn_filament", "nav_btn_settings",     "nav_btn_advanced",
+                                  "nav_btn_tools"};
 
     for (int i = 0; i < UI_PANEL_COUNT; i++) {
         lv_obj_t* btn = lv_obj_find_by_name(navbar, button_names[i]);
