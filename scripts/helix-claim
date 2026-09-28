@@ -233,7 +233,15 @@ jobs)
     # Claims undercount: a session that never claimed still burns cores. Count
     # DISTINCT trees with live compilers - that is the real number of competing
     # builds, where a raw cc1plus count would just be one build's -j.
+    # The caller's own makes are not peers: called from a Makefile's $(shell),
+    # the make asking would otherwise count itself and halve its own share.
+    self=" "; p=$$
+    while [ "$p" -gt 1 ] 2>/dev/null && read -r st < "/proc/$p/stat" 2>/dev/null; do
+        self="$self$p "
+        st=${st##*) }; st=${st#* }; p=${st%% *}   # fields after comm: state ppid ...
+    done
     trees=$(for q in $(pgrep -x cc1plus 2>/dev/null; pgrep -x make 2>/dev/null); do
+                case "$self" in *" $q "*) continue;; esac
                 readlink "/proc/$q/cwd" 2>/dev/null
             done | sed 's#\(/\.worktrees/[^/]*\).*#\1#; s#^\(/[^/]*/[^/]*/[^/]*/[^/]*\)$#\1#' \
               | sort -u | grep -c . )

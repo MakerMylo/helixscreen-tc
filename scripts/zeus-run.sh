@@ -6,12 +6,18 @@
 #   scripts/zeus-run.sh asan '[1543]'               # AddressSanitizer, one tag
 #   scripts/zeus-run.sh asan                        # AddressSanitizer, full suite
 #   scripts/zeus-run.sh test '[netd]'               # plain suite, one tag
+#   scripts/zeus-run.sh sweep                       # make unit-sweep, sharded
+#   scripts/zeus-run.sh full                        # make full-test-run (+ bats)
 #   scripts/zeus-run.sh asan-app help-qr --repeat 50  # the APP under ASAN
 #   scripts/zeus-run.sh tsan-app help-qr --repeat 50  # the APP under TSan
 #
 # The app modes are here for the same reason asan is: the run is long and
 # non-interactive, and the container's image (SDL, no ld.so.preload) is the
 # only place an instrumented desktop app runs cleanly.
+#
+# A whole-suite verdict comes from sweep or full, which shard the way CI and
+# the local gate do. test with no tag runs the suite in one process, where
+# cross-test contamination fails cases no branch touched, so it is not a gate.
 #
 # Why these two in particular:
 #
@@ -53,7 +59,7 @@ ARC_CAP_GB="${ZEUS_ARC_CAP_GB:-64}"     # 0 disables the cap entirely
 GB_PER_JOB="${ZEUS_GB_PER_JOB:-1}"      # asan overrides to 1.5 below
 
 WHAT="${1:-}"
-[ -n "$WHAT" ] || { sed -n '2,30p' "$0" | sed 's/^# \?//'; exit 2; }
+[ -n "$WHAT" ] || { sed -n '2,35p' "$0" | sed 's/^# \?//'; exit 2; }
 shift
 
 SHA=$(git rev-parse HEAD)
@@ -73,6 +79,9 @@ case "$WHAT" in
             # turns a recycled-memory SEGV into a heap-use-after-free report).
             CMD='make test-asan-one TEST="'"$_tag"'" -j$HELIX_J '"$*" ; GB_PER_JOB=1.5 ;;
     test)   CMD='make test -j$HELIX_J && ./build/bin/helix-tests "'"${1:-}"'"' ;;
+    # Trailing args become make overrides, e.g. SHARD_CONCURRENCY=24.
+    sweep)  CMD='make unit-sweep -j$HELIX_J '"$*" ;;
+    full)   CMD='make full-test-run -j$HELIX_J '"$*" ;;
     asan-app|tsan-app)
         # RECIPE is the positional argument; --repeat N (default 25 in the
         # make target) widens the drive. Both map onto the make target's
@@ -100,7 +109,7 @@ case "$WHAT" in
         CMD="make $WHAT $_vars"' -j$HELIX_J'
         EXPECTED_REPEAT="${_repeat:-25}"
         GB_PER_JOB=1.5 ;;
-    *)      echo "✗ unknown job '$WHAT' (mutate | asan | test | asan-app | tsan-app)" >&2; exit 2 ;;
+    *)      echo "✗ unknown job '$WHAT' (mutate | asan | test | sweep | full | asan-app | tsan-app)" >&2; exit 2 ;;
 esac
 
 LOG="${TMPDIR:-/tmp}/zeus-$WHAT-$SHORT.log"

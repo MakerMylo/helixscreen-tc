@@ -32,15 +32,15 @@ ps -eo pid,etime,time,pcpu,comm --sort=-time | head   # abandoned spinners
 #   "(deleted)". Kill that PID by number - never by name, it is shared.
 ```
 
-- **Default to a big `-j`.** This box has 32 cores and ~120GB of RAM; the common mistake is building far too small and leaving the machine idle. Read `nproc`, the idle % in `top`, and `available` — with cores idle and tens of GB available, `-j16`-`-j24` is right even with peers building. Ramp back up the moment a peer finishes.
-- Throttle ONLY when `available` itself is genuinely low (single-digit GB). A full swap row is not a trigger and never has been: tens of GB `available` beside a 14-of-16GB swap row is a healthy box. The failure the throttle exists for is a big `-j` dying mid-link with no `oom-kill` line while load average looks healthy, and that needs `available` to be exhausted, not swap.
+- **Plain `make` (or `make -j`) picks the `-j` for you; do not hand-pick a `-jN`.** It takes this session's fair share from `scripts/helix-claim jobs`: the cores split across the trees building right now, capped by `available`. An idle box gets all 32; four trees building get about 6 each. An explicit `-jN` still passes through untouched, for the rare case you own the box.
+- The unit sweep caps how many shards run at once from the same share (`SHARD_CONCURRENCY` overrides). Every make renices itself to 10, so its compilers and test shards yield to the desktop: thelio's system76-scheduler drops `make` to nice 19 `SCHED_IDLE` only when it happens to notice it, and never lists `helix-tests`. `HELIX_NICE=0` opts out.
 - Dying at the same step twice **can** be a resource ceiling, but rule out a peer first: a second `make` in the SAME tree deletes your freshly linked binary (`prune-orphan-test-objs` in `mk/tests.mk` runs `rm -f $(TEST_BIN)` as a sibling prerequisite of the link, so `-j` gives them no order). The tell: `[LD] helix-tests`, then `✓ Unit test binary ready`, NO `✗ Test linking failed!`, then every shard reports `No such file or directory`. Nothing is wrong with your code; a starved link fails loudly and stops make.
 - **A build here goes minutes at a time printing nothing, and that is normal.** Judge liveness by the log growing, and compare its mtime against `date` in the SAME command before calling it stale - an `etime` and an mtime are not comparable by eye. A parent `make` in `do_wait` and a sub-make in `poll_schedule_timeout` are a make waiting on children and a jobserver poll, not a deadlock. Nothing short of a log that has not grown across two checks minutes apart justifies killing someone's build.
 - Who else is building, and in which tree, is a question you ask them: `ListAgents` + `SendMessage` (global CLAUDE.md § Peer Sessions), not a `pgrep` guess.
-- **The commit hook builds too.** `scripts/quality-checks.sh` verifies an incremental build of the app, at `-j${HELIX_QC_JOBS:-6}`. That is the bound that keeps N sessions committing from becoming N unbounded builds; raise `HELIX_QC_JOBS` when the box is yours. `scripts/qc_timing.py [--staged-only]` runs the gate and prints where its time went, which is how you find out whether you are waiting on that build or on a check.
+- **The commit hook builds too.** `scripts/quality-checks.sh` verifies an incremental build of the app at the `helix-claim jobs` share, so N sessions committing never become N unbounded builds; `HELIX_QC_JOBS` overrides it. `scripts/qc_timing.py [--staged-only]` runs the gate and prints where its time went, which is how you find out whether you are waiting on that build or on a check.
 
 ```bash
-make -j                              # Build ONLY the program binary (NOT tests)
+make                                 # Build ONLY the program binary (NOT tests), at a fair -j
 ./build/bin/helix-screen --test -vv  # Mock printer + DEBUG logs
 # ALWAYS use verbosity: -v=INFO, -vv=DEBUG, -vvv=TRACE (default=WARN)
 
@@ -88,14 +88,17 @@ make remote-native                   # build the app there
 
 scripts/zeus-run.sh mutate --tests '[tag]'   # mutation gate on zeus
 scripts/zeus-run.sh asan '[tag]'            # AddressSanitizer on zeus
-#   Both are expensive and non-interactive, so they belong on the idle 72-core
-#   box. ASAN especially: thelio's /etc/ld.so.preload makes ASAN's runtime load
+scripts/zeus-run.sh sweep                   # make unit-sweep on zeus (`full` adds bats)
+#   All three are expensive and non-interactive, so they belong on the idle
+#   72-core box. `zeus-run.sh test` with no tag runs the suite in ONE process,
+#   where cross-test contamination fails cases no branch touched: not a gate.
+#   ASAN especially: thelio's /etc/ld.so.preload makes ASAN's runtime load
 #   second, so the binary produces NO test output and exits 0 - a pass that ran
 #   nothing. The container has no ld.so.preload and its image matches CI's.
 #   The commit has to be pushed; the container fetches it, it does not take your
-#   tree. zeus is memory-bound, not core-bound (ZFS ARC holds most of its 251GB,
-#   leaving ~14GB), so jobs are 12, and 8 for ASAN - a -j48 build there dies
-#   three compiles in with no error text.
+#   tree. zeus is memory-bound, not core-bound (ZFS ARC holds most of its 251GB),
+#   so the script caps the ARC for the run and sizes -j from what is then free.
+#   `zeus` may not resolve from thelio; `ZEUS_HOST=zeus.local` reaches it.
 
 # Worktrees — MUST use for MAJOR work. Always in .worktrees/ (project root).
 scripts/setup-worktree.sh feature/my-branch  # Symlinks shared deps, builds fast
@@ -253,9 +256,10 @@ What is shared here:
   A merge here can hold the tree for **40 minutes** while the hook builds. Claim it, say so,
   and release when done.
 
-- **`scripts/helix-claim jobs` beats a hardcoded `-j`.** It counts distinct trees with live
-  compilers (a raw `cc1plus` count is just one build's `-j`), folds in live `build:` claims so
-  an unclaimed builder still counts, and caps by `MemAvailable`.
+- **`scripts/helix-claim jobs` is where every default `-j` comes from.** It counts distinct
+  trees with live compilers (a raw `cc1plus` count is just one build's `-j`), folds in live
+  `build:` claims so an unclaimed builder still counts, skips the makes it was called from so
+  a build never counts itself, and caps by `MemAvailable`.
 - **Never `pkill helix-screen`**, nor `pkill -x helix-screen`, nor `pkill -f`. The name is shared, so it reaps every other session's instance, not yours. The victim sees only `[Application] SIGTERM — fast exit` with no cause, so a long mock or `ctl` run dies looking like a crash. Kill the PID you captured at launch; if you lost it, resolve it from your own socket: `for p in $(pgrep -x helix-screen); do grep -qz "$HELIX_SOCK" /proc/$p/cmdline && echo $p; done`.
 
 ---
