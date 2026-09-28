@@ -272,6 +272,7 @@ class TempGraphController {
     void setup_connection_observer();
     void backfill_history();
     void apply_auto_range();
+    void forget_latest_readings();
 
     /**
      * @brief Attach temp/target observers for one series

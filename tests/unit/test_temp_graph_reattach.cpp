@@ -230,6 +230,19 @@ TEST_CASE_METHOD(TempGraphReattachFixture,
     settle();
     REQUIRE(controller->graph()->visible_point_count == baseline + 4);
 
+    // A reading from before a pause is not current: after resume, the bed's push
+    // in a new slot leaves the chamber out until the chamber reports again.
+    controller->pause();
+    lv_subject_set_int(chamber, 400);
+    settle();
+    controller->resume();
+    settle();
+    const int after_resume = controller->graph()->visible_point_count;
+    now += slot;
+    lv_subject_set_int(bed, 620);
+    settle();
+    REQUIRE(controller->graph()->visible_point_count == after_resume + 1);
+
     controller.reset();
     settle();
 }

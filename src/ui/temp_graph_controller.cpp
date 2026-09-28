@@ -188,6 +188,15 @@ void TempGraphController::set_features(uint32_t features) {
 
 void TempGraphController::pause() {
     paused_ = true;
+    forget_latest_readings();
+}
+
+void TempGraphController::forget_latest_readings() {
+    // A reading observed before a pause or reattach may no longer be current;
+    // a series only rejoins the slot-batched pushes once it reports again.
+    for (auto& s : series_) {
+        s.latest_deci = 0;
+    }
 }
 
 void TempGraphController::resume() {
@@ -336,6 +345,7 @@ void TempGraphController::reattach_observers() {
     // after every attach-time fire has been dropped and before any sample that
     // arrives on a later tick.
     suppress_attach_fire_ = true;
+    forget_latest_readings();
     setup_observers();
     lifetime_.defer("TempGraphController::clear_attach_suppression",
                     [this]() { suppress_attach_fire_ = false; });
