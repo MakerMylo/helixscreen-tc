@@ -175,6 +175,47 @@ Steps 1 and 2 are worth doing even if the rest stalls. Both are on
 `feature/ams-action-from-phases`: step 1 is the vocabulary above, step 2 is `coarse`,
 `action_at()` and the sidebar's debug line.
 
+## Step 3: done
+
+The U1, AD5X IFS and tool changer publish their current step's projection. The shared
+rule is `AmsBackend::project_action()`: while the backend's own assignment says an
+operation runs, the published action is the step's projection; IDLE, ERROR and PAUSED
+always stand. `AmsSubscriptionBackend::published_action_locked()` applies it for both
+`get_current_action()` and a backend's `get_system_info()`, fed by the
+`step_action_locked()` hook.
+
+- **U1:** one table (`u1_step_action()`) feeds the step model and the published action.
+- **AD5X IFS:** the tracker already assigned per phase; its action now comes from the same
+  table (`kIfsUnloadPhases` / `kIfsLoadPhases`) the step model reads. No behaviour change.
+- **Tool changer:** `resolve_step_locked()` returns the step's projection with its index.
+  An unmount's Release step now reads SELECTING instead of the dispatch's UNLOADING.
+
+What the migration taught, which changes steps 4 and 5:
+
+- **The hand assignment is not dead on the U1 or the tool changer, so step 5 cannot
+  delete it.** Both parsers read `system_info_.action` back as operation state: the U1
+  closes an operation by matching LOADING / UNLOADING, and the tool changer's
+  `was_mid_operation` is what tells a closing grip from a resting gripper. The projection
+  is applied where the action is published, not written into that state. Step 5 should
+  rename the field to what it is (the backend's operation state) rather than delete it.
+- **The closing Grip frame reads IDLE, not SELECTING.** It is the frame that ends the
+  swap, and projecting it would leave the machine busy until another frame parks the
+  phase; Moonraker republishes only what changed, so no such frame is guaranteed. The
+  earlier "take the projection" decision assumed a following frame.
+- **The sidebar's disagreement log now fires by design** on that closing grip. It
+  measured step 2 and should go in step 5.
+- **The sidebar's post-load cooldown edge takes PURGING -> IDLE as well as
+  LOADING -> IDLE**, since a load on a purging backend ends in its purge.
+- **Runout suppression narrows on the U1.** `AmsState::is_filament_operation_active()`
+  suppresses only LOADING, UNLOADING and SELECTING, so a sensor edge during the U1's Heat
+  or Purge step is no longer suppressed. That is how the AD5X already behaves and matches
+  that function's rule (a stationary step's sensor change is a real fault); worth
+  confirming on the U1 rig.
+- **The U1 cannot be verified under `--test`.** `HELIX_MOCK_AMS=snapmaker` builds
+  `AmsBackendMock`, which has no step model, and no mock printer advertises the U1's
+  `filament_feed` objects for `--real-ams`. Its migration is unit-tested only; the rig
+  should show "Heating..." and the heat glow on the Heat step, and "Purging" on Purge.
+
 ## Decided: the U1 shows Heating while it heats
 
 **Decision (Preston, 2026-09-27):** the Snapmaker U1's Heat step projects `HEATING` in

@@ -382,6 +382,16 @@ class AmsBackend {
         return {};
     }
 
+    /// The action a phased backend publishes: while its own assignment says an
+    /// operation is running, what the current step projects to; otherwise the
+    /// assignment. IDLE, ERROR and PAUSED name no step, so a phase index a
+    /// finished operation left behind never makes the machine read busy, and a
+    /// fault always shows.
+    [[nodiscard]] static AmsAction project_action(AmsAction assigned,
+                                                  std::optional<AmsAction> projected) {
+        return projected && ams_action_is_busy(assigned) ? *projected : assigned;
+    }
+
   public:
     /// One ordered phase in a backend's toolchange narration model.
     struct ToolchangePhase {
@@ -444,8 +454,9 @@ class AmsBackend {
         bool live_temp = false; ///< render a live "<label> cur/target°C" while current
         /// What this step looks like to consumers that read the coarse AmsAction:
         /// the kind of work (HEATING, CUTTING, PURGING), or for a step that only
-        /// positions the machine, the operation's direction. Nothing assigns the
-        /// action from it yet; the backend's own assignment still stands.
+        /// positions the machine, the operation's direction. The Snapmaker, AD5X
+        /// IFS and tool changer backends publish it as the action while the step
+        /// is current (project_action()); the others still assign theirs.
         std::optional<AmsAction> coarse;
     };
 
@@ -488,7 +499,7 @@ class AmsBackend {
     [[nodiscard]] virtual OperationStepModel get_operation_step_model(StepOperationType op) const {
         OperationStepModel model;
         for (const auto& p : toolchange_phase_template(op)) {
-            model.steps.push_back({p.label, -1, p.optional, false});
+            model.steps.push_back({p.label, -1, p.optional, false, std::nullopt});
         }
         return model;
     }

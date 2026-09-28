@@ -325,8 +325,10 @@ void AmsOperationSidebar::init_observers() {
             spdlog::debug("[AmsSidebar] Action changed: {} (prev={})", ams_action_to_string(action),
                           ams_action_to_string(self->prev_ams_action_));
 
-            // Detect LOADING -> IDLE or LOADING -> ERROR for post-load cooling
-            if (self->prev_ams_action_ == AmsAction::LOADING &&
+            // A load ends from its feed or, on a backend that purges, from the
+            // purge: either edge into IDLE / ERROR closes it for post-load cooling.
+            if ((self->prev_ams_action_ == AmsAction::LOADING ||
+                 self->prev_ams_action_ == AmsAction::PURGING) &&
                 (action == AmsAction::IDLE || action == AmsAction::ERROR)) {
                 self->handle_load_complete();
             }

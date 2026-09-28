@@ -197,6 +197,18 @@ class AmsSubscriptionBackend : public AmsBackend {
   protected:
     // --- Hooks for derived classes ---
 
+    /// What the current operation step projects to, for a backend whose action
+    /// follows its step model; nullopt for one that assigns its action. Both
+    /// get_current_action() and the backend's get_system_info() publish it
+    /// through project_action(). Caller holds mutex_.
+    [[nodiscard]] virtual std::optional<AmsAction> step_action_locked() const {
+        return std::nullopt;
+    }
+    /// system_info_.action as published. Caller holds mutex_.
+    [[nodiscard]] AmsAction published_action_locked() const {
+        return project_action(system_info_.action, step_action_locked());
+    }
+
     /// Whether @p slot_index names a position this backend has. Zero positions
     /// means none are discovered yet, which is not the caller's mistake, so it
     /// reads as not-connected rather than as a bad number. Caller holds mutex_.
