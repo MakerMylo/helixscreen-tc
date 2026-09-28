@@ -1261,6 +1261,7 @@
   <translation tag="Guide the toolhead to the chute&apos;s extrude position" ja="ツールヘッドをシュートの押出し位置へ誘導します"/>
   <translation tag="Guides and reference" ja="ガイドとリファレンス"/>
   <translation tag="H" ja="H"/>
+  <translation tag="HELIXSCREEN" ja="HELIXSCREEN"/>
   <translation tag="HOST" ja="ホスト"/>
   <translation tag="HTTP Code" ja="HTTP コード"/>
   <translation tag="HTTP error: {} {}" ja="HTTP エラー: {} {}"/>
@@ -1993,6 +1994,7 @@
   <translation tag="PLA - Black" ja="PLA - ブラック"/>
   <translation tag="POWER" ja="電源"/>
   <translation tag="PRINT OPTIONS" ja="印刷オプション"/>
+  <translation tag="PRINTER" ja="プリンター"/>
   <translation tag="PRINTER VISUALS" ja="プリンター表示"/>
   <translation tag="PRINTERS" ja="プリンター"/>
   <translation tag="PRINT_START has {} skippable operation" ja="PRINT_START にはスキップ可能な操作が {} 個あります"/>
@@ -2471,6 +2473,7 @@
   <translation tag="Runs the printer&apos;s tool offset calibration for every tool." ja="プリンターのツールオフセットキャリブレーションをすべてのツールに対して実行します。"/>
   <translation tag="SAVE_CONFIG failed: {}. Tool offsets were applied but not saved. Run SAVE_CONFIG manually or they will be lost on restart." ja="SAVE_CONFIG に失敗しました: {}。ツールオフセットは適用されましたが保存されていません。SAVE_CONFIG を手動で実行しないと、再起動時に失われます。"/>
   <translation tag="SAVE_CONFIG failed: {}. Z-offset was applied but not saved. Run SAVE_CONFIG manually or the offset will be lost on restart." ja="SAVE_CONFIG に失敗しました: {}。Zオフセットは適用されましたが保存されていません。SAVE_CONFIG を手動で実行しないと、再起動時にオフセットが失われます。"/>
+  <translation tag="SCREEN" ja="画面"/>
   <translation tag="SETTINGS" ja="設定"/>
   <translation tag="SHIPPED IMAGES" ja="付属画像"/>
   <translation tag="SOFTWARE" ja="ソフトウェア"/>

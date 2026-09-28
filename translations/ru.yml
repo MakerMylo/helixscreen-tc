@@ -1380,6 +1380,7 @@ translations:
   Guide the toolhead to the chute's extrude position: Подведите печатающую головку к позиции экструзии жёлоба
   Guides and reference: Руководства и справка
   H: Х
+  HELIXSCREEN: HELIXSCREEN
   HOST: Хост
   HTTP Code: Код HTTP
   'HTTP error: {} {}': 'Ошибка HTTP: {} {}'
@@ -2191,6 +2192,7 @@ translations:
   PLA - Black: PLA - Чёрный
   POWER: ПИТАНИЕ
   PRINT OPTIONS: ПАРАМЕТРЫ ПЕЧАТИ
+  PRINTER: ПРИНТЕР
   PRINTER VISUALS: ВНЕШНИЙ ВИД ПРИНТЕРА
   PRINTERS: ПРИНТЕРЫ
   PRINT_START has {} skippable operation: В PRINT_START есть {} пропускаемая операция
@@ -2717,6 +2719,7 @@ translations:
   'SAVE_CONFIG failed: {}. Tool offsets were applied but not saved. Run SAVE_CONFIG manually or they will be lost on restart.': 'Ошибка SAVE_CONFIG: {}. Смещения инструментов применены, но не сохранены. Выполните SAVE_CONFIG вручную, иначе они будут потеряны при перезапуске.'
   ? 'SAVE_CONFIG failed: {}. Z-offset was applied but not saved. Run SAVE_CONFIG manually or the offset will be lost on restart.'
   : 'Ошибка SAVE_CONFIG: {}. Z-смещение применено, но не сохранено. Выполните SAVE_CONFIG вручную, иначе смещение будет потеряно при перезапуске.'
+  SCREEN: ЭКРАН
   SETTINGS: НАСТРОЙКИ
   SHIPPED IMAGES: ВСТРОЕННЫЕ ИЗОБРАЖЕНИЯ
   SOFTWARE: ПО

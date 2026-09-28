@@ -1261,6 +1261,7 @@
   <translation tag="Guide the toolhead to the chute&apos;s extrude position" ru="Подведите печатающую головку к позиции экструзии жёлоба"/>
   <translation tag="Guides and reference" ru="Руководства и справка"/>
   <translation tag="H" ru="Х"/>
+  <translation tag="HELIXSCREEN" ru="HELIXSCREEN"/>
   <translation tag="HOST" ru="Хост"/>
   <translation tag="HTTP Code" ru="Код HTTP"/>
   <translation tag="HTTP error: {} {}" ru="Ошибка HTTP: {} {}"/>
@@ -1993,6 +1994,7 @@
   <translation tag="PLA - Black" ru="PLA - Чёрный"/>
   <translation tag="POWER" ru="ПИТАНИЕ"/>
   <translation tag="PRINT OPTIONS" ru="ПАРАМЕТРЫ ПЕЧАТИ"/>
+  <translation tag="PRINTER" ru="ПРИНТЕР"/>
   <translation tag="PRINTER VISUALS" ru="ВНЕШНИЙ ВИД ПРИНТЕРА"/>
   <translation tag="PRINTERS" ru="ПРИНТЕРЫ"/>
   <translation tag="PRINT_START has {} skippable operation" ru="В PRINT_START есть {} пропускаемая операция"/>
@@ -2471,6 +2473,7 @@
   <translation tag="Runs the printer&apos;s tool offset calibration for every tool." ru="Запускает калибровку смещений инструментов принтера для всех инструментов."/>
   <translation tag="SAVE_CONFIG failed: {}. Tool offsets were applied but not saved. Run SAVE_CONFIG manually or they will be lost on restart." ru="Ошибка SAVE_CONFIG: {}. Смещения инструментов применены, но не сохранены. Выполните SAVE_CONFIG вручную, иначе они будут потеряны при перезапуске."/>
   <translation tag="SAVE_CONFIG failed: {}. Z-offset was applied but not saved. Run SAVE_CONFIG manually or the offset will be lost on restart." ru="Ошибка SAVE_CONFIG: {}. Z-смещение применено, но не сохранено. Выполните SAVE_CONFIG вручную, иначе смещение будет потеряно при перезапуске."/>
+  <translation tag="SCREEN" ru="ЭКРАН"/>
   <translation tag="SETTINGS" ru="НАСТРОЙКИ"/>
   <translation tag="SHIPPED IMAGES" ru="ВСТРОЕННЫЕ ИЗОБРАЖЕНИЯ"/>
   <translation tag="SOFTWARE" ru="ПО"/>

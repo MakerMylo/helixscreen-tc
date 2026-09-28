@@ -1261,6 +1261,7 @@
   <translation tag="Guide the toolhead to the chute&apos;s extrude position" it="Portare la testina alla posizione di estrusione del condotto"/>
   <translation tag="Guides and reference" it="Guide e riferimenti"/>
   <translation tag="H" it="H"/>
+  <translation tag="HELIXSCREEN" it="HELIXSCREEN"/>
   <translation tag="HOST" it="Host"/>
   <translation tag="HTTP Code" it="Codice HTTP"/>
   <translation tag="HTTP error: {} {}" it="Errore HTTP: {} {}"/>
@@ -1993,6 +1994,7 @@
   <translation tag="PLA - Black" it="PLA - Nero"/>
   <translation tag="POWER" it="ALIMENTAZIONE"/>
   <translation tag="PRINT OPTIONS" it="OPZIONI STAMPA"/>
+  <translation tag="PRINTER" it="STAMPANTE"/>
   <translation tag="PRINTER VISUALS" it="ASPETTO STAMPANTE"/>
   <translation tag="PRINTERS" it="STAMPANTI"/>
   <translation tag="PRINT_START has {} skippable operation" it="PRINT_START ha {} operazione ignorabile"/>
@@ -2471,6 +2473,7 @@
   <translation tag="Runs the printer&apos;s tool offset calibration for every tool." it="Esegue la calibrazione degli offset degli strumenti della stampante per tutti gli strumenti."/>
   <translation tag="SAVE_CONFIG failed: {}. Tool offsets were applied but not saved. Run SAVE_CONFIG manually or they will be lost on restart." it="SAVE_CONFIG non riuscito: {}. Gli offset strumento sono stati applicati ma non salvati. Esegui SAVE_CONFIG manualmente o andranno persi al riavvio."/>
   <translation tag="SAVE_CONFIG failed: {}. Z-offset was applied but not saved. Run SAVE_CONFIG manually or the offset will be lost on restart." it="SAVE_CONFIG non riuscito: {}. L&apos;offset Z è stato applicato ma non salvato. Esegui SAVE_CONFIG manualmente o l&apos;offset andrà perso al riavvio."/>
+  <translation tag="SCREEN" it="SCHERMO"/>
   <translation tag="SETTINGS" it="IMPOSTAZIONI"/>
   <translation tag="SHIPPED IMAGES" it="IMMAGINI INCLUSE"/>
   <translation tag="SOFTWARE" it="SOFTWARE"/>

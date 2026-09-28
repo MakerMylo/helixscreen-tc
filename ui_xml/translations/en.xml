@@ -1261,6 +1261,7 @@
   <translation tag="Guide the toolhead to the chute&apos;s extrude position" en="Guide the toolhead to the chute&apos;s extrude position"/>
   <translation tag="Guides and reference" en="Guides and reference"/>
   <translation tag="H" en="H"/>
+  <translation tag="HELIXSCREEN" en="HELIXSCREEN"/>
   <translation tag="HOST" en="HOST"/>
   <translation tag="HTTP Code" en="HTTP Code"/>
   <translation tag="HTTP error: {} {}" en="HTTP error: {} {}"/>
@@ -1993,6 +1994,7 @@
   <translation tag="PLA - Black" en="PLA - Black"/>
   <translation tag="POWER" en="POWER"/>
   <translation tag="PRINT OPTIONS" en="PRINT OPTIONS"/>
+  <translation tag="PRINTER" en="PRINTER"/>
   <translation tag="PRINTER VISUALS" en="PRINTER VISUALS"/>
   <translation tag="PRINTERS" en="PRINTERS"/>
   <translation tag="PRINT_START has {} skippable operation" en="PRINT_START has {} skippable operation"/>
@@ -2471,6 +2473,7 @@
   <translation tag="Runs the printer&apos;s tool offset calibration for every tool." en="Runs the printer&apos;s tool offset calibration for every tool."/>
   <translation tag="SAVE_CONFIG failed: {}. Tool offsets were applied but not saved. Run SAVE_CONFIG manually or they will be lost on restart." en="SAVE_CONFIG failed: {}. Tool offsets were applied but not saved. Run SAVE_CONFIG manually or they will be lost on restart."/>
   <translation tag="SAVE_CONFIG failed: {}. Z-offset was applied but not saved. Run SAVE_CONFIG manually or the offset will be lost on restart." en="SAVE_CONFIG failed: {}. Z-offset was applied but not saved. Run SAVE_CONFIG manually or the offset will be lost on restart."/>
+  <translation tag="SCREEN" en="SCREEN"/>
   <translation tag="SETTINGS" en="SETTINGS"/>
   <translation tag="SHIPPED IMAGES" en="SHIPPED IMAGES"/>
   <translation tag="SOFTWARE" en="SOFTWARE"/>

@@ -3,7 +3,6 @@
 
 #pragma once
 
-#include "ui_observer_guard.h" // For ObserverGuard RAII wrapper
 #include "ui_panel_base.h"
 
 #include "subject_managed_panel.h" // For SubjectManager
@@ -90,33 +89,17 @@ class SettingsPanel : public PanelBase {
     //
 
     // Toggle switches
-    lv_obj_t* dark_mode_switch_ = nullptr;
-    lv_obj_t* animations_switch_ = nullptr;
     lv_obj_t* gcode_3d_switch_ = nullptr;
-    lv_obj_t* led_light_switch_ = nullptr;
-    lv_obj_t* estop_confirm_switch_ = nullptr;
-    lv_obj_t* telemetry_switch_ = nullptr;
     // Dropdowns
-    lv_obj_t* completion_alert_dropdown_ = nullptr;
     lv_obj_t* display_sleep_dropdown_ = nullptr;
-    lv_obj_t* language_dropdown_ = nullptr;
     // LED chip selection moved to LedSettingsOverlay
 
     // Restart prompt dialog
     lv_obj_t* restart_prompt_dialog_ = nullptr;
 
-    // Action rows (clickable)
-    lv_obj_t* display_settings_row_ = nullptr;
-    lv_obj_t* filament_sensors_row_ = nullptr;
-    lv_obj_t* network_row_ = nullptr;
-    lv_obj_t* factory_reset_row_ = nullptr;
-
     // Change host modal is owned by helix::ui::show_change_host_modal(); the
     // connection-failed prompt reaches the same dialog, and ChangeHostModal keeps
     // a static active_instance_, so a second owner here would fight it.
-
-    // LED state observer (syncs toggle with printer LED state)
-    ObserverGuard led_state_observer_;
 
     //
     // === Reactive Subjects ===
@@ -157,9 +140,6 @@ class SettingsPanel : public PanelBase {
     // === Setup Helpers ===
     //
 
-    void setup_toggle_handlers();
-    void setup_dropdown();
-    void setup_action_handlers();
     void populate_info_rows();
 
   public:
@@ -270,7 +250,7 @@ class SettingsPanel : public PanelBase {
     static void on_sound_clicked(lv_event_t* e);
     static void on_language_time_clicked(lv_event_t* e);
     static void on_printing_clicked(lv_event_t* e);
-    static void on_hardware_clicked(lv_event_t* e);
+    static void on_devices_clicked(lv_event_t* e);
     static void on_safety_clicked(lv_event_t* e);
     static void on_system_clicked(lv_event_t* e);
     static void on_help_clicked(lv_event_t* e);

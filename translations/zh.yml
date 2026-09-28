@@ -1301,6 +1301,7 @@ translations:
   Guide the toolhead to the chute's extrude position: 引导工具头到排料口的挤出位置
   Guides and reference: 指南与参考
   H: 头
+  HELIXSCREEN: HELIXSCREEN
   HOST: 主机
   HTTP Code: HTTP 代码
   'HTTP error: {} {}': 'HTTP 错误: {} {}'
@@ -2065,6 +2066,7 @@ translations:
   PLA - Black: PLA - 黑色
   POWER: 电源
   PRINT OPTIONS: 打印选项
+  PRINTER: 打印机
   PRINTER VISUALS: 打印机外观
   PRINTERS: 打印机
   PRINT_START has {} skippable operation: PRINT_START 有 {} 项可跳过的操作
@@ -2562,6 +2564,7 @@ translations:
   'SAVE_CONFIG failed: {}. Tool offsets were applied but not saved. Run SAVE_CONFIG manually or they will be lost on restart.': SAVE_CONFIG 失败：{}。工具偏移已应用但未保存。请手动执行 SAVE_CONFIG，否则重启后将丢失。
   ? 'SAVE_CONFIG failed: {}. Z-offset was applied but not saved. Run SAVE_CONFIG manually or the offset will be lost on restart.'
   : 'SAVE_CONFIG 失败：{}。Z 偏移已应用但未保存。请手动执行 SAVE_CONFIG，否则重启后偏移将丢失。'
+  SCREEN: 屏幕
   SETTINGS: 设置
   SHIPPED IMAGES: 内置图片
   SOFTWARE: 软件

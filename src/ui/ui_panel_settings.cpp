@@ -69,7 +69,6 @@
 #include "led/led_controller.h"
 #include "lvgl/src/others/translation/lv_translation.h"
 #include "moonraker_manager.h"
-#include "observer_factory.h"
 #include "page_scroll_auto_inject.h"
 #include "platform_info.h"
 #include "printer_hardware.h"
@@ -369,7 +368,7 @@ void SettingsPanel::init_subjects() {
         {"on_sound_clicked", on_sound_clicked},
         {"on_language_time_clicked", on_language_time_clicked},
         {"on_printing_clicked", on_printing_clicked},
-        {"on_hardware_clicked", on_hardware_clicked},
+        {"on_devices_clicked", on_devices_clicked},
         {"on_safety_clicked", on_safety_clicked},
         {"on_system_clicked", on_system_clicked},
         {"on_help_clicked", on_help_clicked},
@@ -452,8 +451,6 @@ void SettingsPanel::setup(lv_obj_t* panel, lv_obj_t* parent_screen) {
     }
 
     // Setup all handlers and bindings
-    setup_toggle_handlers();
-    setup_action_handlers();
     populate_info_rows();
 
     spdlog::debug("[{}] Setup complete", get_name());
@@ -462,243 +459,6 @@ void SettingsPanel::setup(lv_obj_t* panel, lv_obj_t* parent_screen) {
 // ============================================================================
 // SETUP HELPERS
 // ============================================================================
-
-void SettingsPanel::setup_toggle_handlers() {
-    auto& display_settings = DisplaySettingsManager::instance();
-    auto& system_settings = SystemSettingsManager::instance();
-    auto& safety_settings = SafetySettingsManager::instance();
-
-    // === Dark Mode Toggle ===
-    // Event handler wired via XML <event_cb>, just set initial state here
-    lv_obj_t* dark_mode_row = lv_obj_find_by_name(panel_, "row_dark_mode");
-    if (dark_mode_row) {
-        dark_mode_switch_ = lv_obj_find_by_name(dark_mode_row, "toggle");
-        if (dark_mode_switch_) {
-            // Set initial state from DisplaySettingsManager
-            if (display_settings.get_dark_mode()) {
-                lv_obj_add_state(dark_mode_switch_, LV_STATE_CHECKED);
-            } else {
-                lv_obj_remove_state(dark_mode_switch_, LV_STATE_CHECKED);
-            }
-            spdlog::trace("[{}]   ✓ Dark mode toggle", get_name());
-        }
-    }
-
-    // === Animations Toggle ===
-    // Event handler wired via XML <event_cb>, just set initial state here
-    lv_obj_t* animations_row = lv_obj_find_by_name(panel_, "row_animations");
-    if (animations_row) {
-        animations_switch_ = lv_obj_find_by_name(animations_row, "toggle");
-        if (animations_switch_) {
-            // Set initial state from DisplaySettingsManager
-            if (display_settings.get_animations_enabled()) {
-                lv_obj_add_state(animations_switch_, LV_STATE_CHECKED);
-            } else {
-                lv_obj_remove_state(animations_switch_, LV_STATE_CHECKED);
-            }
-            spdlog::trace("[{}]   ✓ Animations toggle", get_name());
-        }
-    }
-
-    // LED chip selection moved to LedSettingsOverlay
-
-    // === LED Light Toggle ===
-    // Event handler wired via XML <event_cb>, sync toggle with actual printer LED state
-    lv_obj_t* led_light_row = lv_obj_find_by_name(panel_, "row_led_light");
-    if (led_light_row) {
-        led_light_switch_ = lv_obj_find_by_name(led_light_row, "toggle");
-        if (led_light_switch_) {
-            // Sync toggle with actual printer LED state via observer
-            led_state_observer_ = helix::ui::observe_int_sync<SettingsPanel>(
-                printer_state_.get_led_state_subject(), this,
-                [](SettingsPanel* self, int value) {
-                    if (self->led_light_switch_) {
-                        bool on = value != 0;
-                        if (on) {
-                            lv_obj_add_state(self->led_light_switch_, LV_STATE_CHECKED);
-                        } else {
-                            lv_obj_remove_state(self->led_light_switch_, LV_STATE_CHECKED);
-                        }
-                    }
-                },
-                printer_state_.get_subjects_lifetime());
-            spdlog::trace("[{}]   ✓ LED light toggle (observing printer state)", get_name());
-        }
-    }
-
-    // === Telemetry Toggle ===
-    lv_obj_t* telemetry_row = lv_obj_find_by_name(panel_, "row_telemetry");
-    if (telemetry_row) {
-        telemetry_switch_ = lv_obj_find_by_name(telemetry_row, "toggle");
-        if (telemetry_switch_) {
-            if (system_settings.get_telemetry_enabled()) {
-                lv_obj_add_state(telemetry_switch_, LV_STATE_CHECKED);
-            } else {
-                lv_obj_remove_state(telemetry_switch_, LV_STATE_CHECKED);
-            }
-            spdlog::trace("[{}]   telemetry toggle", get_name());
-        }
-    }
-
-    // === Completion Alert Dropdown ===
-    // Event handler wired via XML <event_cb>, just set initial value here (options set in XML)
-    lv_obj_t* completion_row = lv_obj_find_by_name(panel_, "row_completion_alert");
-    if (completion_row) {
-        completion_alert_dropdown_ = lv_obj_find_by_name(completion_row, "dropdown");
-        if (completion_alert_dropdown_) {
-            auto mode = AudioSettingsManager::instance().get_completion_alert_mode();
-            lv_dropdown_set_selected(completion_alert_dropdown_, static_cast<uint32_t>(mode));
-            spdlog::trace("[{}]   ✓ Completion alert dropdown (mode={})", get_name(),
-                          static_cast<int>(mode));
-        }
-    }
-
-    // === Z Movement Style Dropdown ===
-    // Event handler wired via XML <event_cb>, just set initial value here (options set in XML)
-    lv_obj_t* z_movement_row = lv_obj_find_by_name(panel_, "row_z_movement_style");
-    if (z_movement_row) {
-        lv_obj_t* z_movement_dropdown = lv_obj_find_by_name(z_movement_row, "dropdown");
-        if (z_movement_dropdown) {
-            auto style = SettingsManager::instance().get_z_movement_style();
-            lv_dropdown_set_selected(z_movement_dropdown, static_cast<uint32_t>(style));
-            spdlog::trace("[{}]   ✓ Z movement style dropdown (style={})", get_name(),
-                          static_cast<int>(style));
-        }
-    }
-
-    // === Toolhead Style Dropdown ===
-    // Options set from C++ (varies between production and test mode)
-    lv_obj_t* toolhead_style_row = lv_obj_find_by_name(panel_, "row_toolhead_style");
-    if (toolhead_style_row) {
-        lv_obj_t* toolhead_dropdown = lv_obj_find_by_name(toolhead_style_row, "dropdown");
-        if (toolhead_dropdown) {
-            lv_dropdown_set_options(toolhead_dropdown,
-                                    SettingsManager::get_toolhead_style_options());
-            auto style = SettingsManager::instance().get_toolhead_style();
-            lv_dropdown_set_selected(
-                toolhead_dropdown,
-                static_cast<uint32_t>(SettingsManager::toolhead_style_to_dropdown_index(style)));
-            spdlog::trace("[{}]   ✓ Toolhead style dropdown (style={}, dropdown_index={})",
-                          get_name(), static_cast<int>(style),
-                          SettingsManager::toolhead_style_to_dropdown_index(style));
-        }
-    }
-
-    // === Language Dropdown ===
-    // Event handler wired via XML <event_cb>, options populated from SystemSettingsManager
-    lv_obj_t* language_row = lv_obj_find_by_name(panel_, "row_language");
-    if (language_row) {
-        language_dropdown_ = lv_obj_find_by_name(language_row, "dropdown");
-        if (language_dropdown_) {
-            lv_dropdown_set_options(language_dropdown_,
-                                    SystemSettingsManager::get_language_options());
-            int lang_index = system_settings.get_language_index();
-            lv_dropdown_set_selected(language_dropdown_, static_cast<uint32_t>(lang_index));
-            spdlog::trace("[{}]   ✓ Language dropdown (index={})", get_name(), lang_index);
-        }
-    }
-
-    // === Timezone Dropdown ===
-    // Options populated dynamically (not in XML) since the list is built in C++
-    lv_obj_t* tz_row = lv_obj_find_by_name(panel_, "row_timezone");
-    if (tz_row) {
-        lv_obj_t* tz_dropdown = lv_obj_find_by_name(tz_row, "dropdown");
-        if (tz_dropdown) {
-            std::string options = DisplaySettingsManager::get_timezone_options();
-            lv_dropdown_set_options(tz_dropdown, options.c_str());
-            int tz_index = display_settings.get_timezone_index();
-            lv_dropdown_set_selected(tz_dropdown, static_cast<uint32_t>(tz_index));
-            spdlog::trace("[{}]   \u2713 Timezone dropdown (index={}, tz={})", get_name(), tz_index,
-                          display_settings.get_timezone());
-        }
-    }
-
-    // === Time Format Dropdown ===
-    // Event handler wired via XML <event_cb>, just set initial value here (options set in XML)
-    lv_obj_t* time_format_row = lv_obj_find_by_name(panel_, "row_time_format");
-    if (time_format_row) {
-        lv_obj_t* time_format_dropdown = lv_obj_find_by_name(time_format_row, "dropdown");
-        if (time_format_dropdown) {
-            auto current_format = display_settings.get_time_format();
-            lv_dropdown_set_selected(time_format_dropdown, static_cast<uint32_t>(current_format));
-            spdlog::trace("[{}]   ✓ Time format dropdown (format={})", get_name(),
-                          static_cast<int>(current_format));
-        }
-    }
-
-    // === G-code Preview Dropdown ===
-    // Event handler wired via XML <event_cb>, set initial value and conditionally adjust options
-    lv_obj_t* gcode_mode_row = lv_obj_find_by_name(panel_, "row_gcode_mode");
-    if (gcode_mode_row) {
-        lv_obj_t* gcode_dropdown = lv_obj_find_by_name(gcode_mode_row, "dropdown");
-        if (gcode_dropdown) {
-#ifndef ENABLE_GLES_3D
-            // Without GLES, remove "3D View" option — use reduced set
-            // Indices: 0=Auto, 1=2D Layers, 2=Thumbnail Only
-            lv_dropdown_set_options(gcode_dropdown,
-                                    (std::string(lv_tr("Auto")) + "\n" + lv_tr("2D Layers") + "\n" +
-                                     lv_tr("Thumbnail Only"))
-                                        .c_str());
-            // Map stored render mode to reduced dropdown index
-            int mode = display_settings.get_gcode_render_mode();
-            int index = 0; // Auto
-            if (mode == 2)
-                index = 1; // 2D Layers
-            else if (mode == 3)
-                index = 2; // Thumbnail Only
-            // mode == 1 (3D) falls through to Auto on non-GLES
-            lv_dropdown_set_selected(gcode_dropdown, index);
-#else
-            // Full options: Auto(0), 3D View(1), 2D Layers(2), Thumbnail Only(3)
-            int mode = display_settings.get_gcode_render_mode();
-            lv_dropdown_set_selected(gcode_dropdown, mode);
-#endif
-            spdlog::trace("[{}]   ✓ G-code mode dropdown", get_name());
-        }
-    }
-
-    // === E-Stop Confirmation Toggle ===
-    // Event handler wired via XML <event_cb>, just set initial state here
-    lv_obj_t* estop_confirm_row = lv_obj_find_by_name(panel_, "row_estop_confirm");
-    if (estop_confirm_row) {
-        estop_confirm_switch_ = lv_obj_find_by_name(estop_confirm_row, "toggle");
-        if (estop_confirm_switch_) {
-            if (safety_settings.get_estop_require_confirmation()) {
-                lv_obj_add_state(estop_confirm_switch_, LV_STATE_CHECKED);
-            }
-            spdlog::trace("[{}]   ✓ E-Stop confirmation toggle", get_name());
-        }
-    }
-}
-
-void SettingsPanel::setup_action_handlers() {
-    // All action row event handlers are wired via XML <event_cb>
-    // Just cache the row references for potential future use
-
-    // === Display Settings Row ===
-    display_settings_row_ = lv_obj_find_by_name(panel_, "row_display_settings");
-    if (display_settings_row_) {
-        spdlog::trace("[{}]   ✓ Display settings action row", get_name());
-    }
-
-    // === Sensors Row ===
-    filament_sensors_row_ = lv_obj_find_by_name(panel_, "row_filament_sensors");
-    if (filament_sensors_row_) {
-        spdlog::trace("[{}]   ✓ Sensors action row", get_name());
-    }
-
-    // === Network Row ===
-    network_row_ = lv_obj_find_by_name(panel_, "row_network");
-    if (network_row_) {
-        spdlog::trace("[{}]   ✓ Network action row", get_name());
-    }
-
-    // === Factory Reset Row ===
-    factory_reset_row_ = lv_obj_find_by_name(panel_, "row_factory_reset");
-    if (factory_reset_row_) {
-        spdlog::trace("[{}]   ✓ Factory reset action row", get_name());
-    }
-}
 
 void SettingsPanel::populate_info_rows() {
     // Printer host description: bound declaratively in settings_connection_overlay.xml
@@ -1112,8 +872,8 @@ void SettingsPanel::on_printing_clicked(lv_event_t* /*e*/) {
     LVGL_SAFE_EVENT_CB_END();
 }
 
-void SettingsPanel::on_hardware_clicked(lv_event_t* /*e*/) {
-    LVGL_SAFE_EVENT_CB_BEGIN("[SettingsPanel] on_hardware_clicked");
+void SettingsPanel::on_devices_clicked(lv_event_t* /*e*/) {
+    LVGL_SAFE_EVENT_CB_BEGIN("[SettingsPanel] on_devices_clicked");
     auto& overlay = helix::settings::get_hardware_settings_overlay();
     overlay.show(get_global_settings_panel().parent_screen_);
     LVGL_SAFE_EVENT_CB_END();
@@ -1466,7 +1226,7 @@ void register_settings_panel_callbacks() {
         {"on_sound_clicked", SettingsPanel::on_sound_clicked},
         {"on_language_time_clicked", SettingsPanel::on_language_time_clicked},
         {"on_printing_clicked", SettingsPanel::on_printing_clicked},
-        {"on_hardware_clicked", SettingsPanel::on_hardware_clicked},
+        {"on_devices_clicked", SettingsPanel::on_devices_clicked},
         {"on_safety_clicked", SettingsPanel::on_safety_clicked},
         {"on_system_clicked", SettingsPanel::on_system_clicked},
         {"on_help_clicked", SettingsPanel::on_help_clicked},

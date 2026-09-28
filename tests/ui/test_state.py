@@ -76,7 +76,7 @@ def test_hidden_widget_is_still_resolvable_and_reports_the_flag(helix_app):
     # list it — resolving it by name and reading flags.hidden is the point.
     helix_app.navigate("settings")
     helix_app.wait_idle()
-    helix_app.click("row_hardware")
+    helix_app.click("row_devices")
     helix_app.wait_idle()
     helix_app.click("row_ams_settings")
     helix_app.wait_idle()

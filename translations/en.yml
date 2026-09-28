@@ -1348,6 +1348,7 @@ translations:
   Guide the toolhead to the chute's extrude position: Guide the toolhead to the chute's extrude position
   Guides and reference: Guides and reference
   H: H
+  HELIXSCREEN: HELIXSCREEN
   HOST: HOST
   HTTP Code: HTTP Code
   'HTTP error: {} {}': 'HTTP error: {} {}'
@@ -2144,6 +2145,7 @@ translations:
   PLA - Black: PLA - Black
   POWER: POWER
   PRINT OPTIONS: PRINT OPTIONS
+  PRINTER: PRINTER
   PRINTER VISUALS: PRINTER VISUALS
   PRINTERS: PRINTERS
   PRINT_START has {} skippable operation: PRINT_START has {} skippable operation
@@ -2661,6 +2663,7 @@ translations:
   'SAVE_CONFIG failed: {}. Tool offsets were applied but not saved. Run SAVE_CONFIG manually or they will be lost on restart.': 'SAVE_CONFIG failed: {}. Tool offsets were applied but not saved. Run SAVE_CONFIG manually or they will be lost on restart.'
   ? 'SAVE_CONFIG failed: {}. Z-offset was applied but not saved. Run SAVE_CONFIG manually or the offset will be lost on restart.'
   : 'SAVE_CONFIG failed: {}. Z-offset was applied but not saved. Run SAVE_CONFIG manually or the offset will be lost on restart.'
+  SCREEN: SCREEN
   SETTINGS: SETTINGS
   SHIPPED IMAGES: SHIPPED IMAGES
   SOFTWARE: SOFTWARE

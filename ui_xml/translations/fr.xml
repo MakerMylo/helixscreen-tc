@@ -1261,6 +1261,7 @@
   <translation tag="Guide the toolhead to the chute&apos;s extrude position" fr="Guidez la tête d&apos;outil vers la position d&apos;extrusion de la goulotte"/>
   <translation tag="Guides and reference" fr="Guides et référence"/>
   <translation tag="H" fr="H"/>
+  <translation tag="HELIXSCREEN" fr="HELIXSCREEN"/>
   <translation tag="HOST" fr="Hôte"/>
   <translation tag="HTTP Code" fr="Code HTTP"/>
   <translation tag="HTTP error: {} {}" fr="Erreur HTTP : {} {}"/>
@@ -1993,6 +1994,7 @@
   <translation tag="PLA - Black" fr="PLA - Noir"/>
   <translation tag="POWER" fr="ALIMENTATION"/>
   <translation tag="PRINT OPTIONS" fr="OPTIONS D&apos;IMPRESSION"/>
+  <translation tag="PRINTER" fr="IMPRIMANTE"/>
   <translation tag="PRINTER VISUALS" fr="VISUELS DE L&apos;IMPRIMANTE"/>
   <translation tag="PRINTERS" fr="IMPRIMANTES"/>
   <translation tag="PRINT_START has {} skippable operation" fr="PRINT_START a {} opération ignorable"/>
@@ -2471,6 +2473,7 @@
   <translation tag="Runs the printer&apos;s tool offset calibration for every tool." fr="Lance la calibration des offsets d&apos;outil de l&apos;imprimante pour tous les outils."/>
   <translation tag="SAVE_CONFIG failed: {}. Tool offsets were applied but not saved. Run SAVE_CONFIG manually or they will be lost on restart." fr="SAVE_CONFIG a échoué : {}. Les décalages d&apos;outil ont été appliqués mais non enregistrés. Lancez SAVE_CONFIG manuellement, sinon ils seront perdus au redémarrage."/>
   <translation tag="SAVE_CONFIG failed: {}. Z-offset was applied but not saved. Run SAVE_CONFIG manually or the offset will be lost on restart." fr="SAVE_CONFIG a échoué : {}. Le décalage Z a été appliqué mais non enregistré. Lancez SAVE_CONFIG manuellement, sinon il sera perdu au redémarrage."/>
+  <translation tag="SCREEN" fr="ÉCRAN"/>
   <translation tag="SETTINGS" fr="PARAMÈTRES"/>
   <translation tag="SHIPPED IMAGES" fr="IMAGES FOURNIES"/>
   <translation tag="SOFTWARE" fr="LOGICIEL"/>
