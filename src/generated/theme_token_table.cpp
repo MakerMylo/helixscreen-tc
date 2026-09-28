@@ -606,7 +606,7 @@ const TokenEntry k_token_table[] = {
     {"px", "keypad_btn_height_small", "52"},
     {"px", "keypad_btn_height_medium", "68"},
     {"px", "keypad_btn_height_large", "84"},
-    {"px", "keypad_width_tiny", "180"},
+    {"px", "keypad_width_tiny", "280"},
     {"px", "keypad_width_small", "280"},
     {"px", "keypad_width_medium", "340"},
     {"px", "keypad_width_large", "400"},
