@@ -22,8 +22,11 @@ class AppMotionActivity {
   public:
     using clock = std::chrono::steady_clock;
     static constexpr std::chrono::seconds GRACE_WINDOW{2};
+    /// Longest a busy episode can pass as the app's own after its last send.
+    static constexpr std::chrono::seconds MAX_SELF_BUSY{30};
 
-    void note_sent() {
+    void note_sent(clock::time_point now = clock::now()) {
+        last_sent_ns_.store(now.time_since_epoch().count(), std::memory_order_relaxed);
         inflight_.fetch_add(1, std::memory_order_relaxed);
     }
 
@@ -48,8 +51,27 @@ class AppMotionActivity {
         return (now - last) < GRACE_WINDOW;
     }
 
+    /**
+     * Whether a busy episode that began at @p episode_start is the app's own
+     * motion: a send landed no more than GRACE_WINDOW before it began, and the
+     * latest send is under MAX_SELF_BUSY old. The ack arrives when Klipper
+     * queues a move, so a long absolute move keeps idle_timeout "Printing"
+     * well past recently_active(); the cap bounds how long an operation
+     * someone else starts mid-move can pass as ours.
+     */
+    bool owns_busy_episode(clock::time_point episode_start,
+                           clock::time_point now = clock::now()) const {
+        const auto last_ns = last_sent_ns_.load(std::memory_order_relaxed);
+        if (last_ns == 0) {
+            return false;
+        }
+        const clock::time_point last{clock::duration{last_ns}};
+        return last >= episode_start - GRACE_WINDOW && (now - last) < MAX_SELF_BUSY;
+    }
+
   private:
     std::atomic<int> inflight_{0};
+    std::atomic<long long> last_sent_ns_{0};
     std::atomic<long long> last_done_ns_{0};
 };
 

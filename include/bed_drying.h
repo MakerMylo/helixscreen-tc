@@ -44,8 +44,6 @@ inline constexpr double kMinZTravelMm = 130.0;
 /// How far short of the end of Z travel the clearance move stops: room for
 /// anything lying under a plate that moves down.
 inline constexpr double kZClearanceMarginMm = 20.0;
-/// How far inside the rear of the plate the toolhead parks.
-inline constexpr double kParkMarginMm = 10.0;
 /// Beyond this, spools and filament deform faster than a bed dries them.
 inline constexpr int kMaxBedC = 90;
 /// The remove prompt waits for the bed to read below this.

@@ -10,9 +10,10 @@
  * The motion panel's Jog/Move tab switch drives everything through the
  * motion_tab subject: the tab containers' hidden flags follow it, the preset
  * grid computes its target at tap time from the live axis envelope, and Park
- * resolves through StandardMacros with the Front preset as the fallback when
- * no park macro exists. Every grid button is disabled while a print is
- * active or the nav buttons are off, and the C++ handlers re-check both.
+ * resolves through StandardMacros, lifting Z and parking over the rear of the
+ * plate when no park macro exists. Every grid button is disabled while a print
+ * is active, the toolhead is busy, or the nav buttons are off, and the C++
+ * handlers re-check the print and nav gates.
  */
 
 #include "ui_modal.h"
@@ -215,7 +216,8 @@ TEST_CASE_METHOD(MoveTabFixture, "park runs the configured macro", "[motion][mov
     CHECK(scripts.find("Y23.5") == std::string::npos); // fallback not taken
 }
 
-TEST_CASE_METHOD(MoveTabFixture, "park without a macro falls back to the front preset",
+TEST_CASE_METHOD(MoveTabFixture,
+                 "park without a macro lifts Z and parks over the rear of the plate",
                  "[motion][move-tab]") {
     StandardMacros::instance().reset();
     helix::PrinterDiscovery hardware;
@@ -228,9 +230,36 @@ TEST_CASE_METHOD(MoveTabFixture, "park without a macro falls back to the front p
 
     click(panel_widget("move_park"));
 
+    // 235x235 plate, commanded Z 10: centred in X, 10mm inside the rear edge,
+    // nozzle up 10mm, and never the front preset.
     const std::string scripts = all_scripts();
     CHECK(scripts.find("PARK") == std::string::npos);
-    CHECK(scripts.find("Y23.5") != std::string::npos);
+    CHECK(scripts.find("X117.5") != std::string::npos);
+    CHECK(scripts.find("Y225") != std::string::npos);
+    CHECK(scripts.find("Z20") != std::string::npos);
+    CHECK(scripts.find("Y23.5") == std::string::npos);
+}
+
+TEST_CASE_METHOD(MoveTabFixture, "the grid greys out while the toolhead is busy, Z stays live",
+                 "[motion][move-tab]") {
+    auto& ps = get_printer_state();
+    get_global_motion_panel().set_motion_tab(1);
+    drain();
+
+    lv_obj_t* preset = panel_widget("preset_center");
+    lv_obj_t* park = panel_widget("move_park");
+    lv_obj_t* z_up = panel_widget("z_up_small");
+
+    ps.update_from_status({{"idle_timeout", {{"state", "Printing"}}}});
+    drain();
+    CHECK(lv_obj_has_state(preset, LV_STATE_DISABLED));
+    CHECK(lv_obj_has_state(park, LV_STATE_DISABLED));
+    CHECK_FALSE(lv_obj_has_state(z_up, LV_STATE_DISABLED));
+
+    ps.update_from_status({{"idle_timeout", {{"state", "Ready"}}}});
+    drain();
+    CHECK_FALSE(lv_obj_has_state(preset, LV_STATE_DISABLED));
+    CHECK_FALSE(lv_obj_has_state(park, LV_STATE_DISABLED));
 }
 
 TEST_CASE_METHOD(MoveTabFixture, "motors off opens the shared confirm", "[motion][move-tab]") {
