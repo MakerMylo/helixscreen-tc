@@ -1,53 +1,14 @@
 # Settings: Printing
 
-The Printing category contains settings that affect how prints are configured and displayed.
+**Settings > Printing** holds settings that change how the printer moves, heats and handles filament. The page has three sections:
 
----
+- **MACHINE**: Machine Limits, Motion, Retraction Settings and Enclosure
+- **FILAMENT**: Material Temperatures, Allow cold load/unload and Cool nozzle after filament ops
+- **EXTRAS**: Timelapse and Macro Buttons
 
-## Toolhead Style
+How the printer is *drawn* (toolhead icon, G-code preview, Z direction labels, bed mesh view) lives in [Appearance](appearance.md#printer-visuals).
 
-Choose the toolhead icon shown on the Home Panel and Print Status screen. Options:
-
-| Option | Description |
-|--------|-------------|
-| **Auto** (default) | HelixScreen detects your toolhead from the printer database or Klipper config |
-| **Stealthburner** | Voron StealthBurner toolhead |
-| **A4T** | Armored Turtle toolhead |
-| **AntHead** | AntHead toolhead |
-| **JabberWocky** | JabberWocky toolhead |
-
-Most users can leave this on **Auto**. Change it if HelixScreen picks the wrong icon or if you've swapped to an aftermarket toolhead.
-
-> **Note:** The native styles (**Default**, **Creality K1**, **Creality K2**) are auto-detected from your printer and don't appear as choices in the dropdown.
-
----
-
-## G-code Preview
-
-Choose how the G-code of the active print is visualized:
-
-| Option | Description |
-|--------|-------------|
-| **Auto** (default) | HelixScreen picks the best mode for your hardware — interactive 3D on capable devices, falling back to lighter modes on slower ones |
-| **3D View** | Interactive 3D rendering of the toolpath |
-| **2D Layers** | Flat per-layer view — lighter on the GPU than 3D |
-| **Thumbnail Only** | Shows just the slicer-embedded thumbnail, no live toolpath rendering — the lightest option |
-
-Use a lighter mode if your hardware struggles with 3D rendering.
-
----
-
-## Z Movement
-
-Controls how Z-axis movement is displayed in the motion controls.
-
-| Mode | Behavior |
-|------|----------|
-| **Auto** (default) | HelixScreen auto-detects based on your printer type (bed-slinger vs CoreXY vs delta) |
-| **Bed Moves** | Z controls labeled as bed movement (bed goes down = nozzle moves up relative to bed) |
-| **Nozzle Moves** | Z controls labeled as nozzle movement (nozzle goes up = away from bed) |
-
-This only changes the direction labels in the UI — the actual G-code sent is the same. Use this if auto-detection picks the wrong style for your printer.
+![Printing settings](../../../images/user/settings-printing.png)
 
 ---
 
@@ -75,6 +36,12 @@ Below the adjustable sliders is a read-only **Config-defined** section showing y
 
 ---
 
+## Motion
+
+Jog speeds and the per-mode move distances for the jog pad. See [Motion](../motion.md#motion-settings) for what each setting does.
+
+---
+
 ## Retraction Settings
 
 > Only shown when firmware retraction (`[firmware_retraction]`) is configured in Klipper.
@@ -90,6 +57,12 @@ As on Machine Limits, each value is shown in a tappable field — **tap it to ty
 | **Retract Speed** | 10–80 mm/s | Speed of the retraction movement |
 | **Unretract Extra** | 0.00–1.00 mm | Extra filament to prime after retraction to compensate for ooze |
 | **Unretract Speed** | 10–60 mm/s | Speed of the prime (unretract) movement |
+
+---
+
+## Enclosure
+
+Tells HelixScreen whether your printer is enclosed. **Auto** (the default) goes by what HelixScreen knows about your printer model. Set it to **Enclosed** if you enclosed an open-frame printer yourself, or **Open frame** if HelixScreen thinks your printer is enclosed and it isn't. [Drying filament on the bed](../temperature.md#drying-filament-on-the-bed) is only offered on a printer that counts as enclosed.
 
 ---
 
@@ -145,9 +118,33 @@ Before this file was linked into `printer_data`, it lived only in the install fo
 
 ---
 
-## Motion
+## Allow cold load/unload
 
-Jog speeds and the per-mode move distances for the jog pad. See [Motion](../motion.md#motion-settings) for what each setting does.
+| State | Behavior |
+|-------|----------|
+| **Off** (default) | Filament load/unload is blocked when the nozzle is below the minimum extrude temperature |
+| **On** | Load/unload run on a cold nozzle, and HelixScreen never heats it for you first |
+
+By default, HelixScreen won't run a filament load or unload while the nozzle is too cold to extrude, matching Klipper's cold-extrude safety check. Turn this on if your load/unload macros heat the nozzle themselves before extruding, so the operation isn't blocked before your macro gets a chance to warm up.
+
+With it on, HelixScreen also stops running its own preheat before the operation — your macro is dispatched immediately and owns the temperature from there. This applies wherever you start a load or unload, including the Filament panel and the filament system's own panel.
+
+You don't need this for a printer whose stock macros HelixScreen already recognizes as self-heating (QIDI's `M604` / `M603`, for instance), or for a filament system whose firmware heats as part of loading (AFC, CFS, QIDI Box, AD5X IFS). Those are detected, and the preheat is skipped for them whatever this setting says.
+
+---
+
+## Cool nozzle after filament ops
+
+| State | Behavior |
+|-------|----------|
+| **On** (default) | The extruder heater is turned off a couple of minutes after a load or unload finishes |
+| **Off** | The nozzle stays at whatever temperature the operation left it |
+
+A filament change heats the nozzle to material temperature. Left alone, it would sit there indefinitely — burning power and slowly cooking the filament in the melt zone. So HelixScreen turns the heater off once you're done. The delay (two minutes by default) is there so you can run several loads and unloads back to back without the nozzle cooling between them; each new operation restarts the clock. Nothing happens while a print is running — an active job manages its own heat.
+
+**Turn this off if your filament system already does it.** [AFC](../filament.md) has its own post-operation cooldown, and other multi-material firmware is adding the same. Two independent timers driving one heater is confusing at best. Leave whichever one you prefer in charge, and switch the other off.
+
+The setting is per printer, so an AFC machine can opt out while your other printers keep the built-in behavior. To change the two-minute delay, see [`cooldown_delay_seconds`](../../CONFIGURATION.md#cooldown_delay_seconds).
 
 ---
 
@@ -218,7 +215,7 @@ HelixScreen auto-detects common macros from your Klipper configuration (e.g., it
 | **Heat Soak** | Chamber heat soak | HEAT_SOAK |
 | **Park** | Parking the toolhead (Motion screen, Move tab) | PARK, PARK_TOOLHEAD, TOOLHEAD_PARK |
 
-If your printer doesn't have a matching macro, some slots fall back to HelixScreen helper macros (installed via **Settings > Advanced > Install HelixScreen Macros**). Leave a slot empty to disable that function.
+If your printer doesn't have a matching macro, some slots fall back to HelixScreen helper macros (installed via **Advanced > Install Helper Macros**). Leave a slot empty to disable that function.
 
 **Load Filament and Unload Filament on a multi-filament printer:** left on **(Auto)**, these two drive your filament system directly rather than running a macro. Choose a macro yourself and it takes over — your macro runs and the filament system's own handling is skipped for that operation, so anything it would have done becomes your macro's job. Set the slot back to **(Auto)** to hand the operation back. The other slots are unaffected. See [Customizing which macro runs](../filament.md#customizing-which-macro-runs).
 
@@ -239,4 +236,4 @@ These settings apply to the **Preheat widget** on Home or Controls and to the **
 
 ---
 
-[Back to Settings](../settings.md) | [Prev: Display & Sound](display-sound.md) | [Next: Hardware & Devices](hardware.md)
+[Back to Settings](../settings.md) | [Prev: Sound](sound.md) | [Next: Devices](devices.md)

@@ -48,7 +48,7 @@ On a printer with more than one tool, the picker beside the lane bars chooses wh
 
 You can override any of these buttons to run a different macro:
 
-1. Go to **Settings > Printer > Macro Buttons**
+1. Go to **Settings > Printing > Macro Buttons**
 2. Scroll to the **Standard Macros** section
 3. Tap the dropdown for **Load Filament**, **Unload Filament**, or **Purge**
 4. Select **(Auto)** to use auto-detection, or pick any macro from your Klipper config
@@ -69,13 +69,13 @@ Loading or unloading normally heats the nozzle to the material's temperature bef
 
 - your filament system heats on its own when it loads,
 - your configured Load/Unload macro heats the hotend itself, or
-- **Allow cold load/unload** is on (Settings > Safety & Notifications).
+- **Allow cold load/unload** is on (Settings > Printing).
 
 ### What happens to the nozzle afterward
 
 Loading or unloading heats the nozzle to material temperature. Two minutes after the operation finishes, HelixScreen turns the extruder heater back off — the delay lets you run several operations in a row without the nozzle cooling in between, and a running print is never touched.
 
-If your filament system already handles this (AFC does), turn off **Settings > Safety & Notifications > Cool nozzle after filament ops** so only one of them is driving the heater. It's a per-printer setting. See [Safety settings](settings/safety.md#cool-nozzle-after-filament-ops).
+If your filament system already handles this (AFC does), turn off **Settings > Printing > Cool nozzle after filament ops** so only one of them is driving the heater. It's a per-printer setting. See [Printing settings](settings/printing.md#cool-nozzle-after-filament-ops).
 
 ---
 
@@ -169,7 +169,7 @@ Some filament systems do not report a bypass position. On those, the Bypass togg
 
 The Creality CFS no longer appears here — it has a working external spool. See [CFS and the External Spool](#cfs-and-the-external-spool).
 
-To show the controls anyway, turn on **Enable Bypass Controls** in Settings > Hardware & Devices > Multi-Filament System Management. The setting appears only when your firmware reports no bypass.
+To show the controls anyway, turn on **Enable Bypass Controls** in Settings > Devices > Multi-Filament System Management. The setting appears only when your firmware reports no bypass.
 
 With it on, the external spool appears on the filament path beside your slots. Tap it to set material, color, and brand, or to link a Spoolman spool.
 
@@ -187,7 +187,7 @@ With it on, the external spool appears on the filament path beside your slots. T
 
 **Tap the external spool** on the filament path. Alongside the spool bookkeeping (Spool Info, Select Spool, Scan QR, Clear) the menu offers **Load** and **Unload**, which feed and retract the bypass spool itself.
 
-Bypass load deliberately does not go through the AMS. It runs your configured **Load Filament** macro — the same one the Filament panel's Load button uses, set in Settings > Macros — or a plain feed if you have no macro configured. That is what the reporter of this behavior expected: with bypass engaged, the normal load routine takes over. Unload does go through the AMS on backends that expose a bypass unload, because that is how the filament gets back out of the toolhead.
+Bypass load deliberately does not go through the AMS. It runs your configured **Load Filament** macro — the same one the Filament panel's Load button uses, set in Settings > Printing > Macro Buttons — or a plain feed if you have no macro configured. That is what the reporter of this behavior expected: with bypass engaged, the normal load routine takes over. Unload does go through the AMS on backends that expose a bypass unload, because that is how the filament gets back out of the toolhead.
 
 If bypass is not engaged when you tap **Load**, it is engaged first. On systems that require it, a lane's filament is unloaded before bypass engages, and the load starts once that finishes — the same sequence the Bypass toggle performs, so nothing is fed down the lane path by mistake.
 
@@ -651,7 +651,7 @@ Whichever shape you have, the readouts, the Material Comfort strip and the dryin
 - [Temperature Control](temperature.md) — Preheat presets work with spool material info
 - [Bluetooth Setup](bluetooth-setup.md) — Required for Bluetooth-connected AMS and label printers
 - [Label Printing](label-printing.md) — Print physical spool labels with Spoolman data
-- [Settings: Hardware & Devices](settings/hardware.md) — AMS, Spoolman, and filament sensor configuration
+- [Settings: Devices](settings/devices.md) — AMS, Spoolman, and filament sensor configuration
 
 ---
 

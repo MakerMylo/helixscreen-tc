@@ -153,7 +153,7 @@ static void on_log_level_changed(lv_event_t* e) {
     SystemSettingsManager::instance().set_log_level_by_index(index);
 }
 
-// Touch & input setting callbacks (Settings → System → Touch & Input).
+// Touch & input setting callbacks (Settings → Touch & Input).
 // The slider rows nest as: row > slider_container > slider, so the row is
 // the slider's grandparent. Used by both drag-time syncs (here) and the
 // activation-time refresh in TouchSettingsOverlay::init_input_sliders.

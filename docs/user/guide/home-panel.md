@@ -99,7 +99,7 @@ While in Edit Mode, any page other than the main page shows a **red trash button
 
 Edit Mode is how you customize your dashboard layout. While in Edit Mode, all normal widget interactions (tapping to open overlays, etc.) are disabled so you can freely rearrange things.
 
-> **Edit Mode is on by default.** If it triggers accidentally when a finger rests on the screen (common on a tablet lying flat), you have two options: turn it off entirely with **Allow Home Screen Editing** under **Settings → System → Touch & Input**, or raise the **Long Press Time** slider in the same page so a longer hold is required. Both take effect immediately.
+> **Edit Mode is on by default.** If it triggers accidentally when a finger rests on the screen (common on a tablet lying flat), you have two options: turn it off entirely with **Allow Home Screen Editing** under **Settings → Touch & Input**, or raise the **Long Press Time** slider in the same page so a longer hold is required. Both take effect immediately.
 
 **Page swiping in Edit Mode:** Swiping between pages works in Edit Mode just as it does outside it: between your pages, plus the Add page tile past your last one, and never further. Swiping pauses from the moment your finger lands on the selected widget until you lift it, while you drag or resize a widget, and while the Widget Catalog is open. To take a widget to another page, or to a new page before your first or past your last one, drag it across the page border - see [Moving a Widget to Another Page](#moving-a-widget-to-another-page).
 
@@ -447,7 +447,7 @@ While **not** in Edit Mode, widgets respond to taps and other gestures:
 
 By default, tapping a Macro Button asks you something before it runs anything. If
 the macro takes parameters, you get a form to fill in. If it takes none, you get a
-"Run MACRO?" dialog — the one controlled by **Settings > Safety > Confirm before
+"Run MACRO?" dialog — the one controlled by **Settings > Safety & Alerts > Confirm before
 running macros**.
 
 That is the right default for a button sitting on the home screen, but it gets in
@@ -737,7 +737,7 @@ On printers with more than one extruder (IDEX, toolchangers, multi-head systems)
 
 ## Emergency Stop
 
-The red **Emergency Stop** button in the top bar halts all printer motion immediately. By default, a confirmation dialog appears before executing. You can disable the confirmation in **Settings > Safety & Notifications > E-Stop Confirmation**.
+The red **Emergency Stop** button in the top bar halts all printer motion immediately. By default, a confirmation dialog appears before executing. You can disable the confirmation in **Settings > Safety & Alerts > E-Stop Confirmation**.
 
 ---
 
@@ -956,7 +956,7 @@ A row of chips shows detected hardware capabilities: Probe, Bed Mesh, Heated Bed
 
 > Requires [beta features](beta-features.md) to be enabled and at least two printers configured.
 
-When you have multiple printers configured, the Printer Manager overlay shows a **Manage Printers** button at the bottom. Tap it to open the printer management screen (same as Settings > Printers).
+When you have multiple printers configured, the Printer Manager overlay shows a **Manage Printers** button at the bottom. Tap it to open the printer management screen (same as Settings > Connection > Printers).
 
 You can also switch printers directly from the **navigation bar**. When multiple printers are configured, a badge with your printer's name appears in the nav bar. Tap it to see a quick-switch menu listing all your printers — tap any printer to switch instantly.
 

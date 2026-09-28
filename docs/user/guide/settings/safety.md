@@ -1,6 +1,8 @@
-# Settings: Safety & Notifications
+# Settings: Safety & Alerts
 
-The Safety & Notifications category covers emergency controls and print alert preferences.
+**Settings > Safety & Alerts** covers emergency controls, confirmations, failure detection and how HelixScreen tells you about finished prints.
+
+![Safety & Alerts settings](../../../images/user/settings-safety.png)
 
 ---
 
@@ -46,36 +48,6 @@ Enable this if you have macros that move the toolhead, heat the printer, or perf
 
 ---
 
-## Allow cold load/unload
-
-| State | Behavior |
-|-------|----------|
-| **Off** (default) | Filament load/unload is blocked when the nozzle is below the minimum extrude temperature |
-| **On** | Load/unload run on a cold nozzle, and HelixScreen never heats it for you first |
-
-By default, HelixScreen won't run a filament load or unload while the nozzle is too cold to extrude, matching Klipper's cold-extrude safety check. Turn this on if your load/unload macros heat the nozzle themselves before extruding, so the operation isn't blocked before your macro gets a chance to warm up.
-
-With it on, HelixScreen also stops running its own preheat before the operation — your macro is dispatched immediately and owns the temperature from there. This applies wherever you start a load or unload, including the Filament panel and the filament system's own panel.
-
-You don't need this for a printer whose stock macros HelixScreen already recognizes as self-heating (QIDI's `M604` / `M603`, for instance), or for a filament system whose firmware heats as part of loading (AFC, CFS, QIDI Box, AD5X IFS). Those are detected, and the preheat is skipped for them whatever this setting says.
-
----
-
-## Cool nozzle after filament ops
-
-| State | Behavior |
-|-------|----------|
-| **On** (default) | The extruder heater is turned off a couple of minutes after a load or unload finishes |
-| **Off** | The nozzle stays at whatever temperature the operation left it |
-
-A filament change heats the nozzle to material temperature. Left alone, it would sit there indefinitely — burning power and slowly cooking the filament in the melt zone. So HelixScreen turns the heater off once you're done. The delay (two minutes by default) is there so you can run several loads and unloads back to back without the nozzle cooling between them; each new operation restarts the clock. Nothing happens while a print is running — an active job manages its own heat.
-
-**Turn this off if your filament system already does it.** [AFC](../filament.md) has its own post-operation cooldown, and other multi-material firmware is adding the same. Two independent timers driving one heater is confusing at best. Leave whichever one you prefer in charge, and switch the other off.
-
-The setting is per printer, so an AFC machine can opt out while your other printers keep the built-in behavior. To change the two-minute delay, see [`cooldown_delay_seconds`](../../CONFIGURATION.md#cooldown_delay_seconds).
-
----
-
 ## Spaghetti Detection
 
 Only present on printers with built-in AI failure detection (a K2 Plus, or a Snapmaker U1 with defect detection). While a print is running, HelixScreen watches the camera for spaghetti - a print that has detached or is piling up as a nest of plastic.
@@ -108,7 +80,7 @@ Controls how HelixScreen notifies you when a print finishes, is cancelled, or fa
 | **Notification** | Brief toast message at the top of the screen |
 | **Alert** (default) | Full-screen modal showing print stats — duration, layers, filament used — with confetti for successful prints |
 
-To change: **Settings > Safety & Notifications > Print Completion Alert** dropdown.
+To change: **Settings > Safety & Alerts > Print Completion Alert** dropdown.
 
 > **Note:** Print errors always show the full alert modal regardless of this setting, since errors need immediate visibility. If you're already on the print status screen when a print ends, no notification is shown (the panel itself shows the result).
 
@@ -118,7 +90,7 @@ Sound always plays for terminal print states (complete, cancelled, error) regard
 
 ## On-screen Alerts
 
-Toasts are the brief banners that slide in at the top of the screen — "Filament loaded", "Saved", "Update available". If the informational ones feel chatty, **Settings > Safety & Notifications > On-screen Alerts** sets the lowest level that is allowed to interrupt you:
+Toasts are the brief banners that slide in at the top of the screen — "Filament loaded", "Saved", "Update available". If the informational ones feel chatty, **Settings > Safety & Alerts > On-screen Alerts** sets the lowest level that is allowed to interrupt you:
 
 | Level | What still toasts |
 |-------|-------------------|
@@ -130,4 +102,4 @@ Held-back notifications are not lost — they still land in the notification his
 
 ---
 
-[Back to Settings](../settings.md) | [Prev: Hardware & Devices](hardware.md) | [Next: System](system.md)
+[Back to Settings](../settings.md) | [Prev: Devices](devices.md) | [Next: Connection](connection.md)

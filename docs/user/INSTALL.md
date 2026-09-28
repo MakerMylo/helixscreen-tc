@@ -90,7 +90,7 @@ Common screen devices:
 
 > **Point it at Moonraker, not Mainsail/Fluidd.** HelixScreen connects to Moonraker's API (port `7125`), not the Mainsail/Fluidd web interface. You do not need Mainsail or Fluidd installed on the screen device at all.
 
-To change the host later, go to **Settings > System > Host**, or edit `moonraker_host` in `settings.json`.
+To change the host later, go to **Settings > Connection > Host**, or edit `moonraker_host` in `settings.json`.
 
 > **Note:** A remote screen controls the printer the same as an on-printer screen would. Features that require running *on the printer* (for example, HelixScreen taking over the printer's own physical panel, or on-device WiFi configuration in the wizard) don't apply to a remote install, but all printing, monitoring, and control features work normally.
 
@@ -300,7 +300,7 @@ Connect to your wireless network or configure Ethernet. You can:
 - Select from detected WiFi networks
 - Skip if using Ethernet or already connected
 
-> **Note:** Hidden networks are not listed. Skip this step and join later from **Settings > System > Network Settings**, which can add a network by name.
+> **Note:** Hidden networks are not listed. Skip this step and join later from **Settings > Connection > Network Settings**, which can add a network by name.
 
 ### Step 4: Moonraker Connection
 Enter your Moonraker host. For most setups:
@@ -462,9 +462,9 @@ Three ways to update, in order of preference: in the app itself, from the Mainsa
 
 ### In the App Itself (Preferred)
 
-The app can update itself: **Settings > Help & About > About > Check for Updates**. It shows the new version, downloads it with a progress bar, and installs it; a **Retry** button appears if the download fails. No SSH and no web browser needed. The **Update Channel** row beside it picks Stable or Beta.
+The app can update itself: **Settings > Updates > Check for Updates**. It shows the new version, downloads it with a progress bar, and installs it; a **Retry** button appears if the download fails. No SSH and no web browser needed. The **Update Channel** row beside it picks Stable or Beta.
 
-This option is hidden where something else manages updates for you, such as on the Snapmaker U1, whose firmware handles HelixScreen updates itself. On Android, the install step opens the Play Store instead of downloading in-app. See [Checking for Updates](guide/settings/help-about.md#checking-for-updates) for the full walkthrough.
+This option is hidden where something else manages updates for you, such as on the Snapmaker U1, whose firmware handles HelixScreen updates itself. On Android, the install step opens the Play Store instead of downloading in-app. See [Checking for Updates](guide/settings/updates.md#check-for-updates) for the full walkthrough.
 
 ### Check Current Version
 

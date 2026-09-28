@@ -168,7 +168,7 @@ Tapping it asks for confirmation ("Release all stepper motors. Position will be 
 
 ## Emergency Stop
 
-The E-Stop button (top-right of the Motion screen header, and on the Controls panel) halts all printer motion immediately, including during a print. You can optionally require a confirmation tap to prevent accidental presses - see **Settings > Safety > E-Stop Confirmation**.
+The E-Stop button (top-right of the Motion screen header, and on the Controls panel) halts all printer motion immediately, including during a print. You can optionally require a confirmation tap to prevent accidental presses - see **Settings > Safety & Alerts > E-Stop Confirmation**.
 
 ---
 

@@ -1,10 +1,12 @@
 # Settings: Help & About
 
+**Settings > Help & About** is where to go when you need help, and where HelixScreen tells you about itself. Updates have their own page: see [Updates](updates.md).
+
 ---
 
 ## Help & About
 
-Five items in the Help & About category:
+Five items on the Help & About page:
 
 | Action | What It Does |
 |--------|--------------|
@@ -12,7 +14,7 @@ Five items in the Help & About category:
 | **Upload Debug Bundle** | Collects logs and system info for support (see below) |
 | **Discord Community** | Join **discord.gg/RZCT2StKhr** for community help and feedback |
 | **Documentation** | Visit **helixscreen.org/docs** for guides and reference |
-| **About** | Version, updates, and printer info (see below) |
+| **About** | Version, printer and system info, print hours (see below) |
 
 ### Welcome Tour
 
@@ -65,39 +67,18 @@ One thing worth knowing: your `printer.cfg` is your own file, and HelixScreen ca
 
 ## About
 
-Tap the **About** row at the bottom of the Settings panel to open the About overlay. This sub-overlay shows system information, update management, and HelixScreen branding.
+Tap **About** at the bottom of the Help & About page to open the About overlay. It shows version and system information and HelixScreen branding.
 
 | Item | Description |
 |------|-------------|
 | **HelixScreen Logo & Branding** | HelixScreen logo, "by Preston Brown", copyright notice, and a scrolling contributor marquee |
 | **Printer Name** | The name of your connected printer (set during setup wizard) |
 | **Current Version** | Your installed HelixScreen version |
-| **Update Channel** | Stable or Beta; **Dev** is added when beta features are enabled |
-| **Check for Updates** | Check for and install new versions (on Android, the install step opens the Play Store) |
 | **Klipper** | Installed Klipper version (fetched from Moonraker) |
 | **Moonraker** | Installed Moonraker version |
 | **OS** | Operating system version |
 | **Print Hours** | Total print hours tracked — tap to open the [History Dashboard](../advanced.md) |
 | **Open Source Licenses** | View licenses for all open source libraries used by HelixScreen |
-
-### Checking for Updates
-
-Tap **Check for Updates** to look for a newer release on your selected [update channel](#update-channels). If one is available, an update dialog walks you through installing it. You'll see the following stages:
-
-1. **Update Available** — Shows the new version. Tap **Install** to begin, or **Cancel** to dismiss.
-2. **Downloading...** — A progress bar tracks the download. You can still **Cancel** at this point. The dialog closes straight away, but the download itself keeps running quietly in the background until the current transfer finishes; the partly-downloaded file is then thrown away. If you start another update before that has happened, you'll get an **Update Failed** screen reading **"Previous download still finishing"** — wait a few seconds and tap **Retry**.
-3. **Verifying...** — HelixScreen checks the downloaded file before installing.
-4. **Installing...** — The new version is written into place. **Do not power off your printer** while this is in progress.
-5. **Update installed!** — Confirmation that the new version is in place.
-6. **Hang on, we'll be right back!** — HelixScreen restarts itself to run the new version.
-
-Steps 5 and 6 are each shown only for a moment: the install is already finished by then, and the short pause exists so you can see that it succeeded before the app exits and comes back.
-
-If something goes wrong, an **Update Failed** screen appears with a **Retry** button so you can try again, or **Close** to dismiss.
-
-> **Caution:** Once installation begins, leave the printer powered on until HelixScreen restarts on its own. Interrupting an install can leave HelixScreen in an inconsistent state.
-
-On Android, the install step opens the Play Store.
 
 ### Easter Eggs
 
@@ -109,20 +90,10 @@ On Android, the install step opens the Play Store.
 Tap the **Current Version** row seven times in **Settings > Help & About > About** to toggle beta features.
 
 When beta features are enabled:
-- **Update Channel** selector gains a third entry, **Dev**
+- The **Update Channel** selector in [Updates](updates.md#update-channel) gains a third entry, **Dev**
 - Additional rows appear in the Advanced panel (Configure PRINT_START, Tool Offsets, Belt Tension; some only on printers whose hardware supports them)
 - Tap seven more times to disable
 
-### Update Channels
-
-| Channel | Description |
-|---------|-------------|
-| **Stable** | Recommended. Tested releases only. |
-| **Beta** | Preview builds with new features. May have rough edges. |
-| **Dev** | Development builds. Appears only with beta features enabled, and requires a `dev_url` set in `/var/lib/helixscreen/update_urls.json` (a root-owned file; see [CONFIGURATION](../../CONFIGURATION.md)). |
-
-> **Note:** Selecting the **Dev** channel without a `dev_url` set in `update_urls.json` shows a "Dev channel requires dev_url in update_urls.json" message and won't check for updates. Dev builds are intended for HelixScreen contributors - most users should stay on **Stable** or **Beta**.
-
 ---
 
-[Back to Settings](../settings.md) | [Prev: System](system.md) | [Next: LED Settings](led-settings.md)
+[Back to Settings](../settings.md) | [Prev: Updates](updates.md)

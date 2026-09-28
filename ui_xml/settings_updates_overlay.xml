@@ -54,12 +54,10 @@
              install can actually apply one — updates_unavailable means it cannot,
              in which case the notice below carries the instructions instead) -->
         <lv_obj name="container_install_update" width="100%" style_pad_all="0">
-          <!-- ONE expression, not three stacked bind_flag_if_eq. Each of those
-               installs its own observer that writes the same `hidden` flag, so
-               whichever fires last wins and the other two are advisory: with three
-               of them the row reappeared on a non-updatable install as soon as
-               update_status reached 2. See LVGL9_XML_GUIDE.md, "Expression
-               Conditionals". -->
+          <!-- ONE expression, not three stacked bind_flag_if_eq. Each stacked bind
+               installs its own observer that writes the same `hidden` flag, so the
+               last observer to fire wins and the other conditions are ignored. See
+               LVGL9_XML_GUIDE.md, "Expression Conditionals". -->
           <bind_flag_if cond="show_update_settings eq 1 and updates_unavailable eq 0 and update_status eq 2"
                         flag="hidden" invert="true"/>
           <setting_action_row name="row_install_update"

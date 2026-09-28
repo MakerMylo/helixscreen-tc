@@ -1,6 +1,8 @@
 # Settings: Touch & Input
 
-Reached from **Settings → System → Touch & Input**. Groups every setting that affects how the screen reads finger input — calibration, debug visualization, scroll feel, and long-press behavior.
+**Settings > Touch & Input** groups every setting that affects how the screen reads your finger: calibration, debug visualization, scroll feel, long-press behavior, scroll buttons, and on Android the keyboard and navigation bar.
+
+![Touch & Input settings](../../../images/user/settings-touch-input.png)
 
 ---
 
@@ -75,4 +77,26 @@ Requires a restart to take effect.
 
 ---
 
-[Back to Settings](../settings.md) | [System Settings](system.md) | [Touch Calibration Guide](../touch-calibration.md)
+## System Keyboard *(Android only)*
+
+When on, text fields open Android's native keyboard instead of the built-in on-screen keyboard. Handy on phones and tablets where you already have a preferred keyboard installed.
+
+---
+
+## Keep Navigation Bar *(Android only)*
+
+When on, the Android navigation bar (back / home / recents) stays onscreen at all times. When off (the default), HelixScreen runs full-screen and you swipe up from the bottom edge to reveal the nav bar — it auto-hides after a few seconds. Turn this on if you use 3-button navigation instead of gestures and want the buttons always available. The status bar stays hidden either way.
+
+---
+
+## Scroll Buttons
+
+Show up/down buttons on long lists — off by default. Turn this on if you'd rather tap through a list than drag it, especially on small screens or displays where touch-drag can feel unresponsive.
+
+When enabled, a screen whose content runs longer than fits gets a slim column of up/down arrow buttons along the right edge. The content shifts left slightly to make room, so the buttons never cover anything. The buttons are for paging through a whole screen, so the individual tiles on the home dashboard don't get them - a tile is small enough that the arrows would cover most of what it's showing, and a short drag scrolls it anyway. Each tap scrolls about one screenful, with a little overlap so you don't lose your place. The up button dims when you're already at the top of the list, and the down button dims at the bottom. Lists that already fit on screen don't get buttons — there's nothing to scroll.
+
+Finger-drag scrolling keeps working normally either way; the buttons are just an additional way to get around. If [Animations](appearance.md#animations) is also on, pressing a button glides the list smoothly; with Animations off, it jumps straight to the new position.
+
+---
+
+[Back to Settings](../settings.md) | [Prev: Appearance](appearance.md) | [Next: Sound](sound.md) | [Touch Calibration Guide](../touch-calibration.md)

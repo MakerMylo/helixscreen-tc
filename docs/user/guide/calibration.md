@@ -23,7 +23,7 @@ The Bed Mesh panel has two parts: a 3D visualization of your bed surface on the 
 
 **Probe a new mesh:** tap **Probe** in the panel header. HelixScreen first asks which profile to store the new mesh in. The name starts as `default`, the profile Klipper loads at startup; type another name to keep the new mesh separate. Tap **Start** to probe. When probing finishes, HelixScreen asks whether to save the printer configuration so the mesh survives a restart.
 
-The visualization mode (3D, 2D, or Auto) can be changed in **Settings > Display**.
+The visualization mode (3D, 2D, or Auto) can be changed in **Settings > Appearance > Bed Mesh Render**.
 
 ### Profile Management
 

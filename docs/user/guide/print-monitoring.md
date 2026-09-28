@@ -167,7 +167,7 @@ On other printers the detection settings stay hidden.
 
 ### Settings
 
-Under **Settings > Safety & Notifications**:
+Under **Settings > Safety & Alerts**:
 
 - **Spaghetti Detection** switches detection on or off. It's on by default. On a K2, the first time HelixScreen runs it copies the printer's own AI detection setting, so detection stays off if you had it off in Creality's settings. After that, HelixScreen's switch is the one that counts.
 - **Pause on Detection** decides whether a detection pauses the print or only warns you. It's hidden on the U1, which always pauses by itself.

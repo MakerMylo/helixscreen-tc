@@ -1,6 +1,8 @@
 # Settings: System
 
-The System category covers security, network configuration, privacy settings, and maintenance actions.
+**Settings > System** covers the screen lock, usage data, logging and maintenance actions. Network and printer connection settings live in [Connection](connection.md), and touch settings in [Touch & Input](touch-input.md).
+
+![System settings](../../../images/user/settings-system.png)
 
 ---
 
@@ -21,41 +23,6 @@ Set up a screen lock with a PIN code to prevent unauthorized access to your prin
 When the screen is locked, a full-screen lock overlay appears with a numeric keypad. Enter your PIN and tap the checkmark to unlock. If you enter the wrong PIN, an error message appears briefly. An **Emergency Stop** button remains accessible in the top-right corner of the lock screen while a print is running, so you can always halt the printer in an emergency without unlocking.
 
 The PIN is stored securely as a one-way hash in your settings — the actual digits are never saved in plain text. A factory reset clears all security settings.
-
----
-
-## Network Settings
-
-> Hidden on Android (the OS manages networking).
-
-Tap to open the Network Settings overlay with a two-column layout:
-
-**Left column — Status:**
-- **WiFi** — Toggle on/off, view connection status (SSID, IP address, MAC address, signal strength). Shows a 2.4GHz indicator if your hardware only supports that band.
-- **Ethernet** — View connection status (IP address, MAC address) — read-only, no toggle.
-- **Test Network** — Verify internet connectivity. Disabled when no network is connected.
-
-**Right column — Available Networks:**
-- Scans and lists available WiFi networks with signal strength indicators
-- Tap a network to connect (enter password if needed)
-- **Add Hidden Network** — Connect to a network that doesn't broadcast its SSID
-- **Refresh** button to re-scan (shows a spinner while scanning)
-
-Joining a WiFi network while Ethernet is connected shows a warning that the wired network will be disconnected, then proceeds: some devices have a single network radio and cannot hold both at once (#1542). If a connection fails, the reason is shown with the result. A WiFi radio that an administrator has blocked (for example with `rfkill`) is left blocked: HelixScreen only clears a block on hardware where you have configured WiFi in HelixScreen (#1697).
-
----
-
-## Host
-
-Shows the current Moonraker host address (e.g., `localhost:7125`). Tap to open the **Change Host** dialog where you can enter a new IP address and port to connect to a different printer.
-
-After changing the host, HelixScreen disconnects from the current printer and reconnects to the new one. Host names are looked up again on every reconnect, so a printer whose IP address changed (a router re-lease, for instance) is found again without restarting HelixScreen.
-
----
-
-## Touch & Input
-
-Opens a sub-page that groups all touch-related settings: calibration, debug visualization, jitter filtering, and scroll feel. See [Touch & Input](touch-input.md) for the full reference.
 
 ---
 
@@ -112,4 +79,4 @@ Clears **all** HelixScreen settings and restarts the Setup Wizard. This resets:
 
 ---
 
-[Back to Settings](../settings.md) | [Prev: Safety & Notifications](safety.md) | [Next: Help & About](help-about.md)
+[Back to Settings](../settings.md) | [Prev: Language & Time](language-time.md) | [Next: Updates](updates.md)

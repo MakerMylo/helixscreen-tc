@@ -319,7 +319,7 @@ void FilamentPanel::execute_load() {
   - Access via `MoonrakerAPI::hardware_discovery()`
 - `src/printer/macro_manager.cpp` - HELIX_* macro definitions
 - `include/config.h` - `MacroConfig` struct, `get_macro()` method
-- `ui_xml/settings_display_sound_overlay.xml` - Reference overlay pattern
+- `ui_xml/settings_display_overlay.xml` - Reference overlay pattern
 
 ### Files Created (historical planning list; paths updated to as-built locations)
 - `include/standard_macros.h`
