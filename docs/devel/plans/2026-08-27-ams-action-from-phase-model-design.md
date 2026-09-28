@@ -68,24 +68,95 @@ already comes from the phase model. So the target is *fewer* coarse states, not 
 
 ## Inventory: what has to move
 
-`system_info_.action = ` / `set_action(` call sites, 79 total:
+`system_info_.action = ` / `set_action(` call sites, 91 in the backends (2026-09-27), plus
+three in `ams_subscription_backend.cpp` and `AmsState::set_action()`:
 
 | backend | sites | has a phase model today |
 |---|---|---|
-| `ams_backend_mock.cpp` | 26 | no |
-| `ams_backend_ad5x_ifs.cpp` | 15 | yes |
-| `ams_backend_toolchanger.cpp` | 9 | yes (added in `f6e866600`) |
-| `ams_backend_cfs.cpp` | 9 | no |
+| `ams_backend_mock.cpp` | 25 | no |
+| `ams_backend_ad5x_ifs.cpp` | 22 | yes |
+| `ams_backend_toolchanger.cpp` | 10 | yes |
+| `ams_backend_cfs.cpp` | 9 | internal only (see below) |
 | `ams_backend_ace.cpp` | 9 | no |
 | `ams_backend_afc.cpp` | 6 | narration template |
+| `ams_backend_openams.cpp` | 5 | no |
 | `ams_backend_snapmaker.cpp` | 4 | yes |
 | `ams_backend_happy_hare.cpp` | 1 | narration template |
+| `ams_backend_qidi.cpp` | 1 | no |
 
 Regenerate with:
 
 ```bash
 grep -rc "system_info_.action = \|set_action(" src/printer/ams_backend_*.cpp
 ```
+
+The UI reads more of the enum than the list above says. Counting `AmsAction::` in
+`src/ui/`: ERROR 15, IDLE 12, HEATING 6, LOADING 4, UNLOADING 4, CUTTING 3, FORMING_TIP 3,
+PURGING 2, SELECTING 1, RESETTING 1, PAUSED 1, CHECKING 1. Most of the tail is two places:
+the device operations overlay's status text (`action_to_string`, one string per value) and
+the legacy step bar (`AmsOperationSidebar::get_step_index_for_action`, which maps HEATING,
+CUTTING, FORMING_TIP and PURGING to steps for backends with no model). HEATING also lights
+the path canvas heat glow (`ui_panel_ams.cpp`). Shrinking the enum means retiring those
+first.
+
+## Step 1: the phase vocabulary
+
+`OperationStep::coarse` says what a step looks like to a consumer of the coarse action:
+the kind of work for a step that does some (Heat -> HEATING, Cut -> CUTTING, Feed ->
+LOADING, Retract -> UNLOADING, Purge -> PURGING), and the operation's direction for a step
+that only positions the machine. `OperationStepModel::action_at(index)` reads it by
+**position**, the same index the step bar highlights: nothing reads `phase_id`, and for
+every phased backend today it equals the position.
+
+A projection needs the operation as well as the index, because each `StepOperationType`
+has its own model (the U1's index 3 is Feed on a load and Retract on an unload).
+`AmsState::get_active_step_operation()` is the one the bar is rendering. Index -1 names no
+step, so IDLE, ERROR and PAUSED stay outside the phase model and keep being assigned.
+
+| backend | phases (position: label -> projection) | where the action comes from |
+|---|---|---|
+| Snapmaker U1 | load: 0 Home -> LOADING, 1 Select -> LOADING, 2 Heat -> HEATING, 3 Feed -> LOADING, 4 Purge -> PURGING. unload: 0 Home -> UNLOADING, 1 Select -> UNLOADING, 2 Heat -> HEATING, 3 Retract -> UNLOADING. Preload and manual feed reuse the load model. | `classify_channel_state()`: one action per direction for the whole operation |
+| AD5X IFS | unload: 0 Heat -> HEATING, 1 Cut -> CUTTING, 2 Retract -> UNLOADING. load and swap: 0 Heat -> HEATING, 1 Feed -> LOADING, 2 Purge -> PURGING | `apply_phase_action_locked()` while its tracker runs; hand assignment otherwise |
+| Tool changer | Release -> SELECTING, Dock -> UNLOADING, Pick -> SELECTING, Change -> SELECTING, Grip -> SELECTING (sequence depends on op and on which signals the controller reports) | the `operation` / `state` word per frame |
+| CFS | none published. Its phase tracker synthesizes CUTTING -> UNLOADING -> LOADING -> PURGING into the action, and the bar comes from the legacy action switch. A declared Cut / Retract / Feed / Purge model would project exactly what it assigns today. | `apply_synthesized_action_locked()` + hand assignment |
+| AFC | narration: heat -> HEATING, cut -> CUTTING, unload -> UNLOADING, feed -> LOADING, poop / brush / kick -> PURGING, load -> LOADING (proposed; `ToolchangePhase` has no `coarse` yet) | AFC's status string via `ams_action_from_string()`; the phase comes separately from console `//` lines, so the two can disagree |
+| Happy Hare | narration: heat, form_tip, cut, unload, select, feed, purge, load | `mmu.action` via `ams_action_from_string()`. The phase is looked up FROM the action (`sync_narration_step`), so deriving the action from the phase runs backwards here: stays on direct assignment |
+| ACE | none: firmware reports a status word only | `ams_action_from_string()` |
+| OpenAMS | none: `ready` / `loaded` only | pending and reported actions |
+| QIDI Box | none: a `tool_change` variable and blocked slots | LOADING / IDLE / ERROR from save_variables |
+| Mock | none of its own; simulates every value including CHECKING, PAUSED, RESETTING | 25 hand sites |
+
+### Where the projection and the assignment disagree today
+
+Step 2 declares the projections for the three phased backends and logs at debug (`[AmsSidebar]
+Step N projects X but the backend assigned Y`) wherever they differ. Found by reading:
+
+- **Snapmaker, Heat (both directions):** assigned LOADING / UNLOADING, projects HEATING.
+  Migrating lights the heat glow and "Heating..." on the U1, and gives
+  `detect_step_operation()` a LOADING -> HEATING -> LOADING sequence it has never seen
+  there. Check the bar in `--test` before migrating.
+- **Snapmaker, Purge:** assigned LOADING, projects PURGING. This is the PURGING open item
+  below.
+- **Tool changer, closing Grip frame:** the action goes IDLE on the same frame the phase
+  lands on Grip, so for one frame Grip projects SELECTING against IDLE. Derived, the swap
+  would read busy until the next frame parks the phase at -1.
+- **Tool changer, opening Release frame on our own dispatch:** the action is the sidebar's
+  optimistic HEATING marker, projection SELECTING.
+- **AD5X:** none while its tracker runs. Its tool change, externally started IFS activity
+  and zmod change assign LOADING / UNLOADING / SELECTING with the phase at -1, so nothing
+  projects there. The phase also lags the action at dispatch: HEATING is set at once, the
+  phase only on the first extruder frame.
+- **AFC:** unmeasured. Narration and the status string are independent sources; declaring
+  `coarse` on `ToolchangePhase` is what would make the sidebar log measure it.
+
+Two constraints for the migration:
+
+- `AmsBackendToolChanger::get_operation_step_model()` is not a pure query: it snapshots the
+  latches its later phase resolution depends on. A derivation must not call it; read the
+  model the sidebar already built, or split the snapshot out first.
+- Projecting the U1's Home / Select as SELECTING instead of the direction would hide its
+  bar through them: the U1 uses the default `action_tracks_step_operation()`, which leaves
+  SELECTING out.
 
 ## Suggested sequence
 
@@ -100,7 +171,9 @@ grep -rc "system_info_.action = \|set_action(" src/printer/ams_backend_*.cpp
    permanently if their firmware genuinely reports no phases.
 5. Delete `action_tracks_step_operation()` and the direct assignments that are now dead.
 
-Steps 1 and 2 are worth doing even if the rest stalls.
+Steps 1 and 2 are worth doing even if the rest stalls. Both are on
+`feature/ams-action-from-phases`: step 1 is the vocabulary above, step 2 is `coarse`,
+`action_at()` and the sidebar's debug line.
 
 ## Open item carried over: the PURGING behavior change
 
