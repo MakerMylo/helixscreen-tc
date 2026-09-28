@@ -104,7 +104,7 @@ void AboutSettingsOverlay::init_subjects() {
                                   "\xe2\x80\x94", "print_hours_value", subjects_);
 
         // Copyright with compile-year range
-        const char* compile_year = __DATE__ + 7; // last 4 chars of "Mon DD YYYY"
+        const char* compile_year = &__DATE__[7]; // last 4 chars of "Mon DD YYYY"
         snprintf(about_copyright_buf_, sizeof(about_copyright_buf_),
                  "\xc2\xa9 2025\xe2\x80\x93%s 356C LLC", compile_year);
         UI_MANAGED_SUBJECT_STRING(about_copyright_subject_, about_copyright_buf_,
