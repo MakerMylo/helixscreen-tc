@@ -12,15 +12,16 @@
     <px name="keypad_btn_height_large" value="84"/>
 
     <!-- keypad_width: Panel width (right-aligned overlay) -->
-    <px name="keypad_width_tiny" value="180"/>
+    <px name="keypad_width_tiny" value="280"/>
     <px name="keypad_width_small" value="280"/>
     <px name="keypad_width_medium" value="340"/>
     <px name="keypad_width_large" value="400"/>
 
   </consts>
   <view name="keypad_panel"
-        extends="lv_obj" width="#keypad_width" height="100%" align="right_mid" style_pad_all="0" style_border_width="0"
-        style_bg_opa="255" style_bg_color="#card_bg" scrollable="false" flex_flow="column" hidden="true">
+        extends="lv_obj" width="#keypad_width" height="100%" style_max_width="100%" align="right_mid" style_pad_all="0"
+        style_border_width="0" style_bg_opa="255" style_bg_color="#card_bg" scrollable="false" flex_flow="column"
+        hidden="true">
     <!-- Header: no title, just back arrow and OK button -->
     <header_bar name="overlay_header"
                 title="" action_button_text="Set " action_button_text_tag="Set " hide_action_button="false"
