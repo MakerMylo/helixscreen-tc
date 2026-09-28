@@ -170,7 +170,7 @@ class InertBackend : public helix::AmsBackendMock {
 TEST_CASE("Characterization: Happy Hare runout event, filament at the toolhead",
           "[ams][happy_hare][error-center][characterization][1250]") {
     helix::HhFaultEventCharHelper hh;
-    hh.feed_mmu(nlohmann::json{{"action", "Error"},
+    hh.feed_mmu(nlohmann::json{{"print_state", "pause_locked"},
                                {"filament_pos", 8},
                                {"filament", "Loaded"},
                                {"reason_for_pause",
@@ -199,7 +199,7 @@ TEST_CASE("Characterization: Happy Hare runout event, filament at the toolhead",
 TEST_CASE("Characterization: Happy Hare clog event, nothing at the toolhead",
           "[ams][happy_hare][error-center][characterization][1250]") {
     helix::HhFaultEventCharHelper hh;
-    hh.feed_mmu(nlohmann::json{{"action", "Error"},
+    hh.feed_mmu(nlohmann::json{{"print_state", "pause_locked"},
                                {"filament_pos", 0}, // unloaded
                                {"filament", "Unloaded"},
                                {"reason_for_pause", "Clog detected on gate 2"}});
@@ -224,30 +224,24 @@ TEST_CASE("Characterization: Happy Hare clog event, nothing at the toolhead",
 TEST_CASE("Characterization: Happy Hare falls back to the !! text when HH gives no reason",
           "[ams][happy_hare][error-center][characterization][1250]") {
     helix::HhFaultEventCharHelper hh;
-    hh.feed_mmu(nlohmann::json{{"action", "Error"}, {"reason_for_pause", ""}});
+    hh.feed_mmu(nlohmann::json{{"print_state", "pause_locked"}, {"reason_for_pause", ""}});
 
     helix::ClassifyContext ctx;
     ctx.is_paused = true;
 
     SECTION("the single space after !! is consumed") {
-        auto e = hh.classify_error("!! Gate 1 jammed", ctx);
+        auto e = hh.classify_error("!! MMU issue detected. Gate 1 jammed", ctx);
         REQUIRE(e.has_value());
-        CHECK(e->detail == "Gate 1 jammed");
+        CHECK(e->detail == "MMU issue detected. Gate 1 jammed");
     }
     SECTION("no space after !! means nothing extra is eaten") {
-        auto e = hh.classify_error("!!Gate 1 jammed", ctx);
+        auto e = hh.classify_error("!!MMU issue detected. Gate 1 jammed", ctx);
         REQUIRE(e.has_value());
-        CHECK(e->detail == "Gate 1 jammed");
+        CHECK(e->detail == "MMU issue detected. Gate 1 jammed");
     }
-    SECTION("a bare !! yields an empty detail rather than throwing") {
-        auto e = hh.classify_error("!!", ctx);
-        REQUIRE(e.has_value());
-        CHECK(e->detail.empty());
-    }
-    SECTION("!! plus a lone space keeps the space") {
-        auto e = hh.classify_error("!! ", ctx);
-        REQUIRE(e.has_value());
-        CHECK(e->detail == " ");
+    SECTION("a bare !! names no HH fault and is left to the generic classifier") {
+        CHECK_FALSE(hh.classify_error("!!", ctx).has_value());
+        CHECK_FALSE(hh.classify_error("!! ", ctx).has_value());
     }
 }
 

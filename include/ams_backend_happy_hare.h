@@ -189,6 +189,7 @@ class AmsBackendHappyHare : public AmsSubscriptionBackend {
     // Error-center: classify a pausing MMU fault into a recovery ErrorEvent.
     [[nodiscard]] std::optional<helix::ErrorEvent>
     classify_error(const std::string& raw_line, const helix::ClassifyContext& ctx) const override;
+    [[nodiscard]] bool duplicates_firmware_prompt(const std::string& title) const override;
 
     [[nodiscard]] std::vector<ToolchangePhase>
     toolchange_phase_template(StepOperationType op) const override;
