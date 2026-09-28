@@ -329,6 +329,13 @@ class AmsBackend {
         return std::nullopt;
     }
 
+    /// Whether the firmware prompt titled @p title is this backend's own dialog
+    /// for a fault the recovery popup already shows. The presenter closes such a
+    /// prompt when it raises the popup, so one fault reads as one dialog.
+    [[nodiscard]] virtual bool duplicates_firmware_prompt(const std::string& /*title*/) const {
+        return false;
+    }
+
     /// Channel B: the current actionable fault, derived from backend STATUS
     /// rather than from a console line. Consulted only by AmsErrorBridge, and
     /// only on the rising edge into AmsAction::ERROR — a backend that never

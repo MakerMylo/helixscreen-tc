@@ -233,6 +233,22 @@ void RecoveryModalPresenter::present(const helix::ErrorEvent& e) {
         spdlog::warn("[RecoveryModal] show_prompt failed; falling back to alert");
         shown_detail_.clear();
         ui_notification_printer_fault(modal_title_for(e), e.detail.c_str());
+        return;
+    }
+
+    // A filament system's own error dialog for this fault would sit behind ours
+    // with a subset of its buttons.
+    if (helix::ActionPromptManager::is_showing()) {
+        const std::string title = helix::ActionPromptManager::current_prompt_name();
+        AmsState& ams = AmsState::instance();
+        for (int i = 0; i < ams.backend_count(); ++i) {
+            const AmsBackend* backend = ams.get_backend(i);
+            if (backend && backend->duplicates_firmware_prompt(title)) {
+                spdlog::debug("[RecoveryModal] closing duplicate firmware prompt: {}", title);
+                helix::ActionPromptManager::dismiss_active();
+                break;
+            }
+        }
     }
 }
 
