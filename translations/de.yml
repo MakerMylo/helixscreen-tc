@@ -223,8 +223,8 @@ translations:
     aufgetreten.
   # Source: probe_accuracy_modal.xml:90
   An error occurred.: 'Ein Fehler ist aufgetreten.'
-  ? An internal error occurred. The app continues running — please send a debug bundle from Settings > Help & About if it repeats.
-  : Ein interner Fehler ist aufgetreten. Die App läuft weiter – bitte senden Sie ein Debug-Paket über Einstellungen > Hilfe & Über, falls er erneut auftritt.
+  ? An internal error occurred. The app continues running. Please send a debug bundle from Settings > Help & About if it repeats.
+  : Ein interner Fehler ist aufgetreten. Die App läuft weiter. Bitte senden Sie ein Debug-Paket über Einstellungen > Hilfe & Über, falls er erneut auftritt.
   An unexpected printer error occurred.: Ein unerwarteter Druckerfehler ist aufgetreten.
   An update is available: Eine Aktualisierung ist verfügbar
   Analyzing data...: Analysiere Daten...

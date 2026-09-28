@@ -202,7 +202,7 @@
   <translation tag="An error occurred during probing." ru="Во время зондирования произошла ошибка."/>
   <translation tag="An error occurred while loading filament." ru="Во время загрузки филамента произошла ошибка."/>
   <translation tag="An error occurred." ru="Произошла ошибка."/>
-  <translation tag="An internal error occurred. The app continues running — please send a debug bundle from Settings &gt; Help &amp; About if it repeats." ru="Произошла внутренняя ошибка. Приложение продолжает работать — отправьте отладочный пакет из «Настройки &gt; Помощь и о программе», если она повторится."/>
+  <translation tag="An internal error occurred. The app continues running. Please send a debug bundle from Settings &gt; Help &amp; About if it repeats." ru="Произошла внутренняя ошибка. Приложение продолжает работать. Отправьте отладочный пакет из «Настройки &gt; Помощь и о программе», если она повторится."/>
   <translation tag="An unexpected printer error occurred." ru="Произошла непредвиденная ошибка принтера."/>
   <translation tag="An update is available" ru="Доступно обновление"/>
   <translation tag="Analyzing data..." ru="Анализ данных..."/>

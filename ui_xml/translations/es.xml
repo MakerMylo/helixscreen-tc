@@ -202,7 +202,7 @@
   <translation tag="An error occurred during probing." es="Ocurrió un error durante el sondeo."/>
   <translation tag="An error occurred while loading filament." es="Ocurrió un error al cargar el filamento."/>
   <translation tag="An error occurred." es="Se produjo un error."/>
-  <translation tag="An internal error occurred. The app continues running — please send a debug bundle from Settings &gt; Help &amp; About if it repeats." es="Ocurrió un error interno. La aplicación sigue funcionando — envíe un paquete de depuración desde Ajustes &gt; Ayuda y acerca de si se repite."/>
+  <translation tag="An internal error occurred. The app continues running. Please send a debug bundle from Settings &gt; Help &amp; About if it repeats." es="Ocurrió un error interno. La aplicación sigue funcionando. Envíe un paquete de depuración desde Ajustes &gt; Ayuda y acerca de si se repite."/>
   <translation tag="An unexpected printer error occurred." es="Ocurrió un error inesperado en la impresora."/>
   <translation tag="An update is available" es="Hay una actualización disponible"/>
   <translation tag="Analyzing data..." es="Analizando datos..."/>

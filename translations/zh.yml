@@ -203,8 +203,8 @@ translations:
   An error occurred while loading filament.: 加载耗材时发生错误。
   # Source: probe_accuracy_modal.xml:90
   An error occurred.: '发生错误。'
-  ? An internal error occurred. The app continues running — please send a debug bundle from Settings > Help & About if it repeats.
-  : 发生了内部错误。应用程序继续运行 — 如果反复出现，请从设置 > 帮助与关于发送调试捆绑包。
+  ? An internal error occurred. The app continues running. Please send a debug bundle from Settings > Help & About if it repeats.
+  : 发生了内部错误。应用程序继续运行。如果反复出现，请从设置 > 帮助与关于发送调试捆绑包。
   An unexpected printer error occurred.: 发生了意外的打印机错误。
   An update is available: 有可用更新
   Analyzing data...: 正在分析数据...

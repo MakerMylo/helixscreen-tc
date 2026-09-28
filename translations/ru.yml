@@ -216,8 +216,8 @@ translations:
     ошибка.
   # Source: probe_accuracy_modal.xml:90
   An error occurred.: 'Произошла ошибка.'
-  ? An internal error occurred. The app continues running — please send a debug bundle from Settings > Help & About if it repeats.
-  : Произошла внутренняя ошибка. Приложение продолжает работать — отправьте отладочный пакет из «Настройки > Помощь и о программе», если она повторится.
+  ? An internal error occurred. The app continues running. Please send a debug bundle from Settings > Help & About if it repeats.
+  : Произошла внутренняя ошибка. Приложение продолжает работать. Отправьте отладочный пакет из «Настройки > Помощь и о программе», если она повторится.
   An unexpected printer error occurred.: Произошла непредвиденная ошибка принтера.
   An update is available: Доступно обновление
   Analyzing data...: Анализ данных...

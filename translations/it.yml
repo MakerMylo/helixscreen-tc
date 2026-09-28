@@ -221,8 +221,8 @@ translations:
     caricamento del filamento.
   # Source: probe_accuracy_modal.xml:90
   An error occurred.: 'Si è verificato un errore.'
-  ? An internal error occurred. The app continues running — please send a debug bundle from Settings > Help & About if it repeats.
-  : Si è verificato un errore interno. L'app continua a funzionare — invia un debug bundle da Impostazioni > Aiuto e info se si ripete.
+  ? An internal error occurred. The app continues running. Please send a debug bundle from Settings > Help & About if it repeats.
+  : Si è verificato un errore interno. L'app continua a funzionare. Invia un debug bundle da Impostazioni > Aiuto e info se si ripete.
   An unexpected printer error occurred.: Si è verificato un errore imprevisto della
     stampante.
   An update is available: È disponibile un aggiornamento

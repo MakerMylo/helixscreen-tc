@@ -202,7 +202,7 @@
   <translation tag="An error occurred during probing." zh="探测过程中发生错误。"/>
   <translation tag="An error occurred while loading filament." zh="加载耗材时发生错误。"/>
   <translation tag="An error occurred." zh="发生错误。"/>
-  <translation tag="An internal error occurred. The app continues running — please send a debug bundle from Settings &gt; Help &amp; About if it repeats." zh="发生了内部错误。应用程序继续运行 — 如果反复出现，请从设置 &gt; 帮助与关于发送调试捆绑包。"/>
+  <translation tag="An internal error occurred. The app continues running. Please send a debug bundle from Settings &gt; Help &amp; About if it repeats." zh="发生了内部错误。应用程序继续运行。如果反复出现，请从设置 &gt; 帮助与关于发送调试捆绑包。"/>
   <translation tag="An unexpected printer error occurred." zh="发生了意外的打印机错误。"/>
   <translation tag="An update is available" zh="有可用更新"/>
   <translation tag="Analyzing data..." zh="正在分析数据..."/>

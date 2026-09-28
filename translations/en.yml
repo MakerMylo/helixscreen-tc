@@ -213,8 +213,8 @@ translations:
   An error occurred while loading filament.: An error occurred while loading filament.
   # Source: probe_accuracy_modal.xml:90
   An error occurred.: An error occurred.
-  ? An internal error occurred. The app continues running — please send a debug bundle from Settings > Help & About if it repeats.
-  : An internal error occurred. The app continues running — please send a debug bundle from Settings > Help & About if it repeats.
+  ? An internal error occurred. The app continues running. Please send a debug bundle from Settings > Help & About if it repeats.
+  : An internal error occurred. The app continues running. Please send a debug bundle from Settings > Help & About if it repeats.
   An unexpected printer error occurred.: An unexpected printer error occurred.
   An update is available: An update is available
   Analyzing data...: Analyzing data...

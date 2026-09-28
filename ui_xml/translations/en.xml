@@ -202,7 +202,7 @@
   <translation tag="An error occurred during probing." en="An error occurred during probing."/>
   <translation tag="An error occurred while loading filament." en="An error occurred while loading filament."/>
   <translation tag="An error occurred." en="An error occurred."/>
-  <translation tag="An internal error occurred. The app continues running — please send a debug bundle from Settings &gt; Help &amp; About if it repeats." en="An internal error occurred. The app continues running — please send a debug bundle from Settings &gt; Help &amp; About if it repeats."/>
+  <translation tag="An internal error occurred. The app continues running. Please send a debug bundle from Settings &gt; Help &amp; About if it repeats." en="An internal error occurred. The app continues running. Please send a debug bundle from Settings &gt; Help &amp; About if it repeats."/>
   <translation tag="An unexpected printer error occurred." en="An unexpected printer error occurred."/>
   <translation tag="An update is available" en="An update is available"/>
   <translation tag="Analyzing data..." en="Analyzing data..."/>

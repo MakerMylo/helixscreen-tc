@@ -4428,8 +4428,8 @@ int Application::main_loop() {
             try {
                 ToastManager::instance().show(
                     ToastSeverity::ERROR,
-                    lv_tr("An internal error occurred. The app continues running — "
-                          "please send a debug bundle from Settings > Help & About if it "
+                    lv_tr("An internal error occurred. The app continues running. Please "
+                          "send a debug bundle from Settings > Help & About if it "
                           "repeats."),
                     8000);
             } catch (...) {

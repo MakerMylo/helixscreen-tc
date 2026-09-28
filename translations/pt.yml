@@ -220,8 +220,8 @@ translations:
   An error occurred while loading filament.: Ocorreu um erro ao carregar o filamento.
   # Source: probe_accuracy_modal.xml:90
   An error occurred.: 'Ocorreu um erro.'
-  ? An internal error occurred. The app continues running — please send a debug bundle from Settings > Help & About if it repeats.
-  : Ocorreu um erro interno. O aplicativo continua em execução — envie um pacote de depuração em Configurações > Ajuda e sobre se isso se repetir.
+  ? An internal error occurred. The app continues running. Please send a debug bundle from Settings > Help & About if it repeats.
+  : Ocorreu um erro interno. O aplicativo continua em execução. Envie um pacote de depuração em Configurações > Ajuda e sobre se isso se repetir.
   An unexpected printer error occurred.: Ocorreu um erro inesperado na impressora.
   An update is available: Uma atualização está disponível
   Analyzing data...: Analisando dados...

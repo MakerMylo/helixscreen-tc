@@ -223,8 +223,8 @@ translations:
     du filament.
   # Source: probe_accuracy_modal.xml:90
   An error occurred.: 'Une erreur s''est produite.'
-  ? An internal error occurred. The app continues running — please send a debug bundle from Settings > Help & About if it repeats.
-  : Une erreur interne s'est produite. L'application continue de fonctionner — veuillez envoyer un paquet de débogage depuis Paramètres > Aide et à propos si cela se reproduit.
+  ? An internal error occurred. The app continues running. Please send a debug bundle from Settings > Help & About if it repeats.
+  : Une erreur interne s'est produite. L'application continue de fonctionner. Veuillez envoyer un paquet de débogage depuis Paramètres > Aide et à propos si cela se reproduit.
   An unexpected printer error occurred.: Une erreur inattendue de l'imprimante s'est
     produite.
   An update is available: Une mise à jour est disponible

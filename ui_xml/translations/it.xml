@@ -202,7 +202,7 @@
   <translation tag="An error occurred during probing." it="Si è verificato un errore durante il sondaggio."/>
   <translation tag="An error occurred while loading filament." it="Si è verificato un errore durante il caricamento del filamento."/>
   <translation tag="An error occurred." it="Si è verificato un errore."/>
-  <translation tag="An internal error occurred. The app continues running — please send a debug bundle from Settings &gt; Help &amp; About if it repeats." it="Si è verificato un errore interno. L&apos;app continua a funzionare — invia un debug bundle da Impostazioni &gt; Aiuto e info se si ripete."/>
+  <translation tag="An internal error occurred. The app continues running. Please send a debug bundle from Settings &gt; Help &amp; About if it repeats." it="Si è verificato un errore interno. L&apos;app continua a funzionare. Invia un debug bundle da Impostazioni &gt; Aiuto e info se si ripete."/>
   <translation tag="An unexpected printer error occurred." it="Si è verificato un errore imprevisto della stampante."/>
   <translation tag="An update is available" it="È disponibile un aggiornamento"/>
   <translation tag="Analyzing data..." it="Analisi dei dati..."/>
