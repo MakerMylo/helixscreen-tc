@@ -1501,6 +1501,7 @@ translations:
   Homing Y...: Referenzfahrt Y...
   Homing Z...: Referenzfahrt Z...
   Homing all axes...: Referenzfahrt alle Achsen...
+  Homing and moving the plate...: 'Referenzfahrt und Heizbett wird bewegt...'
   Homing axes...: Achsen referenzieren...
   Homing complete: Referenzfahrt abgeschlossen
   'Homing failed: ': 'Referenzfahrt fehlgeschlagen: '
@@ -3253,6 +3254,7 @@ translations:
   The nozzle extrudes a few short test moves in a corner, away from the print area, and repeats until it agrees with itself.: 'Die Düse macht ein paar kurze Testbewegungen in einer Ecke, abseits des Druckbereichs, und wiederholt sie, bis die Werte übereinstimmen.'
   The plate and the spools are still hot. Use gloves.: Heizbett und Spulen sind noch heiß. Trage Handschuhe.
 
+  The plate finishes its current move, but drying will not start.: 'Das Heizbett beendet die laufende Bewegung, aber die Trocknung startet nicht.'
   ? The print is paused. Changing tools now moves the toolhead and swaps the filament at the nozzle. Resume the print once the change finishes.
   : Der Druck ist pausiert. Ein Werkzeugwechsel bewegt jetzt den Werkzeugkopf und
     tauscht das Filament an der Düse. Setzen Sie den Druck fort, sobald der Wechsel
@@ -3301,6 +3303,7 @@ translations:
   The unit reported a fault with no further detail. Restart the printer if it repeats: Die Einheit hat einen Fehler ohne nähere Angaben gemeldet. Bei Wiederholung den Drucker neu starten
   The unit's onboard storage has failed. The CFS mainboard needs replacing: Der interne Speicher der Einheit ist ausgefallen. Die CFS-Hauptplatine muss ersetzt werden
   'The unload did not start: unload by hand, then start again': 'Das Entladen hat nicht begonnen: Entlade von Hand und starte dann erneut'
+  The unload finishes on its own, but the plate will not move.: 'Das Entladen läuft zu Ende, aber das Heizbett bewegt sich nicht.'
   Theme: Thema
   Theme Colors: Themenfarben
   Theme Preset: Thema-Voreinstellung
@@ -3547,6 +3550,7 @@ translations:
   Unloading Start Speed: 'Startgeschwindigkeit beim Entladen'
   Unloading before bypass...: Entladen vor Bypass...
   Unloading filament: 'Filament wird entladen'
+  Unloading filament before drying...: 'Filament wird vor dem Trocknen entladen...'
   Unloading filament...: Filament wird entladen...
   Unloads After Print: Entlädt nach dem Druck
   Unlock: Entsperren

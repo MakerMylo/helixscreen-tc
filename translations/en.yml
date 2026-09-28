@@ -1440,6 +1440,7 @@ translations:
   Homing Y...: Homing Y...
   Homing Z...: Homing Z...
   Homing all axes...: Homing all axes...
+  Homing and moving the plate...: Homing and moving the plate...
   'Homing axes...': 'Homing axes...'
   Homing complete: Homing complete
   'Homing failed: ': 'Homing failed: '
@@ -3147,6 +3148,7 @@ translations:
   : The loaded spool is {}, but this file was sliced for {}. Filled filament runs at a lower flow rate and needs a hardened nozzle.
   The nozzle extrudes a few short test moves in a corner, away from the print area, and repeats until it agrees with itself.: The nozzle extrudes a few short test moves in a corner, away from the print area, and repeats until it agrees with itself.
   The plate and the spools are still hot. Use gloves.: The plate and the spools are still hot. Use gloves.
+  The plate finishes its current move, but drying will not start.: The plate finishes its current move, but drying will not start.
   ? The print is paused. Changing tools now moves the toolhead and swaps the filament at the nozzle. Resume the print once the change finishes.
   : The print is paused. Changing tools now moves the toolhead and swaps the filament at the nozzle. Resume the print once the change finishes.
   The printer applied this value and keeps it for this tool.: 'The printer applied this value and keeps it for this tool.'
@@ -3185,6 +3187,7 @@ translations:
   The unit reported a fault with no further detail. Restart the printer if it repeats: The unit reported a fault with no further detail. Restart the printer if it repeats
   The unit's onboard storage has failed. The CFS mainboard needs replacing: The unit's onboard storage has failed. The CFS mainboard needs replacing
   'The unload did not start: unload by hand, then start again': 'The unload did not start: unload by hand, then start again'
+  The unload finishes on its own, but the plate will not move.: The unload finishes on its own, but the plate will not move.
   Theme: Theme
   Theme Colors: Theme Colors
   Theme Preset: Theme Preset
@@ -3426,6 +3429,7 @@ translations:
   Unloading Start Speed: Unloading Start Speed
   Unloading before bypass...: Unloading before bypass...
   Unloading filament: Unloading filament
+  Unloading filament before drying...: Unloading filament before drying...
   Unloading filament...: Unloading filament...
   Unloads After Print: Unloads After Print
   Unlock: Unlock

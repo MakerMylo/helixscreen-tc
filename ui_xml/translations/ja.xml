@@ -1344,6 +1344,7 @@
   <translation tag="Homing Y..." ja="Y軸をホーミング中..."/>
   <translation tag="Homing Z..." ja="Z軸をホーミング中..."/>
   <translation tag="Homing all axes..." ja="全軸をホーミング中..."/>
+  <translation tag="Homing and moving the plate..." ja="ホーミングしてベッドを移動中..."/>
   <translation tag="Homing axes..." ja="軸をホーミング中..."/>
   <translation tag="Homing complete" ja="ホーミング完了"/>
   <translation tag="Homing failed: " ja="ホーミングに失敗: "/>
@@ -2901,6 +2902,7 @@
   <translation tag="The loaded spool is {}, but this file was sliced for {}. Filled filament runs at a lower flow rate and needs a hardened nozzle." ja="装填中のスプールは {} ですが、このファイルは {} 用にスライスされています。充填材入りフィラメントはフローレートが低くなり、硬化ノズルが必要です。"/>
   <translation tag="The nozzle extrudes a few short test moves in a corner, away from the print area, and repeats until it agrees with itself." ja="ノズルは印刷領域から離れた隅で短いテスト移動を数回行い、結果が一致するまで繰り返します。"/>
   <translation tag="The plate and the spools are still hot. Use gloves." ja="ベッドとスプールはまだ熱いです。手袋を使ってください。"/>
+  <translation tag="The plate finishes its current move, but drying will not start." ja="ベッドは現在の移動を完了しますが、乾燥は開始しません。"/>
   <translation tag="The print is paused. Changing tools now moves the toolhead and swaps the filament at the nozzle. Resume the print once the change finishes." ja="印刷は一時停止中です。ここでツールを交換すると、ツールヘッドが移動してノズルのフィラメントが入れ替わります。交換が完了したら印刷を再開してください。"/>
   <translation tag="The printer applied this value and keeps it for this tool." ja="プリンターはこの値を適用し、このツールに保存しました。"/>
   <translation tag="The printer extrudes in a corner and repeats until the readings agree. You do not judge anything by eye." ja="プリンターは隅で押出しを行い、測定値が一致するまで繰り返します。目視での判断は不要です。"/>
@@ -2930,6 +2932,7 @@
   <translation tag="The unit reported a fault with no further detail. Restart the printer if it repeats" ja="ユニットが詳細不明の障害を報告しました。繰り返す場合はプリンターを再起動してください"/>
   <translation tag="The unit&apos;s onboard storage has failed. The CFS mainboard needs replacing" ja="ユニットの内蔵ストレージが故障しました。CFS のメインボードの交換が必要です"/>
   <translation tag="The unload did not start: unload by hand, then start again" ja="排出が始まりませんでした: 手で排出してから、もう一度始めてください"/>
+  <translation tag="The unload finishes on its own, but the plate will not move." ja="排出はそのまま完了しますが、ベッドは移動しません。"/>
   <translation tag="Theme" ja="テーマ"/>
   <translation tag="Theme Colors" ja="テーマカラー"/>
   <translation tag="Theme Preset" ja="テーマプリセット"/>
@@ -3131,6 +3134,7 @@
   <translation tag="Unloading Start Speed" ja="アンロード開始速度"/>
   <translation tag="Unloading before bypass..." ja="バイパス前にアンロード中..."/>
   <translation tag="Unloading filament" ja="フィラメントを取り出しています"/>
+  <translation tag="Unloading filament before drying..." ja="乾燥前にフィラメントを排出中..."/>
   <translation tag="Unloading filament..." ja="フィラメントを排出中..."/>
   <translation tag="Unloads After Print" ja="印刷後にアンロード"/>
   <translation tag="Unlock" ja="ロック解除"/>

@@ -1344,6 +1344,7 @@
   <translation tag="Homing Y..." ru="Парковка Y..."/>
   <translation tag="Homing Z..." ru="Парковка Z..."/>
   <translation tag="Homing all axes..." ru="Парковка всех осей..."/>
+  <translation tag="Homing and moving the plate..." ru="Парковка и перемещение стола..."/>
   <translation tag="Homing axes..." ru="Парковка осей..."/>
   <translation tag="Homing complete" ru="Парковка завершена"/>
   <translation tag="Homing failed: " ru="Парковка не удалась: "/>
@@ -2901,6 +2902,7 @@
   <translation tag="The loaded spool is {}, but this file was sliced for {}. Filled filament runs at a lower flow rate and needs a hardened nozzle." ru="Загружена катушка {}, но файл нарезан для {}. Филамент с наполнителем печатается с меньшим потоком и требует закалённого сопла."/>
   <translation tag="The nozzle extrudes a few short test moves in a corner, away from the print area, and repeats until it agrees with itself." ru="Сопло делает несколько коротких тестовых перемещений в углу, в стороне от зоны печати, и повторяет их до сходимости."/>
   <translation tag="The plate and the spools are still hot. Use gloves." ru="Стол и катушки ещё горячие. Используйте перчатки."/>
+  <translation tag="The plate finishes its current move, but drying will not start." ru="Стол завершит текущее перемещение, но сушка не начнётся."/>
   <translation tag="The print is paused. Changing tools now moves the toolhead and swaps the filament at the nozzle. Resume the print once the change finishes." ru="Печать на паузе. Смена инструмента сейчас переместит печатающую головку и заменит филамент в сопле. Возобновите печать после завершения смены."/>
   <translation tag="The printer applied this value and keeps it for this tool." ru="Принтер применил это значение и сохранил его для этого инструмента."/>
   <translation tag="The printer extrudes in a corner and repeats until the readings agree. You do not judge anything by eye." ru="Принтер выдавливает пластик в углу и повторяет, пока показания не сойдутся. Ничего не нужно оценивать на глаз."/>
@@ -2930,6 +2932,7 @@
   <translation tag="The unit reported a fault with no further detail. Restart the printer if it repeats" ru="Блок сообщил о неисправности без подробностей. Если повторится, перезапустите принтер"/>
   <translation tag="The unit&apos;s onboard storage has failed. The CFS mainboard needs replacing" ru="Встроенная память блока вышла из строя. Требуется замена материнской платы CFS"/>
   <translation tag="The unload did not start: unload by hand, then start again" ru="Выгрузка не началась: выгрузите вручную и начните заново"/>
+  <translation tag="The unload finishes on its own, but the plate will not move." ru="Выгрузка завершится сама, но стол не будет перемещаться."/>
   <translation tag="Theme" ru="Тема"/>
   <translation tag="Theme Colors" ru="Цвета темы"/>
   <translation tag="Theme Preset" ru="Пресет темы"/>
@@ -3131,6 +3134,7 @@
   <translation tag="Unloading Start Speed" ru="Начальная скорость выгрузки"/>
   <translation tag="Unloading before bypass..." ru="Выгрузка перед байпасом..."/>
   <translation tag="Unloading filament" ru="Выгрузка филамента"/>
+  <translation tag="Unloading filament before drying..." ru="Выгрузка филамента перед сушкой..."/>
   <translation tag="Unloading filament..." ru="Выгрузка филамента..."/>
   <translation tag="Unloads After Print" ru="Выгрузка после печати"/>
   <translation tag="Unlock" ru="Разблокировать"/>

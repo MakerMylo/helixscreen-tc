@@ -1344,6 +1344,7 @@
   <translation tag="Homing Y..." es="Posicionando Y..."/>
   <translation tag="Homing Z..." es="Posicionando Z..."/>
   <translation tag="Homing all axes..." es="Posicionando todos los ejes..."/>
+  <translation tag="Homing and moving the plate..." es="Posicionando y moviendo la cama..."/>
   <translation tag="Homing axes..." es="Posicionando ejes..."/>
   <translation tag="Homing complete" es="Posicionamiento completado"/>
   <translation tag="Homing failed: " es="Falló el homing: "/>
@@ -2901,6 +2902,7 @@
   <translation tag="The loaded spool is {}, but this file was sliced for {}. Filled filament runs at a lower flow rate and needs a hardened nozzle." es="La bobina cargada es {}, pero este archivo se laminó para {}. El filamento con relleno funciona con un caudal menor y necesita una boquilla endurecida."/>
   <translation tag="The nozzle extrudes a few short test moves in a corner, away from the print area, and repeats until it agrees with itself." es="La boquilla hace unos movimientos de prueba cortos en una esquina, lejos de la zona de impresión, y repite hasta que los valores coinciden."/>
   <translation tag="The plate and the spools are still hot. Use gloves." es="La cama y las bobinas siguen calientes. Usa guantes."/>
+  <translation tag="The plate finishes its current move, but drying will not start." es="La cama termina su movimiento actual, pero el secado no empezará."/>
   <translation tag="The print is paused. Changing tools now moves the toolhead and swaps the filament at the nozzle. Resume the print once the change finishes." es="La impresión está pausada. Cambiar de herramienta ahora mueve el cabezal y cambia el filamento en la boquilla. Reanude la impresión una vez que el cambio termine."/>
   <translation tag="The printer applied this value and keeps it for this tool." es="La impresora aplicó este valor y lo conserva para esta herramienta."/>
   <translation tag="The printer extrudes in a corner and repeats until the readings agree. You do not judge anything by eye." es="La impresora extruye en una esquina y repite hasta que las lecturas coinciden. Tú no juzgas nada a ojo."/>
@@ -2930,6 +2932,7 @@
   <translation tag="The unit reported a fault with no further detail. Restart the printer if it repeats" es="La unidad informó de un fallo sin más detalles. Reinicie la impresora si se repite"/>
   <translation tag="The unit&apos;s onboard storage has failed. The CFS mainboard needs replacing" es="El almacenamiento interno de la unidad ha fallado. Hay que sustituir la placa base del CFS"/>
   <translation tag="The unload did not start: unload by hand, then start again" es="La descarga no empezó: descarga a mano y vuelve a empezar"/>
+  <translation tag="The unload finishes on its own, but the plate will not move." es="La descarga termina por sí sola, pero la cama no se moverá."/>
   <translation tag="Theme" es="Tema"/>
   <translation tag="Theme Colors" es="Colores del Tema"/>
   <translation tag="Theme Preset" es="Preajuste de Tema"/>
@@ -3131,6 +3134,7 @@
   <translation tag="Unloading Start Speed" es="Velocidad inicial de descarga"/>
   <translation tag="Unloading before bypass..." es="Descargando antes del bypass..."/>
   <translation tag="Unloading filament" es="Descargando filamento"/>
+  <translation tag="Unloading filament before drying..." es="Descargando filamento antes del secado..."/>
   <translation tag="Unloading filament..." es="Descargando filamento..."/>
   <translation tag="Unloads After Print" es="Descarga después de imprimir"/>
   <translation tag="Unlock" es="Desbloquear"/>

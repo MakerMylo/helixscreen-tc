@@ -1344,6 +1344,7 @@
   <translation tag="Homing Y..." zh="正在归位 Y..."/>
   <translation tag="Homing Z..." zh="正在归位 Z..."/>
   <translation tag="Homing all axes..." zh="正在归位所有轴..."/>
+  <translation tag="Homing and moving the plate..." zh="正在归位并移动热床..."/>
   <translation tag="Homing axes..." zh="正在归位各轴..."/>
   <translation tag="Homing complete" zh="归位完成"/>
   <translation tag="Homing failed: " zh="回零失败: "/>
@@ -2901,6 +2902,7 @@
   <translation tag="The loaded spool is {}, but this file was sliced for {}. Filled filament runs at a lower flow rate and needs a hardened nozzle." zh="当前装载的料盘是 {}，但此文件为 {} 切片。填充耗材需要以更低的流量运行，且需要硬化喷嘴。"/>
   <translation tag="The nozzle extrudes a few short test moves in a corner, away from the print area, and repeats until it agrees with itself." zh="喷嘴在远离打印区域的角落进行几次短促的测试挤出，并重复直到读数一致。"/>
   <translation tag="The plate and the spools are still hot. Use gloves." zh="热床和料盘仍然很烫。请戴手套。"/>
+  <translation tag="The plate finishes its current move, but drying will not start." zh="热床会完成当前移动,但烘干不会开始。"/>
   <translation tag="The print is paused. Changing tools now moves the toolhead and swaps the filament at the nozzle. Resume the print once the change finishes." zh="打印已暂停。现在切换工具会移动工具头并更换喷嘴处的耗材。切换完成后请恢复打印。"/>
   <translation tag="The printer applied this value and keeps it for this tool." zh="打印机已应用此值，并为该工具保存。"/>
   <translation tag="The printer extrudes in a corner and repeats until the readings agree. You do not judge anything by eye." zh="打印机在角落挤出并重复，直到读数一致为止。你无需用肉眼判断任何东西。"/>
@@ -2930,6 +2932,7 @@
   <translation tag="The unit reported a fault with no further detail. Restart the printer if it repeats" zh="该单元报告了故障但无更多信息。若反复出现，请重启打印机"/>
   <translation tag="The unit&apos;s onboard storage has failed. The CFS mainboard needs replacing" zh="该单元的板载存储已损坏。需更换 CFS 主板"/>
   <translation tag="The unload did not start: unload by hand, then start again" zh="卸载未开始:请手动卸载,然后重新开始"/>
+  <translation tag="The unload finishes on its own, but the plate will not move." zh="卸载会自行完成,但热床不会移动。"/>
   <translation tag="Theme" zh="主题"/>
   <translation tag="Theme Colors" zh="主题颜色"/>
   <translation tag="Theme Preset" zh="主题预设"/>
@@ -3131,6 +3134,7 @@
   <translation tag="Unloading Start Speed" zh="卸载起始速度"/>
   <translation tag="Unloading before bypass..." zh="旁通前正在卸载..."/>
   <translation tag="Unloading filament" zh="正在卸载耗材"/>
+  <translation tag="Unloading filament before drying..." zh="烘干前正在卸载耗材..."/>
   <translation tag="Unloading filament..." zh="正在卸载耗材..."/>
   <translation tag="Unloads After Print" zh="打印后卸载"/>
   <translation tag="Unlock" zh="解锁"/>

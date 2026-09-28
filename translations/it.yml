@@ -1489,6 +1489,7 @@ translations:
   Homing Y...: Homing Y...
   Homing Z...: Homing Z...
   Homing all axes...: Homing tutti gli assi...
+  Homing and moving the plate...: 'Homing e spostamento del piano...'
   Homing axes...: Homing degli assi...
   Homing complete: Homing completato
   'Homing failed: ': 'Azzeramento non riuscito: '
@@ -3246,6 +3247,7 @@ translations:
   The nozzle extrudes a few short test moves in a corner, away from the print area, and repeats until it agrees with itself.: 'L''ugello fa alcuni brevi movimenti di prova in un angolo, lontano dall''area di stampa, e ripete finché i valori convergono.'
   The plate and the spools are still hot. Use gloves.: Il piano e le bobine sono ancora caldi. Usa i guanti.
 
+  The plate finishes its current move, but drying will not start.: 'Il piano termina lo spostamento in corso, ma l''essiccazione non partirà.'
   ? The print is paused. Changing tools now moves the toolhead and swaps the filament at the nozzle. Resume the print once the change finishes.
   : La stampa è in pausa. Cambiare utensile ora muove la testina e sostituisce il
     filamento all'ugello. Riprendi la stampa al termine del cambio.
@@ -3292,6 +3294,7 @@ translations:
   The unit reported a fault with no further detail. Restart the printer if it repeats: L'unità ha segnalato un guasto senza ulteriori dettagli. Riavviare la stampante se si ripete
   The unit's onboard storage has failed. The CFS mainboard needs replacing: La memoria interna dell'unità è guasta. La scheda madre del CFS va sostituita
   'The unload did not start: unload by hand, then start again': 'Lo scarico non è partito: scarica a mano, poi ricomincia'
+  The unload finishes on its own, but the plate will not move.: 'Lo scaricamento termina da solo, ma il piano non si sposterà.'
   Theme: Tema
   Theme Colors: Colori tema
   Theme Preset: Preset tema
@@ -3539,6 +3542,7 @@ translations:
   Unloading Start Speed: 'Velocità iniziale di scarico'
   Unloading before bypass...: Scaricamento prima del bypass...
   Unloading filament: 'Scaricamento del filamento'
+  Unloading filament before drying...: 'Scaricamento filamento prima dell''essiccazione...'
   Unloading filament...: Scaricamento filamento...
   Unloads After Print: Scarica dopo la stampa
   Unlock: Sblocca

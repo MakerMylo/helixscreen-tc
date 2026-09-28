@@ -1344,6 +1344,7 @@
   <translation tag="Homing Y..." en="Homing Y..."/>
   <translation tag="Homing Z..." en="Homing Z..."/>
   <translation tag="Homing all axes..." en="Homing all axes..."/>
+  <translation tag="Homing and moving the plate..." en="Homing and moving the plate..."/>
   <translation tag="Homing axes..." en="Homing axes..."/>
   <translation tag="Homing complete" en="Homing complete"/>
   <translation tag="Homing failed: " en="Homing failed: "/>
@@ -2901,6 +2902,7 @@
   <translation tag="The loaded spool is {}, but this file was sliced for {}. Filled filament runs at a lower flow rate and needs a hardened nozzle." en="The loaded spool is {}, but this file was sliced for {}. Filled filament runs at a lower flow rate and needs a hardened nozzle."/>
   <translation tag="The nozzle extrudes a few short test moves in a corner, away from the print area, and repeats until it agrees with itself." en="The nozzle extrudes a few short test moves in a corner, away from the print area, and repeats until it agrees with itself."/>
   <translation tag="The plate and the spools are still hot. Use gloves." en="The plate and the spools are still hot. Use gloves."/>
+  <translation tag="The plate finishes its current move, but drying will not start." en="The plate finishes its current move, but drying will not start."/>
   <translation tag="The print is paused. Changing tools now moves the toolhead and swaps the filament at the nozzle. Resume the print once the change finishes." en="The print is paused. Changing tools now moves the toolhead and swaps the filament at the nozzle. Resume the print once the change finishes."/>
   <translation tag="The printer applied this value and keeps it for this tool." en="The printer applied this value and keeps it for this tool."/>
   <translation tag="The printer extrudes in a corner and repeats until the readings agree. You do not judge anything by eye." en="The printer extrudes in a corner and repeats until the readings agree. You do not judge anything by eye."/>
@@ -2930,6 +2932,7 @@
   <translation tag="The unit reported a fault with no further detail. Restart the printer if it repeats" en="The unit reported a fault with no further detail. Restart the printer if it repeats"/>
   <translation tag="The unit&apos;s onboard storage has failed. The CFS mainboard needs replacing" en="The unit&apos;s onboard storage has failed. The CFS mainboard needs replacing"/>
   <translation tag="The unload did not start: unload by hand, then start again" en="The unload did not start: unload by hand, then start again"/>
+  <translation tag="The unload finishes on its own, but the plate will not move." en="The unload finishes on its own, but the plate will not move."/>
   <translation tag="Theme" en="Theme"/>
   <translation tag="Theme Colors" en="Theme Colors"/>
   <translation tag="Theme Preset" en="Theme Preset"/>
@@ -3131,6 +3134,7 @@
   <translation tag="Unloading Start Speed" en="Unloading Start Speed"/>
   <translation tag="Unloading before bypass..." en="Unloading before bypass..."/>
   <translation tag="Unloading filament" en="Unloading filament"/>
+  <translation tag="Unloading filament before drying..." en="Unloading filament before drying..."/>
   <translation tag="Unloading filament..." en="Unloading filament..."/>
   <translation tag="Unloads After Print" en="Unloads After Print"/>
   <translation tag="Unlock" en="Unlock"/>
