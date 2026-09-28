@@ -7,7 +7,8 @@
 #
 # thelio is shared by several sessions at once; zeus has twice the RAM and is
 # usually idle. Mutation, sanitizers and symbolizers belong on zeus however quiet
-# thelio looks, and so does a full sweep once zeus-run.sh has a mode for it. An
+# thelio looks, and so does a sweep: `make unit-sweep` maps to zeus-run.sh's
+# sweep mode and `make full-test-run` to full, each falling back to the other. An
 # explicit -j above the fair share is always worth a word. Container builds and
 # test loops are only worth moving when thelio is tight. "Tight" is not decided
 # here: `helix-claim jobs -v` folds in claimed builds, live build trees and
@@ -56,6 +57,7 @@ esac
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 zeus_run=${HELIX_ADVISOR_ZEUS_RUN:-"$here/zeus-run.sh"}
 push_then="zeus runs only pushed SHAs: push the branch (never main), then"
+see_load="\`scripts/helix-claim resources\` shows what thelio and zeus are running now."
 
 emit() {
     jq -cn --arg c "[resource-advisor] $1" \
@@ -63,10 +65,12 @@ emit() {
     exit 0
 }
 
-# The zeus-run mode for a full sweep, if this checkout's zeus-run has one.
+# The zeus-run mode for a sweep, preferring the one that matches the make
+# target ($1: sweep or full) and falling back to whichever this checkout has.
 zeus_gate_mode() {
-    local m
-    for m in full sweep; do
+    local m other=sweep
+    [ "$1" = sweep ] && other=full
+    for m in "$1" "$other"; do
         grep -qE "^[[:space:]]*${m}\)" "$zeus_run" 2>/dev/null && { echo "$m"; return; }
     done
 }
@@ -107,7 +111,9 @@ while IFS= read -r seg; do
     case "$base" in
         for|while|until) in_loop=1 ;;
         make)
-            if [[ "$seg" =~ $re_sweep_target ]]; then want_sweep=1; fi
+            if [[ "$seg" =~ $re_sweep_target ]]; then
+                [ "${BASH_REMATCH[2]}" = unit-sweep ] && want_sweep=sweep || want_sweep=full
+            fi
             if [[ "$seg" =~ mutate-diff ]]; then want_mutate=1; fi
             if [[ "$seg" =~ $re_asan ]] && ! [[ "$seg" =~ $re_remote ]]; then want_asan=1; fi
             if [[ "$seg" =~ $re_container_target ]]; then want_container=1; fi
@@ -151,9 +157,9 @@ if [ -n "$want_asan" ]; then
     emit "ASAN produces no output on thelio (ld.so.preload loads its runtime second) and exits 0. Run it on zeus: ${push_then} \`scripts/zeus-run.sh asan '[tag]'\`."
 fi
 if [ -n "$want_sweep" ]; then
-    mode=$(zeus_gate_mode)
+    mode=$(zeus_gate_mode "$want_sweep")
     if [ -n "$mode" ]; then
-        emit "A full sweep starts dozens of shards at once. Run it on zeus: ${push_then} \`scripts/zeus-run.sh ${mode}\`. Keep it local only when you need the verdict on uncommitted work in this exact tree."
+        emit "A full sweep starts dozens of shards at once. Run it on zeus: ${push_then} \`scripts/zeus-run.sh ${mode}\`. Keep it local only when you need the verdict on uncommitted work in this exact tree. ${see_load}"
     fi
 fi
 
@@ -187,10 +193,10 @@ else
 fi
 
 if [ -n "$want_container" ]; then
-    emit "Container builds escape thelio's -j and nice, and ${tight}. Run it on zeus (it has the Docker images and twice the RAM), or wait for peers' builds to finish."
+    emit "Container builds escape thelio's -j and nice, and ${tight}. Run it on zeus (it has the Docker images and twice the RAM), or wait for peers' builds to finish. ${see_load}"
 fi
 if [ -n "$want_loop" ]; then
-    emit "A loop over the test binary multiplies its load, and ${tight}. Cut the count, or run the loop on zeus: ${push_then} use the helix-tsan container."
+    emit "A loop over the test binary multiplies its load, and ${tight}. Cut the count, or run the loop on zeus: ${push_then} use the helix-tsan container. ${see_load}"
 fi
 
 exit 0

@@ -91,17 +91,45 @@ context() {
     contains "coredumpctl info" "$(context)"
 }
 
-@test "a full gate is sent to zeus's sweep mode on a roomy box" {
-    printf '#!/usr/bin/env bash\ncase "$1" in\n    sweep)\n        ;;\nesac\n' > "$TEST_DIR/zeus-run.sh"
+# A zeus-run.sh stand-in offering exactly the modes named.
+zeus_modes() {
+    { printf '#!/usr/bin/env bash\ncase "$1" in\n'
+      for m in "$@"; do printf '    %s)\n        ;;\n' "$m"; done
+      printf 'esac\n'; } > "$TEST_DIR/zeus-run.sh"
     export HELIX_ADVISOR_ZEUS_RUN="$TEST_DIR/zeus-run.sh"
+}
+
+@test "with both modes, unit-sweep gets sweep and full-test-run gets full" {
+    zeus_modes sweep full
+    advise "make unit-sweep"
+    contains "zeus-run.sh sweep" "$(context)"
+    lacks "zeus-run.sh full" "$(context)"
+    advise "make -j full-test-run"
+    contains "zeus-run.sh full" "$(context)"
+    lacks "zeus-run.sh sweep" "$(context)"
+}
+
+@test "unit-sweep falls back to full when zeus-run has only full" {
+    zeus_modes full
+    advise "make unit-sweep"
+    contains "zeus-run.sh full" "$(context)"
+}
+
+@test "a sweep suggestion points at helix-claim resources" {
+    zeus_modes sweep full
+    advise "make unit-sweep"
+    contains "scripts/helix-claim resources" "$(context)"
+}
+
+@test "a full gate is sent to zeus's sweep mode on a roomy box" {
+    zeus_modes sweep
     advise "make -j full-test-run"
     contains "zeus-run.sh sweep" "$(context)"
     contains "push the branch" "$(context)"
 }
 
 @test "a full gate is silent while zeus-run has no sweep mode" {
-    printf '#!/usr/bin/env bash\ncase "$1" in\n    test)\n        ;;\nesac\n' > "$TEST_DIR/zeus-run.sh"
-    export HELIX_ADVISOR_ZEUS_RUN="$TEST_DIR/zeus-run.sh"
+    zeus_modes test
     advise "make unit-sweep"
     [ -z "$output" ]
 }
@@ -134,6 +162,7 @@ context() {
     tight_memory
     advise "make snapmaker-u1-docker"
     contains "zeus" "$(context)"
+    contains "scripts/helix-claim resources" "$(context)"
 }
 
 @test "an idf build in docker is heavy when thelio is tight" {
