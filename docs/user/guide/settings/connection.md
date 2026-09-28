@@ -1,6 +1,8 @@
 # Settings: Connection
 
-**Settings > Connection** holds everything about how HelixScreen reaches the network and your printers. The row on the Settings screen shows how the screen is connected right now: the Wi-Fi network name, *Ethernet*, or *Not connected*.
+**Settings > Connection** is about how HelixScreen reaches your network and your printers. Come here to join a Wi-Fi network, check your Ethernet connection, add or switch printers, or point HelixScreen at a different Moonraker address.
+
+On the Settings screen, the **Connection** row shows how the screen is connected right now: the Wi-Fi network name (for example *Wi-Fi HomeNet*), *Ethernet*, or *Not connected*.
 
 ![Connection settings](../../../images/user/settings-connection.png)
 
@@ -8,42 +10,54 @@
 
 ## Network Settings
 
-> Hidden on Android (the OS manages networking).
+> Hidden on Android, where the phone or tablet manages its own network.
 
-Tap to open the Network Settings overlay with a two-column layout:
+Opens the network screen. It has two columns.
 
-**Left column — Status:**
-- **WiFi** — Toggle on/off, view connection status (SSID, IP address, MAC address, signal strength). Shows a 2.4GHz indicator if your hardware only supports that band.
-- **Ethernet** — View connection status (IP address, MAC address) — read-only, no toggle.
-- **Test Network** — Verify internet connectivity. Disabled when no network is connected.
+![Network Settings](../../../images/user/settings-network.png)
 
-**Right column — Available Networks:**
-- Scans and lists available WiFi networks with signal strength indicators
-- Tap a network to connect (enter password if needed)
-- **Add Hidden Network** — Connect to a network that doesn't broadcast its SSID
-- **Refresh** button to re-scan (shows a spinner while scanning)
+**Left: your connection**
 
-Joining a WiFi network while Ethernet is connected shows a warning that the wired network will be disconnected, then proceeds: some devices have a single network radio and cannot hold both at once (#1542). If a connection fails, the reason is shown with the result. A WiFi radio that an administrator has blocked (for example with `rfkill`) is left blocked: HelixScreen only clears a block on hardware where you have configured WiFi in HelixScreen (#1697).
+- **WiFi**: turn Wi-Fi on or off and see the network name, IP address, MAC address and signal strength. A **2.4GHz** tag appears if your hardware only supports that band.
+- **Ethernet**: the IP and MAC address of the wired connection. Read-only.
+- **Test Network**: checks that the internet is reachable. Greyed out when nothing is connected.
+
+**Right: available networks**
+
+- The Wi-Fi networks in range, with their signal strength.
+- Tap a network to join it. Enter the password if it asks.
+- **Add Hidden Network** joins a network that doesn't broadcast its name.
+- **Refresh** scans again.
+
+Joining Wi-Fi while Ethernet is connected shows a warning first that the wired connection will drop, because some boards have one network chip and can't use both at once (#1542). If joining fails, the screen tells you why. If an administrator has blocked the Wi-Fi radio (for example with `rfkill`), HelixScreen leaves it blocked unless you set up Wi-Fi in HelixScreen on that printer (#1697).
 
 ---
 
 ## Printers
 
-Manage all your configured printers. Tap to open the Printer Management overlay where you can:
+Opens **Manage Printers**, the list of every printer this screen knows about.
 
-- **Switch printers** — Tap any printer in the list to switch to it. HelixScreen disconnects from the current printer and connects to the new one.
-- **Add a printer** — Tap "Add Printer" to launch the Setup Wizard for a new printer. You can cancel at any time to return to your current printer.
-- **Delete a printer** — Tap the trash icon next to any non-active printer and confirm. You cannot delete the last remaining printer.
+- **Switch printers**: tap a printer in the list. HelixScreen disconnects from the current printer, connects to the new one, confirms with a message and takes you to the Home screen.
+- **Add a printer**: tap **+ Add Printer**. The setup wizard runs for the new printer, skipping the Wi-Fi and language steps you already did. You can cancel at any time and go back to your current printer.
+- **Delete a printer**: tap the trash icon next to a printer you aren't using and confirm. You can't delete the last printer.
+- **Show Printer Switcher**: adds a printer icon to the navigation bar, so you can switch printers from any screen.
 
-After switching, a toast notification confirms the new connection and you're taken to the Home panel.
+See [Getting Started](../getting-started.md) for adding a second printer.
 
 ---
 
 ## Host
 
-Shows the current Moonraker host address (e.g., `localhost:7125`). Tap to open the **Change Host** dialog where you can enter a new IP address and port to connect to a different printer.
+Shows the Moonraker address HelixScreen is connected to, such as `192.168.1.50:7125`.
 
-After changing the host, HelixScreen disconnects from the current printer and reconnects to the new one. Host names are looked up again on every reconnect, so a printer whose IP address changed (a router re-lease, for instance) is found again without restarting HelixScreen.
+To connect to a different address:
+
+1. Tap **Host**.
+2. Enter the printer's IP address or host name, and the port (usually 7125).
+3. Tap **Test Connection**. **Save** unlocks once the test succeeds.
+4. Tap **Save**. HelixScreen disconnects and reconnects at the new address.
+
+Host names are looked up again every time HelixScreen reconnects, so if your router gives the printer a new IP address, HelixScreen finds it again without a restart.
 
 ---
 

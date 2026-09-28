@@ -1,102 +1,88 @@
 # Settings: Touch & Input
 
-**Settings > Touch & Input** groups every setting that affects how the screen reads your finger: calibration, debug visualization, scroll feel, long-press behavior, scroll buttons, and on Android the keyboard and navigation bar.
+**Settings > Touch & Input** is about how the screen reads your finger. Come here when taps land in the wrong place, when scrolling sets off buttons by accident, when long-presses trigger too easily, or when you'd like buttons for scrolling long lists. On Android it also holds the keyboard and navigation bar options.
 
-![Touch & Input settings](../../../images/user/settings-touch-input.png)
+![Touch & Input settings, top of the page](../../../images/user/settings-touch-input.png)
 
 ---
 
 ## Touch Calibration
 
-Recalibrate if taps register in the wrong location:
+Fixes taps that register in the wrong place. The row shows **Calibrated** or **Not calibrated**. It appears on any screen with a touch panel, so you can recalibrate whenever you like, even on a screen that looked fine at setup.
 
-1. Tap **Touch Calibration**
-2. Tap each crosshair target as it appears on screen (3 points, 7 taps each)
-3. Test that taps land correctly in the verify area
-4. Tap **Accept** to save (or **Retry** to redo)
+1. Tap **Touch Calibration**.
+2. Tap each crosshair as it appears (3 points, 7 taps each).
+3. Tap around the test area to check that taps land where your finger is.
+4. Tap **Accept** to save, or **Retry** to do it again.
 
-The row description shows "Calibrated" or "Not calibrated" status. Always available — you can recalibrate even on screens that auto-detect as already correct. For the full menu of force-calibration options (env var, config file, CLI) and per-platform paths, see the [Touch Calibration Guide](../touch-calibration.md).
+For other ways to start calibration (a config option, an environment variable or a command) and details per printer, see the [Touch Calibration guide](../touch-calibration.md).
 
 ---
 
 ## Show Touch Points
 
-Toggles a debug overlay that draws a ripple at every touch point. Useful when taps feel offset or buttons aren't responding where you expect — turn it on, tap around, and see exactly where the system thinks your finger is. Turn off when done.
+Draws a ripple wherever the screen detects a touch. **Off** by default. Turn it on when taps feel offset or buttons don't respond where you expect, tap around, and you'll see exactly where the screen thinks your finger is. Turn it off when you're done. Takes effect right away.
 
-Takes effect immediately — no restart required.
-
-> Persistent equivalent: `HELIX_DEBUG_TOUCH=1` in `helixscreen.env`. The Settings toggle and the env var read the same flag.
+> The same switch can be turned on permanently with `HELIX_DEBUG_TOUCH=1` in `helixscreen.env`.
 
 ---
 
 ## Scroll Engage Distance
 
-Pixels of finger travel before a press becomes a scroll instead of a click. Range `1`–`20`, default `10`.
+How far your finger has to move before a press turns into a scroll instead of a tap. Range 1 to 20 pixels, default 10.
 
-| Symptom | Suggested value |
+| If this happens | Try |
 |---|---|
-| Scrolls fire a click on whatever was under your finger when you meant to scroll | **5** |
-| Default — sweet spot for most panels | **10** |
-| Taps feel twitchy, micro-wobbles start scrolls | **15** |
+| Scrolling a list taps whatever was under your finger | **5** |
+| Most screens | **10** (default) |
+| Taps feel twitchy, and small wobbles start a scroll | **15** |
 
-Requires a restart to take effect.
+Takes effect after a restart. HelixScreen offers to restart when you change it.
 
 ---
 
 ## Long Press Time
 
-How long you need to hold your finger down before a press counts as a **long-press**. Range `300`–`1500` ms, default `500` (about half a second).
+How long you hold your finger down before it counts as a long-press. Range 300 to 1500 milliseconds, default 500 (half a second).
 
-A long-press is the gesture behind several actions — entering home-screen Edit Mode, deleting a file card, opening macro edit mode, and others. If those trigger when you're just resting your finger on the glass (common on a tablet lying flat), raise this value. A setting around `800`–`1000` makes accidental long-presses much rarer without making deliberate ones feel sluggish.
-
-Takes effect immediately — no restart required.
+Long-press opens home screen edit mode, deletes a file card, edits macros and more. If those happen when you only meant to rest a finger on the glass (common with a tablet lying flat), raise this to 800 or 1000. Takes effect right away.
 
 ---
 
 ## Allow Home Screen Editing
 
-Toggles whether a long-press on the home grid enters **Edit Mode** (the drag-and-drop layout editor). **On by default.**
+Whether a long-press on the home screen opens edit mode, where you move, resize, add and remove widgets. **On** by default.
 
-If Edit Mode triggers by accident — typically a finger resting on a tablet lying flat — turn this off and long-pressing the home grid will do nothing. You can turn it back on when you want to rearrange, resize, add, or remove widgets.
-
-Takes effect immediately — no restart required.
-
-> Want to fine-tune the hold time instead of disabling Edit Mode entirely? Raise the **Long Press Time** slider above — a longer threshold makes accidental entry harder while keeping the feature available.
+Turn it off if edit mode keeps opening by accident. Turn it back on when you want to rearrange. If you'd rather keep editing available, raising [Long Press Time](#long-press-time) makes accidental edits rarer instead. Takes effect right away.
 
 ---
 
 ## Scroll Guard
 
-Some capacitive controllers fire a phantom "clicked" event when you lift your finger after scrolling. Enable Scroll Guard to ignore taps for ~80 ms after a scroll ends.
-
-FlashForge AD5M and AD5X enable this automatically via their hardware presets — leave it on. Most Raspberry Pi setups don't need it.
-
-Requires a restart to take effect.
-
-> Still seeing phantom clicks with the guard enabled? Some controllers need a longer cooldown. Tune `scroll_guard_cooldown_ms` in `settings.json` — see the [TROUBLESHOOTING guide § Accidental Button Presses After Scrolling](../../TROUBLESHOOTING.md#accidental-button-presses-after-scrolling).
+Meant to ignore the stray tap some touch panels send when you lift your finger after scrolling. **This switch currently has no effect.** If scrolling sets off taps, lower [Scroll Engage Distance](#scroll-engage-distance) instead.
 
 ---
 
 ## System Keyboard *(Android only)*
 
-When on, text fields open Android's native keyboard instead of the built-in on-screen keyboard. Handy on phones and tablets where you already have a preferred keyboard installed.
+Uses Android's own keyboard for text fields instead of HelixScreen's on-screen keyboard. Handy if you already have a keyboard you like on your phone or tablet.
 
 ---
 
 ## Keep Navigation Bar *(Android only)*
 
-When on, the Android navigation bar (back / home / recents) stays onscreen at all times. When off (the default), HelixScreen runs full-screen and you swipe up from the bottom edge to reveal the nav bar — it auto-hides after a few seconds. Turn this on if you use 3-button navigation instead of gestures and want the buttons always available. The status bar stays hidden either way.
+Keeps Android's navigation bar (back, home, recents) on screen all the time. When it's off (the default), HelixScreen runs full screen: swipe up from the bottom edge to show the bar, and it hides again after a few seconds. Turn this on if you use 3-button navigation instead of gestures. The status bar stays hidden either way.
 
 ---
 
 ## Scroll Buttons
 
-Show up/down buttons on long lists — off by default. Turn this on if you'd rather tap through a list than drag it, especially on small screens or displays where touch-drag can feel unresponsive.
+Adds up and down buttons to screens that are too long to fit. **Off** by default, except on the ESP32 screen, where dragging is slow and the buttons start on. Turn it on if you'd rather tap through a list than drag it, especially on small screens or screens where dragging feels unreliable.
 
-When enabled, a screen whose content runs longer than fits gets a slim column of up/down arrow buttons along the right edge. The content shifts left slightly to make room, so the buttons never cover anything. The buttons are for paging through a whole screen, so the individual tiles on the home dashboard don't get them - a tile is small enough that the arrows would cover most of what it's showing, and a short drag scrolls it anyway. Each tap scrolls about one screenful, with a little overlap so you don't lose your place. The up button dims when you're already at the top of the list, and the down button dims at the bottom. Lists that already fit on screen don't get buttons — there's nothing to scroll.
+When it's on, a screen that needs scrolling gets a slim column of arrow buttons on its right edge. The content moves over a little to make room, so the buttons never cover anything. Each tap scrolls about one screen, with a little overlap so you keep your place. The up arrow dims at the top of the list and the down arrow dims at the bottom. Screens that already fit get no buttons, and neither do the small tiles on the home screen, where the arrows would cover most of the tile.
 
-Finger-drag scrolling keeps working normally either way; the buttons are just an additional way to get around. If [Animations](appearance.md#animations) is also on, pressing a button glides the list smoothly; with Animations off, it jumps straight to the new position.
+Dragging still works as usual. With [Animations](appearance.md#animations) on, the list glides to its new position. With Animations off, it jumps there.
 
 ---
 
-[Back to Settings](../settings.md) | [Prev: Appearance](appearance.md) | [Next: Sound](sound.md) | [Touch Calibration Guide](../touch-calibration.md)
+[Back to Settings](../settings.md) | [Prev: Appearance](appearance.md) | [Next: Sound](sound.md)

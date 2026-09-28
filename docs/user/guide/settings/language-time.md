@@ -1,6 +1,8 @@
 # Settings: Language & Time
 
-**Settings > Language & Time** sets the language HelixScreen speaks and how it shows the time. The row on the Settings screen shows your current choice, for example *English · 24-hour*.
+**Settings > Language & Time** sets the language HelixScreen uses and how it shows the time. Set your timezone here so print finish times and the clock match your wall clock.
+
+On the Settings screen, the **Language & Time** row shows your choices, for example *English · 24-hour*.
 
 ![Language & Time settings](../../../images/user/settings-language-time.png)
 
@@ -8,19 +10,19 @@
 
 ## Language
 
-Choose the display language for all UI text. Nine languages are available: English, German, Spanish, French, Italian, Japanese, Portuguese, Russian, and Chinese.
+The language for everything on screen: English, German, Spanish, French, Italian, Japanese, Portuguese, Russian or Chinese. The screen switches as soon as you pick one. No restart needed.
 
 ---
 
 ## Timezone
 
-Set your local timezone so that print completion times, ETAs, and the clock widget display the correct time. Most printers default to UTC. Select from a curated list of common timezones. Each entry shows its UTC offset (e.g., "Eastern (-5:00)"). Daylight saving time is handled automatically using your system's timezone database.
+Your local timezone, so print finish times, time remaining and the clock widget show the right time. Most printers start out on UTC. Pick from a list of common timezones. Each one shows its offset from UTC, for example "Eastern (-5:00)". Daylight saving time is handled for you.
 
 ---
 
 ## Time Format
 
-Choose between 12-hour and 24-hour clock display. Affects all timestamps shown throughout the UI.
+**12 Hour** (such as 3:45 PM, the default) or **24 Hour** (such as 15:45). Applies to every time shown in HelixScreen.
 
 ---
 

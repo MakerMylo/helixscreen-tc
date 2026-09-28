@@ -1,85 +1,87 @@
 # Settings: Printing
 
-**Settings > Printing** holds settings that change how the printer moves, heats and handles filament. The page has three sections:
+**Settings > Printing** holds the settings that change how your printer moves, heats and handles filament, and the buttons and macros HelixScreen runs for you. The page has three sections:
 
 - **MACHINE**: Machine Limits, Motion, Retraction Settings and Enclosure
 - **FILAMENT**: Material Temperatures, Allow cold load/unload and Cool nozzle after filament ops
 - **EXTRAS**: Timelapse and Macro Buttons
 
-How the printer is *drawn* (toolhead icon, G-code preview, Z direction labels, bed mesh view) lives in [Appearance](appearance.md#printer-visuals).
+Looking for how the printer is *drawn* (toolhead picture, G-code preview, Z button labels, bed mesh view)? That's in [Appearance](appearance.md#printer-visuals).
 
-![Printing settings](../../../images/user/settings-printing.png)
+![Printing settings, the Machine section](../../../images/user/settings-printing.png)
 
 ---
 
 ## Machine Limits
 
-Tap to open the Machine Limits overlay. A banner at the top reminds you: **"Changes are temporary and reset on printer reboot."** These sliders override your Klipper config for the current session — useful for testing or troubleshooting motion issues. To make permanent changes, edit `printer.cfg` directly.
+Opens sliders for your printer's speed and acceleration limits. Use them to test or troubleshoot motion. A banner at the top reminds you: **Changes are temporary and reset on printer reboot.** To change the limits for good, edit `printer.cfg`.
 
-Each setting has a slider, with the current value shown on the right in a tappable field:
+> **Tap a value to type an exact number.** The sliders are quick but coarse. Max Acceleration covers 500 to 50000 in a few hundred pixels, so landing on exactly 3000 by dragging is luck. Tap the number next to a slider to open a keypad instead.
 
-> **Tap the value to type an exact number.** Sliders are quick but coarse — Max Acceleration spans 500–50000 over a few hundred pixels, so landing on exactly 3000 by dragging is luck. Tapping the value opens a numeric keypad where you type the number you actually want.
+| Setting | Range | What it limits |
+|---------|-------|----------------|
+| **Max Velocity** | 50 to 1000 mm/s | The fastest the toolhead moves |
+| **Max Acceleration** | 500 to 50000 mm/s² | How quickly it speeds up |
+| **Accel to Decel** | 500 to 50000 mm/s² | How hard moves slow down |
+| **Square Corner Velocity** | 1.0 to 20.0 mm/s | The speed carried through a sharp corner. Half steps such as 5.5 can be typed on the keypad |
+| **Extrude Speed** | 1 to 50 mm/s | The speed of the manual extrude and retract buttons |
 
-| Setting | Range | Description |
-|---------|-------|-------------|
-| **Max Velocity** | 50–1000 mm/s | Maximum toolhead speed |
-| **Max Acceleration** | 500–50000 mm/s² | Maximum acceleration |
-| **Accel to Decel** | 500–50000 mm/s² | Acceleration-to-deceleration limit (caps how aggressively moves slow down) |
-| **Square Corner Velocity** | 1.0–20.0 mm/s | Maximum speed carried through square corners. Accepts half steps (5.5) — type them on the keypad. |
-| **Extrude Speed** | 1–50 mm/s | Feedrate used for manual extrude/retract actions |
+> **Extrude Speed is kept.** Unlike the limits above, it's a HelixScreen setting. It's remembered after a restart.
 
-> **Extrude Speed is saved.** Unlike the motion limits above, the Extrude Speed value is a persisted HelixScreen setting — it is remembered across restarts and applies to the manual extrude/retract controls.
+Under the sliders, a **Config-defined** section shows your **Max Z Velocity** and **Max Z Accel**. They come from your Klipper config and can't be changed here.
 
-Below the adjustable sliders is a read-only **Config-defined** section showing your **Max Z Velocity** and **Max Z Accel**, which come from your Klipper config and cannot be changed here.
-
-**Reset:** the **Reset** button at the bottom restores the motion limits to your printer's original configured values.
+**Reset** at the bottom puts the limits back to your printer's configured values.
 
 ---
 
 ## Motion
 
-Jog speeds and the per-mode move distances for the jog pad. See [Motion](../motion.md#motion-settings) for what each setting does.
+Jog speeds and how far each jog pad button moves. See [Motion](../motion.md#motion-settings) for what each one does.
 
 ---
 
 ## Retraction Settings
 
-> Only shown when firmware retraction (`[firmware_retraction]`) is configured in Klipper.
+> Only shown when firmware retraction (`[firmware_retraction]`) is set up in Klipper.
 
-Tap to open the retraction overlay. Configure G10/G11 firmware retraction parameters. **Changes apply immediately** and can be adjusted mid-print for tuning.
+Sets the firmware retraction that `G10`/`G11` use. **Changes apply straight away**, even mid-print, so you can tune while you watch.
 
-As on Machine Limits, each value is shown in a tappable field — **tap it to type an exact number** on the numeric keypad instead of hunting for it with the slider. The distances accept two decimals (0.85 mm).
+As with Machine Limits, **tap a value to type an exact number**. Distances take two decimals, such as 0.85 mm.
 
-| Parameter | Range | Description |
-|-----------|-------|-------------|
-| **Enable Retraction** | On/Off | Master toggle for firmware retraction |
-| **Retract Length** | 0.00–6.00 mm | Amount of filament to retract. 0.4–2 mm for direct drive, 4–6 mm for bowden. |
-| **Retract Speed** | 10–80 mm/s | Speed of the retraction movement |
-| **Unretract Extra** | 0.00–1.00 mm | Extra filament to prime after retraction to compensate for ooze |
-| **Unretract Speed** | 10–60 mm/s | Speed of the prime (unretract) movement |
+| Setting | Range | What it does |
+|---------|-------|--------------|
+| **Enable Retraction** | On or off | Turns firmware retraction on or off |
+| **Retract Length** | 0.00 to 6.00 mm | How much filament to pull back. 0.4 to 2 mm for direct drive, 4 to 6 mm for Bowden |
+| **Retract Speed** | 10 to 80 mm/s | How fast to pull back |
+| **Unretract Extra** | 0.00 to 1.00 mm | Extra filament pushed out afterwards to make up for oozing |
+| **Unretract Speed** | 10 to 60 mm/s | How fast to push it back |
 
 ---
 
 ## Enclosure
 
-Tells HelixScreen whether your printer is enclosed. **Auto** (the default) goes by what HelixScreen knows about your printer model. Set it to **Enclosed** if you enclosed an open-frame printer yourself, or **Open frame** if HelixScreen thinks your printer is enclosed and it isn't. [Drying filament on the bed](../temperature.md#drying-filament-on-the-bed) is only offered on a printer that counts as enclosed.
+Tells HelixScreen whether your printer is enclosed. **Auto** (the default) goes by what HelixScreen knows about your printer model. Choose **Enclosed** if you've enclosed an open-frame printer yourself, or **Open frame** if HelixScreen thinks your printer is enclosed and it isn't.
+
+It matters for [drying filament on the bed](../temperature.md#drying-filament-on-the-bed), which is only offered on an enclosed printer.
 
 ---
 
 ## Material Temperatures
 
-Configure preheat presets for different filament materials (PLA, PETG, ABS, TPU, etc.). Each material can have:
+Sets the preheat temperatures for each filament material (PLA, PETG, ABS, TPU and so on). The presets on the Home, Controls and Filament screens use these. For each material you can set:
 
-- **Nozzle Temperature** - Target extruder temperature. The field clamps to the range your printer and nozzle allow, so it cannot be set past what the hardware supports.
-- **Bed Temperature** — Target bed temperature
-- **Preheat Macro** — A Klipper macro to run when preheating this material
-- **Macro Handles Heating** — If enabled, the macro is responsible for setting temperatures. If disabled, HelixScreen sets temperatures first, then runs the macro as an additional step.
+- **Nozzle Temperature**: the nozzle target. It's limited to what your printer and nozzle allow.
+- **Bed Temperature**: the bed target.
+- **Preheat Macro**: a Klipper macro to run when you preheat this material.
+- **Macro Handles Heating**: when on, your macro sets the temperatures. When off, HelixScreen sets the temperatures first and then runs your macro.
+
+See [Per-Material Preheat Macros](#per-material-preheat-macros) for when the macro runs.
 
 ### Editing materials and brands by hand
 
-Everything on this screen and in the filament catalog (the brand and material picker) can also be edited in one file, `user_filaments.json`. On most installs it lives in `~/printer_data/config/helixscreen/`, so Mainsail or Fluidd can open it from their config file browser. The copy in the install folder's `config/` directory (for example `~/helixscreen/config/`) is a link to the same file.
+Everything on this screen and in the filament catalog (the brand and material picker) is also stored in one file, `user_filaments.json`. On most installs it's in `~/printer_data/config/helixscreen/`, so you can open it from Mainsail's or Fluidd's config file list. The copy in the install folder's `config/` folder (for example `~/helixscreen/config/`) is a link to the same file.
 
-The file has two lists: `types` for material types (PLA, PETG and so on) and `filaments` for branded products.
+The file has two lists: `types` for materials (PLA, PETG and so on) and `filaments` for branded products.
 
 ```json
 {
@@ -95,56 +97,56 @@ The file has two lists: `types` for material types (PLA, PETG and so on) and `fi
 }
 ```
 
-**Material types (`types`).** An entry whose `name` matches a built-in material changes only the fields you list; everything else keeps the built-in value. The Material Temperatures screen writes here too, so a change you make on the screen shows up in this file and the other way round. An entry with a new `name` adds a material type, which then appears in the Material Temperatures list and can be used as a product's `type`.
+**Materials (`types`).** An entry with the `name` of a built-in material changes only the fields you list. Everything else keeps its built-in value. The Material Temperatures screen writes to this list too, so a change on the screen shows up in the file and the other way round. An entry with a new `name` adds a material. It then appears in the Material Temperatures list and can be used as a product's `type`.
 
 - Fields: `nozzle_min`, `nozzle_max`, `bed`, `chamber` (0 means no chamber heat), `preheat_macro`, `macro_handles_heating`, `dry_temp`, `dry_time` (minutes), `density` (g/cm³), `category` and `compat_group`.
-- Numbers must be written as plain numbers: `205`, not `"205"`. A field whose value is text or `null` is ignored with a warning in the log, and the built-in value stays.
-- A new type must set `nozzle_min` and `nozzle_max`, with `nozzle_max` at least `nozzle_min`; a type without a usable nozzle range is skipped with a warning in the log. Set `bed` too; anything else it leaves out is 0. Its `compat_group` defaults to its own name, so endless spool never swaps it with a different material. Set `compat_group` to an existing group (for example `"PLA"`) if it really is interchangeable with that group.
-- The built-in list is the `types` section of `assets/filaments.json` in the HelixScreen install folder. Read it for names and default values, but don't edit it, because updates replace it.
-- **Reset to Default** on the Material Temperatures screen removes your temperature and macro fields for a built-in type. A type you added has no default, so the button is hidden for it.
+- Write numbers as plain numbers: `205`, not `"205"`. A field holding text or `null` is ignored (with a warning in the log) and the built-in value stays.
+- A new material must set `nozzle_min` and `nozzle_max`, with `nozzle_max` at least `nozzle_min`. One without a usable nozzle range is skipped, with a warning in the log. Set `bed` too; anything else you leave out is 0. Its `compat_group` is its own name unless you set one, so endless spool never swaps it for a different material. Set `compat_group` to an existing group (for example `"PLA"`) only if it really can stand in for that group.
+- The built-in list is the `types` section of `assets/filaments.json` in the HelixScreen install folder. Read it for names and defaults, but don't edit it: updates replace it.
+- **Reset to Default** on the Material Temperatures screen removes your temperature and macro changes for a built-in material. A material you added has no default, so the button is hidden for it.
 
 **Brands and products (`filaments`).**
 
-- `id`, `brand`, `name` and `type` are required. The `id` must be unique; lowercase with dashes is the convention.
-- `nozzle`, `nozzle_min`, `nozzle_max`, `bed` and `density` are optional. Anything you leave out comes from the product's material type, including your changes in `types`.
-- To change a built-in product, use its `id` and include only the fields you want to change. Built-in products are in the `filaments` section of `assets/filaments.json`.
-- Temperatures set on a product win over its type's values.
+- `id`, `brand`, `name` and `type` are required. The `id` must be unique. Lowercase with dashes is the convention.
+- `nozzle`, `nozzle_min`, `nozzle_max`, `bed` and `density` are optional. Anything you leave out comes from the product's material, including your changes in `types`.
+- To change a built-in product, use its `id` and list only the fields you want to change. Built-in products are in the `filaments` section of `assets/filaments.json`.
+- Temperatures set on a product override those of its material.
 
-Restart HelixScreen after editing so every screen picks up the change. A file that is only a list of products (`[ ... ]`) still works; HelixScreen rewrites it in the form above the next time it saves. If the file stops parsing, HelixScreen ignores it until it's fixed, and the next save from the screen (a product or a Material Temperatures change) copies it to `user_filaments.json.bak` before starting fresh.
+Restart HelixScreen after editing so every screen picks up the change. A file that is only a list of products (`[ ... ]`) still works; HelixScreen rewrites it in the form above the next time it saves. If the file stops being valid JSON, HelixScreen ignores it until it's fixed. The next save from the screen then copies it to `user_filaments.json.bak` and starts fresh.
 
-Before this file was linked into `printer_data`, it lived only in the install folder, where an update from Mainsail or Fluidd deletes it. If you added products on an older version, copy the file somewhere safe before updating.
+On older versions this file lived only in the install folder, where a Mainsail or Fluidd update deletes it. If you added products on an older version, copy the file somewhere safe before updating.
 
-**Material temperatures from older versions.** Older versions kept Material Temperatures changes in `settings.json` under `material_overrides`. HelixScreen moves them into `types` in `user_filaments.json` the first time it starts, and removes them from `settings.json`. If `user_filaments.json` doesn't parse at that point, they stay in `settings.json` and the move is tried again on the next start. Going back to an older version loses them, because older versions only look in `settings.json`. Which material each preset button uses stays in `settings.json` under `preset_materials`, a list of four entries such as `{"type": "PETG"}`; stop HelixScreen before editing `settings.json`, because it rewrites the whole file whenever it saves a setting.
+**Material temperatures from older versions.** Older versions kept Material Temperatures changes in `settings.json` under `material_overrides`. The first time a newer version starts, HelixScreen moves them into `types` in `user_filaments.json` and removes them from `settings.json`. If `user_filaments.json` isn't valid at that moment, they stay put and the move is tried again next start. Going back to an older version loses them, because older versions only look in `settings.json`. Which material each preset button uses stays in `settings.json` under `preset_materials`, a list of four entries such as `{"type": "PETG"}`. Stop HelixScreen before editing `settings.json`, because it rewrites the whole file whenever it saves a setting.
 
 ---
 
 ## Allow cold load/unload
 
-| State | Behavior |
-|-------|----------|
-| **Off** (default) | Filament load/unload is blocked when the nozzle is below the minimum extrude temperature |
-| **On** | Load/unload run on a cold nozzle, and HelixScreen never heats it for you first |
+| Setting | What happens |
+|---------|--------------|
+| **Off** (default) | Loading and unloading are blocked while the nozzle is too cold to extrude |
+| **On** | Loading and unloading run on a cold nozzle, and HelixScreen never heats it for you first |
 
-By default, HelixScreen won't run a filament load or unload while the nozzle is too cold to extrude, matching Klipper's cold-extrude safety check. Turn this on if your load/unload macros heat the nozzle themselves before extruding, so the operation isn't blocked before your macro gets a chance to warm up.
+By default HelixScreen won't load or unload filament while the nozzle is too cold, the same safety check Klipper makes. Turn this on if your load and unload macros heat the nozzle themselves, so they aren't blocked before they get the chance.
 
-With it on, HelixScreen also stops running its own preheat before the operation — your macro is dispatched immediately and owns the temperature from there. This applies wherever you start a load or unload, including the Filament panel and the filament system's own panel.
+With it on, HelixScreen also skips its own preheat. Your macro runs straight away and is in charge of the temperature. This applies wherever you start a load or unload, including the Filament screen and your filament system's own screen.
 
-You don't need this for a printer whose stock macros HelixScreen already recognizes as self-heating (QIDI's `M604` / `M603`, for instance), or for a filament system whose firmware heats as part of loading (AFC, CFS, QIDI Box, AD5X IFS). Those are detected, and the preheat is skipped for them whatever this setting says.
+You don't need it for printers whose stock macros HelixScreen already knows heat on their own (QIDI's `M604` and `M603`, for example), or for filament systems that heat as part of loading (AFC, CFS, QIDI Box, AD5X IFS). HelixScreen detects those and skips its preheat whatever this switch says.
 
 ---
 
 ## Cool nozzle after filament ops
 
-| State | Behavior |
-|-------|----------|
-| **On** (default) | The extruder heater is turned off a couple of minutes after a load or unload finishes |
-| **Off** | The nozzle stays at whatever temperature the operation left it |
+| Setting | What happens |
+|---------|--------------|
+| **On** (default) | The nozzle heater turns off a couple of minutes after a load or unload finishes |
+| **Off** | The nozzle stays at whatever temperature the load or unload left it at |
 
-A filament change heats the nozzle to material temperature. Left alone, it would sit there indefinitely — burning power and slowly cooking the filament in the melt zone. So HelixScreen turns the heater off once you're done. The delay (two minutes by default) is there so you can run several loads and unloads back to back without the nozzle cooling between them; each new operation restarts the clock. Nothing happens while a print is running — an active job manages its own heat.
+A filament change heats the nozzle to printing temperature. Left alone, it would stay hot, using power and slowly cooking the filament inside. So HelixScreen turns the heater off when you're done. It waits two minutes first, so you can do several loads and unloads in a row without the nozzle cooling in between. Each new load or unload restarts the wait. Nothing happens during a print: the print looks after its own temperatures.
 
-**Turn this off if your filament system already does it.** [AFC](../filament.md) has its own post-operation cooldown, and other multi-material firmware is adding the same. Two independent timers driving one heater is confusing at best. Leave whichever one you prefer in charge, and switch the other off.
+**Turn this off if your filament system already does it.** [AFC](../filament.md) has its own cool-down after loading, and other filament systems are adding the same. Two timers controlling one heater only confuses things, so keep one and switch the other off.
 
-The setting is per printer, so an AFC machine can opt out while your other printers keep the built-in behavior. To change the two-minute delay, see [`cooldown_delay_seconds`](../../CONFIGURATION.md#cooldown_delay_seconds).
+The setting is per printer, so an AFC printer can turn it off while your other printers keep it. To change the two-minute wait, see [`cooldown_delay_seconds`](../../CONFIGURATION.md#cooldown_delay_seconds).
 
 ---
 
@@ -152,42 +154,40 @@ The setting is per printer, so an AFC machine can opt out while your other print
 
 > Only shown when the [Moonraker-Timelapse](https://github.com/mainsail-crew/moonraker-timelapse) plugin is installed.
 
-Tap to open the Timelapse Settings overlay. Configure how HelixScreen records timelapse videos of your prints.
+Sets up how HelixScreen records timelapse videos of your prints.
 
-| Setting | Options | Description |
-|---------|---------|-------------|
-| **Enable Timelapse** | On/Off | Master toggle for timelapse recording |
-| **Recording Mode** | Layer / Hyperlapse | **Layer** captures one frame at each layer change — best for most prints. **Hyperlapse** captures frames at fixed time intervals — better for very long prints. |
-| **Framerate** | 15 / 24 / 30 / 60 fps | Playback speed of the rendered video. 30 fps is the default. |
-| **Auto-render video** | On/Off | When enabled, automatically renders a video file when the print completes |
+| Setting | Options | What it does |
+|---------|---------|--------------|
+| **Enable Timelapse** | On or off | Turns recording on or off |
+| **Recording Mode** | Layer or Hyperlapse | **Layer** takes one frame per layer, best for most prints. **Hyperlapse** takes frames at a fixed time interval, better for very long prints |
+| **Framerate** | 15, 24, 30 or 60 fps | How fast the finished video plays. 30 fps is the default |
+| **Auto-render video** | On or off | Makes the video file automatically when the print finishes |
 
-A quick **timelapse toggle** also appears on the print status panel, so you can enable or disable recording without leaving the print view.
+Changes are saved straight away and sent to Moonraker. The print status screen also has a timelapse switch, so you can turn recording on or off without leaving the print.
 
-Changes are saved immediately and sent to Moonraker. If the timelapse plugin is not yet installed, HelixScreen shows an **Install Wizard** that walks you through the SSH commands to set it up — see [Advanced > Timelapse](../advanced.md#timelapse) for details.
-
-For browsing and playing recorded videos, see **Advanced > Timelapse Videos** (covered in [Advanced > Timelapse](../advanced.md#timelapse)).
+If the plugin isn't installed yet, HelixScreen shows an **Install Wizard** that walks you through the commands. See [Advanced > Timelapse](../advanced.md#timelapse). To watch recorded videos, use **Advanced > Timelapse Videos**.
 
 ---
 
 ## Macro Buttons
 
-Tap to open the Macro Buttons overlay. Configure quick-action buttons and standard macro assignments.
+Chooses what HelixScreen's quick buttons run, and which of your Klipper macros it uses for common jobs such as loading filament or cleaning the nozzle.
 
 ### Quick Buttons
 
-These macros power the buttons you see on the Controls and Filament panels:
+These power buttons on the Controls and Filament screens:
 
-| Button | Where it appears | What it does by default |
-|--------|-----------------|------------------------|
-| **Cooldown** | Preheat widget (when heaters are on), Filament panel (always shown, dimmed while the nozzle isn't heating) | Turns off extruder and bed heaters |
-| **Load Filament** | Filament panel | Runs `LOAD_FILAMENT` |
-| **Unload Filament** | Filament panel | Runs `UNLOAD_FILAMENT` |
-| **Custom Macro 1** | Controls panel | Runs `HELIX_CLEAN_NOZZLE` (label: "Clean Nozzle") |
-| **Custom Macro 2** | Controls panel | Runs `HELIX_BED_LEVEL_IF_NEEDED` (label: "Bed Level") |
+| Button | Where it appears | What it runs out of the box |
+|--------|------------------|-----------------------------|
+| **Cooldown** | The Preheat widget (while something is heating) and the Filament screen (always shown, dimmed while nothing is heating) | Turns off the nozzle and bed heaters |
+| **Load Filament** | Filament screen | `LOAD_FILAMENT` |
+| **Unload Filament** | Filament screen | `UNLOAD_FILAMENT` |
+| **Custom Macro 1** | Controls screen | `HELIX_CLEAN_NOZZLE`, labeled "Clean Nozzle" |
+| **Custom Macro 2** | Controls screen | `HELIX_BED_LEVEL_IF_NEEDED`, labeled "Bed Level" |
 
-**Cooldown behavior:** When you preheat a material using the Preheat widget on the home or controls panel, the button automatically switches to **Cool Down** while any heater target is above zero. Tapping it runs your configured cooldown macro. This is especially useful if your cooldown needs to do more than just turn off heaters — for example, turning off chamber heaters, bed fans, or recirculation fans.
+After you preheat from the Preheat widget on the Home or Controls screen, its button changes to **Cool Down** while any heater has a target. Tapping it runs your cooldown macro. Change that macro if cooling down should do more than turn off heaters, such as turning off a chamber heater, bed fans or an air filter.
 
-You can customize any of these. Each button has a **label** (what the button says) and **G-code** (what it runs when tapped). The cooldown macro can be a simple G-code string or a multi-line sequence:
+Each button has a **label** (what the button says) and **G-code** (what it runs). The G-code can be one command or several lines:
 
 ```
 SET_HEATER_TEMPERATURE HEATER=extruder TARGET=0
@@ -195,44 +195,37 @@ SET_HEATER_TEMPERATURE HEATER=heater_bed TARGET=0
 SET_FAN_SPEED FAN=bed_fan SPEED=0
 ```
 
-For advanced configuration via `settings.json`, see the [default_macros reference](../../CONFIGURATION.md#default_macros).
+To set these in `settings.json` instead, see the [default_macros reference](../../CONFIGURATION.md#default_macros).
 
 ### Standard Macros
 
-HelixScreen auto-detects common macros from your Klipper configuration (e.g., it recognizes `CLEAN_NOZZLE`, `NOZZLE_CLEAN`, and similar naming patterns). You can override any auto-detected assignment:
+HelixScreen looks for common macros in your Klipper config and uses them for each job below. It recognizes common spellings, such as both `CLEAN_NOZZLE` and `NOZZLE_CLEAN`. You can pick a different macro for any slot:
 
-| Slot | What it controls | Common auto-detected macros |
-|------|------------------|-----------------------------|
-| **Load Filament** | Filament load operations | LOAD_FILAMENT, M701 |
-| **Unload Filament** | Filament unload operations | UNLOAD_FILAMENT, M702 |
-| **Purge** | Nozzle purge/prime | PURGE, PURGE_LINE, LINE_PURGE, PRIME_LINE |
-| **Pause** | Print pause | PAUSE, M600 |
-| **Resume** | Print resume | RESUME |
-| **Cancel** | Print cancel | CANCEL_PRINT |
+| Slot | Used for | Macros it looks for |
+|------|----------|---------------------|
+| **Load Filament** | Loading filament | LOAD_FILAMENT, M701 |
+| **Unload Filament** | Unloading filament | UNLOAD_FILAMENT, M702 |
+| **Purge** | Purging or priming the nozzle | PURGE, PURGE_LINE, LINE_PURGE, PRIME_LINE |
+| **Pause** | Pausing a print | PAUSE, M600 |
+| **Resume** | Resuming a print | RESUME |
+| **Cancel** | Cancelling a print | CANCEL_PRINT |
 | **Bed Mesh** | Bed mesh calibration | BED_MESH_CALIBRATE |
 | **Bed Level** | Manual bed leveling | BED_SCREWS_ADJUST, SCREWS_TILT_CALCULATE |
 | **Clean Nozzle** | Nozzle cleaning | CLEAN_NOZZLE, NOZZLE_CLEAN |
 | **Heat Soak** | Chamber heat soak | HEAT_SOAK |
 | **Park** | Parking the toolhead (Motion screen, Move tab) | PARK, PARK_TOOLHEAD, TOOLHEAD_PARK |
 
-If your printer doesn't have a matching macro, some slots fall back to HelixScreen helper macros (installed via **Advanced > Install Helper Macros**). Leave a slot empty to disable that function.
+If your printer has no matching macro, some slots fall back to HelixScreen's helper macros, which you install from **Advanced > Install Helper Macros**. Leave a slot empty to turn that job off.
 
-**Load Filament and Unload Filament on a multi-filament printer:** left on **(Auto)**, these two drive your filament system directly rather than running a macro. Choose a macro yourself and it takes over — your macro runs and the filament system's own handling is skipped for that operation, so anything it would have done becomes your macro's job. Set the slot back to **(Auto)** to hand the operation back. The other slots are unaffected. See [Customizing which macro runs](../filament.md#customizing-which-macro-runs).
-
-> **Looking for Load/Unload/Purge button customization?** See the [Filament guide](../filament.md#customizing-which-macro-runs) for a step-by-step walkthrough, including how these buttons interact with AMS systems.
+**Load Filament and Unload Filament on a multi-filament printer.** Left on **(Auto)**, these two use your filament system directly instead of running a macro. If you pick a macro, your macro takes over and the filament system's own loading is skipped, so anything it would have done is now up to your macro. Set the slot back to **(Auto)** to hand the job back. The other slots aren't affected. See [Customizing which macro runs](../filament.md#customizing-which-macro-runs) for a step-by-step guide.
 
 ### Per-Material Preheat Macros
 
-You can also assign a custom Klipper macro to each material preset (PLA, PETG, ABS, TPU). This is useful when preheating requires more than just setting temperatures — for example, turning on bed fans for ABS or starting a chamber heater.
+Each material in [Material Temperatures](#material-temperatures) can run its own Klipper macro when you preheat it. Use this when preheating needs more than temperatures, such as turning on bed fans for ABS or starting a chamber heater.
 
-Configure per-material macros in **Material Temperatures** (above). Each material can have:
+The macro runs from the **Preheat widget** on the Home or Controls screen and from the **material preset buttons on the Filament screen**, including the active-spool preset. On the Filament screen, tap a preset to preheat it, or long-press it to choose which material the button uses. The separate nozzle, bed and chamber temperature controls never run a material's macro.
 
-- **Preheat Macro** — A Klipper macro to run when preheating this material
-- **Macro Handles Heating** — If enabled, the macro is responsible for setting temperatures. If disabled, HelixScreen sets temperatures first, then runs the macro as an additional step.
-
-These settings apply to the **Preheat widget** on Home or Controls and to the **material preset buttons on the Filament panel**, including the active-spool preset when shown. Long-pressing a Filament preset changes the material assigned to that button; tapping it preheats that material. Individual nozzle, bed, and chamber temperature controls do not run a whole-material macro.
-
-**Macro Handles Heating** is not an enable/disable switch for the macro: the assigned macro runs in either mode. With it enabled, the macro must set every temperature you want. With no macro assigned, or one this printer does not define, the button applies its displayed preset temperatures. Manual preheat does not keep a hotter previous nozzle target for purging; load/unload operations retain their own heating behavior.
+**Macro Handles Heating** doesn't turn the macro on or off: the macro runs either way. When it's on, the macro must set every temperature itself. When there's no macro, or the macro doesn't exist on this printer, the button just sets the preset temperatures. A manual preheat doesn't keep a hotter nozzle target from before; loading and unloading keep their own heating.
 
 ---
 

@@ -1,6 +1,8 @@
 # Settings: Updates
 
-**Settings > Updates** is where HelixScreen updates itself. The row on the Settings screen tells you where things stand: *Up to date*, the version that is waiting (for example *1.1.1 available*), *Checking…*, *Check failed*, or your installed version when it hasn't checked yet.
+**Settings > Updates** is where HelixScreen updates itself. Pick which releases you want, check for a new one and install it, all from the touchscreen.
+
+On the Settings screen, the **Updates** row tells you where things stand: *Up to date*, the version waiting for you (for example *1.1.1 available*), *Checking…*, *Check failed*, or your installed version (such as *Version 1.1.0*) before the first check. On printers whose firmware updates HelixScreen, it reads *Managed by firmware*.
 
 ![Updates settings](../../../images/user/settings-updates.png)
 
@@ -8,53 +10,59 @@
 
 ## Update Channel
 
-| Channel | Description |
-|---------|-------------|
-| **Stable** | Recommended. Tested releases only. |
-| **Beta** | Preview builds with new features. May have rough edges. |
-| **Dev** | Development builds. Appears only with beta features enabled, and requires a `dev_url` set in `/var/lib/helixscreen/update_urls.json` (a root-owned file; see [CONFIGURATION](../../CONFIGURATION.md)). |
+Which releases you get:
 
-> **Note:** Selecting the **Dev** channel without a `dev_url` set in `update_urls.json` shows a "Dev channel requires dev_url in update_urls.json" message and won't check for updates. Dev builds are intended for HelixScreen contributors - most users should stay on **Stable** or **Beta**.
+| Channel | What you get |
+|---------|--------------|
+| **Stable** | Tested releases only. Recommended |
+| **Beta** | Preview builds with new features. May have rough edges |
+| **Dev** | Development builds. Only listed once [beta features](help-about.md#enabling-beta-features) are on, and needs a `dev_url` in `/var/lib/helixscreen/update_urls.json` (a file only root can edit; see [CONFIGURATION](../../CONFIGURATION.md)) |
 
-Changing the channel starts a fresh check on the new channel.
+Changing the channel checks the new channel straight away.
+
+> **Note:** Choosing **Dev** without a `dev_url` in `update_urls.json` shows "Dev channel requires dev_url in update_urls.json" and doesn't check. Dev builds are meant for people working on HelixScreen. Most people should stay on **Stable** or **Beta**.
 
 ---
 
 ## Check for Updates
 
-Tap **Check for Updates** to look for a newer release on your selected [update channel](#update-channel). If one is available, an update dialog walks you through installing it. You'll see the following stages:
+Looks for a newer release on your channel. Once a check has run, the row shows the result, such as the version that's available.
 
-1. **Update Available** — Shows the new version. Tap **Install** to begin, or **Cancel** to dismiss.
-2. **Downloading...** — A progress bar tracks the download. You can still **Cancel** at this point. The dialog closes straight away, but the download itself keeps running quietly in the background until the current transfer finishes; the partly-downloaded file is then thrown away. If you start another update before that has happened, you'll get an **Update Failed** screen reading **"Previous download still finishing"** — wait a few seconds and tap **Retry**.
-3. **Verifying...** — HelixScreen checks the downloaded file before installing.
-4. **Installing...** — The new version is written into place. **Do not power off your printer** while this is in progress.
-5. **Update installed!** — Confirmation that the new version is in place.
-6. **Hang on, we'll be right back!** — HelixScreen restarts itself to run the new version.
+If there's a new version, a dialog walks you through installing it:
 
-Steps 5 and 6 are each shown only for a moment: the install is already finished by then, and the short pause exists so you can see that it succeeded before the app exits and comes back.
+1. **Update Available**: shows the new version. Tap **Install** to start, or **Cancel**.
+2. **Downloading...**: a progress bar shows the download. You can still **Cancel** here. The dialog closes at once, but the download finishes its current piece in the background before it's thrown away. If you start another update before then, you'll see **Update Failed** with "Previous download still finishing". Wait a few seconds and tap **Retry**.
+3. **Verifying...**: HelixScreen checks the download before installing it.
+4. **Installing...**: the new version is put in place. **Don't turn off the printer now.**
+5. **Update installed!**: the new version is in place.
+6. **Hang on, we'll be right back!**: HelixScreen restarts into the new version.
 
-If something goes wrong, an **Update Failed** screen appears with a **Retry** button so you can try again, or **Close** to dismiss.
+Steps 5 and 6 only flash up for a moment. The install is already done by then; the pause just lets you see it worked.
 
-> **Caution:** Once installation begins, leave the printer powered on until HelixScreen restarts on its own. Interrupting an install can leave HelixScreen in an inconsistent state.
+If something goes wrong, **Update Failed** offers **Retry** to try again or **Close** to give up for now.
 
-On Android, the install step opens the Play Store.
+> **Caution:** Once installing starts, leave the printer on until HelixScreen restarts by itself. Cutting power during an install can leave HelixScreen broken.
+
+On Android, installing opens the Play Store.
 
 ---
 
 ## Install Update
 
-Appears once a check has found a version to install. Tap it to open the update dialog described above.
+> Only shown when a check has found a version to install.
 
-If you switched to a channel whose current release is older than the version you have (going from Beta back to Stable, for example), HelixScreen asks **Install Older Version?** first. Anything added since that version is removed.
+Opens the update dialog above at the **Update Available** step, so you can install a version you found earlier.
+
+If you switched to a channel whose latest release is older than the version you have (going from Beta back to Stable, for example), HelixScreen first asks **Install Older Version?**. Anything added since that older version will be gone.
 
 ---
 
 ## When updates come from somewhere else
 
-Some installs can't update themselves, and the page says so instead of offering buttons that wouldn't work:
+Some installs can't update themselves. The page tells you so instead of showing buttons that wouldn't work.
 
-- **Software Updates: Managed by your firmware.** Your printer's firmware ships HelixScreen and updates it along with everything else. The channel, check and install rows are hidden, and the **Updates** row on the Settings screen reads *Managed by firmware*. Update the firmware to get a newer HelixScreen.
-- **Software Updates: Not available here. Update from a terminal.** HelixScreen can see that a new version exists but can't write to its own install folder. Tap the row for a QR code that links to the instructions: you run the HelixScreen installer with `--update` from a terminal on the printer. See [Upgrading](../../UPGRADING.md) for the other ways to update.
+- **Software Updates: Managed by your firmware.** Your printer's firmware includes HelixScreen and updates it along with everything else. The channel, check and install rows are hidden. Update the printer's firmware to get a newer HelixScreen.
+- **Software Updates: Not available here. Update from a terminal.** HelixScreen can see new versions but can't write to its own install folder. Tap the row for a QR code that links to instructions: you run the HelixScreen installer with `--update` from a terminal on the printer. [Upgrading](../../UPGRADING.md) lists the other ways to update.
 
 ---
 

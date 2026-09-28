@@ -1,87 +1,91 @@
 # Settings: Display
 
-**Settings > Display** controls the screen itself: which way it faces, how big the interface is drawn, how bright it is, and when it dims, sleeps or shows a screensaver.
+**Settings > Display** controls the screen itself. Use it to turn the picture to match how the screen is mounted, make the interface bigger or smaller, set the brightness, and choose when the screen dims, sleeps or shows a screensaver.
 
-![Display settings](../../../images/user/settings-display.png)
+On the Settings screen, the **Display** row shows your brightness and sleep time, for example *80% · sleep 10 min*. It reads *80% · never sleeps* when sleep is off, and just *Sleep 10 min* on a screen that can't change its brightness.
+
+![Display settings, top of the page](../../../images/user/settings-display.png)
 
 ---
 
 ## Screen Rotation
 
-Turn the picture to match how the panel is physically mounted: **Normal**, **90° Clockwise**, **180° Upside Down**, or **270° Clockwise**. The row sits at the top of the page, so someone facing a sideways screen reaches it without scrolling.
+Turns the picture to match how the screen is mounted: **Normal**, **90° Clockwise**, **180° Upside Down** or **270° Clockwise**. It's the first row on the page, so you can reach it without scrolling while the picture is sideways.
 
-Changing the rotation applies the next time HelixScreen starts — when you pick a new value, HelixScreen offers to restart right away, and re-selecting the current rotation changes nothing. Touch input follows the new orientation automatically. The row is hidden on the desktop simulator, where you rotate the window from your operating system instead.
+The new rotation applies the next time HelixScreen starts. When you pick one, HelixScreen offers to restart right away. Touch follows the new orientation on its own.
 
-> If taps land in the wrong places after rotating, that is a touch-calibration question, not a rotation one — see the [Touch Calibration guide](../touch-calibration.md).
+This row is hidden on the desktop simulator. There you rotate the window from your operating system instead.
+
+> If taps land in the wrong place after rotating, the screen needs touch calibration, not a different rotation. See the [Touch Calibration guide](../touch-calibration.md).
 
 ---
 
 ## UI Scale
 
-How big the interface is drawn. The dropdown offers **Automatic**, then 100% through 200%.
+Sets how big everything is drawn. Choose **Automatic**, or a size from 100% to 200%.
 
-**Automatic** works the size out from your panel's physical pixel density, so a screen that packs more pixels into the same number of millimetres gets a proportionally larger UI and everything stays the same real-world size. On every supported printer this comes out at 100%, so Automatic changes nothing there. It only grows the interface on very high-density displays — an Android phone or tablet, where the stock sizing would otherwise be uncomfortably tiny. Automatic shows you the figure it picked, e.g. *Automatic (158%)*.
+**Automatic** picks a size from how densely your screen packs its pixels, so buttons and text stay the same physical size on any screen. On every supported printer this works out to 100%. It only makes the interface bigger on very sharp screens, such as an Android phone or tablet. The menu shows the size it picked, for example *Automatic (158%)*.
 
-Pick an explicit percentage if the result is not to your taste, or if HelixScreen has guessed wrong about a display it does not know. 100% pins the interface to its authored size whatever the panel reports.
+Pick a percentage yourself if you'd like things bigger or smaller, or if Automatic guesses wrong on a screen HelixScreen doesn't know. 100% always draws the interface at its designed size.
 
-**The new size appears after you restart HelixScreen.** Fonts and layout are worked out once, while the screen is being set up, so the change cannot be applied to a running interface. Nothing is lost by waiting — the setting is saved as soon as you pick it.
+**The new size appears after you restart HelixScreen.** Your choice is saved straight away.
 
-Your home panel arrangement is remembered per size: the number of widget slots changes with the scale, so each scale keeps its own saved layout. Rearrange at one size, switch, rearrange again; switching back restores the arrangement you made there.
+Each size keeps its own home screen layout, because a different size fits a different number of widgets. If you rearrange your home screen at one size and then switch, switching back brings your first arrangement back.
 
 ---
 
 ## Brightness
 
-Slider from 10–100%. Only shown on hardware with backlight control (hidden on Android).
+A slider from 10% to 100% (80% to start with). Only shown on screens whose backlight HelixScreen can control. Android handles brightness itself, so the slider is hidden there.
 
-On the Creality K2 the low end of the slider keeps the panel brighter than you ask for: the K2 panel shows anything under about 20% of its range as fully off, so HelixScreen never dims into that range.
+On the Creality K2, the bottom of the slider stays a little brighter than the number suggests. The K2 panel turns fully off below about 20% of its range, so HelixScreen never dims it that far.
 
 ---
 
 ## Screen Dim
 
-When the screen dims to lower brightness: Never, 30s, 1m, 2m, 5m, or 10m of inactivity.
+How long the screen waits with nobody touching it before it dims: **Never**, **30 seconds**, **1 minute**, **2 minutes**, **5 minutes** or **10 minutes** (the default). Only shown on screens that can change their brightness.
 
 ---
 
 ## Display Sleep
 
-When the screen turns off completely: Never, 1m, 5m, 10m, 20m, or 30m of inactivity.
+How long the screen waits before it turns off completely: **Never**, **1 minute**, **5 minutes**, **10 minutes**, **20 minutes** (the default) or **30 minutes**. Touch the screen to wake it.
 
-Sleeping turns the backlight off. On the rare panel with no adjustable backlight, the panel itself is powered down instead. If your screen stays faintly lit after sleep, or does not come back after waking, the behavior can be forced either way in `settings.json`:
+Sleeping turns the backlight off. On the rare screen with no adjustable backlight, HelixScreen powers the panel down instead. If your screen stays faintly lit while asleep, or doesn't come back when you touch it, you can force the behavior in `settings.json`:
 
 ```json
 "display": { "panel_power_off": 1 }
 ```
 
-Use `0` where `1` made things worse. Touch wakes the screen in all cases.
+Use `0` if `1` made things worse.
 
 ---
 
 ## Screensaver
 
-Choose a screensaver to display during inactivity instead of dimming the screen:
+An animation that plays while the screen is idle. It starts when the screen would dim and stops when the screen goes to sleep. On a screen with no brightness control, the screensaver is the only sign that the screen is idle.
 
-| Option | Description |
-|--------|-------------|
-| **Off** | No screensaver; the screen dims and sleeps normally |
-| **Flying Toasters** (default) | Classic flying toasters animation |
-| **Starfield** | Scrolling starfield |
-| **3D Pipes** | Animated 3D pipes |
-| **Bouncing Printer** | Your printer drifts across the screen and bounces off the edges, changing color on every wall — with a celebration if it ever lands a corner |
-| **Fireworks** | Fireworks bursting over hills under a night sky |
+| Option | What you see |
+|--------|--------------|
+| **Off** | No screensaver. The screen just dims and sleeps |
+| **Flying Toasters** (default on most screens) | The classic flying toasters |
+| **Starfield** | Stars streaming past |
+| **3D Pipes** | Pipes growing across the screen |
+| **Bouncing Printer** | Your printer drifts around and bounces off the edges, changing color at every wall. Land a corner and it celebrates |
+| **Fireworks** | Fireworks over hills at night |
 
-Each screensaver checks how much processor time it uses on your printer's screen. If it would slow the printer, it lowers its frame rate or detail, and if even that is too much it shows a black screen instead. It remembers the result and checks again after an update.
+Each screensaver checks how much processor time it takes on your printer. If it would slow the printer down, it lowers its frame rate or detail. If that's still too much, it shows a black screen instead. It remembers the result and checks again after an update.
 
-When any option other than **Off** is selected, a **Test Screensaver** button appears below the dropdown. Tap it to preview the selected screensaver immediately, without waiting for the inactivity timeout.
+### Test Screensaver
+
+Appears under the Screensaver row when a screensaver is selected. Tap it to see the screensaver right away instead of waiting for the screen to go idle. Touch the screen to stop it.
 
 ---
 
 ## Sleep While Printing
 
-Allow the display to sleep during active prints. Off by default so you can monitor progress.
-
-> **Tip:** Touch the screen to wake from sleep.
+Lets the screen dim and sleep during a print, on the same timers as the rest of the time. **On** by default. Turn it off to keep the screen lit for the whole print, so you can check progress at a glance without touching it.
 
 ---
 

@@ -1,116 +1,138 @@
 # Settings: Sound
 
-**Settings > Sound** turns sounds on or off and picks how loud they are and what they sound like. The **Sound** row only appears on the Settings screen when HelixScreen finds a speaker or buzzer it can use.
+**Settings > Sound** turns sounds on or off and sets how loud they are and what they sound like. The **Sound** row only appears on the Settings screen when HelixScreen finds a speaker or buzzer it can use (see [Supported Hardware](#supported-hardware)).
 
-![Sound settings](../../../images/user/settings-sound.png)
+On the Settings screen, the **Sound** row shows your volume, for example *Volume 60%*, or *Muted* when sounds are off.
+
+![Sound settings, top of the page](../../../images/user/settings-sound.png)
 
 ---
 
 ## Sounds
 
-Master toggle — turns all sounds on or off. All other sound options are hidden when sounds are disabled.
+The master switch. Turns every sound on or off. **Off** on a fresh install, so turn it on to hear anything. When it's off, the rest of the rows on this page are hidden.
 
-> Sound options appear as soon as HelixScreen starts — you don't need to wait for the printer to connect. If no audio hardware is detected after connection, the sound options are hidden entirely.
+> The Sound options are there as soon as HelixScreen starts, before the printer connects. If no speaker is found once the printer connects, they're hidden.
+
+---
 
 ## Volume
 
-Master volume slider (0–100%). Only shown when sounds are enabled.
+Sets the volume for every sound, from 0% to 100%. Starts at 80%.
+
+---
 
 ## UI Sounds
 
-Controls button taps, navigation, and toggle sounds. When off, only important sounds still play (print complete, errors, alarms).
+Button taps, switch clicks and the sounds for opening and closing screens. **On** by default. Turn it off to keep only the sounds that matter: print finished, errors and alarms.
+
+---
 
 ## Sound Theme
 
-Choose sound style. A test sound plays when you switch themes.
+Picks the style of every sound. A test sound plays when you switch. The five built-in themes:
+
+| Theme | Sound |
+|-------|-------|
+| **Default** | Balanced and understated. Soft clicks, smooth navigation chirps and a melodic fanfare when a print finishes |
+| **Minimal** | Only the important events: print finished, errors and alarms. No button or navigation sounds |
+| **Retro** | 8-bit chiptune. Square-wave arpeggios, a victory fanfare and buzzy retro alarms |
+| **Miami Vice** | Punchy 80s synth with a driving rhythm and a soaring lead for print finished |
+| **Crockett's Theme** | Warm, cinematic 80s synth with long sustains and filter sweeps. Startup plays the Crockett's Theme melody |
+
+You can also make your own theme. See [Custom Sound Themes](#custom-sound-themes).
+
+---
 
 ## Output Device
 
-*(Only shown on devices using the ALSA audio backend — hidden on desktop/SDL, PWM-buzzer, and Moonraker-beeper hardware.)*
+Chooses which sound card plays HelixScreen's sounds, for example an HDMI screen with its own speakers or the board's built-in output. Only shown on printers that play sound through a Linux sound card (ALSA) and have a list of devices to choose from.
 
-Choose which audio output device UI sounds and notifications play through. Useful when a device exposes more than one sound card (e.g., an HDMI display with its own audio plus an onboard speaker). The list is populated from the system's available ALSA output devices.
-
-## Sound Themes
-
-HelixScreen comes with five built-in themes:
-
-| Theme | Description |
-|-------|-------------|
-| **Default** | Balanced, tasteful sounds. Subtle clicks, smooth navigation chirps, and a melodic fanfare when your print completes. |
-| **Minimal** | Only plays sounds for important events: print complete, errors, and alarms. No button or navigation sounds at all. |
-| **Retro** | 8-bit chiptune style. Punchy square-wave arpeggios, a Mario-style victory fanfare, and buzzy retro alarms. |
-| **Miami Vice** | Punchy 80s electronic synth. Staccato square-wave hits, driving rhythm, and a soaring saw-wave lead for print complete. |
-| **Crockett's Theme** | Warm, cinematic 80s synth. Smooth saw waves with long sustains and filter sweeps. Startup plays the Crockett's Theme melody. |
+---
 
 ## Preview Sounds
 
-Tap **Preview Sounds** in the Sound section to open an overlay with buttons for every sound in the current theme. Tap any button to hear that sound immediately. This is useful for comparing themes or testing custom sounds.
+Opens a screen with a button for every sound in the current theme. Tap one to hear it. Useful for comparing themes or testing a theme you made.
 
-## Custom Sound Themes
+---
 
-You can create your own sound themes without modifying the HelixScreen installation:
+## Test Tracker
 
-1. SSH into your printer
-2. Create the sounds directory if it doesn't exist: `mkdir -p ~/helixscreen/config/sounds`
-3. Copy an existing theme as a starting point: `cp ~/helixscreen/assets/config/sounds/default.json ~/helixscreen/config/sounds/mytheme.json`
-4. Edit the file: change the `"name"` field and modify the sounds
-5. Your theme appears in the Sound Theme dropdown immediately
+Plays, or stops, the Crockett's Theme music track. Use it to check that music plays properly on your printer. Only shown on printers that can play music tracks.
 
-Custom themes support the full synthesis engine: four waveform types (square, saw, triangle, sine), ADSR envelopes, frequency sweeps, lowpass/highpass filters with sweep, LFO modulation, polyphonic chords (up to 4 voices), musical note names (C4, F#5, Bb3), and musical duration notation (8n, 4n., 16t) with BPM.
-
-If your custom theme has the same filename as a built-in theme, your version takes priority.
-
-See the [Sound System developer docs](../../../devel/SOUND_SYSTEM.md#sound-theme-json-schema) for the complete JSON schema reference.
+---
 
 ## What Sounds When
 
-| Event | Sound | When It Plays |
+| Event | Sound | When it plays |
 |-------|-------|---------------|
-| Button press | Short click | Any button tapped |
-| Toggle on | Rising chirp | A switch turned on |
-| Toggle off | Falling chirp | A switch turned off |
-| Navigate forward | Ascending tone | Opening a screen or overlay |
-| Navigate back | Descending tone | Closing an overlay or going back |
-| Print complete | Victory melody | Print finished successfully |
-| Print cancelled | Descending tone | Print job cancelled |
-| Error alert | Pulsing alarm | A significant error occurred |
-| Error notification | Short buzz | An error toast appeared |
-| Critical alarm | Urgent siren | Critical failure requiring attention |
-| Test sound | Short beep | Preview Sounds overlay in settings |
-| Startup | Theme jingle | HelixScreen launches (plays once at startup) |
+| Button press | Short click | You tap a button |
+| Switch on | Rising chirp | You turn a switch on |
+| Switch off | Falling chirp | You turn a switch off |
+| Navigate forward | Rising tone | A screen opens |
+| Navigate back | Falling tone | You go back or close a screen |
+| Print complete | Victory melody | A print finishes |
+| Print cancelled | Falling tone | A print is cancelled |
+| Error alert | Pulsing alarm | Something went seriously wrong |
+| Error notification | Short buzz | An error message pops up |
+| Critical alarm | Urgent siren | A critical failure needs your attention |
+| Test sound | Short beep | You tap a button in Preview Sounds |
+| Startup | Theme jingle | HelixScreen starts |
 
-The first five (button press, toggles, navigation) are **UI sounds** and respect the "UI Sounds" toggle. The rest always play as long as the master toggle is on.
+The first five are **UI sounds** and follow the UI Sounds switch. The rest play whenever the master Sounds switch is on.
+
+---
+
+## Custom Sound Themes
+
+You can add your own theme without touching the HelixScreen install:
+
+1. SSH into your printer.
+2. Create the sounds folder if it isn't there yet: `mkdir -p ~/helixscreen/config/sounds`
+3. Copy a built-in theme to start from: `cp ~/helixscreen/assets/config/sounds/default.json ~/helixscreen/config/sounds/mytheme.json`
+4. Edit the file. Change the `"name"` field, then change the sounds.
+5. Your theme appears in the Sound Theme menu right away.
+
+Custom themes can use everything the built-in ones do: four wave shapes (square, saw, triangle, sine), envelopes, pitch sweeps, filters with sweeps, LFO modulation, chords of up to 4 notes, note names (C4, F#5, Bb3) and note lengths (8n, 4n., 16t) with a tempo.
+
+A custom theme with the same file name as a built-in one replaces it.
+
+The full file format is in the [Sound System developer docs](../../../devel/SOUND_SYSTEM.md#sound-theme-json-schema).
+
+---
 
 ## Supported Hardware
 
-| Hardware | How It Works |
-|----------|-------------|
-| **Desktop (SDL)** | Full audio synthesis through your computer speakers. Best sound quality. |
-| **ALSA (Linux)** | Direct audio output on devices with ALSA sound support. 4-voice polyphony with MOD/MED tracker music support for richer sound themes. |
-| **FlashForge AD5X** | Piezo speaker driven by the printer's PWM hardware. Chords and full sound themes, plus tracker music (including the startup jingle) rendered as tone phrases. |
-| **FlashForge AD5M / AD5M Pro** | Hardware PWM buzzer. Tone sound effects only, with no startup music or tracker themes on this hardware. |
-| **Other Klipper printers** | Beeper commands sent through Moonraker. Requires `[output_pin beeper]` in your Klipper config. Basic beep tones only. |
+| Hardware | How it plays |
+|----------|--------------|
+| **Desktop (SDL)** | Full sound through your computer's speakers. The best quality |
+| **Linux sound card (ALSA)** | Full sound with 4 notes at once, plus music tracks for richer themes |
+| **FlashForge AD5X** | The printer's speaker. Chords, full themes and music (including the startup jingle) played as tone sequences |
+| **FlashForge AD5M / AD5M Pro** | The printer's buzzer. Tones only: no startup music and no music themes |
+| **Other Klipper printers** | Beeps sent through Moonraker. Needs `[output_pin beeper]` in your Klipper config. Simple beeps only |
 
-If no audio hardware is detected, the sound options are hidden entirely.
+If no sound hardware is found, the Sound row and page are hidden.
 
-**Disabling sound entirely:** On some hardware (e.g., Artillery M1 Pro), audio drivers are present but using them causes excessive CPU load. If you experience performance issues with sound enabled, add `"disable_sound": true` to your `settings.json` or start HelixScreen with `--no-sound`. This prevents the audio backend from initializing at all, unlike the Sounds toggle which just mutes playback.
+**Turning sound off completely.** On some hardware (for example the Artillery M1 Pro) the sound drivers work but use too much processor time. If the printer slows down with sound on, add `"disable_sound": true` to `settings.json`, or start HelixScreen with `--no-sound`. That stops the sound system from starting at all. The Sounds switch only mutes it.
+
+---
 
 ## Sound Troubleshooting
 
-**I don't see Sound in Settings.**
-Your printer doesn't have a detected speaker or buzzer. For Klipper printers, make sure you have `[output_pin beeper]` configured in your `printer.cfg`, then restart HelixScreen.
+**There's no Sound row in Settings.**
+HelixScreen didn't find a speaker or buzzer. On a Klipper printer, check that `printer.cfg` has an `[output_pin beeper]` section, then restart HelixScreen.
 
 **Sounds are too quiet or too loud.**
-Adjust the Volume slider. Volume also varies by theme — try switching themes.
+Move the Volume slider. Themes differ in loudness too, so try another theme.
 
-**Print complete sound doesn't play.**
-Make sure the master "Sounds" toggle is on. The "UI Sounds" toggle does not affect print completion sounds.
+**The print-finished sound doesn't play.**
+Check that the master Sounds switch is on. The UI Sounds switch doesn't affect it.
 
-**Button click sounds are annoying.**
-Turn off "UI Sounds". This disables button, toggle, and navigation sounds while keeping important notifications.
+**Button clicks get on my nerves.**
+Turn off UI Sounds. Buttons, switches and screen changes go quiet, and important sounds still play.
 
-**Sounds work on desktop but not on my printer.**
-Confirm your printer has audio hardware. For Klipper printers, verify `[output_pin beeper]` is present and correctly configured. Test by sending an `M300` command from the Klipper console.
+**Sounds work on my computer but not on the printer.**
+Check that the printer has sound hardware. On a Klipper printer, check that `[output_pin beeper]` is set up, and test it by sending `M300` from the Klipper console.
 
 ---
 

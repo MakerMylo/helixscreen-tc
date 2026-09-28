@@ -1,81 +1,85 @@
 # Settings: System
 
-**Settings > System** covers the screen lock, usage data, logging and maintenance actions. Network and printer connection settings live in [Connection](connection.md), and touch settings in [Touch & Input](touch-input.md).
+**Settings > System** looks after HelixScreen itself: the screen lock, anonymous usage data, how much it logs, and restarting or resetting it. Network and printer connections are in [Connection](connection.md), and touch settings are in [Touch & Input](touch-input.md).
 
-![System settings](../../../images/user/settings-system.png)
+![System settings, top of the page](../../../images/user/settings-system.png)
 
 ---
 
 ## Security
 
-Set up a screen lock with a PIN code to prevent unauthorized access to your printer controls. Tap to open the Security overlay.
+Locks the screen with a PIN, so nobody can use your printer's controls without it. Tap **Security** to set it up.
 
-**When no PIN is set:**
+**With no PIN set:**
 
-- **Set PIN** — Create a 4–6 digit numeric PIN. You'll be asked to enter it twice to confirm.
+- **Set PIN**: choose a 4 to 6 digit PIN and enter it twice.
 
-**When a PIN is set:**
+**With a PIN set:**
 
-- **Change PIN** — Update your PIN. You must enter the current PIN first, then enter and confirm the new one.
-- **Remove PIN** — Disable the PIN entirely. Requires entering the current PIN for confirmation.
-- **Auto-lock** — Toggle automatic screen locking. When enabled, the screen locks after the display sleep timeout. You'll need to enter your PIN to unlock.
+- **Change PIN**: enter your current PIN, then the new one twice.
+- **Remove PIN**: turn the lock off. You'll need to enter your current PIN.
+- **Auto-lock**: lock the screen automatically when it goes to sleep (see [Display Sleep](display.md#display-sleep)).
 
-When the screen is locked, a full-screen lock overlay appears with a numeric keypad. Enter your PIN and tap the checkmark to unlock. If you enter the wrong PIN, an error message appears briefly. An **Emergency Stop** button remains accessible in the top-right corner of the lock screen while a print is running, so you can always halt the printer in an emergency without unlocking.
+When the screen is locked, a keypad covers it. Enter your PIN and tap the check mark. A wrong PIN shows a short error. While a print is running, an **Emergency Stop** button stays in the top-right corner of the lock screen, so you can always stop the printer without unlocking.
 
-The PIN is stored securely as a one-way hash in your settings — the actual digits are never saved in plain text. A factory reset clears all security settings.
+HelixScreen never saves your PIN itself, only a scrambled version of it that can't be turned back into the digits. A factory reset removes the PIN. See [Security](../security.md) for more.
 
 ---
 
 ## Performance
 
-> Only shown when performance data is available.
+> Only shown once HelixScreen has performance readings.
 
-The row description shows a live summary of host load. Tap to open the Performance overlay, which shows real-time host CPU and memory usage along with per-MCU load for each connected controller board. Useful for spotting an overloaded host or a struggling MCU when prints stutter or the UI feels sluggish.
+The row shows how busy things are right now, for example *95% CPU · 13% MCU*. Tap it for live processor and memory use on the computer running HelixScreen, plus the load on each of your printer's controller boards. Check it when prints stutter or the screen feels slow, to see whether the host or a board is overloaded.
 
 ---
 
-## Share Usage Data (Telemetry)
+## Share Usage Data
 
-Toggle anonymous usage telemetry that helps improve HelixScreen. Data collection is completely anonymous — no personal information, printer names, or file names are ever sent.
+Sends anonymous usage data that helps improve HelixScreen. **Off** until you turn it on. Nothing personal is sent: no names, printer names or file names. See [Telemetry & Privacy](../../TELEMETRY.md) for exactly what is and isn't collected.
 
-When enabled, a **View Telemetry Data** row appears below the toggle. Tap it to see exactly what data will be sent. See the [Telemetry & Privacy](../../TELEMETRY.md) documentation for full details on what is and isn't collected.
+### View Telemetry Data
+
+> Only shown while Share Usage Data is on.
+
+Shows exactly what would be sent, before it's sent.
 
 ---
 
 ## Log Level
 
-Control how much detail HelixScreen writes to its logs. This is useful when troubleshooting issues or gathering diagnostic information for a bug report.
+How much detail HelixScreen writes to its log. Raise it when you're chasing a problem or preparing a bug report.
 
-| Level | What it captures |
+| Level | What it records |
 |-------|-----------------|
-| **Warn** | Errors and warnings only (quiet) |
-| **Info** | Connection events, panel changes, milestones (default) |
-| **Debug** | State changes, API calls, component init (use this for bug reports) |
-| **Trace** | Everything including LVGL internals (very verbose, rarely needed) |
+| **Warn** | Only errors and warnings |
+| **Info** (default) | Connections, screen changes and other milestones |
+| **Debug** | Changes of state and messages to and from the printer. Use this for bug reports |
+| **Trace** | Everything, including screen drawing. Very long and rarely needed |
 
-Changes take effect immediately, with no restart required. Set to **Debug** before reproducing a problem, then set back to **Info** when done.
+The change takes effect straight away. Set **Debug**, reproduce the problem, send a [debug bundle](help-about.md#upload-debug-bundle), then set it back to **Info**.
 
-> **Tip:** Debug and Trace levels increase CPU usage and log volume. Don't leave them enabled long-term.
+> **Tip:** Debug and Trace use more processor time and fill the log faster. Don't leave them on.
 
 ---
 
 ## Restart HelixScreen
 
-Restart the display application. Useful after changing settings that require a restart (like theme changes) or if the UI becomes unresponsive. Shows a brief "Restarting..." toast before the app restarts.
+Restarts the screen app (not the printer). A short "Restarting HelixScreen..." message appears first. Use it after changing a setting that needs a restart, such as [UI Scale](display.md#ui-scale), or if the screen stops responding properly.
 
 ---
 
 ## Factory Reset
 
-Clears **all** HelixScreen settings and restarts the Setup Wizard. This resets:
+Erases **all** HelixScreen settings and starts the setup wizard again. HelixScreen asks you to confirm first. A factory reset clears:
 
-- All appearance, display, and sound settings
-- LED configuration
-- Printer connection details
-- Sensor roles and hardware expectations
-- All other preferences
+- Display, appearance, sound and all other preferences
+- LED setup
+- Your printers and how to connect to them
+- Sensor roles and the Hardware Health expected list
+- The screen lock PIN
 
-**Does not affect** your Klipper configuration, Moonraker, or any files on the printer itself.
+It **doesn't touch** your Klipper config, Moonraker or any files on the printer.
 
 ---
 

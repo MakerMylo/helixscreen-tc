@@ -1,104 +1,104 @@
 # Settings: Safety & Alerts
 
-**Settings > Safety & Alerts** covers emergency controls, confirmations, failure detection and how HelixScreen tells you about finished prints.
+**Settings > Safety & Alerts** decides how careful HelixScreen is and how loudly it tells you things. Use it to add a confirmation to the emergency stop or to macros, to set a safety net for cancels that hang, to control camera failure detection, and to choose how finished prints and other messages are announced.
 
-![Safety & Alerts settings](../../../images/user/settings-safety.png)
+![Safety & Alerts settings, top of the page](../../../images/user/settings-safety.png)
 
 ---
 
 ## E-Stop Confirmation
 
-| State | Behavior |
-|-------|----------|
-| **Off** (default) | Tapping E-Stop fires immediately — fastest emergency response |
-| **On** | Shows a confirmation dialog requiring a tap-and-hold before triggering |
+| Setting | What happens |
+|---------|--------------|
+| **On** (default) | E-Stop asks you to confirm first |
+| **Off** | Tapping E-Stop stops the printer immediately |
 
-Enable this if you find yourself accidentally hitting the E-Stop button. Disable it if you need the fastest possible emergency response.
+The confirmation guards against stopping a print by accident. Turn it off if you want the fastest possible emergency stop.
 
 ---
 
 ## Cancel Escalation
 
-When a print cancel is sent, some printers take a long time to finish their cancel routine (parking tools, cooling down, running CANCEL_PRINT macros). Cancel Escalation adds a safety net: if the cancel doesn't complete within a timeout, HelixScreen automatically escalates to an emergency stop (M112).
+Some printers take a long time to finish cancelling a print: parking tools, cooling down, running a long `CANCEL_PRINT` macro. Cancel Escalation is a safety net. If a cancel hasn't finished after a set time, HelixScreen sends an emergency stop (`M112`).
 
-| Setting | Options |
-|---------|---------|
-| **Cancel Escalation** | On/Off toggle. **Off by default.** |
-| **Escalation Timeout** | 15, 30, 60, or 120 seconds. Only shown when escalation is enabled. Default: 30 seconds. |
+**Off** by default.
 
-**When to leave this off:**
-- Toolchangers that need to park tools during cancel
-- Printers with long CANCEL_PRINT macros
-- Any printer where the cancel routine is expected to take more than a few seconds
+**Leave it off** on tool changers that park tools when cancelling, on printers with long `CANCEL_PRINT` macros, and on any printer whose cancel is expected to take more than a few seconds.
 
-**When to turn this on:**
-- Simple printers where cancel should complete quickly
-- If you've experienced "stuck" cancels where the printer never returns to idle
+**Turn it on** on simple printers where a cancel should be quick, or if you've had cancels that got stuck and never returned to idle.
+
+### Escalation Timeout
+
+> Only shown while Cancel Escalation is on.
+
+How long to wait before the emergency stop: **15**, **30** (default), **60** or **120 seconds**.
 
 ---
 
 ## Confirm before running macros
 
-| State | Behavior |
-|-------|----------|
-| **Off** (default) | Tapping a macro button runs it immediately |
-| **On** | Shows a confirmation dialog before running any macro |
+| Setting | What happens |
+|---------|--------------|
+| **On** (default) | HelixScreen asks before running a macro |
+| **Off** | Tapping a macro button runs it straight away |
 
-Enable this if you have macros that move the toolhead, heat the printer, or perform other actions you don't want triggered by an accidental tap.
+Keep it on if you have macros that move the toolhead, heat the printer or do anything else you wouldn't want set off by a stray tap. Turn it off if you run macros often and trust your fingers. Macros that take parameters always open a form first, whatever this says.
 
 ---
 
 ## Spaghetti Detection
 
-Only present on printers with built-in AI failure detection (a K2 Plus, or a Snapmaker U1 with defect detection). While a print is running, HelixScreen watches the camera for spaghetti - a print that has detached or is piling up as a nest of plastic.
+> Only shown on printers with built-in camera failure detection: the Creality K2 Plus, and the Snapmaker U1 with defect detection.
 
-| State | Behavior |
-|-------|----------|
-| **On** (default) | During a print, the camera is checked for failures |
-| **Off** | Nothing is watched; no detection alerts appear |
+While a print runs, the printer's camera watches for "spaghetti": a print that has come loose or is piling up as a tangle of plastic.
 
-The first time HelixScreen starts on a printer that had its own detection choice stored (a K2 Plus), your existing on/off and pause settings are carried over once. After that they live here.
+| Setting | What happens |
+|---------|--------------|
+| **On** (default) | The camera is checked for failures during every print |
+| **Off** | Nothing is watched and no detection alerts appear |
+
+The first time HelixScreen starts on a K2 Plus that had its own detection settings, it copies your on/off and pause choices over once. After that, they're set here.
 
 ### Pause on Detection
 
-| State | Behavior |
-|-------|----------|
-| **On** (default) | A detected failure pauses the print and shows the spaghetti dialog, so you can resume, abort, or turn detection off |
-| **Off** | A detected failure only shows a warning; the print keeps running |
+| Setting | What happens |
+|---------|--------------|
+| **On** (default) | A detected failure pauses the print and opens a dialog where you can resume, cancel, or turn detection off |
+| **Off** | A detected failure only shows a warning. The print keeps going |
 
-This row is only adjustable while Spaghetti Detection is on. On printers whose firmware pauses the print itself when it detects a failure (the U1), the pause happens either way - this setting controls whether HelixScreen adds its own pause on printers where it must, and whether you get the full dialog or just the warning.
+Greyed out while Spaghetti Detection is off. Hidden on printers whose firmware pauses the print on its own when it sees a failure (the Snapmaker U1).
+
+See [Print Monitoring](../print-monitoring.md) for what the detection dialog offers.
 
 ---
 
 ## Print Completion Alert
 
-Controls how HelixScreen notifies you when a print finishes, is cancelled, or fails — when you're not already on the print status screen.
+How HelixScreen tells you a print has finished, been cancelled or failed, when you're not already looking at the print status screen.
 
-| Mode | Behavior |
-|------|----------|
-| **Off** | No visual notification (sound still plays if enabled) |
-| **Notification** | Brief toast message at the top of the screen |
-| **Alert** (default) | Full-screen modal showing print stats — duration, layers, filament used — with confetti for successful prints |
+| Setting | What you get |
+|---------|--------------|
+| **Off** | Nothing on screen. The sound still plays if sounds are on |
+| **Notification** | A short message at the top of the screen |
+| **Alert** (default) | A full-screen summary of the print (time, layers, filament used), with confetti when it succeeded |
 
-To change: **Settings > Safety & Alerts > Print Completion Alert** dropdown.
+A failed print always gets the full alert, whatever you choose, because errors need your attention. If the print status screen is already open when the print ends, there's no extra alert: that screen shows the result.
 
-> **Note:** Print errors always show the full alert modal regardless of this setting, since errors need immediate visibility. If you're already on the print status screen when a print ends, no notification is shown (the panel itself shows the result).
-
-Sound always plays for terminal print states (complete, cancelled, error) regardless of alert mode, as long as the master Sounds toggle is on.
+The end-of-print sound plays for every finished, cancelled or failed print as long as the master Sounds switch is on.
 
 ---
 
 ## On-screen Alerts
 
-Toasts are the brief banners that slide in at the top of the screen — "Filament loaded", "Saved", "Update available". If the informational ones feel chatty, **Settings > Safety & Alerts > On-screen Alerts** sets the lowest level that is allowed to interrupt you:
+Toasts are the short messages that slide in at the top of the screen, like "Filament loaded", "Saved" or "Update available". If the informational ones feel chatty, choose the least important kind that's still allowed to interrupt you:
 
-| Level | What still toasts |
-|-------|-------------------|
-| **All** (default) | Everything — info, success, warnings and errors |
+| Setting | What still shows |
+|---------|------------------|
+| **All** (default) | Everything: info, success, warnings and errors |
 | **Warnings & errors** | Info and success messages are held back |
-| **Errors only** | Only error toasts appear |
+| **Errors only** | Only errors |
 
-Held-back notifications are not lost — they still land in the notification history (open it from the Notifications widget on the Home panel). The filter never silences a full-screen error dialog, and it never silences the [Print Completion Alert](#print-completion-alert) above; both bypass it on purpose.
+Held-back messages aren't lost. They still go into the notification history, which you open from the Notifications widget on the Home screen. This setting never hides a full-screen error, and never hides the [Print Completion Alert](#print-completion-alert).
 
 ---
 
