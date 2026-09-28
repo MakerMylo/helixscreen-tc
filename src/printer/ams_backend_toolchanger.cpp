@@ -285,6 +285,12 @@ const char* tc_step_label(TcStep step) {
     return "";
 }
 
+/// The coarse action a step projects to. The swap itself is the operation, so
+/// every step reads SELECTING except docking, which puts the old tool away.
+AmsAction tc_step_action(TcStep step) {
+    return step == TcStep::Dock ? AmsAction::UNLOADING : AmsAction::SELECTING;
+}
+
 } // namespace
 
 AmsBackend::OperationStepModel
@@ -302,7 +308,8 @@ AmsBackendToolChanger::get_operation_step_model(StepOperationType op) const {
         tc_step_sequence(op, step_model_feeder_reported_, step_model_direction_reported_);
     int index = 0;
     for (TcStep step : sequence) {
-        model.steps.push_back({lv_tr(tc_step_label(step)), index++, false, /*live_temp=*/false});
+        model.steps.push_back({lv_tr(tc_step_label(step)), index++, false, /*live_temp=*/false,
+                               tc_step_action(step)});
     }
     // No phases to show. NOT the legacy Heat/Feed/Purge bar: nothing heats, no
     // filament feeds and nothing purges on a machine that swaps a whole hot end.
