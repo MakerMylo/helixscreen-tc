@@ -12,18 +12,6 @@ Looking for how the printer is *drawn* (toolhead picture, G-code preview, Z butt
 
 ---
 
-## Enclosure
-
-Tells HelixScreen whether your printer is enclosed. It decides whether [Dry Filament on the bed](../temperature.md#drying-filament-on-the-bed) is offered, which needs an enclosure.
-
-| Mode | Behavior |
-|------|----------|
-| **Auto** (default) | Enclosed when your printer model is known to ship enclosed, or when a chamber heater is configured |
-| **Enclosed** | Treat the printer as enclosed. Use this if you enclosed it yourself |
-| **Open frame** | Treat the printer as open. Dry Filament stays hidden |
-
----
-
 ## Machine Limits
 
 Opens sliders for your printer's speed and acceleration limits. Use them to test or troubleshoot motion. A banner at the top reminds you: **Changes are temporary and reset on printer reboot.** To change the limits for good, edit `printer.cfg`.
@@ -72,7 +60,7 @@ As with Machine Limits, **tap a value to type an exact number**. Distances take 
 
 ## Enclosure
 
-Tells HelixScreen whether your printer is enclosed. **Auto** (the default) goes by what HelixScreen knows about your printer model. Choose **Enclosed** if you've enclosed an open-frame printer yourself, or **Open frame** if HelixScreen thinks your printer is enclosed and it isn't.
+Tells HelixScreen whether your printer is enclosed. **Auto** (the default) counts the printer as enclosed when its model is known to ship enclosed, or when a chamber heater is set up. Choose **Enclosed** if you've enclosed an open-frame printer yourself, or **Open frame** if HelixScreen thinks your printer is enclosed and it isn't.
 
 It matters for [drying filament on the bed](../temperature.md#drying-filament-on-the-bed), which is only offered on an enclosed printer.
 
