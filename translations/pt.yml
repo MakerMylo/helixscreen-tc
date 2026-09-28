@@ -874,6 +874,7 @@ translations:
   Deploy: Implantar
   Describe the issue (optional): Descreva o problema (opcional)
   Detailed: Detalhado
+  Detect automatically: 'Detectar automaticamente'
   'Detect filament tangles': 'Detectar emaranhados de filamento'
   Detecting plate...: Detectando placa...
   Detecting printer type...: Detectando tipo de impressora...
@@ -1741,6 +1742,7 @@ translations:
   Load: Carregar
   Load Cell: 'Célula de carga'
   Load Cells: 'Células de carga'
+  Load Extruder: 'Carregar extrusor'
   Load Failed: 'Falha ao carregar'
   Load Filament: Carregar Filamento
   Load a filament first before trying to unload: Carregue primeiro filamento antes de tentar descarregar
@@ -1926,7 +1928,7 @@ translations:
   Motors Off: Desligar Motores
   'Motors disable failed: {}': 'Falha ao desativar motores: {}'
   Motors disabled: Motores desativados
-  Motors off: ''
+  Motors off: Desligar Motores
   Motors stay on while a print is active: Os motores permanecem ativos durante uma impressão
   Mount: Montar
   Move: Mover
@@ -2308,6 +2310,7 @@ translations:
   'Preheat: all {} tools + bed set': 'Pré-aquecer: todas as {} ferramentas + mesa
     configurada'
   'Preheat: {} + bed set': 'Pré-aquecer: {} + mesa configurada'
+  Preload: 'Pré-carregar'
   Preload failed: Falha ao pré-carregar
   Prepared: Preparado
   Preparing: Preparando
@@ -2550,6 +2553,7 @@ translations:
   Recording Mode: Modo de Gravação
   Recover: Recuperar
   Recover MMU state?: Recuperar estado do MMU?
+  Recover State: 'Recuperar estado'
   Recovering AFC system...: Recuperando sistema AFC...
   Recovery failed: Recuperação falhou
   'Recovery failed: ': 'A recuperação falhou: '
@@ -2565,6 +2569,7 @@ translations:
   Refresh Interval: Intervalo de Atualização
   Refresh RFID: 'Atualizar RFID'
   Relative vibration: Vibração relativa
+  Refresh Spoolman: 'Atualizar Spoolman'
   Reheating...: Reaquecendo...
   Release all stepper motors. Position will be lost.: Liberar todos os motores de
     passo. A posição será perdida.
@@ -2914,6 +2919,7 @@ translations:
   Set up: Configurar
   Set up your label printer in Settings: Configure sua impressora de etiquetas em
     Configurações
+  Set what is really selected and loaded. Nothing moves.: 'Defina o que está realmente selecionado e carregado. Nada se move.'
   Settings: Configurações
   Settings Snapshot: Captura de Configurações
   Settings reset to defaults. Restarting...: Configurações restauradas para os padrões.
@@ -3522,6 +3528,7 @@ translations:
   Unknown error: Erro desconhecido
   Unload: Descarregar
   Unload Distance: 'Distância de descarregamento'
+  Unload Extruder: 'Descarregar extrusor'
   Unload Failed: 'Falha ao descarregar'
   Unload Filament: Descarregar Filamento
   'Unload at end': 'Descarregar ao terminar'
@@ -3533,6 +3540,7 @@ translations:
   Unload macro not configured: Macro de descarga não configurado
   Unload the CFS filament before enabling bypass: 'Descarregue o filamento do CFS antes de ativar o bypass'
   Unload...: Descarregar...
+  Unloaded: 'Descarregado'
   Unloading: Descarregando
   Unloading Start Speed: 'Velocidade inicial de descarregamento'
   Unloading before bypass...: Descarregando antes do bypass...

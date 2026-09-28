@@ -861,6 +861,7 @@ translations:
   Deploy: Развернуть
   Describe the issue (optional): Опишите проблему (необязательно)
   Detailed: Подробно
+  Detect automatically: 'Определить автоматически'
   'Detect filament tangles': 'Обнаруживать спутывание филамента'
   Detecting plate...: Обнаружение пластины...
   Detecting printer type...: Определение типа принтера...
@@ -1720,6 +1721,7 @@ translations:
   Load: Загрузить
   Load Cell: 'Тензодатчик'
   Load Cells: 'Тензодатчики'
+  Load Extruder: 'Загрузить экструдер'
   Load Failed: 'Не удалось загрузить'
   Load Filament: Загрузить филамент
   Load a filament first before trying to unload: Сначала загрузите филамент, прежде чем пытаться его выгрузить
@@ -1903,7 +1905,7 @@ translations:
   Motors Off: Отключить моторы
   'Motors disable failed: {}': 'Ошибка отключения моторов: {}'
   Motors disabled: Моторы отключены
-  Motors off: ''
+  Motors off: Отключить моторы
   Motors stay on while a print is active: Моторы остаются включены во время печати
   Mount: Установить
   Move: Двигать
@@ -2282,6 +2284,7 @@ translations:
   Preheat cancelled: Предварительный нагрев отменён
   'Preheat: all {} tools + bed set': 'Преднагрев: все {} инструменты + стол заданы'
   'Preheat: {} + bed set': 'Преднагрев: {} + стол заданы'
+  Preload: 'Предзагрузка'
   Preload failed: Ошибка предварительной загрузки
   Prepared: Готово
   Preparing: Подготовка
@@ -2522,6 +2525,7 @@ translations:
   Recording Mode: Режим записи
   Recover: Восстановить
   Recover MMU state?: Восстановить состояние MMU?
+  Recover State: 'Восстановить состояние'
   Recovering AFC system...: Восстановление системы AFC...
   Recovery failed: Восстановление не удалось
   'Recovery failed: ': 'Восстановление не удалось: '
@@ -2537,6 +2541,7 @@ translations:
   Refresh Interval: Интервал обновления
   Refresh RFID: 'Обновить RFID'
   Relative vibration: Относительная вибрация
+  Refresh Spoolman: 'Обновить Spoolman'
   Reheating...: Разогрев...
   Release all stepper motors. Position will be lost.: Отпустить все шаговые моторы.
     Позиция будет потеряна.
@@ -2881,6 +2886,7 @@ translations:
   : Задайте тип и цвет филамента для этого слота вручную. Если метка должна читаться, переустановите катушку этикеткой к считывателю, когда блок простаивает
   Set up: Настроить
   Set up your label printer in Settings: Настройте принтер этикеток в Настройках
+  Set what is really selected and loaded. Nothing moves.: 'Укажите, что на самом деле выбрано и загружено. Ничего не двигается.'
   Settings: Настройки
   Settings Snapshot: Снимок настроек
   Settings reset to defaults. Restarting...: Настройки сброшены к значениям по умолчанию.
@@ -3477,6 +3483,7 @@ translations:
   Unknown error: Неизвестная ошибка
   Unload: Выгрузить
   Unload Distance: 'Расстояние выгрузки'
+  Unload Extruder: 'Выгрузить экструдер'
   Unload Failed: 'Не удалось выгрузить'
   Unload Filament: Выгрузить филамент
   'Unload at end': 'Выгружать в конце'
@@ -3488,6 +3495,7 @@ translations:
   Unload macro not configured: Макрос выгрузки не настроен
   Unload the CFS filament before enabling bypass: 'Выгрузите филамент CFS перед включением обхода'
   Unload...: Выгрузить...
+  Unloaded: 'Выгружен'
   Unloading: Выгрузка
   Unloading Start Speed: 'Начальная скорость выгрузки'
   Unloading before bypass...: Выгрузка перед байпасом...

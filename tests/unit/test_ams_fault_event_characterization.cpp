@@ -6,7 +6,7 @@
  * @brief Byte-level pin on the ErrorEvents Happy Hare and AFC emit (#1250).
  *
  * The existing per-backend tests spot-check a field or two (source, severity,
- * "RESUME is first", "MMU_RECOVER LOADED=1 is present"). Nothing pinned the
+ * "RESUME is first", "MMU_RECOVER is present"). Nothing pinned the
  * WHOLE event: title text, exact detail, sticky, and the recovery list in order
  * with every RecoveryAction member — label, gcode, log_tag, style and
  * needs_hot_nozzle.
@@ -24,13 +24,13 @@
  * that does not override.
  */
 
-#include "test_helpers/afc_test_access.h"
 #include "ams_backend_afc.h"
 #include "ams_backend_happy_hare.h"
 #include "ams_backend_mock.h"
 #include "ams_fault_event.h"
 #include "ams_types.h"
 #include "error_event.h"
+#include "test_helpers/afc_test_access.h"
 
 #include <string>
 #include <vector>
@@ -188,13 +188,12 @@ TEST_CASE("Characterization: Happy Hare runout event, filament at the toolhead",
     // reason_for_pause_ wins over the terse !! line.
     CHECK(e->detail == "Runout detected on gate 0  EndlessSpool mode is off - manual "
                        "intervention is required");
-    check_actions(e->recovery_actions,
-                  {
-                      {"Resume", "RESUME", "hh::resume", "primary", true},
-                      {"Recover", "MMU_RECOVER LOADED=1", "hh::recover", "", false},
-                      {"Unload", "MMU_UNLOAD", "hh::unload", "", true},
-                      {"Unlock", "MMU_UNLOCK", "hh::unlock", "danger", false},
-                  });
+    check_actions(e->recovery_actions, {
+                                           {"Resume", "RESUME", "hh::resume", "primary", true},
+                                           {"Recover", "MMU_RECOVER", "hh::recover", "", false},
+                                           {"Unload", "MMU_UNLOAD", "hh::unload", "", true},
+                                           {"Unlock", "MMU_UNLOCK", "hh::unlock", "danger", false},
+                                       });
 }
 
 TEST_CASE("Characterization: Happy Hare clog event, nothing at the toolhead",
@@ -214,13 +213,12 @@ TEST_CASE("Characterization: Happy Hare clog event, nothing at the toolhead",
     // No "runout" in the detail, so the generic title.
     CHECK(e->title == "Filament System Error");
     CHECK(e->detail == "Clog detected on gate 2");
-    // Unload is dropped, and MMU_RECOVER flips to UNLOADED=1.
-    check_actions(e->recovery_actions,
-                  {
-                      {"Resume", "RESUME", "hh::resume", "primary", true},
-                      {"Recover", "MMU_RECOVER UNLOADED=1", "hh::recover", "", false},
-                      {"Unlock", "MMU_UNLOCK", "hh::unlock", "danger", false},
-                  });
+    // Unload is dropped.
+    check_actions(e->recovery_actions, {
+                                           {"Resume", "RESUME", "hh::resume", "primary", true},
+                                           {"Recover", "MMU_RECOVER", "hh::recover", "", false},
+                                           {"Unlock", "MMU_UNLOCK", "hh::unlock", "danger", false},
+                                       });
 }
 
 TEST_CASE("Characterization: Happy Hare falls back to the !! text when HH gives no reason",

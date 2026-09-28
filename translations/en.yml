@@ -841,6 +841,7 @@ translations:
   Deploy: Deploy
   Describe the issue (optional): Describe the issue (optional)
   Detailed: Detailed
+  Detect automatically: Detect automatically
   'Detect filament tangles': 'Detect filament tangles'
   'Detecting plate...': 'Detecting plate...'
   Detecting printer type...: Detecting printer type...
@@ -1679,6 +1680,7 @@ translations:
   Load: Load
   Load Cell: Load Cell
   Load Cells: Load Cells
+  Load Extruder: Load Extruder
   Load Failed: Load Failed
   Load Filament: Load Filament
   Load a filament first before trying to unload: Load a filament first before trying to unload
@@ -2235,6 +2237,7 @@ translations:
   Preheat cancelled: Preheat cancelled
   'Preheat: all {} tools + bed set': 'Preheat: all {} tools + bed set'
   'Preheat: {} + bed set': 'Preheat: {} + bed set'
+  Preload: Preload
   Preload failed: Preload failed
   'Prepared': 'Prepared'
   Preparing: Preparing
@@ -2470,6 +2473,7 @@ translations:
   Recording Mode: Recording Mode
   Recover: Recover
   Recover MMU state?: Recover MMU state?
+  Recover State: Recover State
   Recovering AFC system...: Recovering AFC system...
   Recovery failed: Recovery failed
   'Recovery failed: ': 'Recovery failed: '
@@ -2484,6 +2488,7 @@ translations:
   Refresh: Refresh
   Refresh Interval: Refresh Interval
   Refresh RFID: Refresh RFID
+  Refresh Spoolman: Refresh Spoolman
   'Reheating...': 'Reheating...'
   Relative vibration: Relative vibration
   Release all stepper motors. Position will be lost.: Release all stepper motors.
@@ -2822,6 +2827,7 @@ translations:
   : Set the filament type and colour by hand for this slot. If the tag should be readable, re-seat the spool with its label facing the reader once the box is idle
   Set up: Set up
   Set up your label printer in Settings: Set up your label printer in Settings
+  Set what is really selected and loaded. Nothing moves.: Set what is really selected and loaded. Nothing moves.
   Settings: Settings
   Settings Snapshot: Settings Snapshot
   Settings reset to defaults. Restarting...: Settings reset to defaults. Restarting...
@@ -3404,6 +3410,7 @@ translations:
   Unknown error: Unknown error
   Unload: Unload
   Unload Distance: Unload Distance
+  Unload Extruder: Unload Extruder
   Unload Failed: Unload Failed
   Unload Filament: Unload Filament
   'Unload at end': 'Unload at end'
@@ -3414,6 +3421,7 @@ translations:
   Unload macro not configured: Unload macro not configured
   Unload the CFS filament before enabling bypass: Unload the CFS filament before enabling bypass
   Unload...: Unload...
+  Unloaded: Unloaded
   Unloading: Unloading
   Unloading Start Speed: Unloading Start Speed
   Unloading before bypass...: Unloading before bypass...

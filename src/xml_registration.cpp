@@ -523,6 +523,7 @@ void register_xml_components() {
     register_xml("action_prompt_modal.xml");
     register_xml("info_qr_modal.xml");
     register_xml("chamber_dryer_modal.xml");
+    register_xml("ams_recover_state_modal.xml");
     register_xml("bed_drying_modal.xml");
     helix::ui::register_bed_drying_callbacks();
     register_xml("batch_filament_modal.xml");

@@ -364,6 +364,7 @@ constexpr const char* kNoMachineControlFiles[] = {
     "ui_xml/ams_loading_error_modal.xml",
     "ui_xml/ams_overview_panel.xml",
     "ui_xml/ams_panel.xml",
+    "ui_xml/ams_recover_state_modal.xml",
     "ui_xml/ams_selector_menu.xml",
     "ui_xml/ams_slot_view.xml",
     "ui_xml/ams_unit_card.xml",
