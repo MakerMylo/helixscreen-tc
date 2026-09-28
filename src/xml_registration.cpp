@@ -756,12 +756,17 @@ void register_xml_components() {
 
     // Settings overlay panels
     register_xml("sound_preview_overlay.xml");
-    register_xml("settings_display_sound_overlay.xml");
+    register_xml("settings_display_overlay.xml");
+    register_xml("settings_appearance_overlay.xml");
+    register_xml("settings_sound_overlay.xml");
+    register_xml("settings_language_time_overlay.xml");
     register_xml("settings_printing_overlay.xml");
     register_xml("settings_hardware_overlay.xml");
     register_xml("settings_safety_overlay.xml");
     register_xml("settings_system_overlay.xml");
     register_xml("settings_touch_overlay.xml");
+    register_xml("settings_connection_overlay.xml");
+    register_xml("settings_updates_overlay.xml");
     register_xml("settings_help_overlay.xml");
     register_xml("tour_tooltip_card.xml");
     register_xml("security_settings_overlay.xml");

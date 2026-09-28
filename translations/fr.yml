@@ -69,6 +69,7 @@ translations:
     chaque vis
   10 minutes: 10 minutes
   12 Hour: 12 heures
+  12-hour: 12 heures
   120 seconds: 120 secondes
   15 seconds: 15 secondes
   170-300 °C: '170-300 °C'
@@ -83,6 +84,7 @@ translations:
     tourner chaque vis
   20 minutes: 20 minutes
   24 Hour: 24 heures
+  24-hour: 24 heures
   270°: 270°
   270° Clockwise: 270° dans le sens horaire
   2D Heatmap: Carte thermique 2D
@@ -161,7 +163,6 @@ translations:
   'Accepted Z Position: {:.3f}': 'Position Z acceptée : {:.3f}'
   Accessories: 'Accessoires'
   Accuracy: Précision
-  'Act:': 'Réel :'
   Action Required: Action requise
   Actions: Actions
   Active: Actif
@@ -197,6 +198,7 @@ translations:
   All Devices: Tous les appareils
   All axes homed: Tous les axes référencés
   All fields are required: Tous les champs sont requis
+  All healthy: Tout va bien
   Allow: 'Autoriser'
   Allow Home Screen Editing: 'Autoriser la modification de l''écran d''accueil'
   Allow cold load/unload: Autoriser le chargement/déchargement à froid
@@ -222,9 +224,8 @@ translations:
     du filament.
   # Source: probe_accuracy_modal.xml:90
   An error occurred.: 'Une erreur s''est produite.'
-  An internal error occurred. The app continues running — please send a debug bundle from Settings > About if it repeats.: Une
-    erreur interne s'est produite. L'application continue de fonctionner — veuillez
-    envoyer un paquet de débogage depuis Paramètres > À propos si cela se reproduit.
+  ? An internal error occurred. The app continues running. Please send a debug bundle from Settings > Help & About if it repeats.
+  : Une erreur interne s'est produite. L'application continue de fonctionner. Veuillez envoyer un paquet de débogage depuis Paramètres > Aide et à propos si cela se reproduit.
   An unexpected printer error occurred.: Une erreur inattendue de l'imprimante s'est
     produite.
   An update is available: Une mise à jour est disponible
@@ -439,7 +440,6 @@ translations:
   Calibrate X: Calibrer X
   Calibrate Y: Calibrer Y
   Calibrate all tools: Calibrer tous les outils
-  Calibrate and tune scroll feel: "Calibrer et ajuster le défilement"
   Calibrate input shaping to reduce ringing artifacts in prints: Calibrer l'input
     shaping pour réduire les artefacts d'ondulation
   Calibrate tool offsets?: Calibrer les offsets d'outil ?
@@ -560,6 +560,7 @@ translations:
   Check Again: Revérifier
   Check Klipper console for details: Consultez la console Klipper pour plus de détails
   Check extruder temperature and try again. Manual removal may be required.: Vérifiez la température de l'extrudeur et réessayez. Une extraction manuelle peut être nécessaire.
+  Check failed: Échec de la vérification
   Check filament: Vérifier le filament
   Check for Updates: Vérifier les mises à jour
   Check slot: Vérifier le slot
@@ -592,6 +593,7 @@ translations:
   Checking timelapse plugin...: Vérification du plugin timelapse...
   Checking webcam: Vérification de la webcam
   Checking...: Vérification...
+  Checking…: Vérification…
   Choose 12-hour or 24-hour time display: Choisir l'affichage 12 heures ou 24 heures
   Choose Filament: Choisir le filament
   Choose Model: Choisir le modèle
@@ -895,6 +897,7 @@ translations:
   Device name: Nom de l'appareil
   Device name is required: Le nom de l'appareil est requis
   'Device: ': 'Appareil : '
+  Devices: Périphériques
   Different filament?: Filament différent ?
   Digital Clock: 'Horloge numérique'
   Disable: Désactiver
@@ -910,7 +913,7 @@ translations:
   Discord Community: Communauté Discord
   Discovered Printers: Imprimantes découvertes
   Dismiss: Ignorer
-  Display & Sound: Affichage et son
+  Display: Affichage
   Display Mode: Mode d'affichage
   Display Sleep: Veille de l'écran
   ? Display resolution is very high (%dx%d). Text may appear small. Reduce framebuffer
@@ -967,6 +970,7 @@ translations:
   EEPROM error on CFS unit: Erreur EEPROM sur l'unité CFS
   EMERGENCY STOP: ARRÊT D'URGENCE
   EMPTY: VIDE
+  EXTRAS: SUPPLÉMENTS
   Each fan can only be selected once: Chaque ventilateur ne peut être sélectionné
     qu'une fois
   Edit: Modifier
@@ -990,7 +994,6 @@ translations:
   Emergency Stop: Arrêt d'urgence
   Emergency Stop?: Arrêt d'urgence ?
   Emergency stop activated: Arrêt d'urgence activé
-  Emergency stop and print alerts: Arrêt d'urgence et alertes d'impression
   'Emergency stop failed: not connected': 'Échec de l''arrêt d''urgence : non connecté'
   Empty: Vide
   Empty slots disable the associated functionality: Les slots vides désactivent la
@@ -1052,7 +1055,6 @@ translations:
   Error: Erreur
   Error at chunk {} (code={}): Erreur au bloc {} (code={})
   Error loading file: Erreur lors du chargement du fichier
-  Error loading printing tips: Erreur lors du chargement des conseils d'impression
   'Error saving printer settings: {}': 'Erreur lors de l''enregistrement des paramètres
     : {}'
   Error state: État d'erreur
@@ -1127,6 +1129,7 @@ translations:
   Extruder too cold: Extrudeur trop froid
   Extruding prime line...: Extrusion de la ligne d'amorçage...
   FAILED: ÉCHOUÉ
+  FILAMENT: FILAMENT
   FILAMENTS: FILAMENTS
   FILTERS: FILTRES
   Factory Reset: Réinitialisation d'usine
@@ -1405,6 +1408,7 @@ translations:
   Guide the toolhead to the chute's extrude position: Guidez la tête d'outil vers la position d'extrusion de la goulotte
   Guides and reference: Guides et référence
   H: H
+  HELIXSCREEN: HELIXSCREEN
   HOST: Hôte
   HTTP Code: Code HTTP
   'HTTP error: {} {}': 'Erreur HTTP : {} {}'
@@ -1414,7 +1418,6 @@ translations:
   Hang on, we'll be right back!: Patientez, nous revenons tout de suite !
   Happy Hare MMU: Happy Hare MMU
   Hardware: Matériel
-  Hardware & Devices: Matériel et périphériques
   Hardware Health: État du matériel
   Hardware Name: Nom du matériel
   Hardware Profile: Profil matériel
@@ -1505,6 +1508,7 @@ translations:
   Homing Y...: Référence Y...
   Homing Z...: Référence Z...
   Homing all axes...: Référence de tous les axes...
+  Homing and moving the plate...: 'Référence et déplacement du plateau...'
   Homing axes...: Référence des axes...
   Homing complete: Référence terminée
   'Homing failed: ': 'Échec de la prise d''origine : '
@@ -1714,7 +1718,7 @@ translations:
   Lane tests and motor resets: 'Tests de voie et réinitialisations moteur'
   Lanes: Voies
   Language: Langue
-  Language, theme, brightness, and sound: Langue, thème, luminosité et son
+  Language & Time: Langue et heure
   Last: Dernière
   # Source: history_dashboard_panel.xml:114
   Last 7 days: '7 derniers jours'
@@ -1742,6 +1746,7 @@ translations:
   Library: Bibliothèque
   Lifetime Print Stats: Statistiques d'impression totales
   Light: Clair
+  Light Mode: Mode clair
   Light will switch when the current operation finishes: La lumière basculera dès
     que l'opération en cours sera terminée.
   Line the nozzle up with the purge chute so purged filament drops straight in.: Alignez la buse au-dessus de la goulotte de purge pour que le filament purgé tombe droit dedans.
@@ -1806,6 +1811,7 @@ translations:
   Lowest notification level that interrupts with a toast: 'Niveau de notification le plus bas qui interrompt par une notification éphémère'
   M to toggle: M pour basculer
   'MAC:': 'MAC :'
+  MACHINE: MACHINE
   MACRO DEVICES: APPAREILS MACRO
   MAIN POWER BUTTON: BOUTON D'ALIMENTATION PRINCIPAL
   MANUAL: MANUEL
@@ -1861,6 +1867,7 @@ translations:
   Manage: Gérer
   Manage Printers: Gérer les imprimantes
   Manage configured printers: Gérer les imprimantes configurées
+  Managed by firmware: Géré par le firmware
   Managed by your firmware: Géré par votre firmware
   Manual: Manuel
   Manual Bed Leveling: Mise à niveau manuelle du plateau
@@ -1968,6 +1975,7 @@ translations:
   Multi-Filament System not available: Système multi-filament non disponible
   Multi-filament system not ready: Système multi-filaments pas prêt
   Must home axes first: Les axes doivent d'abord être référencés
+  Muted: Muet
   My Custom Theme: Mon thème personnalisé
   My Panel: Mon panneau
   My Printer: Mon imprimante
@@ -1979,6 +1987,7 @@ translations:
   'Name:': 'Nom :'
   Named actions in the LED Controls widget. Not shown under LED selection.: Actions nommées dans le widget Commandes LED. Non affichées dans la sélection LED.
   Needs adjustment: Ajustement nécessaire
+  Needs attention: Attention requise
   Needs the {} package to switch spools: 'Nécessite le plugin {} pour changer de bobine'
   Net Weight (g): Poids net (g)
   Network: Réseau
@@ -1991,6 +2000,7 @@ translations:
   Network name cannot be empty: Le nom du réseau ne peut pas être vide
   'Network, display, sound, printer setup, and more. You can replay this tour anytime from Help & About.': 'Réseau, affichage, son, configuration de l''imprimante, et plus. Vous pouvez rejouer cette visite à tout moment depuis Aide et à propos.'
   Never: Jamais
+  Never sleeps: Ne dort jamais
   New Spool: Nouvelle bobine
   'New Spool: Step 1 of 3': 'Nouvelle bobine : Étape 1 sur 3'
   'New Spool: Step {} of {}': 'Nouvelle bobine : étape {} sur {}'
@@ -2218,6 +2228,8 @@ translations:
   PLA - Black: PLA - Noir
   POWER: ALIMENTATION
   PRINT OPTIONS: OPTIONS D'IMPRESSION
+  PRINTER: IMPRIMANTE
+  PRINTER VISUALS: 'VISUELS DE L''IMPRIMANTE'
   PRINTERS: IMPRIMANTES
   PRINT_START has {} skippable operation: PRINT_START a {} opération ignorable
   PRINT_START has {} skippable operations: PRINT_START a {} opérations ignorables
@@ -2439,10 +2451,9 @@ translations:
   'Printer: ': 'Imprimante : '
   PrinterIdentify: Identifier l'imprimante
   Printers: Imprimantes
-  Printers, Multi-Filament System, fans, sensors, and LEDs: Imprimantes, système multi-filament,
-    ventilateurs, capteurs et LEDs
   Printing: Impression
   Printing label...: Impression de l'étiquette...
+  Printing now: Impression
   Printing test label...: Impression de l'étiquette de test...
   Printing with the wrong material can cause clogs, poor adhesion, or failed prints.: Imprimer
     avec le mauvais matériau peut provoquer des bouchons, une mauvaise adhérence ou
@@ -2468,6 +2479,7 @@ translations:
   Checking Bed Mesh...: Vérification du maillage du plateau...
   Probing point {} of {}: 'Point de palpage {} sur {}'
   Probing... ({} points): 'Palpage... ({} points)'
+  Problem found: Problème détecté
   Proceed: Continuer
   # Source: abort_progress_modal.xml:20
   Processing...: 'Traitement...'
@@ -2756,10 +2768,10 @@ translations:
   'SAVE_CONFIG failed: {}. Tool offsets were applied but not saved. Run SAVE_CONFIG manually or they will be lost on restart.': "SAVE_CONFIG a échoué : {}. Les décalages d'outil ont été appliqués mais non enregistrés. Lancez SAVE_CONFIG manuellement, sinon ils seront perdus au redémarrage."
   ? 'SAVE_CONFIG failed: {}. Z-offset was applied but not saved. Run SAVE_CONFIG manually or the offset will be lost on restart.'
   : 'SAVE_CONFIG a échoué : {}. Le décalage Z a été appliqué mais non enregistré. Lancez SAVE_CONFIG manuellement, sinon il sera perdu au redémarrage.'
+  SCREEN: ÉCRAN
   SETTINGS: PARAMÈTRES
   SHIPPED IMAGES: IMAGES FOURNIES
   SOFTWARE: LOGICIEL
-  SOUND: SON
   STANDARD MACROS: MACROS STANDARD
   STARTUP: DÉMARRAGE
   STOP: ARRÊT
@@ -2769,7 +2781,7 @@ translations:
     on startup. Open Settings to fix the issue, then reboot.
   : Mode sans échec actif. La connexion à l'imprimante est désactivée car l'application
     plantait au démarrage. Ouvrez les Paramètres pour résoudre le problème, puis redémarrez.
-  Safety & Notifications: Sécurité et notifications
+  Safety & Alerts: Sécurité et alertes
   Same spool in {}? Tap Clear if it is a new one.: 'Même bobine dans {} ? Touchez Effacer s''il s''agit d''une nouvelle.'
   Sample: Échantillon
   Sample %d/%d: Échantillon %d/%d
@@ -2852,7 +2864,6 @@ translations:
   Secondary: Secondaire
   Section Detail: Détail de section
   Security: Sécurité
-  Security, network, host, and administration: Sécurité, réseau, hôte et administration
   See exactly what data will be sent: Voir exactement quelles données seront envoyées
   See the log: 'Consultez le journal'
   See the quick tour of HelixScreen again: Revoir la visite rapide de HelixScreen
@@ -2988,6 +2999,7 @@ translations:
   Skipped: 'Ignoré'
   Sleep While Printing: Veille pendant impression
   Sleep adjusted to match dim timeout: Délai de veille ajusté
+  Sleep {} min: Veille dans {} min
   Sliced colors: Couleurs tranchées
   Slicer: Trancheur
   Slot: Slot
@@ -3010,6 +3022,7 @@ translations:
   'Some mapped slots are short on filament:': 'Certains slots affectés manquent de filament :'
   Some settings will take effect after restart.: Certains paramètres prendront effet
     après redémarrage.
+  Sound: Son
   Sound Theme: Thème sonore
   Sounds: Sons
   Source: Source
@@ -3018,7 +3031,6 @@ translations:
   Spaghetti Detection: Détection de spaghettis
   Spaghetti detected: Spaghetti détecté
   Spaghetti detected (%d%%): Spaghetti détecté (%d%%)
-  Spaghetti detected — print paused: Spaghetti détecté — impression en pause
   Speaker: Haut-parleur
   Speed: Vitesse
   Speed Settings: 'Paramètres de vitesse'
@@ -3126,7 +3138,6 @@ translations:
   Success Rate: Taux de réussite
   Success!: Succès !
   Summary: Résumé
-  Support, documentation, and version info: Support, documentation et infos de version
   Suppress periodic 'T:.../B:...' status lines: Supprimer les lignes d'état périodiques
     'T:.../B:...'
   Suppress periodic temperature status lines: Supprimer les lignes d'état périodiques de température
@@ -3272,6 +3283,7 @@ translations:
   The nozzle extrudes a few short test moves in a corner, away from the print area, and repeats until it agrees with itself.: 'La buse fait quelques mouvements de test dans un coin, à l''écart de la zone d''impression, et répète jusqu''à convergence.'
   The plate and the spools are still hot. Use gloves.: Le plateau et les bobines sont encore chauds. Portez des gants.
 
+  The plate finishes its current move, but drying will not start.: 'Le plateau termine son déplacement en cours, mais le séchage ne démarrera pas.'
   ? The print is paused. Changing tools now moves the toolhead and swaps the filament at the nozzle. Resume the print once the change finishes.
   : L'impression est en pause. Changer d'outil maintenant déplace la tête d'impression et remplace le filament au niveau de la buse. Reprenez l'impression une fois le changement terminé.
   The printer applied this value and keeps it for this tool.: 'L''imprimante a appliqué cette valeur et la conserve pour cet outil.'
@@ -3319,6 +3331,8 @@ translations:
   The unit is already running another operation. Wait for it to finish, or reset the CFS if it stays stuck: L'unité exécute déjà une autre opération. Attendez la fin, ou réinitialisez le CFS s'il reste bloqué
   The unit reported a fault with no further detail. Restart the printer if it repeats: L'unité a signalé une panne sans plus de détails. Redémarrez l'imprimante si cela se reproduit
   The unit's onboard storage has failed. The CFS mainboard needs replacing: La mémoire interne de l'unité est défaillante. La carte mère du CFS doit être remplacée
+  'The unload did not start: unload by hand, then start again': 'Le déchargement n''a pas démarré : déchargez à la main, puis recommencez'
+  The unload finishes on its own, but the plate will not move.: 'Le déchargement se termine de lui-même, mais le plateau ne bougera pas.'
   Theme: Thème
   Theme Colors: Couleurs du thème
   Theme Preset: Préréglage du thème
@@ -3473,7 +3487,6 @@ translations:
   Toolhead Y: Tête d'outil Y
   Toolhead jam: Bourrage de la tête d'outil
   Toolhead position unknown: 'Position de la tête d''outil inconnue'
-  Toolhead, G-code, limits, and materials: Tête d'outil, G-code, limites et matériaux
   Toolheads: 'Têtes d''outil'
   Tools: Outils
   Tools Used: Outils utilisés
@@ -3569,6 +3582,7 @@ translations:
   Unloading Start Speed: 'Vitesse initiale de déchargement'
   Unloading before bypass...: Déchargement avant bypass...
   Unloading filament: 'Déchargement du filament'
+  Unloading filament before drying...: 'Déchargement du filament avant le séchage...'
   Unloading filament...: Déchargement du filament...
   Unloads After Print: Décharge après l'impression
   Unlock: Déverrouiller
@@ -3592,6 +3606,7 @@ translations:
   Update installed!: Mise à jour installée !
   Update your security PIN: Mettez à jour votre PIN de sécurité
     sur cette installation.
+  Updates: Mises à jour
   Updating Configuration...: Mise à jour de la configuration...
   Upgrade to AFC 1.2.0 or newer for multi-color spools. It also adds filament names, which otherwise need Spoolman.: Passez à AFC 1.2.0 ou plus récent pour les bobines multicolores. Cette version ajoute aussi les noms de filament, qui nécessitent sinon Spoolman.
   Upload: Téléverser
@@ -3624,7 +3639,8 @@ translations:
   Verifying timelapse plugin...: Vérification du plugin timelapse...
   Verifying...: Vérification...
   Version: Version
-  Version, updates, and printer info: Version, mises à jour et infos imprimante
+  Version and printer info: Version et infos imprimante
+  Version {}: Version {}
   Vertical: Vertical
   Vibration: Vibration
   Vibration compensation active: Compensation de vibration active
@@ -3642,6 +3658,7 @@ translations:
   'Visits: ': 'Visites : '
   Volume: Volume
   Volume of filament used during ramming: 'Volume de filament utilisé pendant le bourrage'
+  Volume {}%: Volume {}%
   WIDTH SENSORS: CAPTEURS DE LARGEUR
   WLED: WLED
   WLED Preset: Préréglage WLED
@@ -3692,7 +3709,9 @@ translations:
   Which macro the Close feeder button sends: Macro envoyée par le bouton Fermer l'alimentateur
   Which macro the Open feeder button sends: Macro envoyée par le bouton Ouvrir l'alimentateur
   White: Blanc
+  Wi-Fi: WiFi
   Wi-Fi or ethernet connection status: État de la connexion WiFi ou Ethernet
+  Wi-Fi {}: WiFi {}
   WiFi: WiFi
   WiFi Disabled: WiFi désactivé
   WiFi Enabled: WiFi activé
@@ -3828,6 +3847,7 @@ translations:
   locked: 'verrouillé'
   mm before clog: mm avant bouchon
   needs: nécessite
+  never sleeps: ne dort jamais
   not detected: non détecté
   not loaded: 'non chargé'
   nozzle: buse
@@ -3848,6 +3868,7 @@ translations:
   remaining before clog detection triggers: restant avant le déclenchement de la détection
     de bouchon
   rendering: rendu en cours
+  sleep {} min: veille dans {} min
   slots): emplacements)
   started: lancé
   steppers: moteurs pas à pas
@@ -3861,6 +3882,7 @@ translations:
   you have: vous avez
   '{} LED strips available': '{} bandeaux LED disponibles'
   '{} and {} are both mapped here': '{} et {} sont tous deux affectés ici'
+  '{} available': '{} disponible'
   '{} axis homed': Axe {} référencé
   '{} command timed out': Délai d'attente dépassé pour la commande {}
   '{} complete': '{} terminé'

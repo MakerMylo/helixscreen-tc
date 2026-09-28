@@ -127,7 +127,6 @@
 #include "ui_runout_guidance_modal.h"
 #include "ui_settings_about.h"
 #include "ui_settings_barcode_scanner.h"
-#include "ui_settings_display_sound.h"
 #include "ui_settings_fans.h"
 #include "ui_settings_hardware_health.h"
 #include "ui_settings_label_printer.h"
@@ -4401,8 +4400,9 @@ int Application::main_loop() {
             try {
                 ToastManager::instance().show(
                     ToastSeverity::ERROR,
-                    lv_tr("An internal error occurred. The app continues running — "
-                          "please send a debug bundle from Settings > About if it repeats."),
+                    lv_tr("An internal error occurred. The app continues running. Please "
+                          "send a debug bundle from Settings > Help & About if it "
+                          "repeats."),
                     8000);
             } catch (...) {
                 // Toast subsystem itself in trouble — keep running anyway.

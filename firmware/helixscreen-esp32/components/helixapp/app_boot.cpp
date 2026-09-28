@@ -741,7 +741,7 @@ extern "C" void app_boot_ui(void) {
     // already has a value (any boot after the user has edited Host in Settings,
     // or a prior first-boot seed), leave it untouched — the Kconfig value must
     // never override a user-set value. Seeding here (before any UI/subject
-    // reads Config) means the Settings > System > Host row and the real
+    // reads Config) means the Settings > Connection > Host row and the real
     // connect path (app_net_start(), below) both see a consistent value from
     // their very first read.
     // The Kconfig URL is empty in the committed tree (a bench address is

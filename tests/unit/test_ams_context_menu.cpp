@@ -64,9 +64,9 @@ class AmsContextMenuTestAccess {
 
     static SlotOpDecision decide_slot_ops(const AmsBackend* backend, int slot_index,
                                           bool pending_is_loaded, bool system_busy,
-                                          bool print_blocks_op) {
+                                          bool print_blocks_op, bool toolhead_unaccounted) {
         return AmsContextMenu::decide_slot_ops(backend, slot_index, pending_is_loaded, system_busy,
-                                               print_blocks_op);
+                                               print_blocks_op, toolhead_unaccounted);
     }
 
     static bool decide_show_backup_row(const helix::printer::EndlessSpoolCapabilities& caps,
@@ -834,7 +834,7 @@ class DockSensorToolChanger : public AmsBackendToolChanger {
                                                                bool print_blocks_op = false) {
     return AmsContextMenuTestAccess::decide_slot_ops(
         &backend, slot, backend.can_unload_from_toolhead(slot), backend.get_system_info().is_busy(),
-        print_blocks_op);
+        print_blocks_op, backend.toolhead_filament_unaccounted().value_or(false));
 }
 
 } // namespace
@@ -878,6 +878,33 @@ TEST_CASE("Snapmaker lane menu offers Unload and Load for filament parked in the
         CHECK(d.unload_enabled);
         CHECK_FALSE(d.can_load);
     }
+}
+
+TEST_CASE("Lane menus withdraw Unload while the toolhead is unaccounted",
+          "[ams][context_menu][1324]") {
+    // Filament at the toolhead with no lane claiming it: the lane the menu is
+    // open on may not be the seated one, so neither the heated unload nor a
+    // cold eject is offered on any lane. The computed mode is left alone - a
+    // relabel to Eject would cold-retract the lane that is secretly seated -
+    // only the enablement withdraws, and the sidebar's active-head Unload
+    // covers the state instead.
+    using UnloadMode = AmsContextMenuTestAccess::UnloadMode;
+
+    AmsBackendMock loaded(4);
+    REQUIRE(loaded.start());
+    // Slot 0 is the mock's default loaded lane.
+    REQUIRE(loaded.can_unload_from_toolhead(0));
+    CHECK(ops_for(loaded, 0).unload_enabled);
+    loaded.stop();
+
+    AmsBackendMock unaccounted(4);
+    unaccounted.set_initial_state_scenario("unaccounted");
+    REQUIRE(unaccounted.start());
+    REQUIRE(unaccounted.toolhead_filament_unaccounted().value_or(false));
+    const auto d = ops_for(unaccounted, 0);
+    CHECK(d.unload_mode == UnloadMode::Unload);
+    CHECK_FALSE(d.unload_enabled);
+    unaccounted.stop();
 }
 
 TEST_CASE("A dock-sensor fault disables Unmount and says why", "[ams][context_menu][toolchanger]") {

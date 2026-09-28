@@ -341,9 +341,17 @@ class AmsContextMenu : public ContextMenu {
     //
     // `print_blocks_op` is helix::ui::print_blocks_filament_op() - see
     // decide_can_load() for why the raw print_active subject is the wrong input.
+    //
+    // `toolhead_unaccounted` is backend->toolhead_filament_unaccounted()
+    // flattened with value_or(false), read by the caller. Filament at the
+    // toolhead that no lane claims: the lane this menu names may not be the
+    // seated one, so its Unload is a guess and a cold Eject of the lane that IS
+    // seated grinds un-cut filament. Every lane's Unload/Eject withdraws (mode
+    // untouched, never relabelled to Eject); the sidebar's active-head Unload
+    // covers the state by letting the firmware resolve the channel.
     static SlotOpDecision decide_slot_ops(const AmsBackend* backend, int slot_index,
                                           bool pending_is_loaded, bool system_busy,
-                                          bool print_blocks_op);
+                                          bool print_blocks_op, bool toolhead_unaccounted);
 
     // Pure: selects the Unload button's operation for the open slot.
     //
