@@ -65,6 +65,7 @@ translations:
   1. Printer will home and probe each screw: 1. Printer will home and probe each screw
   10 minutes: 10 minutes
   12 Hour: 12 Hour
+  12-hour: 12-hour
   120 seconds: 120 seconds
   15 seconds: 15 seconds
   170-300 °C: 170-300 °C
@@ -78,6 +79,7 @@ translations:
     screw
   20 minutes: 20 minutes
   24 Hour: 24 Hour
+  24-hour: 24-hour
   270°: 270°
   270° Clockwise: 270° Clockwise
   2D Heatmap: 2D Heatmap
@@ -153,7 +155,6 @@ translations:
   'Accepted Z Position: {:.3f}': 'Accepted Z Position: {:.3f}'
   Accessories: Accessories
   Accuracy: Accuracy
-  'Act:': 'Act:'
   Action Required: Action Required
   Actions: Actions
   Active: Active
@@ -189,6 +190,7 @@ translations:
   All Devices: All Devices
   All axes homed: All axes homed
   All fields are required: All fields are required
+  All healthy: All healthy
   Allow: Allow
   Allow Home Screen Editing: Allow Home Screen Editing
   Allow cold load/unload: Allow cold load/unload
@@ -212,9 +214,8 @@ translations:
   An error occurred while loading filament.: An error occurred while loading filament.
   # Source: probe_accuracy_modal.xml:90
   An error occurred.: An error occurred.
-  An internal error occurred. The app continues running — please send a debug bundle from Settings > About if it repeats.: An
-    internal error occurred. The app continues running — please send a debug bundle
-    from Settings > About if it repeats.
+  ? An internal error occurred. The app continues running. Please send a debug bundle from Settings > Help & About if it repeats.
+  : An internal error occurred. The app continues running. Please send a debug bundle from Settings > Help & About if it repeats.
   An unexpected printer error occurred.: An unexpected printer error occurred.
   An update is available: An update is available
   Analyzing data...: Analyzing data...
@@ -421,7 +422,6 @@ translations:
   Calibrate X: Calibrate X
   Calibrate Y: Calibrate Y
   Calibrate all tools: Calibrate all tools
-  Calibrate and tune scroll feel: Calibrate and tune scroll feel
   Calibrate input shaping to reduce ringing artifacts in prints: Calibrate input shaping
     to reduce ringing artifacts in prints
   Calibrate tool offsets?: Calibrate tool offsets?
@@ -533,6 +533,7 @@ translations:
   Check Again: Check Again
   Check Klipper console for details: Check Klipper console for details
   Check extruder temperature and try again. Manual removal may be required.: Check extruder temperature and try again. Manual removal may be required.
+  Check failed: Check failed
   Check filament: Check filament
   Check for Updates: Check for Updates
   Check slot: Check slot
@@ -566,6 +567,7 @@ translations:
   Checking timelapse plugin...: Checking timelapse plugin...
   Checking webcam: Checking webcam
   Checking...: Checking...
+  Checking…: Checking…
   Choose 12-hour or 24-hour time display: Choose 12-hour or 24-hour time display
   Choose Filament: Choose Filament
   Choose Model: Choose Model
@@ -857,6 +859,7 @@ translations:
   Device name: Device name
   Device name is required: Device name is required
   'Device: ': 'Device: '
+  Devices: Devices
   Different filament?: Different filament?
   Digital Clock: Digital Clock
   Disable: Disable
@@ -872,7 +875,7 @@ translations:
   Discord Community: Discord Community
   Discovered Printers: Discovered Printers
   Dismiss: Dismiss
-  Display & Sound: Display & Sound
+  Display: Display
   Display Mode: Display Mode
   Display Sleep: Display Sleep
   ? Display resolution is very high (%dx%d). Text may appear small. Reduce framebuffer
@@ -922,6 +925,7 @@ translations:
   EEPROM error on CFS unit: EEPROM error on CFS unit
   EMERGENCY STOP: EMERGENCY STOP
   EMPTY: EMPTY
+  EXTRAS: EXTRAS
   Each fan can only be selected once: Each fan can only be selected once
   Edit: Edit
   Edit Filament: Edit Filament
@@ -944,7 +948,6 @@ translations:
   Emergency Stop: Emergency Stop
   Emergency Stop?: Emergency Stop?
   Emergency stop activated: Emergency stop activated
-  Emergency stop and print alerts: Emergency stop and print alerts
   'Emergency stop failed: not connected': 'Emergency stop failed: not connected'
   Empty: Empty
   Empty slots disable the associated functionality: Empty slots disable the associated
@@ -1003,7 +1006,6 @@ translations:
   Error: Error
   Error at chunk {} (code={}): Error at chunk {} (code={})
   Error loading file: Error loading file
-  Error loading printing tips: Error loading printing tips
   'Error saving printer settings: {}': 'Error saving printer settings: {}'
   Error state: Error state
   'Error: %s': 'Error: %s'
@@ -1075,6 +1077,7 @@ translations:
   Extruder too cold: Extruder too cold
   'Extruding prime line...': 'Extruding prime line...'
   FAILED: FAILED
+  FILAMENT: FILAMENT
   FILAMENTS: FILAMENTS
   FILTERS: FILTERS
   Factory Reset: Factory Reset
@@ -1343,6 +1346,7 @@ translations:
   Guide the toolhead to the chute's extrude position: Guide the toolhead to the chute's extrude position
   Guides and reference: Guides and reference
   H: H
+  HELIXSCREEN: HELIXSCREEN
   HOST: HOST
   HTTP Code: HTTP Code
   'HTTP error: {} {}': 'HTTP error: {} {}'
@@ -1351,7 +1355,6 @@ translations:
   Hang on, we'll be right back!: Hang on, we'll be right back!
   Happy Hare MMU: Happy Hare MMU
   Hardware: Hardware
-  Hardware & Devices: Hardware & Devices
   Hardware Health: Hardware Health
   Hardware Name: Hardware Name
   Hardware Profile: Hardware Profile
@@ -1644,7 +1647,7 @@ translations:
   Lane tests and motor resets: Lane tests and motor resets
   Lanes: Lanes
   Language: Language
-  Language, theme, brightness, and sound: Language, theme, brightness, and sound
+  Language & Time: Language & Time
   Last: Last
   # Source: history_dashboard_panel.xml:114
   Last 7 days: Last 7 days
@@ -1671,6 +1674,7 @@ translations:
   Library: Library
   Lifetime Print Stats: Lifetime Print Stats
   Light: Light
+  Light Mode: Light Mode
   Light will switch when the current operation finishes: Light will switch when the
     current operation finishes
   Line the nozzle up with the purge chute so purged filament drops straight in.: Line the nozzle up with the purge chute so purged filament drops straight in.
@@ -1733,6 +1737,7 @@ translations:
   Lowest notification level that interrupts with a toast: Lowest notification level that interrupts with a toast
   M to toggle: M to toggle
   'MAC:': 'MAC:'
+  MACHINE: MACHINE
   MACRO DEVICES: MACRO DEVICES
   MAIN POWER BUTTON: MAIN POWER BUTTON
   MANUAL: MANUAL
@@ -1786,6 +1791,7 @@ translations:
   Manage: Manage
   Manage Printers: Manage Printers
   Manage configured printers: Manage configured printers
+  Managed by firmware: Managed by firmware
   Managed by your firmware: Managed by your firmware
   Manual: Manual
   Manual Bed Leveling: Manual Bed Leveling
@@ -1892,6 +1898,7 @@ translations:
   Multi-Filament System not available: Multi-Filament System not available
   Multi-filament system not ready: Multi-filament system not ready
   Must home axes first: Must home axes first
+  Muted: Muted
   My Custom Theme: My Custom Theme
   My Panel: My Panel
   My Printer: My Printer
@@ -1903,6 +1910,7 @@ translations:
   'Name:': 'Name:'
   Named actions in the LED Controls widget. Not shown under LED selection.: Named actions in the LED Controls widget. Not shown under LED selection.
   Needs adjustment: Needs adjustment
+  Needs attention: Needs attention
   Needs the {} package to switch spools: Needs the {} package to switch spools
   Net Weight (g): Net Weight (g)
   Network: Network
@@ -1915,6 +1923,7 @@ translations:
   Network name cannot be empty: Network name cannot be empty
   'Network, display, sound, printer setup, and more. You can replay this tour anytime from Help & About.': 'Network, display, sound, printer setup, and more. You can replay this tour anytime from Help & About.'
   Never: Never
+  Never sleeps: Never sleeps
   New Spool: New Spool
   'New Spool: Step 1 of 3': 'New Spool: Step 1 of 3'
   'New Spool: Step {} of {}': 'New Spool: Step {} of {}'
@@ -2135,6 +2144,8 @@ translations:
   PLA - Black: PLA - Black
   POWER: POWER
   PRINT OPTIONS: PRINT OPTIONS
+  PRINTER: PRINTER
+  PRINTER VISUALS: PRINTER VISUALS
   PRINTERS: PRINTERS
   PRINT_START has {} skippable operation: PRINT_START has {} skippable operation
   PRINT_START has {} skippable operations: PRINT_START has {} skippable operations
@@ -2349,10 +2360,9 @@ translations:
   'Printer: ': 'Printer: '
   PrinterIdentify: PrinterIdentify
   Printers: Printers
-  Printers, Multi-Filament System, fans, sensors, and LEDs: Printers, Multi-Filament
-    System, fans, sensors, and LEDs
   Printing: Printing
   Printing label...: Printing label...
+  Printing now: Printing now
   Printing test label...: Printing test label...
   Printing with the wrong material can cause clogs, poor adhesion, or failed prints.: Printing
     with the wrong material can cause clogs, poor adhesion, or failed prints.
@@ -2376,6 +2386,7 @@ translations:
   'Probing Z...': 'Probing Z...'
   Probing point {} of {}: Probing point {} of {}
   Probing... ({} points): Probing... ({} points)
+  Problem found: Problem found
   Proceed: Proceed
   # Source: abort_progress_modal.xml:20
   Processing...: Processing...
@@ -2656,10 +2667,10 @@ translations:
   'SAVE_CONFIG failed: {}. Tool offsets were applied but not saved. Run SAVE_CONFIG manually or they will be lost on restart.': 'SAVE_CONFIG failed: {}. Tool offsets were applied but not saved. Run SAVE_CONFIG manually or they will be lost on restart.'
   ? 'SAVE_CONFIG failed: {}. Z-offset was applied but not saved. Run SAVE_CONFIG manually or the offset will be lost on restart.'
   : 'SAVE_CONFIG failed: {}. Z-offset was applied but not saved. Run SAVE_CONFIG manually or the offset will be lost on restart.'
+  SCREEN: SCREEN
   SETTINGS: SETTINGS
   SHIPPED IMAGES: SHIPPED IMAGES
   SOFTWARE: SOFTWARE
-  SOUND: SOUND
   STANDARD MACROS: STANDARD MACROS
   STARTUP: STARTUP
   STOP: STOP
@@ -2669,7 +2680,7 @@ translations:
     on startup. Open Settings to fix the issue, then reboot.
   : Safe Mode active. The printer connection is disabled because the app kept crashing
     on startup. Open Settings to fix the issue, then reboot.
-  Safety & Notifications: Safety & Notifications
+  Safety & Alerts: Safety & Alerts
   Same spool in {}? Tap Clear if it is a new one.: Same spool in {}? Tap Clear if it is a new one.
   Sample: Sample
   Sample %d/%d: Sample %d/%d
@@ -2748,7 +2759,6 @@ translations:
   Secondary: Secondary
   Section Detail: Section Detail
   Security: Security
-  Security, network, host, and administration: Security, network, host, and administration
   See exactly what data will be sent: See exactly what data will be sent
   See the log: See the log
   See the quick tour of HelixScreen again: See the quick tour of HelixScreen again
@@ -2876,6 +2886,7 @@ translations:
   Skipped: Skipped
   Sleep While Printing: Sleep While Printing
   Sleep adjusted to match dim timeout: Sleep adjusted to match dim timeout
+  Sleep {} min: Sleep {} min
   Sliced colors: Sliced colors
   Slicer: Slicer
   Slot: Slot
@@ -2898,6 +2909,7 @@ translations:
   'Some mapped slots are short on filament:': 'Some mapped slots are short on filament:'
   Some settings will take effect after restart.: Some settings will take effect after
     restart.
+  Sound: Sound
   Sound Theme: Sound Theme
   Sounds: Sounds
   Source: Source
@@ -2906,7 +2918,6 @@ translations:
   Spaghetti Detection: Spaghetti Detection
   Spaghetti detected: Spaghetti detected
   Spaghetti detected (%d%%): Spaghetti detected (%d%%)
-  Spaghetti detected — print paused: Spaghetti detected — print paused
   Speaker: Speaker
   Speed: Speed
   Speed Settings: Speed Settings
@@ -3006,7 +3017,6 @@ translations:
   Success Rate: Success Rate
   Success!: Success!
   Summary: Summary
-  Support, documentation, and version info: Support, documentation, and version info
   Suppress periodic 'T:.../B:...' status lines: Suppress periodic 'T:.../B:...' status
     lines
   Suppress periodic temperature status lines: Suppress periodic temperature status lines
@@ -3334,7 +3344,6 @@ translations:
   Toolhead Y: Toolhead Y
   Toolhead jam: Toolhead jam
   Toolhead position unknown: Toolhead position unknown
-  Toolhead, G-code, limits, and materials: Toolhead, G-code, limits, and materials
   Toolheads: Toolheads
   Tools: Tools
   Tools Used: Tools Used
@@ -3452,6 +3461,7 @@ translations:
   Update from a Terminal: Update from a Terminal
   Update installed!: Update installed!
   Update your security PIN: Update your security PIN
+  Updates: Updates
   Updating Configuration...: Updating Configuration...
   Upgrade to AFC 1.2.0 or newer for multi-color spools. It also adds filament names, which otherwise need Spoolman.: Upgrade to AFC 1.2.0 or newer for multi-color spools. It also adds filament names, which otherwise need Spoolman.
   Upload: Upload
@@ -3483,7 +3493,8 @@ translations:
   Verifying timelapse plugin...: Verifying timelapse plugin...
   Verifying...: Verifying...
   Version: Version
-  Version, updates, and printer info: Version, updates, and printer info
+  Version and printer info: Version and printer info
+  Version {}: Version {}
   Vertical: Vertical
   Vibration: Vibration
   Vibration compensation active: Vibration compensation active
@@ -3500,6 +3511,7 @@ translations:
   'Visits: ': 'Visits: '
   Volume: Volume
   Volume of filament used during ramming: Volume of filament used during ramming
+  Volume {}%: Volume {}%
   WIDTH SENSORS: WIDTH SENSORS
   WLED: WLED
   WLED Preset: WLED Preset
@@ -3550,7 +3562,9 @@ translations:
   Which macro the Close feeder button sends: Which macro the Close feeder button sends
   Which macro the Open feeder button sends: Which macro the Open feeder button sends
   White: White
+  Wi-Fi: Wi-Fi
   Wi-Fi or ethernet connection status: Wi-Fi or ethernet connection status
+  Wi-Fi {}: Wi-Fi {}
   WiFi: WiFi
   WiFi Disabled: WiFi Disabled
   WiFi Enabled: WiFi Enabled
@@ -3683,6 +3697,7 @@ translations:
   locked: locked
   mm before clog: mm before clog
   needs: needs
+  never sleeps: never sleeps
   not detected: not detected
   not loaded: not loaded
   nozzle: nozzle
@@ -3697,6 +3712,7 @@ translations:
   remaining: remaining
   remaining before clog detection triggers: remaining before clog detection triggers
   rendering: rendering
+  sleep {} min: sleep {} min
   slots): slots)
   started: started
   steppers: steppers
@@ -3710,6 +3726,7 @@ translations:
   you have: you have
   '{} LED strips available': '{} LED strips available'
   '{} and {} are both mapped here': '{} and {} are both mapped here'
+  '{} available': '{} available'
   '{} axis homed': '{} axis homed'
   '{} command timed out': '{} command timed out'
   '{} complete': '{} complete'

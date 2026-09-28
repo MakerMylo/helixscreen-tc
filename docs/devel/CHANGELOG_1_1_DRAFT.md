@@ -158,7 +158,7 @@ what gets saved.
   the interval and threshold the printer's `ai_control` settings already hold, and never
   writes them. A confirmed detection pauses the print and opens a dialog offering Resume,
   Abort, Reduce Sensitivity or Turn off detection. The whole pipeline is vendor-neutral: any
-  detection source only reports, and two settings in Safety & Notifications decide what
+  detection source only reports, and two settings in Safety & Alerts decide what
   happens - **Spaghetti Detection** (watch at all) and **Pause on Detection** (pause, or only
   warn). On the first start both are seeded once from the printer's own stored choice
   (`switch` / `pausePrint`) and are HelixScreen's from then on. Printers whose firmware
@@ -242,6 +242,27 @@ what gets saved.
 
 ### Changed
 
+- **Settings is one list of twelve pages in three groups** (#1023) - Screen (Display, Appearance,
+  Touch & Input, Sound), Printer (Printing, Devices, Safety & Alerts, Connection) and HelixScreen
+  (Language & Time, System, Updates, Help & About). Every page is one tap from the Settings screen,
+  and Display, Appearance, Sound, Devices, Connection, Language & Time and Updates show a short
+  status line, such as your brightness and sleep time or whether an update is waiting. Nothing is
+  reset: every setting keeps its value. Where things went:
+
+  | Was | Now |
+  |-----|-----|
+  | Display & Sound | Display, Appearance, Sound, Language & Time |
+  | Printing > Toolhead Style, G-code Preview, Z Movement | Appearance > Printer Visuals |
+  | Hardware & Devices | Devices |
+  | Hardware & Devices > Printers | Connection > Printers |
+  | Safety & Notifications | Safety & Alerts |
+  | Safety & Notifications > Allow cold load/unload, Cool nozzle after filament ops | Printing |
+  | System > Network Settings, Host | Connection |
+  | System > Touch & Input | Touch & Input, on the Settings screen itself |
+  | Display & Sound > Scroll Buttons, System Keyboard, Keep Navigation Bar | Touch & Input |
+  | Help & About > About > Update Channel, Check for Updates | Updates |
+
+  The upgrade banner's Update button now opens Settings > Updates.
 - **The Controls panel fits small screens** - the Calibration & Tools card holds only
   calibration (Bed Mesh, Z Calibration, Pressure Adv., Bed Screws, and QGL, Z-Tilt or Tool
   Offsets where the printer has them) in a grid that keeps every label on one line. Motors

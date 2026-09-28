@@ -438,7 +438,7 @@ void HelixTestFixture::reset_all() {
     // each subject's name from the XML scope on the way out, so once a test tears
     // one of these down the names stay withdrawn for the REST of the binary:
     // every later SettingsManager::init_subjects() short-circuits and never
-    // re-registers them. A test that then builds settings_display_sound_overlay.xml
+    // re-registers them. A test that then builds settings_display_overlay.xml
     // or settings_safety_overlay.xml gets "No subject was found" and silently
     // unbound toggles — a failure that reads as a broken binding, not as leakage
     // from a test that ran twenty test cases earlier.

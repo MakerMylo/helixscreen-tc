@@ -9,7 +9,7 @@ These docs are **end-user facing**. They must be written for people who are NOT 
 - Screenshots are better than descriptions
 - Never reference source files, class names, or internal architecture
 - Config examples should be copy-pasteable
-- When mentioning settings, show the exact path in the UI (e.g., "Settings > System > Touch & Input")
+- When mentioning settings, show the exact path in the UI (e.g., "Settings > Touch & Input > Scroll Guard")
 - Test all instructions on a clean install before publishing
 
 ## User Docs Index
@@ -39,15 +39,20 @@ These docs are **end-user facing**. They must be written for people who are NOT 
 | `guide/label-printing.md` | Label printer setup, supported printers (Brother/Phomemo/Niimbot/MakeID), Bluetooth pairing, troubleshooting |
 | `guide/calibration.md` | Bed mesh, screws tilt, input shaper, PID |
 | `guide/touch-calibration.md` | Touch screen calibration, forcing recalibration, config reference |
-| `guide/settings.md` | Settings hub page with links to sub-pages |
-| `guide/settings/display-sound.md` | Language, timezone, animations, display settings, sound settings, home widgets |
-| `guide/settings/printing.md` | Toolhead, G-code preview, Z movement, machine limits, retraction, timelapse, macros |
-| `guide/settings/hardware.md` | Hardware issues, printers, multi-filament systems, fans, sensors, LEDs, power devices, Spoolman |
-| `guide/settings/safety.md` | E-Stop confirmation, cancel escalation, print completion alert |
-| `guide/settings/system.md` | Security, network, host, touch & input link, plugins, telemetry, reset |
-| `guide/settings/touch-input.md` | Touch calibration, debug viz, scroll engage distance, scroll guard |
-| `guide/settings/help-about.md` | Debug bundles, Discord, docs, version, updates, print hours |
+| `guide/settings.md` | Settings hub: the three groups (Screen, Printer, HelixScreen) and their twelve pages |
+| `guide/settings/display.md` | Screen rotation, UI scale, brightness, screen dim, display sleep, screensaver, sleep while printing |
+| `guide/settings/appearance.md` | Dark mode, themes and the theme editor, animations, widget labels, printer visuals (toolhead style, G-code preview, Z movement, bed mesh render) |
+| `guide/settings/touch-input.md` | Touch calibration, debug viz, scroll engage distance, long press, home screen editing, scroll guard, scroll buttons, Android keyboard and navigation bar |
+| `guide/settings/sound.md` | Sounds, volume, UI sounds, sound themes, output device, custom themes, supported hardware, troubleshooting |
+| `guide/settings/printing.md` | Machine limits, motion, retraction, enclosure, material temperatures, cold load/unload, post-filament cooldown, timelapse, macro buttons |
+| `guide/settings/devices.md` | Hardware health, camera, multi-filament systems, fans, sensors, LEDs, power devices, Spoolman |
 | `guide/settings/led-settings.md` | LED strip selection, auto-state, macro devices, setup guides |
+| `guide/settings/safety.md` | Safety & Alerts: E-Stop confirmation, cancel escalation, macro confirmation, spaghetti detection, print completion alert, on-screen alerts |
+| `guide/settings/connection.md` | Network settings, printers, Moonraker host |
+| `guide/settings/language-time.md` | Language, timezone, time format |
+| `guide/settings/system.md` | Security, performance, telemetry, log level, restart, factory reset |
+| `guide/settings/updates.md` | Update channel, check and install, firmware-managed and can't-update notices |
+| `guide/settings/help-about.md` | Welcome tour, debug bundles, Discord, docs, About (version, system info, print hours, beta features) |
 | `guide/fans.md` | Discovered fans grouped by controllable vs. automatic, live speed dials, RPM readouts, per-fan renaming |
 | `guide/sensors.md` | Filament and motion sensors with per-sensor role assignment, read-only sensor types, chamber heater/sensor mapping |
 | `guide/security.md` | PIN screen lock, auto-lock tied to display sleep, lock-screen keypad, what a factory reset clears |

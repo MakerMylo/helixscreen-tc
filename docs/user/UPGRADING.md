@@ -8,7 +8,7 @@ This guide helps you upgrade HelixScreen to a newer version.
 
 ## Quick Upgrade
 
-The preferred ways to update are inside the app itself (**Settings > Help & About > About > Check for Updates**) or the Mainsail/Fluidd update manager. From the command line instead, on any host with direct internet access:
+The preferred ways to update are inside the app itself (**Settings > Updates > Check for Updates**) or the Mainsail/Fluidd update manager. From the command line instead, on any host with direct internet access:
 
 ```bash
 curl -sSL https://releases.helixscreen.org/install.sh | sh -s -- --update

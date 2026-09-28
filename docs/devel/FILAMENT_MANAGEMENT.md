@@ -1352,7 +1352,7 @@ each backend's doc ([Snapmaker U1](FILAMENT_BACKEND_SNAPMAKER_U1.md)).
 
 | Order | What runs | Chosen when |
 |-------|-----------|-------------|
-| 0 `FilamentTier::Macro` (**user override**) | The macro the user assigned in Settings > Macro Buttons, via `dispatch_filament_macro()` | `StandardMacroInfo::get_source() == MacroSource::CONFIGURED`. Outranks everything, on load and unload alike |
+| 0 `FilamentTier::Macro` (**user override**) | The macro the user assigned in Settings > Printing > Macro Buttons, via `dispatch_filament_macro()` | `StandardMacroInfo::get_source() == MacroSource::CONFIGURED`. Outranks everything, on load and unload alike |
 | 1 `FilamentTier::AmsBackend` | `load_filament()`, `unload_filament()`, or `change_tool()` — carried in `FilamentOpPlan::ams_call` / `ams_arg` | A backend owns the operation (see the asymmetry below) |
 | 2 `FilamentTier::Macro` (auto-detected) | The `StandardMacroSlot::LoadFilament` / `UnloadFilament` we pattern-matched, or a `HELIX_*` fallback | No tier 1, and the slot is non-empty |
 | 3 `FilamentTier::RawGcode` | `filament_load_fallback_gcode()` (fast bowden move, then a slow push into the melt zone) or `filament_unload_fallback_gcode()` (tip-shape, then a long retract) | Nothing else is configured |
