@@ -194,7 +194,7 @@ TEST_CASE_METHOD(RootFixture, "settings root: refresh reads every stateful row's
 
     CHECK(status_text(root_, "row_display") == "65% · sleep 10 min");
     CHECK(status_text(root_, "row_appearance") ==
-          "Dark · " + DisplaySettingsManager::instance().get_theme_name());
+          "Dark Mode · " + DisplaySettingsManager::instance().get_theme_name());
     CHECK(status_text(root_, "row_devices") == "Needs attention");
     CHECK(status_text(root_, "row_language_time") == "English · 24-hour");
 

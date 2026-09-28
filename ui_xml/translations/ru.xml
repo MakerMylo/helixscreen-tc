@@ -753,7 +753,6 @@
   <translation tag="Damping (Kd)" ru="Демпфирование (Kd)"/>
   <translation tag="Danger" ru="Опасность"/>
   <translation tag="Danger Zone" ru="Опасная зона"/>
-  <translation tag="Dark" ru="Тёмный"/>
   <translation tag="Dark Mode" ru="Тёмный режим"/>
   <translation tag="Database" ru="База данных"/>
   <translation tag="Date (newest)" ru="Дата (новые)"/>
@@ -2121,7 +2120,6 @@
   <translation tag="Print Library" ru="Библиотека печати"/>
   <translation tag="Print Outcome" ru="Результат печати"/>
   <translation tag="Print Paused" ru="Печать приостановлена"/>
-  <translation tag="Print Settings" ru="Настройки печати"/>
   <translation tag="Print Speed" ru="Скорость печати"/>
   <translation tag="Print Start" ru="Начало печати"/>
   <translation tag="Print Stats" ru="Статистика печати"/>
@@ -2189,6 +2187,7 @@
   <translation tag="Printers" ru="Принтеры"/>
   <translation tag="Printing" ru="Печать"/>
   <translation tag="Printing label..." ru="Печать этикетки..."/>
+  <translation tag="Printing now" ru="Печать"/>
   <translation tag="Printing test label..." ru="Печать тестовой этикетки..."/>
   <translation tag="Printing with the wrong material can cause clogs, poor adhesion, or failed prints." ru="Печать неподходящим материалом может привести к засорам, плохой адгезии или неудачным печатям."/>
   <translation tag="Printing: start after this job" ru="Идёт печать: начать после этой печати"/>

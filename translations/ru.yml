@@ -832,7 +832,6 @@ translations:
   Damping (Kd): Демпфирование (Kd)
   Danger: Опасность
   Danger Zone: Опасная зона
-  Dark: Тёмный
   Dark Mode: Тёмный режим
   Database: База данных
   Date (newest): Дата (новые)
@@ -2328,7 +2327,6 @@ translations:
   Print Library: Библиотека печати
   Print Outcome: Результат печати
   Print Paused: Печать приостановлена
-  Print Settings: Настройки печати
   Print Speed: Скорость печати
   Print Start: Начало печати
   Print Stats: 'Статистика печати'
@@ -2404,6 +2402,7 @@ translations:
   Printers: Принтеры
   Printing: Печать
   Printing label...: Печать этикетки...
+  Printing now: Печать
   Printing test label...: Печать тестовой этикетки...
   Printing with the wrong material can cause clogs, poor adhesion, or failed prints.: Печать
     неподходящим материалом может привести к засорам, плохой адгезии или неудачным

@@ -773,7 +773,6 @@ translations:
   Damping (Kd): 阻尼 (Kd)
   Danger: 危险
   Danger Zone: 危险区域
-  Dark: 深色
   Dark Mode: 深色模式
   Database: 数据库
   Date (newest): 日期（最新）
@@ -2198,7 +2197,6 @@ translations:
   Print Library: 打印库
   Print Outcome: 打印结果
   Print Paused: 打印已暂停
-  Print Settings: 打印设置
   Print Speed: 打印速度
   Print Start: 打印开始
   Print Stats: '打印统计'
@@ -2266,8 +2264,9 @@ translations:
   'Printer: ': '打印机: '
   PrinterIdentify: 识别打印机
   Printers: 打印机
-  Printing: 正在打印
+  Printing: 打印
   Printing label...: 正在打印标签...
+  Printing now: 正在打印
   Printing test label...: 正在打印测试标签...
   Printing with the wrong material can cause clogs, poor adhesion, or failed prints.: 使用错误的耗材打印可能导致堵塞、附着力差或打印失败。
   'Printing: start after this job': '打印中：本次打印完成后开始'

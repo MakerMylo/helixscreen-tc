@@ -753,7 +753,6 @@
   <translation tag="Damping (Kd)" ja="減衰 (Kd)"/>
   <translation tag="Danger" ja="危険"/>
   <translation tag="Danger Zone" ja="危険ゾーン"/>
-  <translation tag="Dark" ja="ダーク"/>
   <translation tag="Dark Mode" ja="ダークモード"/>
   <translation tag="Database" ja="データベース"/>
   <translation tag="Date (newest)" ja="日付（新しい順）"/>
@@ -2121,7 +2120,6 @@
   <translation tag="Print Library" ja="印刷ライブラリ"/>
   <translation tag="Print Outcome" ja="印刷結果"/>
   <translation tag="Print Paused" ja="印刷一時停止"/>
-  <translation tag="Print Settings" ja="印刷設定"/>
   <translation tag="Print Speed" ja="印刷速度"/>
   <translation tag="Print Start" ja="印刷開始"/>
   <translation tag="Print Stats" ja="印刷統計"/>
@@ -2187,8 +2185,9 @@
   <translation tag="Printer: " ja="プリンター: "/>
   <translation tag="PrinterIdentify" ja="プリンターを識別"/>
   <translation tag="Printers" ja="プリンター"/>
-  <translation tag="Printing" ja="印刷中"/>
+  <translation tag="Printing" ja="印刷"/>
   <translation tag="Printing label..." ja="ラベル印刷中..."/>
+  <translation tag="Printing now" ja="印刷中"/>
   <translation tag="Printing test label..." ja="テストラベル印刷中..."/>
   <translation tag="Printing with the wrong material can cause clogs, poor adhesion, or failed prints." ja="誤った素材で印刷すると、詰まり、密着不良、または印刷失敗の原因となる可能性があります。"/>
   <translation tag="Printing: start after this job" ja="印刷中：このジョブ後に開始"/>

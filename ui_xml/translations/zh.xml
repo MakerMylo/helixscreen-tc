@@ -753,7 +753,6 @@
   <translation tag="Damping (Kd)" zh="阻尼 (Kd)"/>
   <translation tag="Danger" zh="危险"/>
   <translation tag="Danger Zone" zh="危险区域"/>
-  <translation tag="Dark" zh="深色"/>
   <translation tag="Dark Mode" zh="深色模式"/>
   <translation tag="Database" zh="数据库"/>
   <translation tag="Date (newest)" zh="日期（最新）"/>
@@ -2121,7 +2120,6 @@
   <translation tag="Print Library" zh="打印库"/>
   <translation tag="Print Outcome" zh="打印结果"/>
   <translation tag="Print Paused" zh="打印已暂停"/>
-  <translation tag="Print Settings" zh="打印设置"/>
   <translation tag="Print Speed" zh="打印速度"/>
   <translation tag="Print Start" zh="打印开始"/>
   <translation tag="Print Stats" zh="打印统计"/>
@@ -2187,8 +2185,9 @@
   <translation tag="Printer: " zh="打印机: "/>
   <translation tag="PrinterIdentify" zh="识别打印机"/>
   <translation tag="Printers" zh="打印机"/>
-  <translation tag="Printing" zh="正在打印"/>
+  <translation tag="Printing" zh="打印"/>
   <translation tag="Printing label..." zh="正在打印标签..."/>
+  <translation tag="Printing now" zh="正在打印"/>
   <translation tag="Printing test label..." zh="正在打印测试标签..."/>
   <translation tag="Printing with the wrong material can cause clogs, poor adhesion, or failed prints." zh="使用错误的耗材打印可能导致堵塞、附着力差或打印失败。"/>
   <translation tag="Printing: start after this job" zh="打印中：本次打印完成后开始"/>

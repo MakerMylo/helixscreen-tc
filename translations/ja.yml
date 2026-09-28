@@ -775,7 +775,6 @@ translations:
   Damping (Kd): 減衰 (Kd)
   Danger: 危険
   Danger Zone: 危険ゾーン
-  Dark: ダーク
   Dark Mode: ダークモード
   Database: データベース
   Date (newest): 日付（新しい順）
@@ -2206,7 +2205,6 @@ translations:
   Print Library: 印刷ライブラリ
   Print Outcome: 印刷結果
   Print Paused: 印刷一時停止
-  Print Settings: 印刷設定
   Print Speed: 印刷速度
   Print Start: 印刷開始
   Print Stats: '印刷統計'
@@ -2275,8 +2273,9 @@ translations:
   'Printer: ': 'プリンター: '
   PrinterIdentify: プリンターを識別
   Printers: プリンター
-  Printing: 印刷中
+  Printing: 印刷
   Printing label...: ラベル印刷中...
+  Printing now: 印刷中
   Printing test label...: テストラベル印刷中...
   Printing with the wrong material can cause clogs, poor adhesion, or failed prints.: 誤った素材で印刷すると、詰まり、密着不良、または印刷失敗の原因となる可能性があります。
   'Printing: start after this job': '印刷中：このジョブ後に開始'

@@ -845,7 +845,6 @@ translations:
   Damping (Kd): Amortecimento (Kd)
   Danger: Perigo
   Danger Zone: Zona de Perigo
-  Dark: Escuro
   Dark Mode: Modo Escuro
   Database: Banco de Dados
   Date (newest): Data (mais recente)
@@ -2354,7 +2353,6 @@ translations:
   Print Library: Biblioteca de impressão
   Print Outcome: Resultado da Impressão
   Print Paused: Impressão Pausada
-  Print Settings: Configurações de impressão
   Print Speed: Velocidade de Impressão
   Print Start: Início da Impressão
   Print Stats: 'Estatísticas de impressão'
@@ -2430,8 +2428,9 @@ translations:
   'Printer: ': 'Impressora: '
   PrinterIdentify: Identificar Impressora
   Printers: Impressoras
-  Printing: Imprimindo
+  Printing: Impressão
   Printing label...: Imprimindo etiqueta...
+  Printing now: Imprimindo
   Printing test label...: Imprimindo etiqueta de teste...
   Printing with the wrong material can cause clogs, poor adhesion, or failed prints.: Imprimir
     com o material errado pode causar entupimentos, má aderência ou falhas de impressão.

@@ -812,7 +812,6 @@ translations:
   Damping (Kd): Damping (Kd)
   Danger: Danger
   Danger Zone: Danger Zone
-  Dark: Dark
   Dark Mode: Dark Mode
   Database: Database
   Date (newest): Date (newest)
@@ -2281,7 +2280,6 @@ translations:
   Print Library: Print Library
   Print Outcome: Print Outcome
   Print Paused: Print Paused
-  Print Settings: Print Settings
   Print Speed: Print Speed
   Print Start: Print Start
   Print Stats: Print Stats
@@ -2355,6 +2353,7 @@ translations:
   Printers: Printers
   Printing: Printing
   Printing label...: Printing label...
+  Printing now: Printing now
   Printing test label...: Printing test label...
   Printing with the wrong material can cause clogs, poor adhesion, or failed prints.: Printing
     with the wrong material can cause clogs, poor adhesion, or failed prints.

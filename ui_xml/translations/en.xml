@@ -753,7 +753,6 @@
   <translation tag="Damping (Kd)" en="Damping (Kd)"/>
   <translation tag="Danger" en="Danger"/>
   <translation tag="Danger Zone" en="Danger Zone"/>
-  <translation tag="Dark" en="Dark"/>
   <translation tag="Dark Mode" en="Dark Mode"/>
   <translation tag="Database" en="Database"/>
   <translation tag="Date (newest)" en="Date (newest)"/>
@@ -2121,7 +2120,6 @@
   <translation tag="Print Library" en="Print Library"/>
   <translation tag="Print Outcome" en="Print Outcome"/>
   <translation tag="Print Paused" en="Print Paused"/>
-  <translation tag="Print Settings" en="Print Settings"/>
   <translation tag="Print Speed" en="Print Speed"/>
   <translation tag="Print Start" en="Print Start"/>
   <translation tag="Print Stats" en="Print Stats"/>
@@ -2189,6 +2187,7 @@
   <translation tag="Printers" en="Printers"/>
   <translation tag="Printing" en="Printing"/>
   <translation tag="Printing label..." en="Printing label..."/>
+  <translation tag="Printing now" en="Printing now"/>
   <translation tag="Printing test label..." en="Printing test label..."/>
   <translation tag="Printing with the wrong material can cause clogs, poor adhesion, or failed prints." en="Printing with the wrong material can cause clogs, poor adhesion, or failed prints."/>
   <translation tag="Printing: start after this job" en="Printing: start after this job"/>

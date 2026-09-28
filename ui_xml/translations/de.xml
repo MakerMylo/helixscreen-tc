@@ -753,7 +753,6 @@
   <translation tag="Damping (Kd)" de="Dämpfung (Kd)"/>
   <translation tag="Danger" de="Gefahr"/>
   <translation tag="Danger Zone" de="Gefahrenbereich"/>
-  <translation tag="Dark" de="Dunkel"/>
   <translation tag="Dark Mode" de="Dunkelmodus"/>
   <translation tag="Database" de="Datenbank"/>
   <translation tag="Date (newest)" de="Datum (neueste)"/>
@@ -2121,7 +2120,6 @@
   <translation tag="Print Library" de="Druckbibliothek"/>
   <translation tag="Print Outcome" de="Druckergebnis"/>
   <translation tag="Print Paused" de="Druck pausiert"/>
-  <translation tag="Print Settings" de="Druckeinstellungen"/>
   <translation tag="Print Speed" de="Druckgeschwindigkeit"/>
   <translation tag="Print Start" de="Druckstart"/>
   <translation tag="Print Stats" de="Druckstatistik"/>
@@ -2189,6 +2187,7 @@
   <translation tag="Printers" de="Drucker"/>
   <translation tag="Printing" de="Drucken"/>
   <translation tag="Printing label..." de="Etikett wird gedruckt..."/>
+  <translation tag="Printing now" de="Drucken"/>
   <translation tag="Printing test label..." de="Testetikett wird gedruckt..."/>
   <translation tag="Printing with the wrong material can cause clogs, poor adhesion, or failed prints." de="Das Drucken mit dem falschen Material kann zu Verstopfungen, schlechter Haftung oder fehlgeschlagenen Drucken führen."/>
   <translation tag="Printing: start after this job" de="Druck läuft: nach diesem Auftrag starten"/>

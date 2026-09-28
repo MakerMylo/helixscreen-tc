@@ -753,7 +753,6 @@
   <translation tag="Damping (Kd)" pt="Amortecimento (Kd)"/>
   <translation tag="Danger" pt="Perigo"/>
   <translation tag="Danger Zone" pt="Zona de Perigo"/>
-  <translation tag="Dark" pt="Escuro"/>
   <translation tag="Dark Mode" pt="Modo Escuro"/>
   <translation tag="Database" pt="Banco de Dados"/>
   <translation tag="Date (newest)" pt="Data (mais recente)"/>
@@ -2121,7 +2120,6 @@
   <translation tag="Print Library" pt="Biblioteca de impressão"/>
   <translation tag="Print Outcome" pt="Resultado da Impressão"/>
   <translation tag="Print Paused" pt="Impressão Pausada"/>
-  <translation tag="Print Settings" pt="Configurações de impressão"/>
   <translation tag="Print Speed" pt="Velocidade de Impressão"/>
   <translation tag="Print Start" pt="Início da Impressão"/>
   <translation tag="Print Stats" pt="Estatísticas de impressão"/>
@@ -2187,8 +2185,9 @@
   <translation tag="Printer: " pt="Impressora: "/>
   <translation tag="PrinterIdentify" pt="Identificar Impressora"/>
   <translation tag="Printers" pt="Impressoras"/>
-  <translation tag="Printing" pt="Imprimindo"/>
+  <translation tag="Printing" pt="Impressão"/>
   <translation tag="Printing label..." pt="Imprimindo etiqueta..."/>
+  <translation tag="Printing now" pt="Imprimindo"/>
   <translation tag="Printing test label..." pt="Imprimindo etiqueta de teste..."/>
   <translation tag="Printing with the wrong material can cause clogs, poor adhesion, or failed prints." pt="Imprimir com o material errado pode causar entupimentos, má aderência ou falhas de impressão."/>
   <translation tag="Printing: start after this job" pt="Imprimindo: inicie depois desta impressão"/>
