@@ -3,7 +3,8 @@
 
 /**
  * @file ui_settings_appearance.h
- * @brief Appearance settings overlay - dark mode, theme, animations, widget labels, bed mesh
+ * @brief Appearance settings overlay - dark mode, theme, animations, widget labels,
+ *        printer visuals (toolhead style, G-code preview, Z movement, bed mesh)
  *
  * Owns the theme explorer (theme_preview_overlay) and the theme editor entry point.
  *
@@ -54,6 +55,9 @@ class AppearanceSettingsOverlay : public OverlayBase {
     void handle_dark_mode_changed(bool enabled);
     void handle_widget_labels_changed(bool enabled);
     void handle_bed_mesh_mode_changed(int mode);
+    void handle_toolhead_style_changed(int index);
+    void handle_gcode_mode_changed(int index);
+    void handle_z_movement_style_changed(int index);
     void handle_theme_settings_clicked();
     /**
      * @brief Make the theme explorer treat the active theme as committed
@@ -76,6 +80,9 @@ class AppearanceSettingsOverlay : public OverlayBase {
   private:
     void init_animations_toggle();
     void init_bed_mesh_dropdown();
+    void init_toolhead_style_dropdown();
+    void init_gcode_mode_dropdown();
+    void init_z_movement_dropdown();
     void init_theme_preset_dropdown(lv_obj_t* root);
 
     /// Theme Editor overlay (secondary - for detailed color editing)
@@ -105,6 +112,9 @@ class AppearanceSettingsOverlay : public OverlayBase {
     static void on_dark_mode_changed(lv_event_t* e);
     static void on_widget_labels_changed(lv_event_t* e);
     static void on_bed_mesh_mode_changed(lv_event_t* e);
+    static void on_toolhead_style_changed(lv_event_t* e);
+    static void on_gcode_mode_changed(lv_event_t* e);
+    static void on_z_movement_style_changed(lv_event_t* e);
 
     // Theme explorer
     static void on_theme_preset_changed(lv_event_t* e);

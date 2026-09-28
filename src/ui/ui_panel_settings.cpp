@@ -143,47 +143,6 @@ static void on_cancel_escalation_timeout_changed(lv_event_t* e) {
     SafetySettingsManager::instance().set_cancel_escalation_timeout_seconds(seconds);
 }
 
-// Static callback for Z movement style dropdown
-static void on_z_movement_style_changed(lv_event_t* e) {
-    lv_obj_t* dropdown = static_cast<lv_obj_t*>(lv_event_get_current_target(e));
-    int index = static_cast<int>(lv_dropdown_get_selected(dropdown));
-    auto style = static_cast<ZMovementStyle>(index);
-    spdlog::info("[SettingsPanel] Z movement style changed: {} ({})", index,
-                 index == 0 ? "Auto" : (index == 1 ? "Bed Moves" : "Nozzle Moves"));
-    SettingsManager::instance().set_z_movement_style(style);
-}
-
-// Static callback for toolhead style dropdown
-static void on_toolhead_style_changed(lv_event_t* e) {
-    lv_obj_t* dropdown = static_cast<lv_obj_t*>(lv_event_get_current_target(e));
-    int index = static_cast<int>(lv_dropdown_get_selected(dropdown));
-    auto style = SettingsManager::dropdown_index_to_toolhead_style(index);
-    spdlog::info("[SettingsPanel] Toolhead style changed: {} (dropdown index {})",
-                 static_cast<int>(style), index);
-    SettingsManager::instance().set_toolhead_style(style);
-}
-
-// Static callback for G-code render mode dropdown
-static void on_gcode_mode_changed(lv_event_t* e) {
-    lv_obj_t* dropdown = static_cast<lv_obj_t*>(lv_event_get_current_target(e));
-    int index = static_cast<int>(lv_dropdown_get_selected(dropdown));
-
-    // Map dropdown index to render mode value
-    // With GLES: indices match mode values directly (0=Auto, 1=3D, 2=2D, 3=Thumbnail)
-    // Without GLES: reduced set (0=Auto, 1=2D Layers, 2=Thumbnail Only)
-#ifndef ENABLE_GLES_3D
-    static const int INDEX_TO_MODE[] = {0, 2, 3}; // Auto, 2D Layers, Thumbnail Only
-    int mode = (index >= 0 && index <= 2) ? INDEX_TO_MODE[index] : 0;
-#else
-    int mode = index;
-#endif
-
-    static const char* MODE_NAMES[] = {"Auto", "3D", "2D Layers", "Thumbnail Only"};
-    spdlog::info("[SettingsPanel] G-code render mode changed: {} ({})", mode,
-                 (mode >= 0 && mode <= 3) ? MODE_NAMES[mode] : "Unknown");
-    DisplaySettingsManager::instance().set_gcode_render_mode(mode);
-}
-
 // Static callback for log level dropdown
 static void on_log_level_changed(lv_event_t* e) {
     lv_obj_t* dropdown = static_cast<lv_obj_t*>(lv_event_get_current_target(e));
@@ -374,9 +333,6 @@ void SettingsPanel::init_subjects() {
     register_xml_callbacks({
         // Dropdowns
         {"on_completion_alert_changed", on_completion_alert_dropdown_changed},
-        {"on_gcode_mode_changed", on_gcode_mode_changed},
-        {"on_z_movement_style_changed", on_z_movement_style_changed},
-        {"on_toolhead_style_changed", on_toolhead_style_changed},
         {"on_log_level_changed", on_log_level_changed},
         {"on_debug_touches_changed", on_debug_touches_changed},
         {"on_scroll_limit_changed", on_scroll_limit_changed},

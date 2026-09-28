@@ -891,6 +891,7 @@ translations:
   Device name: Nombre del dispositivo
   Device name is required: El nombre del dispositivo es requerido
   'Device: ': 'Dispositivo: '
+  Devices: Dispositivos
   Different filament?: ¿Filamento diferente?
   Digital Clock: 'Reloj digital'
   Disable: Desactivar
@@ -962,6 +963,7 @@ translations:
   EEPROM error on CFS unit: Error de EEPROM en la unidad CFS
   EMERGENCY STOP: PARADA DE EMERGENCIA
   EMPTY: VACÍO
+  EXTRAS: EXTRAS
   Each fan can only be selected once: Cada ventilador solo se puede seleccionar una
     vez
   Edit: Editar
@@ -1120,6 +1122,7 @@ translations:
   Extruder too cold: Extrusor demasiado frío
   Extruding prime line...: Extruyendo línea de cebado...
   FAILED: FALLIDO
+  FILAMENT: FILAMENTO
   FILAMENTS: FILAMENTOS
   FILTERS: FILTROS
   Factory Reset: Restaurar de Fábrica
@@ -1793,6 +1796,7 @@ translations:
   Lowest notification level that interrupts with a toast: 'Nivel de notificación más bajo que interrumpe con un aviso emergente'
   M to toggle: M para alternar
   'MAC:': 'MAC:'
+  MACHINE: MÁQUINA
   MACRO DEVICES: DISPOSITIVOS DE MACRO
   MAIN POWER BUTTON: BOTÓN DE ENCENDIDO PRINCIPAL
   MANUAL: MANUAL
@@ -2210,6 +2214,7 @@ translations:
   PLA - Black: PLA - Negro
   POWER: ENERGÍA
   PRINT OPTIONS: OPCIONES DE IMPRESIÓN
+  PRINTER VISUALS: VISUALES DE IMPRESORA
   PRINTERS: IMPRESORAS
   PRINT_START has {} skippable operation: PRINT_START tiene {} operación omitible
   PRINT_START has {} skippable operations: PRINT_START tiene {} operaciones omitibles
@@ -2753,6 +2758,7 @@ translations:
   : Modo seguro activo. La conexión con la impresora está deshabilitada porque la
     aplicación seguía fallando al iniciar. Abra Ajustes para solucionar el problema
     y luego reinicie.
+  Safety & Alerts: Seguridad y alertas
   Safety & Notifications: Seguridad y notificaciones
   Same spool in {}? Tap Clear if it is a new one.: '¿La misma bobina en {}? Toca Borrar si es una nueva.'
   Sample: Muestra

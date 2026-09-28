@@ -78,6 +78,9 @@ void AppearanceSettingsOverlay::register_callbacks() {
         {"on_dark_mode_changed", on_dark_mode_changed},
         {"on_widget_labels_changed", on_widget_labels_changed},
         {"on_bed_mesh_mode_changed", on_bed_mesh_mode_changed},
+        {"on_toolhead_style_changed", on_toolhead_style_changed},
+        {"on_gcode_mode_changed", on_gcode_mode_changed},
+        {"on_z_movement_style_changed", on_z_movement_style_changed},
 
         // Theme explorer
         {"on_theme_preset_changed", on_theme_preset_changed},
@@ -148,6 +151,9 @@ void AppearanceSettingsOverlay::on_activate() {
 
     init_animations_toggle();
     init_bed_mesh_dropdown();
+    init_toolhead_style_dropdown();
+    init_gcode_mode_dropdown();
+    init_z_movement_dropdown();
 }
 
 // ============================================================================
@@ -186,6 +192,75 @@ void AppearanceSettingsOverlay::init_bed_mesh_dropdown() {
 
         spdlog::debug("[{}] Bed mesh mode dropdown initialized to {} ({})", get_name(),
                       current_mode, current_mode == 0 ? "Auto" : (current_mode == 1 ? "3D" : "2D"));
+    }
+}
+
+void AppearanceSettingsOverlay::init_toolhead_style_dropdown() {
+    if (!overlay_root_)
+        return;
+
+    lv_obj_t* row = lv_obj_find_by_name(overlay_root_, "row_toolhead_style");
+    if (!row)
+        return;
+
+    lv_obj_t* dropdown = lv_obj_find_by_name(row, "dropdown");
+    if (dropdown) {
+        lv_dropdown_set_options(dropdown, SettingsManager::get_toolhead_style_options());
+        auto style = SettingsManager::instance().get_toolhead_style();
+        lv_dropdown_set_selected(
+            dropdown,
+            static_cast<uint32_t>(SettingsManager::toolhead_style_to_dropdown_index(style)));
+        spdlog::trace("[{}] Toolhead style dropdown initialized (style={}, dropdown_index={})",
+                      get_name(), static_cast<int>(style),
+                      SettingsManager::toolhead_style_to_dropdown_index(style));
+    }
+}
+
+void AppearanceSettingsOverlay::init_gcode_mode_dropdown() {
+    if (!overlay_root_)
+        return;
+
+    lv_obj_t* row = lv_obj_find_by_name(overlay_root_, "row_gcode_mode");
+    if (!row)
+        return;
+
+    lv_obj_t* dropdown = lv_obj_find_by_name(row, "dropdown");
+    if (dropdown) {
+        auto& display_settings = DisplaySettingsManager::instance();
+#ifndef ENABLE_GLES_3D
+        // Without GLES, remove "3D View" option
+        lv_dropdown_set_options(dropdown, (std::string(lv_tr("Auto")) + "\n" + lv_tr("2D Layers") +
+                                           "\n" + lv_tr("Thumbnail Only"))
+                                              .c_str());
+        int mode = display_settings.get_gcode_render_mode();
+        int index = 0; // Auto
+        if (mode == 2)
+            index = 1; // 2D Layers
+        else if (mode == 3)
+            index = 2; // Thumbnail Only
+        lv_dropdown_set_selected(dropdown, index);
+#else
+        int mode = display_settings.get_gcode_render_mode();
+        lv_dropdown_set_selected(dropdown, mode);
+#endif
+        spdlog::trace("[{}] G-code mode dropdown initialized", get_name());
+    }
+}
+
+void AppearanceSettingsOverlay::init_z_movement_dropdown() {
+    if (!overlay_root_)
+        return;
+
+    lv_obj_t* row = lv_obj_find_by_name(overlay_root_, "row_z_movement_style");
+    if (!row)
+        return;
+
+    lv_obj_t* dropdown = lv_obj_find_by_name(row, "dropdown");
+    if (dropdown) {
+        auto style = SettingsManager::instance().get_z_movement_style();
+        lv_dropdown_set_selected(dropdown, static_cast<uint32_t>(style));
+        spdlog::trace("[{}] Z movement style dropdown initialized (style={})", get_name(),
+                      static_cast<int>(style));
     }
 }
 
@@ -230,6 +305,34 @@ void AppearanceSettingsOverlay::handle_bed_mesh_mode_changed(int mode) {
     spdlog::info("[{}] Bed mesh render mode changed: {} ({})", get_name(), mode,
                  mode == 0 ? "Auto" : (mode == 1 ? "3D" : "2D"));
     DisplaySettingsManager::instance().set_bed_mesh_render_mode(mode);
+}
+
+void AppearanceSettingsOverlay::handle_toolhead_style_changed(int index) {
+    auto style = SettingsManager::dropdown_index_to_toolhead_style(index);
+    spdlog::info("[{}] Toolhead style changed: {} (dropdown index {})", get_name(),
+                 static_cast<int>(style), index);
+    SettingsManager::instance().set_toolhead_style(style);
+}
+
+void AppearanceSettingsOverlay::handle_gcode_mode_changed(int index) {
+#ifndef ENABLE_GLES_3D
+    static const int INDEX_TO_MODE[] = {0, 2, 3}; // Auto, 2D Layers, Thumbnail Only
+    int mode = (index >= 0 && index <= 2) ? INDEX_TO_MODE[index] : 0;
+#else
+    int mode = index;
+#endif
+
+    static const char* MODE_NAMES[] = {"Auto", "3D", "2D Layers", "Thumbnail Only"};
+    spdlog::info("[{}] G-code render mode changed: {} ({})", get_name(), mode,
+                 (mode >= 0 && mode <= 3) ? MODE_NAMES[mode] : "Unknown");
+    DisplaySettingsManager::instance().set_gcode_render_mode(mode);
+}
+
+void AppearanceSettingsOverlay::handle_z_movement_style_changed(int index) {
+    auto style = static_cast<ZMovementStyle>(index);
+    spdlog::info("[{}] Z movement style changed: {} ({})", get_name(), index,
+                 index == 0 ? "Auto" : (index == 1 ? "Bed Moves" : "Nozzle Moves"));
+    SettingsManager::instance().set_z_movement_style(style);
 }
 
 // ============================================================================
@@ -549,6 +652,30 @@ void AppearanceSettingsOverlay::on_bed_mesh_mode_changed(lv_event_t* e) {
     auto* dropdown = static_cast<lv_obj_t*>(lv_event_get_current_target(e));
     int mode = static_cast<int>(lv_dropdown_get_selected(dropdown));
     get_appearance_settings_overlay().handle_bed_mesh_mode_changed(mode);
+    LVGL_SAFE_EVENT_CB_END();
+}
+
+void AppearanceSettingsOverlay::on_toolhead_style_changed(lv_event_t* e) {
+    LVGL_SAFE_EVENT_CB_BEGIN("[AppearanceSettingsOverlay] on_toolhead_style_changed");
+    auto* dropdown = static_cast<lv_obj_t*>(lv_event_get_current_target(e));
+    int index = static_cast<int>(lv_dropdown_get_selected(dropdown));
+    get_appearance_settings_overlay().handle_toolhead_style_changed(index);
+    LVGL_SAFE_EVENT_CB_END();
+}
+
+void AppearanceSettingsOverlay::on_gcode_mode_changed(lv_event_t* e) {
+    LVGL_SAFE_EVENT_CB_BEGIN("[AppearanceSettingsOverlay] on_gcode_mode_changed");
+    auto* dropdown = static_cast<lv_obj_t*>(lv_event_get_current_target(e));
+    int index = static_cast<int>(lv_dropdown_get_selected(dropdown));
+    get_appearance_settings_overlay().handle_gcode_mode_changed(index);
+    LVGL_SAFE_EVENT_CB_END();
+}
+
+void AppearanceSettingsOverlay::on_z_movement_style_changed(lv_event_t* e) {
+    LVGL_SAFE_EVENT_CB_BEGIN("[AppearanceSettingsOverlay] on_z_movement_style_changed");
+    auto* dropdown = static_cast<lv_obj_t*>(lv_event_get_current_target(e));
+    int index = static_cast<int>(lv_dropdown_get_selected(dropdown));
+    get_appearance_settings_overlay().handle_z_movement_style_changed(index);
     LVGL_SAFE_EVENT_CB_END();
 }
 

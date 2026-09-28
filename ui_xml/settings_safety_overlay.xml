@@ -53,22 +53,6 @@
                             description_tag="Show a confirmation dialog when tapping a macro"
                             subject="settings_macro_confirm" callback="on_macro_confirm_changed"/>
         <!-- ================================================================== -->
-        <!-- ALLOW COLD EXTRUDE -->
-        <!-- ================================================================== -->
-        <setting_toggle_row name="row_allow_cold_extrude"
-                            label="Allow cold load/unload" label_tag="Allow cold load/unload" icon="cooldown"
-                            description="Run filament load/unload even when the nozzle is cold (for macros that heat the nozzle themselves)"
-                            description_tag="Run filament load/unload even when the nozzle is cold (for macros that heat the nozzle themselves)"
-                            subject="settings_allow_cold_extrude" callback="on_allow_cold_extrude_changed"/>
-        <!-- ================================================================== -->
-        <!-- POST-OP NOZZLE COOLDOWN -->
-        <!-- ================================================================== -->
-        <setting_toggle_row name="row_filament_auto_cooldown"
-                            label="Cool nozzle after filament ops" label_tag="Cool nozzle after filament ops"
-                            icon="cooldown" description="Turn the extruder heater off after a load or unload finishes"
-                            description_tag="Turn the extruder heater off after a load or unload finishes"
-                            subject="filament_auto_cooldown" callback="on_filament_auto_cooldown_changed"/>
-        <!-- ================================================================== -->
         <!-- SPAGHETTI DETECTION (only when a detection source is capable) -->
         <!-- ================================================================== -->
         <lv_obj name="container_detection" width="100%" style_pad_all="0" scrollable="false" flex_flow="column">

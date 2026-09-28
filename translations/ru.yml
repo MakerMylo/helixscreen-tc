@@ -878,6 +878,7 @@ translations:
   Device name: Имя устройства
   Device name is required: Требуется название устройства
   'Device: ': 'Устройство: '
+  Devices: Устройства
   Different filament?: Другой филамент?
   Digital Clock: 'Цифровые часы'
   Disable: Отключить
@@ -949,6 +950,7 @@ translations:
   EEPROM error on CFS unit: Ошибка EEPROM в блоке CFS
   EMERGENCY STOP: АВАРИЙНАЯ ОСТАНОВКА
   EMPTY: ПУСТО
+  EXTRAS: ДОПОЛНИТЕЛЬНО
   Each fan can only be selected once: Каждый вентилятор можно выбрать только один
     раз
   Edit: Редактировать
@@ -1105,6 +1107,7 @@ translations:
   Extruder too cold: Экструдер слишком холодный
   Extruding prime line...: Экструзия линии подготовки...
   FAILED: ОШИБКА
+  FILAMENT: ФИЛАМЕНТ
   FILAMENTS: ФИЛАМЕНТЫ
   FILTERS: ФИЛЬТРЫ
   Factory Reset: Сброс к заводским настройкам
@@ -1776,6 +1779,7 @@ translations:
   Lowest notification level that interrupts with a toast: 'Минимальный уровень уведомления, прерывающий всплывающим сообщением'
   M to toggle: M для переключения
   'MAC:': 'MAC:'
+  MACHINE: МАШИНА
   MACRO DEVICES: МАКРО-УСТРОЙСТВА
   MAIN POWER BUTTON: ГЛАВНАЯ КНОПКА ПИТАНИЯ
   MANUAL: ВРУЧНУЮ
@@ -2187,6 +2191,7 @@ translations:
   PLA - Black: PLA - Чёрный
   POWER: ПИТАНИЕ
   PRINT OPTIONS: ПАРАМЕТРЫ ПЕЧАТИ
+  PRINTER VISUALS: ВНЕШНИЙ ВИД ПРИНТЕРА
   PRINTERS: ПРИНТЕРЫ
   PRINT_START has {} skippable operation: В PRINT_START есть {} пропускаемая операция
   PRINT_START has {} skippable operations: В PRINT_START есть {} пропускаемых операций
@@ -2726,6 +2731,7 @@ translations:
   : Активен безопасный режим. Подключение к принтеру отключено, так как приложение
     постоянно аварийно завершалось при запуске. Откройте настройки, чтобы устранить
     проблему, затем перезагрузите.
+  Safety & Alerts: Безопасность и оповещения
   Safety & Notifications: Безопасность и уведомления
   Same spool in {}? Tap Clear if it is a new one.: 'Та же катушка в {}? Нажмите «Очистить», если это новая.'
   Sample: Образец

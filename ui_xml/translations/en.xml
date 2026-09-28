@@ -798,6 +798,7 @@
   <translation tag="Device name" en="Device name"/>
   <translation tag="Device name is required" en="Device name is required"/>
   <translation tag="Device: " en="Device: "/>
+  <translation tag="Devices" en="Devices"/>
   <translation tag="Different filament?" en="Different filament?"/>
   <translation tag="Digital Clock" en="Digital Clock"/>
   <translation tag="Disable" en="Disable"/>
@@ -860,6 +861,7 @@
   <translation tag="EEPROM error on CFS unit" en="EEPROM error on CFS unit"/>
   <translation tag="EMERGENCY STOP" en="EMERGENCY STOP"/>
   <translation tag="EMPTY" en="EMPTY"/>
+  <translation tag="EXTRAS" en="EXTRAS"/>
   <translation tag="Each fan can only be selected once" en="Each fan can only be selected once"/>
   <translation tag="Edit" en="Edit"/>
   <translation tag="Edit Filament" en="Edit Filament"/>
@@ -1005,6 +1007,7 @@
   <translation tag="Extruder too cold" en="Extruder too cold"/>
   <translation tag="Extruding prime line..." en="Extruding prime line..."/>
   <translation tag="FAILED" en="FAILED"/>
+  <translation tag="FILAMENT" en="FILAMENT"/>
   <translation tag="FILAMENTS" en="FILAMENTS"/>
   <translation tag="FILTERS" en="FILTERS"/>
   <translation tag="Factory Reset" en="Factory Reset"/>
@@ -1605,6 +1608,7 @@
   <translation tag="Lowest notification level that interrupts with a toast" en="Lowest notification level that interrupts with a toast"/>
   <translation tag="M to toggle" en="M to toggle"/>
   <translation tag="MAC:" en="MAC:"/>
+  <translation tag="MACHINE" en="MACHINE"/>
   <translation tag="MACRO DEVICES" en="MACRO DEVICES"/>
   <translation tag="MAIN POWER BUTTON" en="MAIN POWER BUTTON"/>
   <translation tag="MANUAL" en="MANUAL"/>
@@ -1989,6 +1993,7 @@
   <translation tag="PLA - Black" en="PLA - Black"/>
   <translation tag="POWER" en="POWER"/>
   <translation tag="PRINT OPTIONS" en="PRINT OPTIONS"/>
+  <translation tag="PRINTER VISUALS" en="PRINTER VISUALS"/>
   <translation tag="PRINTERS" en="PRINTERS"/>
   <translation tag="PRINT_START has {} skippable operation" en="PRINT_START has {} skippable operation"/>
   <translation tag="PRINT_START has {} skippable operations" en="PRINT_START has {} skippable operations"/>
@@ -2476,6 +2481,7 @@
   <translation tag="STYLE PROPERTIES" en="STYLE PROPERTIES"/>
   <translation tag="SWITCH SENSORS" en="SWITCH SENSORS"/>
   <translation tag="Safe Mode active. The printer connection is disabled because the app kept crashing on startup. Open Settings to fix the issue, then reboot." en="Safe Mode active. The printer connection is disabled because the app kept crashing on startup. Open Settings to fix the issue, then reboot."/>
+  <translation tag="Safety &amp; Alerts" en="Safety &amp; Alerts"/>
   <translation tag="Safety &amp; Notifications" en="Safety &amp; Notifications"/>
   <translation tag="Same spool in {}? Tap Clear if it is a new one." en="Same spool in {}? Tap Clear if it is a new one."/>
   <translation tag="Sample" en="Sample"/>

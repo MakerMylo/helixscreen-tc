@@ -798,6 +798,7 @@
   <translation tag="Device name" ja="デバイス名"/>
   <translation tag="Device name is required" ja="デバイス名は必須です"/>
   <translation tag="Device: " ja="デバイス: "/>
+  <translation tag="Devices" ja="デバイス"/>
   <translation tag="Different filament?" ja="別のフィラメント？"/>
   <translation tag="Digital Clock" ja="デジタル時計"/>
   <translation tag="Disable" ja="無効化"/>
@@ -860,6 +861,7 @@
   <translation tag="EEPROM error on CFS unit" ja="CFS ユニットの EEPROM エラー"/>
   <translation tag="EMERGENCY STOP" ja="緊急停止"/>
   <translation tag="EMPTY" ja="空"/>
+  <translation tag="EXTRAS" ja="その他"/>
   <translation tag="Each fan can only be selected once" ja="各ファンは一度のみ選択できます"/>
   <translation tag="Edit" ja="編集"/>
   <translation tag="Edit Filament" ja="フィラメントを編集"/>
@@ -1005,6 +1007,7 @@
   <translation tag="Extruder too cold" ja="エクストルーダーが冷えています"/>
   <translation tag="Extruding prime line..." ja="プライムラインを押し出し中..."/>
   <translation tag="FAILED" ja="失敗"/>
+  <translation tag="FILAMENT" ja="フィラメント"/>
   <translation tag="FILAMENTS" ja="フィラメント"/>
   <translation tag="FILTERS" ja="フィルター"/>
   <translation tag="Factory Reset" ja="工場出荷時リセット"/>
@@ -1605,6 +1608,7 @@
   <translation tag="Lowest notification level that interrupts with a toast" ja="トースト通知で割り込む最も低い通知レベル"/>
   <translation tag="M to toggle" ja="M で切り替え"/>
   <translation tag="MAC:" ja="MAC:"/>
+  <translation tag="MACHINE" ja="マシン"/>
   <translation tag="MACRO DEVICES" ja="マクロデバイス"/>
   <translation tag="MAIN POWER BUTTON" ja="メイン電源ボタン"/>
   <translation tag="MANUAL" ja="手動"/>
@@ -1989,6 +1993,7 @@
   <translation tag="PLA - Black" ja="PLA - ブラック"/>
   <translation tag="POWER" ja="電源"/>
   <translation tag="PRINT OPTIONS" ja="印刷オプション"/>
+  <translation tag="PRINTER VISUALS" ja="プリンター表示"/>
   <translation tag="PRINTERS" ja="プリンター"/>
   <translation tag="PRINT_START has {} skippable operation" ja="PRINT_START にはスキップ可能な操作が {} 個あります"/>
   <translation tag="PRINT_START has {} skippable operations" ja="PRINT_START にはスキップ可能な操作が {} 個あります"/>
@@ -2476,6 +2481,7 @@
   <translation tag="STYLE PROPERTIES" ja="スタイルプロパティ"/>
   <translation tag="SWITCH SENSORS" ja="スイッチセンサー"/>
   <translation tag="Safe Mode active. The printer connection is disabled because the app kept crashing on startup. Open Settings to fix the issue, then reboot." ja="セーフモードが有効です。起動時にアプリがクラッシュし続けたため、プリンター接続は無効になっています。設定を開いて問題を解決してから再起動してください。"/>
+  <translation tag="Safety &amp; Alerts" ja="安全とアラート"/>
   <translation tag="Safety &amp; Notifications" ja="安全と通知"/>
   <translation tag="Same spool in {}? Tap Clear if it is a new one." ja="{} は同じスプールですか？新しいスプールならクリアをタップしてください。"/>
   <translation tag="Sample" ja="サンプル"/>

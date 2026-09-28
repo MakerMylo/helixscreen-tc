@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!-- Copyright (C) 2025-2026 356C LLC -->
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
-<!-- Appearance Settings Overlay: dark mode, theme, animations, widget labels, bed mesh -->
+<!-- Appearance Settings Overlay: dark mode, theme, animations, widget labels, printer visuals -->
 <!-- Uses setting_* components for consistency with main settings panel -->
 <component>
   <styles>
@@ -42,7 +42,30 @@
                             description="Show text labels on icon-only home screen widgets"
                             description_tag="Show text labels on icon-only home screen widgets"
                             subject="show_widget_labels" callback="on_widget_labels_changed"/>
-        <!-- Bed Mesh Render Mode -->
+      </setting_group>
+      <!-- ================================================================== -->
+      <!-- PRINTER VISUALS -->
+      <!-- ================================================================== -->
+      <setting_group name="group_printer_visuals">
+        <setting_group_header title="PRINTER VISUALS" title_tag="PRINTER VISUALS"/>
+        <setting_dropdown_row name="row_toolhead_style"
+                              label="Toolhead Style" label_tag="Toolhead Style" icon="palette"
+                              description="How the toolhead icon appears"
+                              description_tag="How the toolhead icon appears" options="Auto"
+                              callback="on_toolhead_style_changed"/>
+        <setting_dropdown_row name="row_gcode_mode"
+                              label="G-code Preview" label_tag="G-code Preview" icon="printer_3d"
+                              description="Choose rendering mode for G-code visualization"
+                              description_tag="Choose rendering mode for G-code visualization"
+                              options="Auto&#10;3D View&#10;2D Layers&#10;Thumbnail Only"
+                              options_tag="Auto&#10;3D View&#10;2D Layers&#10;Thumbnail Only"
+                              callback="on_gcode_mode_changed"/>
+        <setting_dropdown_row name="row_z_movement_style"
+                              label="Z Movement" label_tag="Z Movement" icon="arrow_up_down"
+                              description="How Z-axis movement is displayed"
+                              description_tag="How Z-axis movement is displayed"
+                              options="Auto&#10;Bed Moves&#10;Nozzle Moves"
+                              options_tag="Auto&#10;Bed Moves&#10;Nozzle Moves" callback="on_z_movement_style_changed"/>
         <setting_dropdown_row name="row_bed_mesh_mode"
                               label="Bed Mesh Render" label_tag="Bed Mesh Render" icon="grid_large"
                               description="Choose rendering mode for bed mesh visualization"

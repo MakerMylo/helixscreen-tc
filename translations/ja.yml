@@ -820,6 +820,7 @@ translations:
   Device name: デバイス名
   Device name is required: デバイス名は必須です
   'Device: ': 'デバイス: '
+  Devices: デバイス
   Different filament?: 別のフィラメント？
   Digital Clock: 'デジタル時計'
   Disable: 無効化
@@ -890,6 +891,7 @@ translations:
   EEPROM error on CFS unit: CFS ユニットの EEPROM エラー
   EMERGENCY STOP: 緊急停止
   EMPTY: 空
+  EXTRAS: その他
   Each fan can only be selected once: 各ファンは一度のみ選択できます
   Edit: 編集
   Edit Filament: フィラメントを編集
@@ -1038,6 +1040,7 @@ translations:
   Extruder too cold: エクストルーダーが冷えています
   Extruding prime line...: プライムラインを押し出し中...
   FAILED: 失敗
+  FILAMENT: フィラメント
   FILAMENTS: フィラメント
   FILTERS: フィルター
   Factory Reset: 工場出荷時リセット
@@ -1670,6 +1673,7 @@ translations:
   Lowest notification level that interrupts with a toast: 'トースト通知で割り込む最も低い通知レベル'
   M to toggle: M で切り替え
   'MAC:': 'MAC:'
+  MACHINE: マシン
   MACRO DEVICES: マクロデバイス
   MAIN POWER BUTTON: メイン電源ボタン
   MANUAL: 手動
@@ -2068,6 +2072,7 @@ translations:
   PLA - Black: PLA - ブラック
   POWER: 電源
   PRINT OPTIONS: 印刷オプション
+  PRINTER VISUALS: プリンター表示
   PRINTERS: プリンター
   PRINT_START has {} skippable operation: PRINT_START にはスキップ可能な操作が {} 個あります
   PRINT_START has {} skippable operations: PRINT_START にはスキップ可能な操作が {} 個あります
@@ -2578,6 +2583,7 @@ translations:
   ? Safe Mode active. The printer connection is disabled because the app kept crashing
     on startup. Open Settings to fix the issue, then reboot.
   : セーフモードが有効です。起動時にアプリがクラッシュし続けたため、プリンター接続は無効になっています。設定を開いて問題を解決してから再起動してください。
+  Safety & Alerts: 安全とアラート
   Safety & Notifications: 安全と通知
   Same spool in {}? Tap Clear if it is a new one.: '{} は同じスプールですか？新しいスプールならクリアをタップしてください。'
   Sample: サンプル

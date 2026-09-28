@@ -895,6 +895,7 @@ translations:
   Device name: Gerätename
   Device name is required: Gerätename ist erforderlich
   'Device: ': 'Gerät: '
+  Devices: Geräte
   Different filament?: Anderes Filament?
   Digital Clock: 'Digitaluhr'
   Disable: Deaktivieren
@@ -967,6 +968,7 @@ translations:
   EEPROM error on CFS unit: EEPROM-Fehler an der CFS-Einheit
   EMERGENCY STOP: NOTAUS
   EMPTY: LEER
+  EXTRAS: EXTRAS
   Each fan can only be selected once: Jeder Lüfter kann nur einmal ausgewählt werden
   Edit: Bearbeiten
   Edit Filament: Filament bearbeiten
@@ -1125,6 +1127,7 @@ translations:
   Extruder too cold: Extruder zu kalt
   Extruding prime line...: Prime-Linie extrudieren...
   FAILED: FEHLGESCHLAGEN
+  FILAMENT: FILAMENT
   FILAMENTS: FILAMENTE
   FILTERS: FILTER
   Factory Reset: Werkseinstellungen
@@ -1804,6 +1807,7 @@ translations:
   Lowest notification level that interrupts with a toast: 'Niedrigste Benachrichtigungsstufe, die mit einer Einblendung unterbricht'
   M to toggle: M zum Umschalten
   'MAC:': 'MAC:'
+  MACHINE: MASCHINE
   MACRO DEVICES: MAKRO-GERÄTE
   MAIN POWER BUTTON: HAUPTSCHALTER
   MANUAL: MANUELL
@@ -2217,6 +2221,7 @@ translations:
   PLA - Black: PLA - Schwarz
   POWER: STROM
   PRINT OPTIONS: DRUCKOPTIONEN
+  PRINTER VISUALS: DRUCKERDARSTELLUNG
   PRINTERS: DRUCKER
   PRINT_START has {} skippable operation: PRINT_START hat {} überspringbaren Vorgang
   PRINT_START has {} skippable operations: PRINT_START hat {} überspringbare Vorgänge
@@ -2759,6 +2764,7 @@ translations:
   : Abgesicherter Modus aktiv. Die Druckerverbindung ist deaktiviert, weil die App
     beim Start wiederholt abgestürzt ist. Öffnen Sie die Einstellungen, um das Problem
     zu beheben, und starten Sie dann neu.
+  Safety & Alerts: Sicherheit & Alarme
   Safety & Notifications: Sicherheit & Benachrichtigungen
   Same spool in {}? Tap Clear if it is a new one.: 'Dieselbe Spule in {}? Tippen Sie auf Löschen, wenn es eine neue ist.'
   Sample: Messung

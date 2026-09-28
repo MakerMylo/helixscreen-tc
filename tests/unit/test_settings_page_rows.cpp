@@ -13,6 +13,7 @@
 
 #include "ui_nav_manager.h"
 #include "ui_panel_settings.h"
+#include "ui_settings_appearance.h"
 #include "ui_settings_sound.h"
 #include "ui_update_queue.h"
 
@@ -153,6 +154,35 @@ TEST_CASE_METHOD(PageRowsFixture, "settings pages: speaker chip path opens Sound
     lv_obj_t* cached = nullptr;
     sound.destroy_overlay_ui(cached);
     helix::ui::UpdateQueue::instance().drain();
+    process_lvgl(5);
+}
+
+TEST_CASE_METHOD(PageRowsFixture,
+                 "settings pages: printer visuals live in Appearance, filament rows in Printing",
+                 "[settings][settings_pages]") {
+    build("settings_appearance_overlay");
+    CHECK(has("row_toolhead_style"));
+    CHECK(has("row_gcode_mode"));
+    CHECK(has("row_z_movement_style"));
+    build("settings_printing_overlay");
+    CHECK_FALSE(has("row_toolhead_style"));
+    CHECK(has("row_allow_cold_extrude"));
+    CHECK(has("row_filament_auto_cooldown"));
+    build("settings_safety_overlay");
+    CHECK_FALSE(has("row_allow_cold_extrude"));
+}
+
+TEST_CASE_METHOD(PageRowsFixture, "Appearance fills the printer-visual dropdowns on activate",
+                 "[settings][settings_pages]") {
+    auto& page = helix::settings::get_appearance_settings_overlay();
+    page.show(test_screen());
+    process_lvgl(5);
+    lv_obj_t* row = lv_obj_find_by_name(lv_screen_active(), "row_toolhead_style");
+    REQUIRE(row != nullptr);
+    lv_obj_t* dd = lv_obj_find_by_name(row, "dropdown");
+    REQUIRE(dd != nullptr);
+    CHECK(lv_dropdown_get_option_count(dd) > 1); // XML ships a lone "Auto" placeholder
+    NavigationManager::instance().go_back();
     process_lvgl(5);
 }
 

@@ -896,6 +896,7 @@ translations:
   Device name: Nom de l'appareil
   Device name is required: Le nom de l'appareil est requis
   'Device: ': 'Appareil : '
+  Devices: Périphériques
   Different filament?: Filament différent ?
   Digital Clock: 'Horloge numérique'
   Disable: Désactiver
@@ -969,6 +970,7 @@ translations:
   EEPROM error on CFS unit: Erreur EEPROM sur l'unité CFS
   EMERGENCY STOP: ARRÊT D'URGENCE
   EMPTY: VIDE
+  EXTRAS: SUPPLÉMENTS
   Each fan can only be selected once: Chaque ventilateur ne peut être sélectionné
     qu'une fois
   Edit: Modifier
@@ -1129,6 +1131,7 @@ translations:
   Extruder too cold: Extrudeur trop froid
   Extruding prime line...: Extrusion de la ligne d'amorçage...
   FAILED: ÉCHOUÉ
+  FILAMENT: FILAMENT
   FILAMENTS: FILAMENTS
   FILTERS: FILTRES
   Factory Reset: Réinitialisation d'usine
@@ -1808,6 +1811,7 @@ translations:
   Lowest notification level that interrupts with a toast: 'Niveau de notification le plus bas qui interrompt par une notification éphémère'
   M to toggle: M pour basculer
   'MAC:': 'MAC :'
+  MACHINE: MACHINE
   MACRO DEVICES: APPAREILS MACRO
   MAIN POWER BUTTON: BOUTON D'ALIMENTATION PRINCIPAL
   MANUAL: MANUEL
@@ -2224,6 +2228,7 @@ translations:
   PLA - Black: PLA - Noir
   POWER: ALIMENTATION
   PRINT OPTIONS: OPTIONS D'IMPRESSION
+  PRINTER VISUALS: 'VISUELS DE L''IMPRIMANTE'
   PRINTERS: IMPRIMANTES
   PRINT_START has {} skippable operation: PRINT_START a {} opération ignorable
   PRINT_START has {} skippable operations: PRINT_START a {} opérations ignorables
@@ -2770,6 +2775,7 @@ translations:
     on startup. Open Settings to fix the issue, then reboot.
   : Mode sans échec actif. La connexion à l'imprimante est désactivée car l'application
     plantait au démarrage. Ouvrez les Paramètres pour résoudre le problème, puis redémarrez.
+  Safety & Alerts: Sécurité et alertes
   Safety & Notifications: Sécurité et notifications
   Same spool in {}? Tap Clear if it is a new one.: 'Même bobine dans {} ? Touchez Effacer s''il s''agit d''une nouvelle.'
   Sample: Échantillon

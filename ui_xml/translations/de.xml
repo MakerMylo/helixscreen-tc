@@ -798,6 +798,7 @@
   <translation tag="Device name" de="Gerätename"/>
   <translation tag="Device name is required" de="Gerätename ist erforderlich"/>
   <translation tag="Device: " de="Gerät: "/>
+  <translation tag="Devices" de="Geräte"/>
   <translation tag="Different filament?" de="Anderes Filament?"/>
   <translation tag="Digital Clock" de="Digitaluhr"/>
   <translation tag="Disable" de="Deaktivieren"/>
@@ -860,6 +861,7 @@
   <translation tag="EEPROM error on CFS unit" de="EEPROM-Fehler an der CFS-Einheit"/>
   <translation tag="EMERGENCY STOP" de="NOTAUS"/>
   <translation tag="EMPTY" de="LEER"/>
+  <translation tag="EXTRAS" de="EXTRAS"/>
   <translation tag="Each fan can only be selected once" de="Jeder Lüfter kann nur einmal ausgewählt werden"/>
   <translation tag="Edit" de="Bearbeiten"/>
   <translation tag="Edit Filament" de="Filament bearbeiten"/>
@@ -1005,6 +1007,7 @@
   <translation tag="Extruder too cold" de="Extruder zu kalt"/>
   <translation tag="Extruding prime line..." de="Prime-Linie extrudieren..."/>
   <translation tag="FAILED" de="FEHLGESCHLAGEN"/>
+  <translation tag="FILAMENT" de="FILAMENT"/>
   <translation tag="FILAMENTS" de="FILAMENTE"/>
   <translation tag="FILTERS" de="FILTER"/>
   <translation tag="Factory Reset" de="Werkseinstellungen"/>
@@ -1605,6 +1608,7 @@
   <translation tag="Lowest notification level that interrupts with a toast" de="Niedrigste Benachrichtigungsstufe, die mit einer Einblendung unterbricht"/>
   <translation tag="M to toggle" de="M zum Umschalten"/>
   <translation tag="MAC:" de="MAC:"/>
+  <translation tag="MACHINE" de="MASCHINE"/>
   <translation tag="MACRO DEVICES" de="MAKRO-GERÄTE"/>
   <translation tag="MAIN POWER BUTTON" de="HAUPTSCHALTER"/>
   <translation tag="MANUAL" de="MANUELL"/>
@@ -1989,6 +1993,7 @@
   <translation tag="PLA - Black" de="PLA - Schwarz"/>
   <translation tag="POWER" de="STROM"/>
   <translation tag="PRINT OPTIONS" de="DRUCKOPTIONEN"/>
+  <translation tag="PRINTER VISUALS" de="DRUCKERDARSTELLUNG"/>
   <translation tag="PRINTERS" de="DRUCKER"/>
   <translation tag="PRINT_START has {} skippable operation" de="PRINT_START hat {} überspringbaren Vorgang"/>
   <translation tag="PRINT_START has {} skippable operations" de="PRINT_START hat {} überspringbare Vorgänge"/>
@@ -2476,6 +2481,7 @@
   <translation tag="STYLE PROPERTIES" de="STIL-EIGENSCHAFTEN"/>
   <translation tag="SWITCH SENSORS" de="SCHALTSENSOREN"/>
   <translation tag="Safe Mode active. The printer connection is disabled because the app kept crashing on startup. Open Settings to fix the issue, then reboot." de="Abgesicherter Modus aktiv. Die Druckerverbindung ist deaktiviert, weil die App beim Start wiederholt abgestürzt ist. Öffnen Sie die Einstellungen, um das Problem zu beheben, und starten Sie dann neu."/>
+  <translation tag="Safety &amp; Alerts" de="Sicherheit &amp; Alarme"/>
   <translation tag="Safety &amp; Notifications" de="Sicherheit &amp; Benachrichtigungen"/>
   <translation tag="Same spool in {}? Tap Clear if it is a new one." de="Dieselbe Spule in {}? Tippen Sie auf Löschen, wenn es eine neue ist."/>
   <translation tag="Sample" de="Messung"/>

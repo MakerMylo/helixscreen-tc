@@ -886,6 +886,7 @@ translations:
   Device name: Nome dispositivo
   Device name is required: Il nome dispositivo è obbligatorio
   'Device: ': 'Dispositivo: '
+  Devices: Dispositivi
   Different filament?: Filamento diverso?
   Digital Clock: 'Orologio digitale'
   Disable: Disabilita
@@ -959,6 +960,7 @@ translations:
   EEPROM error on CFS unit: Errore EEPROM sull'unità CFS
   EMERGENCY STOP: ARRESTO EMERGENZA
   EMPTY: VUOTO
+  EXTRAS: EXTRA
   Each fan can only be selected once: Ogni ventola può essere selezionata solo una
     volta
   Edit: Modifica
@@ -1117,6 +1119,7 @@ translations:
   Extruder too cold: Estrusore troppo freddo
   Extruding prime line...: Estrusione linea di priming...
   FAILED: FALLITO
+  FILAMENT: FILAMENTO
   FILAMENTS: FILAMENTI
   FILTERS: FILTRI
   Factory Reset: Ripristino di fabbrica
@@ -1794,6 +1797,7 @@ translations:
   Lowest notification level that interrupts with a toast: 'Livello di notifica più basso che interrompe con un messaggio a comparsa'
   M to toggle: M per alternare
   'MAC:': 'MAC:'
+  MACHINE: MACCHINA
   MACRO DEVICES: DISPOSITIVI MACRO
   MAIN POWER BUTTON: PULSANTE DI ACCENSIONE PRINCIPALE
   MANUAL: MANUALE
@@ -2209,6 +2213,7 @@ translations:
   PLA - Black: PLA - Nero
   POWER: ALIMENTAZIONE
   PRINT OPTIONS: OPZIONI STAMPA
+  PRINTER VISUALS: ASPETTO STAMPANTE
   PRINTERS: STAMPANTI
   PRINT_START has {} skippable operation: PRINT_START ha {} operazione ignorabile
   PRINT_START has {} skippable operations: PRINT_START ha {} operazioni ignorabili
@@ -2750,6 +2755,7 @@ translations:
   : Modalità provvisoria attiva. La connessione alla stampante è disabilitata perché
     l'app continuava a bloccarsi all'avvio. Apri Impostazioni per risolvere il problema,
     quindi riavvia.
+  Safety & Alerts: Sicurezza e avvisi
   Safety & Notifications: Sicurezza e notifiche
   Same spool in {}? Tap Clear if it is a new one.: 'Stessa bobina in {}? Tocca Cancella se è una nuova.'
   Sample: Campione

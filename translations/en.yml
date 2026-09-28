@@ -858,6 +858,7 @@ translations:
   Device name: Device name
   Device name is required: Device name is required
   'Device: ': 'Device: '
+  Devices: Devices
   Different filament?: Different filament?
   Digital Clock: Digital Clock
   Disable: Disable
@@ -924,6 +925,7 @@ translations:
   EEPROM error on CFS unit: EEPROM error on CFS unit
   EMERGENCY STOP: EMERGENCY STOP
   EMPTY: EMPTY
+  EXTRAS: EXTRAS
   Each fan can only be selected once: Each fan can only be selected once
   Edit: Edit
   Edit Filament: Edit Filament
@@ -1077,6 +1079,7 @@ translations:
   Extruder too cold: Extruder too cold
   'Extruding prime line...': 'Extruding prime line...'
   FAILED: FAILED
+  FILAMENT: FILAMENT
   FILAMENTS: FILAMENTS
   FILTERS: FILTERS
   Factory Reset: Factory Reset
@@ -1734,6 +1737,7 @@ translations:
   Lowest notification level that interrupts with a toast: Lowest notification level that interrupts with a toast
   M to toggle: M to toggle
   'MAC:': 'MAC:'
+  MACHINE: MACHINE
   MACRO DEVICES: MACRO DEVICES
   MAIN POWER BUTTON: MAIN POWER BUTTON
   MANUAL: MANUAL
@@ -2140,6 +2144,7 @@ translations:
   PLA - Black: PLA - Black
   POWER: POWER
   PRINT OPTIONS: PRINT OPTIONS
+  PRINTER VISUALS: PRINTER VISUALS
   PRINTERS: PRINTERS
   PRINT_START has {} skippable operation: PRINT_START has {} skippable operation
   PRINT_START has {} skippable operations: PRINT_START has {} skippable operations
@@ -2669,6 +2674,7 @@ translations:
     on startup. Open Settings to fix the issue, then reboot.
   : Safe Mode active. The printer connection is disabled because the app kept crashing
     on startup. Open Settings to fix the issue, then reboot.
+  Safety & Alerts: Safety & Alerts
   Safety & Notifications: Safety & Notifications
   Same spool in {}? Tap Clear if it is a new one.: Same spool in {}? Tap Clear if it is a new one.
   Sample: Sample

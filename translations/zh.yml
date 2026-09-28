@@ -818,6 +818,7 @@ translations:
   Device name: 设备名称
   Device name is required: 设备名称为必填项
   'Device: ': '设备: '
+  Devices: 设备
   Different filament?: 耗材不同？
   Digital Clock: '数字时钟'
   Disable: 禁用
@@ -887,6 +888,7 @@ translations:
   EEPROM error on CFS unit: CFS 单元 EEPROM 错误
   EMERGENCY STOP: 紧急停止
   EMPTY: 空
+  EXTRAS: 其他
   Each fan can only be selected once: 每个风扇只能选择一次
   Edit: 编辑
   Edit Filament: 编辑耗材
@@ -1034,6 +1036,7 @@ translations:
   Extruder too cold: 挤出机温度过低
   Extruding prime line...: 正在挤出引导线...
   FAILED: 失败
+  FILAMENT: 耗材
   FILAMENTS: 耗材
   FILTERS: 筛选
   Factory Reset: 恢复出厂设置
@@ -1664,6 +1667,7 @@ translations:
   Lowest notification level that interrupts with a toast: '以浮层提醒打断的最低通知级别'
   M to toggle: 按 M 切换
   'MAC:': MAC：
+  MACHINE: 机器
   MACRO DEVICES: 宏设备
   MAIN POWER BUTTON: 主电源按钮
   MANUAL: 手动
@@ -2061,6 +2065,7 @@ translations:
   PLA - Black: PLA - 黑色
   POWER: 电源
   PRINT OPTIONS: 打印选项
+  PRINTER VISUALS: 打印机外观
   PRINTERS: 打印机
   PRINT_START has {} skippable operation: PRINT_START 有 {} 项可跳过的操作
   PRINT_START has {} skippable operations: PRINT_START 有 {} 项可跳过的操作
@@ -2569,6 +2574,7 @@ translations:
   ? Safe Mode active. The printer connection is disabled because the app kept crashing
     on startup. Open Settings to fix the issue, then reboot.
   : 安全模式已激活。由于应用程序在启动时反复崩溃，打印机连接已被禁用。请打开设置以解决问题，然后重启。
+  Safety & Alerts: 安全与警报
   Safety & Notifications: 安全与通知
   Same spool in {}? Tap Clear if it is a new one.: '{} 是同一个料盘吗？如果是新料盘，请点击清除。'
   Sample: 样本
