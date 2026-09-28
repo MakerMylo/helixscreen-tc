@@ -92,7 +92,7 @@ struct OpNozzle {
 [[nodiscard]] FilamentOpPlan plan_live_unload(const BackendCaps& caps, int target_slot,
                                               bool target_is_loaded);
 
-/// unload_target_is_loaded() with the four per-lane answers read off a live
+/// unload_target_is_loaded() with the per-lane answers read off a live
 /// backend. False when @p backend is null: with no backend there is no lane to
 /// ask about, and plan_unload() gates its tier 1 on the backend anyway.
 [[nodiscard]] bool read_unload_target_loaded(AmsBackend* backend, const AmsSystemInfo& info,

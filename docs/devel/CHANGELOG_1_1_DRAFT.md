@@ -326,6 +326,11 @@ what gets saved.
 
 ### Fixed
 
+- **Filament stuck in the toolhead with no slot claiming it could not be unloaded** - on the
+  AD5X and the other systems that can tell, the filament sidebar's and Filament panel's
+  Unload now pulls it out of the active head, and a slot's own Unload greys
+  out in that state, since the slot it names may not be the one holding the filament
+  (prestonbrown/helixscreen#1324).
 - **The screen crashed and restarted during print start on the K2** - matching the printer's
   start-sequence messages could exhaust the small stack the K2 gives each thread, and
   HelixScreen died with no crash report. The K1, AD5X and Creator 5 Pro builds share the same

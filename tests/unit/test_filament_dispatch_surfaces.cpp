@@ -38,6 +38,8 @@
 #include "../test_helpers/filament_runout_handler_test_access.h"
 #include "../test_helpers/lane_material_backend.h"
 #include "../test_helpers/load_filament_expression_default.h"
+#include "../test_helpers/registered_backend.h"
+#include "ams_backend_mock.h"
 #include "ams_state.h"
 #include "app_globals.h"
 #include "async_lifetime_guard.h"
@@ -326,6 +328,28 @@ TEST_CASE_METHOD(DispatchSurfaceFixture,
 
     CHECK(prompt_count == 1);
     CHECK(prompted_macro == "UNLOAD_FILAMENT");
+}
+
+TEST_CASE_METHOD(DispatchSurfaceFixture,
+                 "Sidebar unload dispatches the active head when the toolhead is unaccounted",
+                 "[filament][dispatch][wiring][ams][1324]") {
+    // Filament at the toolhead, current_slot -1, no lane claiming it. The
+    // sidebar button asks for "whatever is active", and the backend's
+    // unload_filament(-1) is the one command that resolves the real channel
+    // from firmware - so the dispatch must carry the -1 through.
+    configure_filament_macros(); // detected only: no user macro outranks the backend
+    helix::test::RegisteredBackend<helix::AmsBackendMock> reg(2);
+    reg->set_initial_state_scenario("unaccounted");
+    REQUIRE(reg->start().success());
+    REQUIRE(reg->toolhead_filament_unaccounted().value_or(false));
+    REQUIRE(reg->get_current_slot() == -1);
+
+    AmsOperationSidebar sidebar(state);
+    // The button's own entry point forwards exactly this: handle_unload(-1).
+    sidebar.handle_unload(-1);
+
+    REQUIRE(reg->last_unload_slot().has_value());
+    CHECK(*reg->last_unload_slot() == -1);
 }
 
 // =============================================================================

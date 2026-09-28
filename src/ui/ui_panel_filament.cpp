@@ -2117,8 +2117,15 @@ void FilamentPanel::update_filament_op_buttons() {
     // parked short of the nozzle, and the panel's Unload is always the heated
     // toolhead unload. The cold lane ops (Eject / Recover) live on the AMS
     // context menu, not here.
-    state.unload_available =
-        state.slot_is_loaded || backend->slot_filament_parked_in_toolhead(slot);
+    //
+    // The active-head sentinel adds the one target the narrow lane rule above
+    // cannot answer: filament at the toolhead that no lane claims, where the
+    // backend's unaccounted answer is the only evidence. It enables Unload
+    // only - Load keeps its slot-picker redirect for an unresolved slot.
+    state.unload_available = state.slot_is_loaded ||
+                             backend->slot_filament_parked_in_toolhead(slot) ||
+                             (slot == helix::ui::ACTIVE_HEAD_SLOT &&
+                              backend->toolhead_filament_unaccounted().value_or(false));
     state.unload_is_cold_lane_op = false;
 
     const auto gating = helix::ui::compute_op_button_gating(state);
@@ -3104,10 +3111,12 @@ FilamentPanel::UnloadContext FilamentPanel::current_unload_context() const {
     if (backend) {
         sys = backend->get_system_info();
     }
-    // Only `present` matters to plan_unload; the remaining caps answer the
-    // load-vs-swap question, which unload does not ask.
+    // Only `present` and the unaccounted flag matter to plan_unload; the
+    // remaining caps answer the load-vs-swap question, which unload does not
+    // ask.
     helix::ui::BackendCaps caps;
     caps.present = backend != nullptr;
+    caps.toolhead_unaccounted = backend && backend->toolhead_filament_unaccounted().value_or(false);
 
     const bool loaded = helix::ui::read_unload_target_loaded(backend, sys, slot);
     return {helix::ui::plan_live_unload(caps, slot, loaded), loaded};
