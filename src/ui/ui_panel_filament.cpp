@@ -1091,11 +1091,13 @@ float FilamentPanel::keypad_max_for(helix::HeaterType type, int fallback_deg) {
 void FilamentPanel::handle_nozzle_temp_tap() {
     spdlog::debug("[{}] Opening custom nozzle temperature keypad", get_name());
 
+    const std::string title =
+        helix::ui::temperature::heater_keypad_title(helix::HeaterType::Nozzle);
     ui_keypad_config_t config = {
         .initial_value = static_cast<float>(nozzle_target_ > 0 ? nozzle_target_ : 200),
         .min_value = 0.0f,
         .max_value = keypad_max_for(helix::HeaterType::Nozzle, nozzle_max_temp_),
-        .title_label = lv_tr("Nozzle Temperature"),
+        .title_label = title.c_str(),
         .unit_label = "°C",
         .allow_decimal = false,
         .allow_negative = false,
@@ -1108,11 +1110,12 @@ void FilamentPanel::handle_nozzle_temp_tap() {
 void FilamentPanel::handle_bed_temp_tap() {
     spdlog::debug("[{}] Opening custom bed temperature keypad", get_name());
 
+    const std::string title = helix::ui::temperature::heater_keypad_title(helix::HeaterType::Bed);
     ui_keypad_config_t config = {.initial_value =
                                      static_cast<float>(bed_target_ > 0 ? bed_target_ : 60),
                                  .min_value = 0.0f,
                                  .max_value = keypad_max_for(helix::HeaterType::Bed, bed_max_temp_),
-                                 .title_label = lv_tr("Bed Temperature"),
+                                 .title_label = title.c_str(),
                                  .unit_label = "°C",
                                  .allow_decimal = false,
                                  .allow_negative = false,
@@ -1125,12 +1128,14 @@ void FilamentPanel::handle_bed_temp_tap() {
 void FilamentPanel::handle_chamber_temp_tap() {
     spdlog::debug("[{}] Opening custom chamber temperature keypad", get_name());
 
+    const std::string title =
+        helix::ui::temperature::heater_keypad_title(helix::HeaterType::Chamber);
     ui_keypad_config_t config = {
         .initial_value =
             static_cast<float>(chamber_target_ > 0 ? deci_to_degrees(chamber_target_) : 50),
         .min_value = 0.0f,
         .max_value = keypad_max_for(helix::HeaterType::Chamber, chamber_max_temp_),
-        .title_label = lv_tr("Chamber Temperature"),
+        .title_label = title.c_str(),
         .unit_label = "°C",
         .allow_decimal = false,
         .allow_negative = false,

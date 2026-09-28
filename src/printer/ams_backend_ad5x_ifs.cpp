@@ -2766,10 +2766,14 @@ AmsBackendAd5xIfs::get_operation_step_model(StepOperationType op) const {
     // and picked up by the string-extraction tooling (mirrors Snapmaker).
     const bool unload = (op == StepOperationType::UNLOAD);
     OperationStepModel model;
-    model.steps.push_back({lv_tr("Heat nozzle"), 0, false, /*live_temp=*/true});
-    model.steps.push_back(
-        {unload ? lv_tr("Cut filament") : lv_tr("Feed filament"), 1, false, false});
-    model.steps.push_back({unload ? lv_tr("Retract") : lv_tr("Purge"), 2, false, false});
+    model.steps.push_back({lv_tr("Heat nozzle"), 0, false, /*live_temp=*/true, AmsAction::HEATING});
+    if (unload) {
+        model.steps.push_back({lv_tr("Cut filament"), 1, false, false, AmsAction::CUTTING});
+        model.steps.push_back({lv_tr("Retract"), 2, false, false, AmsAction::UNLOADING});
+    } else {
+        model.steps.push_back({lv_tr("Feed filament"), 1, false, false, AmsAction::LOADING});
+        model.steps.push_back({lv_tr("Purge"), 2, false, false, AmsAction::PURGING});
+    }
     return model;
 }
 

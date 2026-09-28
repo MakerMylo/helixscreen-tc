@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 
+#include "ui_heater_config.h"
+
 #include "lvgl/lvgl.h"
 #include "moonraker_types.h"
 #include "printer_temperature_state.h"
@@ -596,6 +598,16 @@ inline const char* build_heater_off_gcode(const std::string& heater_full_name, c
                                           size_t buffer_size) {
     return build_heater_gcode(heater_full_name, 0, buffer, buffer_size);
 }
+
+/**
+ * @brief Keypad header title for a heater: its short name
+ *
+ * The unit beside the value already says it is a temperature, and a
+ * "<heater> Temperature" title does not fit a small keypad header in every
+ * language. The nozzle is named the way the panels name it ("Nozzle 4" on a
+ * multi-extruder printer).
+ */
+std::string heater_keypad_title(HeaterType type);
 
 } // namespace temperature
 } // namespace ui

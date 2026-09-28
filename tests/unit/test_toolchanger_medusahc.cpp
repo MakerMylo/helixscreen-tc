@@ -419,6 +419,21 @@ TEST_CASE("A controller that names the direction gets the four-step bar",
           std::vector<std::string>{"Release filament", "Dock tool", "Grip filament"});
 }
 
+TEST_CASE("A tool changer's steps project SELECTING, and docking projects UNLOADING",
+          "[ams][toolchanger][coarse]") {
+    ToolChangerHelper tc(4);
+    tc.set_tool_sensor(toolchanger_addon::resolve_tool_sensor(medusahc_discovery()));
+    tc.feed(
+        json{{"medusahc", {{"operation", "idle"}, {"current_tool", 0}, {"feeder_open", false}}}});
+
+    const auto swap = tc.get_operation_step_model(StepOperationType::LOAD_SWAP);
+    REQUIRE(swap.steps.size() == 4);
+    CHECK(swap.action_at(0) == AmsAction::SELECTING); // Release filament
+    CHECK(swap.action_at(1) == AmsAction::UNLOADING); // Dock tool
+    CHECK(swap.action_at(2) == AmsAction::SELECTING); // Pick up tool
+    CHECK(swap.action_at(3) == AmsAction::SELECTING); // Grip filament
+}
+
 TEST_CASE("A controller with only 'changing' gets one middle step", "[ams][toolchanger][steps]") {
     ToolChangerHelper tc(4);
     tc.set_tool_sensor(toolchanger_addon::resolve_tool_sensor(standalone_medusahc_discovery(4)));
