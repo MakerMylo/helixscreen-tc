@@ -1352,7 +1352,7 @@ struct FlowguardInfo {
  */
 struct RecoverStateRequest {
     int slot = -1;              ///< 0-based slot, -1 = keep the firmware's current one
-    bool bypass = false;        ///< Bypass is selected; tool and slot are then ignored
+    bool bypass = false;        ///< Bypass is selected; slot is then ignored
     std::optional<bool> loaded; ///< Filament at the extruder; nullopt = let firmware detect
 };
 
