@@ -126,7 +126,7 @@ def test_globals_xml_round_trips_and_preserves_content():
 def test_stage_translations_ships_every_language_but_the_identity_en(tmp_path):
     translations_dir = tmp_path / "ui_xml" / "translations"
     translations_dir.mkdir(parents=True)
-    for lang in ("en", "fr", "de"):
+    for lang in ("en", "fr", "de", "ja", "zh"):
         (translations_dir / f"{lang}.xml").write_text(
             f"<translations languages=\"{lang}\"><translation tag=\"a\" {lang}=\"x\"/></translations>",
             encoding="utf-8")
@@ -137,3 +137,15 @@ def test_stage_translations_ships_every_language_but_the_identity_en(tmp_path):
     staged = tmp_path / "out" / "ui_xml" / "translations"
     assert included == ["de", "fr"]
     assert sorted(p.name for p in staged.iterdir()) == ["de.xml", "fr.xml"]
+
+
+def test_stage_translations_ships_cjk_only_when_asked(tmp_path):
+    translations_dir = tmp_path / "ui_xml" / "translations"
+    translations_dir.mkdir(parents=True)
+    for lang in ("en", "fr", "ja", "zh"):
+        (translations_dir / f"{lang}.xml").write_text(
+            f"<translations languages=\"{lang}\"><translation tag=\"a\" {lang}=\"x\"/></translations>",
+            encoding="utf-8")
+
+    _, included = stage_translations(tmp_path / "ui_xml", tmp_path / "out", with_cjk=True)
+    assert included == ["fr", "ja", "zh"]

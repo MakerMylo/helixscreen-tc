@@ -800,13 +800,9 @@ extern "C" void app_boot_ui(void) {
     helix::register_xml_components();
     log_heap_milestone("xml-registered");
 
-    // Notification badge click: the real handler opens the NotificationHistory
-    // panel, which is excluded from the v1 ESP cut (its accessor isn't linked —
-    // notification_register_callbacks() would drag in the excluded panel). The
-    // badge still exists on the home widget, so register a no-op for its event
-    // (BEFORE app_layout XML is created in build_shell) to silence the
-    // "callback not found" warning; opening history is a later stage.
-    lv_xml_register_event_cb(nullptr, "status_notification_history_clicked", [](lv_event_t*) {});
+    // The bell opens the notification history panel. Registered BEFORE
+    // app_layout XML is created in build_shell(), as desktop does.
+    helix::ui::notification_register_callbacks();
 
     // Phase 8: core subjects (PrinterState / AmsState).
     static SubjectInitializer subjects;
