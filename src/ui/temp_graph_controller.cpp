@@ -6,6 +6,7 @@
 #include "ui_update_queue.h"
 
 #include "app_globals.h"
+#include "i_moonraker_client.h"
 #include "observer_factory.h"
 #include "printer_state.h"
 #include "system/crash_handler.h"
@@ -196,6 +197,31 @@ void TempGraphController::resume() {
 
 void TempGraphController::refresh_from_history() {
     backfill_history();
+}
+
+void TempGraphController::seed_from_moonraker(IMoonrakerClient& client) {
+    client.get_temperature_store(
+        [](const TemperatureStore& store) {
+            auto store_copy = std::make_shared<TemperatureStore>(store);
+            helix::ui::queue_update("TempGraphController::seed_from_moonraker", [store_copy]() {
+                auto* mgr = get_temperature_history_manager();
+                if (mgr == nullptr) {
+                    return;
+                }
+                using namespace std::chrono;
+                const int64_t now_ms =
+                    duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+                mgr->seed_from_store(*store_copy, now_ms);
+                // Persistent graphs (home dashboard widget, filament mini graph)
+                // are built before this seed arrives, so their construction-time
+                // backfill was empty (#1124).
+                refresh_all_from_history();
+            });
+        },
+        [](const MoonrakerError& err) {
+            spdlog::debug("[TempGraphController] server.temperature_store seed failed: {}",
+                          err.message);
+        });
 }
 
 void TempGraphController::refresh_all_from_history() {

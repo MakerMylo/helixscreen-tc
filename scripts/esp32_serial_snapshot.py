@@ -13,11 +13,10 @@ between HELIX-SNAP markers. Log lines interleave between them and are ignored.
 pausing --tap-wait seconds after each so the UI settles. --notes prints every
 notification since boot (the toasts the bell counts) instead of a screenshot.
 
-Needs pyserial. On Linux, opening a CH340/CP210x port can pulse DTR/RTS before
-pyserial holds them low, which resets a board wired for auto-reset. The request
-is repeated until the dump starts, so a reset costs one boot, not the capture.
-Linux raises the modem lines on every open, so expect that reset: --settle waits
-before the first request, for a screen that has finished booting and connecting.
+Needs pyserial. A board wired for auto-reset resets while RTS and DTR differ;
+after opening, RTS is released before DTR so they never do. The request is
+repeated until the dump starts, so a reset that happens anyway costs one boot,
+not the capture, and --settle waits for a screen that has finished booting.
 """
 
 import argparse
@@ -89,9 +88,12 @@ def main() -> int:
 
     port = serial.Serial()
     port.port, port.baudrate, port.timeout = args.port, args.baud, 0.5
-    port.dtr = False
-    port.rts = False
+    # The CH340 board resets while RTS and DTR differ. Opening raises both (no
+    # reset); dropping RTS first keeps them from ever disagreeing. Presetting
+    # them before open() would not: pyserial applies DTR before RTS there.
     port.open()
+    port.rts = False
+    port.dtr = False
     port.reset_input_buffer()
 
     time.sleep(args.settle)
