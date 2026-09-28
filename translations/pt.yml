@@ -1928,7 +1928,6 @@ translations:
   Motors Off: Desligar Motores
   'Motors disable failed: {}': 'Falha ao desativar motores: {}'
   Motors disabled: Motores desativados
-  Motors off: Desligar Motores
   Motors stay on while a print is active: Os motores permanecem ativos durante uma impressão
   Mount: Montar
   Move: Mover
