@@ -190,11 +190,6 @@ class TempGraphController {
     /// nozzle and bed readings costs one chart repaint, not two.
     static bool sample_due(int64_t last_ms, int64_t now_ms);
 
-    /// Replaces the wall clock live samples are stamped with (tests only).
-    void set_clock_for_testing(std::function<int64_t()> now_ms) {
-        now_ms_fn_ = std::move(now_ms);
-    }
-
     /**
      * @brief Tear down and recreate the graph from scratch
      *
@@ -244,6 +239,8 @@ class TempGraphController {
     int series_id_for(const std::string& klipper_name) const;
 
   private:
+    friend class TempGraphControllerTestAccess;
+
     /// Per-series runtime state (extends the spec with observer handles)
     struct SeriesState {
         std::string klipper_name;

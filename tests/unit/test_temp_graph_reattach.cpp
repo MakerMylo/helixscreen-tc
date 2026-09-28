@@ -26,6 +26,7 @@
 #include "../../include/temp_graph_controller.h"
 #include "../../include/ui_temp_graph.h"
 #include "../lvgl_test_fixture.h"
+#include "../test_helpers/temp_graph_controller_test_access.h"
 #include "app_globals.h"
 #include "lvgl/lvgl.h"
 #include "printer_state.h"
@@ -210,7 +211,7 @@ TEST_CASE_METHOD(TempGraphReattachFixture,
     REQUIRE(controller->is_valid());
     constexpr int64_t slot = UI_TEMP_GRAPH_SAMPLE_INTERVAL_SEC * 1000;
     int64_t now = 1'000'000 * slot + 100;
-    controller->set_clock_for_testing([&now] { return now; });
+    TempGraphControllerTestAccess::set_clock(*controller, [&now] { return now; });
     settle();
     const int baseline = controller->graph()->visible_point_count;
 
