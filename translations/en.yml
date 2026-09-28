@@ -3184,6 +3184,7 @@ translations:
   The unit is already running another operation. Wait for it to finish, or reset the CFS if it stays stuck: The unit is already running another operation. Wait for it to finish, or reset the CFS if it stays stuck
   The unit reported a fault with no further detail. Restart the printer if it repeats: The unit reported a fault with no further detail. Restart the printer if it repeats
   The unit's onboard storage has failed. The CFS mainboard needs replacing: The unit's onboard storage has failed. The CFS mainboard needs replacing
+  'The unload did not start: unload by hand, then start again': 'The unload did not start: unload by hand, then start again'
   Theme: Theme
   Theme Colors: Theme Colors
   Theme Preset: Theme Preset

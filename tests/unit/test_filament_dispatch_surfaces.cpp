@@ -29,6 +29,7 @@
  */
 
 #include "ui_ams_sidebar.h"
+#include "ui_bed_drying_modal.h"
 #include "ui_filament_runout_handler.h"
 #include "ui_nav_manager.h"
 #include "ui_update_queue.h"
@@ -40,6 +41,7 @@
 #include "ams_state.h"
 #include "app_globals.h"
 #include "async_lifetime_guard.h"
+#include "bed_drying_controller.h"
 #include "filament_op_router.h"
 #include "macro_executor.h"
 #include "macro_param_cache.h"
@@ -916,4 +918,139 @@ TEST_CASE_METHOD(DispatchSurfaceFixture,
 
     CHECK(prompt_count == 1);
     CHECK(prompted_prefill.empty());
+}
+
+// -----------------------------------------------------------------------------
+// Bed drying's unload offer
+// -----------------------------------------------------------------------------
+//
+// The plate must not move until the toolhead is clear, so the flow waits on
+// whichever tier ran. A filament system has no reply to wait on; its published
+// action has to go busy and come back idle.
+
+using helix::AmsAction;
+using helix::AmsBackendMock;
+using helix::AmsError;
+using helix::AmsErrorHelper;
+using helix::AmsSystemInfo;
+
+namespace {
+
+/// Lane 1 loaded at the toolhead; records each unload the ladder hands it.
+class UnloadRecordingBackend : public AmsBackendMock {
+  public:
+    UnloadRecordingBackend() : AmsBackendMock(4) {}
+
+    [[nodiscard]] AmsSystemInfo get_system_info() const override {
+        AmsSystemInfo sys = AmsBackendMock::get_system_info();
+        sys.current_slot = 1;
+        sys.filament_loaded = true;
+        return sys;
+    }
+    [[nodiscard]] bool slot_is_actively_loaded(int slot) const override {
+        return slot == 1;
+    }
+    AmsError unload_filament(int slot_index) override {
+        unloads.push_back(slot_index);
+        return result;
+    }
+
+    std::vector<int> unloads;
+    AmsError result = AmsErrorHelper::success();
+};
+
+void publish_action(AmsAction action) {
+    lv_subject_set_int(helix::AmsState::instance().get_ams_action_subject(),
+                       static_cast<int>(action));
+    helix::ui::UpdateQueue::instance().drain();
+}
+
+} // namespace
+
+TEST_CASE_METHOD(DispatchSurfaceFixture,
+                 "Bed drying unload hands a loaded lane to the filament system, then moves on",
+                 "[filament][dispatch][wiring][bed_drying]") {
+    clear_filament_macros();
+    auto owned = std::make_unique<UnloadRecordingBackend>();
+    auto* backend = owned.get();
+    AmsScope ams(std::move(owned));
+    helix::BedDryingController ctrl(state, api.get(), nullptr);
+    bool moved_on = false;
+
+    helix::ui::unload_before_drying(ctrl, [&] { moved_on = true; });
+    helix::ui::UpdateQueue::instance().drain();
+
+    REQUIRE(backend->unloads == std::vector<int>{1});
+    CHECK_FALSE(gcode_sent_containing("G1 E-80"));
+    CHECK_FALSE(moved_on);
+
+    publish_action(AmsAction::UNLOADING);
+    CHECK_FALSE(moved_on);
+    publish_action(AmsAction::IDLE);
+    CHECK(moved_on);
+}
+
+TEST_CASE_METHOD(DispatchSurfaceFixture, "Bed drying stops when the filament system errors",
+                 "[filament][dispatch][wiring][bed_drying]") {
+    clear_filament_macros();
+    AmsScope ams(std::make_unique<UnloadRecordingBackend>());
+    helix::BedDryingController ctrl(state, api.get(), nullptr);
+    bool moved_on = false;
+
+    helix::ui::unload_before_drying(ctrl, [&] { moved_on = true; });
+    publish_action(AmsAction::HEATING);
+    publish_action(AmsAction::ERROR);
+    publish_action(AmsAction::IDLE);
+
+    CHECK_FALSE(moved_on);
+}
+
+TEST_CASE_METHOD(DispatchSurfaceFixture,
+                 "Bed drying stops when the filament system rejects the unload",
+                 "[filament][dispatch][wiring][bed_drying]") {
+    clear_filament_macros();
+    auto owned = std::make_unique<UnloadRecordingBackend>();
+    owned->result = AmsErrorHelper::not_connected("test");
+    AmsScope ams(std::move(owned));
+    helix::BedDryingController ctrl(state, api.get(), nullptr);
+    bool moved_on = false;
+
+    helix::ui::unload_before_drying(ctrl, [&] { moved_on = true; });
+    // A later op's busy-then-idle must not be read as this unload finishing.
+    publish_action(AmsAction::UNLOADING);
+    publish_action(AmsAction::IDLE);
+
+    CHECK_FALSE(moved_on);
+}
+
+TEST_CASE_METHOD(DispatchSurfaceFixture,
+                 "Bed drying stops when the filament system never starts the unload",
+                 "[filament][dispatch][wiring][bed_drying]") {
+    clear_filament_macros();
+    AmsScope ams(std::make_unique<UnloadRecordingBackend>());
+    helix::BedDryingController ctrl(state, api.get(), nullptr);
+    bool moved_on = false;
+
+    helix::ui::unload_before_drying(ctrl, [&] { moved_on = true; });
+    process_lvgl(helix::BedDryingController::kUnloadStartWindowMs + 1000);
+    helix::ui::UpdateQueue::instance().drain();
+    publish_action(AmsAction::UNLOADING);
+    publish_action(AmsAction::IDLE);
+
+    CHECK_FALSE(moved_on);
+}
+
+TEST_CASE_METHOD(DispatchSurfaceFixture,
+                 "Bed drying with no filament system runs the unload macro, then moves on",
+                 "[filament][dispatch][wiring][bed_drying]") {
+    configure_filament_macros();
+    REQUIRE(helix::AmsState::instance().get_backend() == nullptr);
+    helix::BedDryingController ctrl(state, api.get(), nullptr);
+    bool moved_on = false;
+
+    helix::ui::unload_before_drying(ctrl, [&] { moved_on = true; });
+    helix::ui::UpdateQueue::instance().drain();
+
+    CHECK(gcode_sent_containing("UNLOAD_FILAMENT"));
+    CHECK(moved_on);
 }

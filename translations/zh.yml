@@ -3057,6 +3057,7 @@ translations:
   The unit is already running another operation. Wait for it to finish, or reset the CFS if it stays stuck: 该单元正在执行其他操作。请等待其完成；若持续卡住，请重置 CFS
   The unit reported a fault with no further detail. Restart the printer if it repeats: 该单元报告了故障但无更多信息。若反复出现，请重启打印机
   The unit's onboard storage has failed. The CFS mainboard needs replacing: 该单元的板载存储已损坏。需更换 CFS 主板
+  'The unload did not start: unload by hand, then start again': 卸载未开始:请手动卸载,然后重新开始
   Theme: 主题
   Theme Colors: 主题颜色
   Theme Preset: 主题预设

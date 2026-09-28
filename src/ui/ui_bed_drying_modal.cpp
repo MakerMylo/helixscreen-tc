@@ -4,14 +4,14 @@
 
 #include "ui_event_safety.h"
 #include "ui_toast_manager.h"
-#include "ui_update_queue.h"
 
+#include "ams_state.h"
 #include "app_globals.h"
 #include "bed_drying_controller.h"
+#include "filament_op_execute.h"
 #include "i_moonraker_api.h"
 #include "lvgl/src/others/translation/lv_translation.h"
 #include "printer_state.h"
-#include "standard_macros.h"
 
 #include <spdlog/fmt/fmt.h>
 #include <spdlog/spdlog.h>
@@ -119,6 +119,45 @@ void prepare_plate(const Material& material, bool with_appliance) {
 
 } // namespace
 
+void unload_before_drying(BedDryingController& ctrl, std::function<void()> then) {
+    AmsBackend* backend = AmsState::instance().get_backend();
+    AmsSystemInfo info;
+    int slot = -1;
+    if (backend) {
+        info = backend->get_system_info();
+        slot = info.current_slot;
+    }
+    const bool loaded = read_unload_target_loaded(backend, info, slot);
+
+    FilamentOpSurface surface;
+    surface.log_tag = "[BedDrying]";
+    // A filament system has no reply to wait on, so its action is watched
+    // instead. on_begin runs inline, before the backend is asked, for this tier.
+    surface.on_begin = [&ctrl, then](const FilamentOpPlan& plan) {
+        if (plan.tier != FilamentTier::AmsBackend) {
+            return;
+        }
+        ctrl.await_unload(then, [](bool started) {
+            // Once it started, an ERROR edge has its own error surface.
+            if (!started) {
+                ToastManager::instance().show(
+                    ToastSeverity::ERROR,
+                    lv_tr("The unload did not start: unload by hand, then start again"), 6000);
+            }
+        });
+    };
+    surface.on_failed = [&ctrl](const FilamentOpPlan&, const AmsError&, bool&) {
+        ctrl.cancel_unload_wait();
+    };
+    surface.on_async_success = then;
+    surface.on_refused = [then](const FilamentOpPlan&) {
+        ToastManager::instance().show(ToastSeverity::INFO, lv_tr("No filament loaded to unload"),
+                                      3000);
+        then();
+    };
+    execute_filament_unload(backend, slot, loaded, surface);
+}
+
 void start_bed_drying_flow(const Material& material, bool with_appliance) {
     auto* ctrl = get_bed_drying_controller();
     if (!ctrl) {
@@ -130,28 +169,9 @@ void start_bed_drying_flow(const Material& material, bool with_appliance) {
         return;
     }
     auto unload_then_prepare = [material, with_appliance] {
-        IMoonrakerAPI* api = get_moonraker_api();
-        const bool sent = StandardMacros::instance().execute(
-            StandardMacroSlot::UnloadFilament, api,
-            [material, with_appliance] {
-                // The macro's reply arrives on the WebSocket thread.
-                helix::ui::queue_update("BedDrying::unloaded", [material, with_appliance] {
-                    prepare_plate(material, with_appliance);
-                });
-            },
-            [](const MoonrakerError& err) {
-                helix::ui::queue_update("BedDrying::unload_failed", [msg = err.message] {
-                    ToastManager::instance().show(
-                        ToastSeverity::ERROR,
-                        fmt::format("{}: {}", lv_tr("Unload failed"), msg).c_str(), 6000);
-                });
-            },
-            600000);
-        if (!sent) {
-            ToastManager::instance().show(ToastSeverity::WARNING,
-                                          lv_tr("No unload macro found: unload by hand, then "
-                                                "start again"),
-                                          6000);
+        if (auto* c = get_bed_drying_controller()) {
+            unload_before_drying(
+                *c, [material, with_appliance] { prepare_plate(material, with_appliance); });
         }
     };
     ConfirmOptions opts;

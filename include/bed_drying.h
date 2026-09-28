@@ -117,6 +117,20 @@ enum class UnloadOffer {
     return *toolhead_loaded ? UnloadOffer::Recommended : UnloadOffer::None;
 }
 
+/// Where a filament-system unload the flow waits on stands. The system has to
+/// be seen busy before an idle reading means it finished: the idle it reports
+/// as the unload is sent is the state it started from. ERROR means it gave up,
+/// and the error surface that owns that edge reports it.
+enum class UnloadProgress { Waiting, Done, Failed };
+
+/// @param seen_busy whether any earlier reading was busy
+[[nodiscard]] constexpr UnloadProgress unload_progress(bool seen_busy, bool busy, bool error) {
+    if (error) {
+        return UnloadProgress::Failed;
+    }
+    return (busy || !seen_busy) ? UnloadProgress::Waiting : UnloadProgress::Done;
+}
+
 /// What the sensors say about filament at the toolhead; nullopt when none can
 /// say for certain. A toolhead sensor answers both ways. A filament system
 /// reporting a loaded lane, or a runout sensor seeing filament, says loaded;
