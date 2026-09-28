@@ -35,7 +35,7 @@
 # reproduce.
 set -euo pipefail
 
-HOST="${ZEUS_HOST:-zeus}"
+HOST="${ZEUS_HOST:-zeus.local}"   # bare `zeus` does not resolve from thelio
 CONTAINER="${ZEUS_CONTAINER:-helix-tsan}"
 WORKDIR="${ZEUS_WORKDIR:-/work/helixscreen}"
 
@@ -80,8 +80,11 @@ case "$WHAT" in
             CMD='make test-asan-one TEST="'"$_tag"'" -j$HELIX_J '"$*" ; GB_PER_JOB=1.5 ;;
     test)   CMD='make test -j$HELIX_J && ./build/bin/helix-tests "'"${1:-}"'"' ;;
     # Trailing args become make overrides, e.g. SHARD_CONCURRENCY=24.
-    sweep)  CMD='make unit-sweep -j$HELIX_J '"$*" ;;
-    full)   CMD='make full-test-run -j$HELIX_J '"$*" ;;
+    # NPROCS pins the shard count to thelio's 96. The count decides which tests
+    # share a process, so zeus's own 216 would judge a grouping nobody runs
+    # locally; a trailing NPROCS= still overrides it.
+    sweep)  CMD='make unit-sweep NPROCS=96 -j$HELIX_J '"$*" ;;
+    full)   CMD='make full-test-run NPROCS=96 -j$HELIX_J '"$*" ;;
     asan-app|tsan-app)
         # RECIPE is the positional argument; --repeat N (default 25 in the
         # make target) widens the drive. Both map onto the make target's

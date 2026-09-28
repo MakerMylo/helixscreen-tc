@@ -98,7 +98,6 @@ scripts/zeus-run.sh sweep                   # make unit-sweep on zeus (`full` ad
 #   The commit has to be pushed; the container fetches it, it does not take your
 #   tree. zeus is memory-bound, not core-bound (ZFS ARC holds most of its 251GB),
 #   so the script caps the ARC for the run and sizes -j from what is then free.
-#   `zeus` may not resolve from thelio; `ZEUS_HOST=zeus.local` reaches it.
 
 # Worktrees — MUST use for MAJOR work. Always in .worktrees/ (project root).
 scripts/setup-worktree.sh feature/my-branch  # Symlinks shared deps, builds fast
