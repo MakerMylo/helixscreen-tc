@@ -383,10 +383,6 @@ void FilamentPanel::deinit_subjects() {
     if (pending_preheat_op_ != PreheatOp::NONE) {
         pending_preheat_op_ = PreheatOp::NONE;
         pending_preheat_target_ = 0;
-        // Same leak this abandonment path guards against in cancel_pending_preheat().
-        if (AmsBackend* backend = AmsState::instance().get_backend()) {
-            backend->clear_home_preconfirmed();
-        }
         home_before_load_macro_ = false;
         // Don't schedule delayed cooldown during teardown — just cool down immediately
         if (prior_nozzle_target_ == 0) {
@@ -1482,43 +1478,15 @@ void FilamentPanel::handle_load_button() {
     const helix::ui::FilamentOpPlan plan = current_load_plan();
     const bool preheat = needs_ui_preheat(plan, StandardMacroSlot::LoadFilament);
 
-    // Asked INDEPENDENTLY of the preheat. They coincided while a cold nozzle was
-    // the only reason to pause before dispatch, but a backend or macro that heats
-    // for us removes that reason without homing anything — and skipping the ask
-    // here also skips arm_home_preconfirmed(), leaving the backend to raise its
-    // own prompt whose decline reads to ams_action_observer_ as a completed load.
-    AmsBackend* backend = AmsState::instance().get_backend();
-    if (helix::ui::needs_home_confirmation(plan, StandardMacroSlot::LoadFilament, backend,
-                                           helix::toolhead_is_homed(printer_state_))) {
-        spdlog::info("[{}] Toolhead not homed -- asking before load", get_name());
-        // Ask BEFORE the preheat, not after: the physical G28 still fires later,
-        // right before the dispatch (inside the backend's ensure_homed_then() on
-        // tier 1, ahead of the macro on tier 2), so only the confirmation moves
-        // earlier and a decline never wastes a heat cycle.
-        //
-        // FilamentPanel is an immortal singleton [L012] -- capturing [this]
-        // directly is safe with no AsyncLifetimeGuard token.
-        helix::ui::request_home_confirmation(
-            [this, preheat, tier = plan.tier]() {
-                // The consent goes to whatever sends this tier's G28.
-                if (tier == helix::ui::FilamentTier::AmsBackend) {
-                    if (AmsBackend* b = AmsState::instance().get_backend()) {
-                        b->arm_home_preconfirmed();
-                    }
-                } else if (tier == helix::ui::FilamentTier::Macro) {
-                    home_before_load_macro_ = true;
-                }
-                if (preheat) {
-                    start_preheat_for_op(PreheatOp::LOAD);
-                } else {
-                    continue_load_after_checks();
-                }
-            },
-            [this]() {
-                spdlog::info("[{}] User declined pre-load home; no heat commanded", get_name());
-            });
-        return;
-    }
+    // Decided independently of the preheat: a backend or macro that heats for us
+    // removes the reason to pause without homing anything. A backend load homes
+    // inside its own ensure_homed_then(); only the macro tier needs us to send the
+    // G28, which execute_load() does right before the macro, after any preheat.
+    home_before_load_macro_ =
+        plan.tier == helix::ui::FilamentTier::Macro &&
+        helix::ui::needs_prerequisite_home(plan, StandardMacroSlot::LoadFilament,
+                                           AmsState::instance().get_backend(),
+                                           helix::toolhead_is_homed(printer_state_));
 
     if (preheat) {
         start_preheat_for_op(PreheatOp::LOAD);
@@ -2839,13 +2807,6 @@ void FilamentPanel::cancel_pending_preheat() {
     pending_preheat_op_ = PreheatOp::NONE;
     pending_preheat_target_ = 0;
 
-    // A confirmed-then-abandoned load must not leave home consent armed for a
-    // later, unrelated dispatch on this backend. Harmless no-op when nothing
-    // was armed (e.g. cancelling an UNLOAD/EXTRUDE/RETRACT/PURGE preheat,
-    // which never arms this).
-    if (AmsBackend* backend = AmsState::instance().get_backend()) {
-        backend->clear_home_preconfirmed();
-    }
     home_before_load_macro_ = false;
 
     // Cancel any pending cooldown timer
