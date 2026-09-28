@@ -41,12 +41,21 @@ static int spdlog_level_to_index(spdlog::level::level_enum level) {
     return 0; // Default to Warn
 }
 
+#ifndef HELIX_HAS_CJK
+#define HELIX_HAS_CJK 1
+#endif
+
 // Language options - codes and display names
-// Order: en, de, fr, es, ru, pt, it, zh, ja (indices 0-8)
+// Order: en, de, fr, es, ru, pt, it, zh, ja (indices 0-8). The CJK pair comes
+// last so a build without CJK fonts (HELIX_HAS_CJK=0, the ESP32 firmware) drops
+// it by shortening the list, and every other index keeps its meaning. A saved
+// zh/ja there reads as English.
 static const char* LANGUAGE_CODES[] = {"en", "de", "fr", "es", "ru", "pt", "it", "zh", "ja"};
-static const int LANGUAGE_COUNT = sizeof(LANGUAGE_CODES) / sizeof(LANGUAGE_CODES[0]);
+static const int LANGUAGE_COUNT = HELIX_HAS_CJK ? 9 : 7;
 static const char* LANGUAGE_OPTIONS_TEXT =
-    "English\nDeutsch\nFrançais\nEspañol\nРусский\nPortuguês\nItaliano\n中文\n日本語";
+    HELIX_HAS_CJK
+        ? "English\nDeutsch\nFrançais\nEspañol\nРусский\nPortuguês\nItaliano\n中文\n日本語"
+        : "English\nDeutsch\nFrançais\nEspañol\nРусский\nPortuguês\nItaliano";
 
 SystemSettingsManager& SystemSettingsManager::instance() {
     static SystemSettingsManager instance;
