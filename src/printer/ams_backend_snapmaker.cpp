@@ -267,15 +267,18 @@ AmsBackendSnapmaker::get_operation_step_model(StepOperationType op) const {
     // The Heat step (phase 2) shows a live nozzle temperature. All labels are
     // wrapped in lv_tr() so they are translated and picked up by the string tooling.
     const bool unload = (op == StepOperationType::UNLOAD);
+    // Home and Select only position the head, so they project the operation's
+    // direction.
+    const AmsAction direction = unload ? AmsAction::UNLOADING : AmsAction::LOADING;
     OperationStepModel model;
-    model.steps.push_back({lv_tr("Home"), 0, false, false});
-    model.steps.push_back({lv_tr("Select"), 1, false, false});
-    model.steps.push_back({lv_tr("Heat nozzle"), 2, false, /*live_temp=*/true});
+    model.steps.push_back({lv_tr("Home"), 0, false, false, direction});
+    model.steps.push_back({lv_tr("Select"), 1, false, false, direction});
+    model.steps.push_back({lv_tr("Heat nozzle"), 2, false, /*live_temp=*/true, AmsAction::HEATING});
     if (unload) {
-        model.steps.push_back({lv_tr("Retract"), 3, false, false});
+        model.steps.push_back({lv_tr("Retract"), 3, false, false, AmsAction::UNLOADING});
     } else {
-        model.steps.push_back({lv_tr("Feed filament"), 3, false, false});
-        model.steps.push_back({lv_tr("Purge"), 4, false, false});
+        model.steps.push_back({lv_tr("Feed filament"), 3, false, false, AmsAction::LOADING});
+        model.steps.push_back({lv_tr("Purge"), 4, false, false, AmsAction::PURGING});
     }
     return model;
 }

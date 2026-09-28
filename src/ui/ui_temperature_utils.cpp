@@ -10,6 +10,7 @@
 #include "safety_settings_manager.h"
 #include "spdlog/spdlog.h"
 #include "theme_manager.h"
+#include "tool_state.h"
 
 #include <algorithm>
 #include <cmath>
@@ -332,6 +333,18 @@ HeaterStatus classify_heater_status(int current_deci, int target_deci, int power
         status.duty = std::to_string(power_pct) + "%";
     }
     return status;
+}
+
+std::string heater_keypad_title(HeaterType type) {
+    switch (type) {
+    case HeaterType::Nozzle:
+        return ToolState::instance().nozzle_label();
+    case HeaterType::Bed:
+        return lv_tr("Bed");
+    case HeaterType::Chamber:
+        return lv_tr("Chamber");
+    }
+    return {};
 }
 
 } // namespace temperature

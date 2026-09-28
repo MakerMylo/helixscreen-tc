@@ -435,6 +435,11 @@ class AmsBackend {
         int phase_id = -1;      ///< backend phase index this step represents (-1 = positional)
         bool optional = false;  ///< stays greyed/Pending when never reached this op
         bool live_temp = false; ///< render a live "<label> cur/target°C" while current
+        /// What this step looks like to consumers that read the coarse AmsAction:
+        /// the kind of work (HEATING, CUTTING, PURGING), or for a step that only
+        /// positions the machine, the operation's direction. Nothing assigns the
+        /// action from it yet; the backend's own assignment still stands.
+        std::optional<AmsAction> coarse;
     };
 
     /// Ordered step labels for an operation. Empty => backend has no specialized
@@ -449,6 +454,16 @@ class AmsBackend {
         /// source has nothing to say, and Heat/Feed/Purge is not a truer answer
         /// than silence.
         bool suppressed = false;
+
+        /// The coarse action the step at @p index projects to, the same positional
+        /// index the step bar highlights. nullopt when no step sits there or it
+        /// declares no projection.
+        [[nodiscard]] std::optional<AmsAction> action_at(int index) const {
+            if (index < 0 || index >= static_cast<int>(steps.size())) {
+                return std::nullopt;
+            }
+            return steps[static_cast<size_t>(index)].coarse;
+        }
     };
 
     /**

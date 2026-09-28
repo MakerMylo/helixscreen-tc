@@ -9431,6 +9431,24 @@ TEST_CASE("AD5X IFS get_operation_step_model LOAD is the 3-phase synth sequence"
     }
 }
 
+TEST_CASE("AD5X IFS steps project the action its phase machine assigns",
+          "[ams][ad5x_ifs][coarse]") {
+    helix::test::RegisteredBackend<AmsBackendAd5xIfs> backend_reg(nullptr, nullptr);
+    AmsBackendAd5xIfs& backend = *backend_reg;
+
+    const auto unload = backend.get_operation_step_model(StepOperationType::UNLOAD);
+    CHECK(unload.action_at(0) == AmsAction::HEATING);
+    CHECK(unload.action_at(1) == AmsAction::CUTTING);
+    CHECK(unload.action_at(2) == AmsAction::UNLOADING);
+
+    for (auto op : {StepOperationType::LOAD_FRESH, StepOperationType::LOAD_SWAP}) {
+        const auto load = backend.get_operation_step_model(op);
+        CHECK(load.action_at(0) == AmsAction::HEATING);
+        CHECK(load.action_at(1) == AmsAction::LOADING);
+        CHECK(load.action_at(2) == AmsAction::PURGING);
+    }
+}
+
 TEST_CASE("AD5X IFS get_operation_step_index_subject is the AmsState phase subject",
           "[ams][ad5x_ifs][stepmodel]") {
     helix::test::RegisteredBackend<AmsBackendAd5xIfs> backend_reg(nullptr, nullptr);

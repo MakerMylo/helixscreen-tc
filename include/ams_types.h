@@ -342,6 +342,8 @@ inline bool ams_action_is_busy(AmsAction action) {
  *
  * SELECTING is deliberately absent: a filament system passes through it on the
  * way to a slot, and the step bar is already tracking the load that follows.
+ * PURGING is deliberately present: a purge moves filament, so an operation that
+ * starts outside the UI with a purge shows the step bar like any other.
  */
 inline bool ams_action_is_filament_operation(AmsAction action) {
     switch (action) {
