@@ -493,6 +493,7 @@ class AmsBackendSnapmaker : public AmsSubscriptionBackend {
         return "[AMS Snapmaker]";
     }
     SlotInfo* cached_slot_locked(int slot_index) override;
+    [[nodiscard]] std::optional<AmsAction> step_action_locked() const override;
 
   private:
     friend class SnapmakerTestAccess;

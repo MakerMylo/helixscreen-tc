@@ -31,9 +31,11 @@
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <charconv>
 #include <lvgl.h>
+#include <optional>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -226,9 +228,37 @@ void AmsBackendSnapmaker::on_started() {
 // State Queries
 // ============================================================================
 
+namespace {
+/// What each U1 step projects to, by the phase index classify_channel_state()
+/// emits for its direction. Home and Select only position the head, so they
+/// read as the direction. The step model and the published action both read
+/// this, so the two cannot disagree.
+std::optional<AmsAction> u1_step_action(bool unload, int phase) {
+    static constexpr std::array kLoad{AmsAction::LOADING, AmsAction::LOADING, AmsAction::HEATING,
+                                      AmsAction::LOADING, AmsAction::PURGING};
+    static constexpr std::array kUnload{AmsAction::UNLOADING, AmsAction::UNLOADING,
+                                        AmsAction::HEATING, AmsAction::UNLOADING};
+    const int count = static_cast<int>(unload ? kUnload.size() : kLoad.size());
+    if (phase < 0 || phase >= count) {
+        return std::nullopt;
+    }
+    return unload ? kUnload[static_cast<size_t>(phase)] : kLoad[static_cast<size_t>(phase)];
+}
+} // namespace
+
 AmsSystemInfo AmsBackendSnapmaker::get_system_info() const {
     std::lock_guard<std::mutex> lock(mutex_);
-    return system_info_;
+    AmsSystemInfo info = system_info_;
+    info.action = published_action_locked();
+    return info;
+}
+
+std::optional<AmsAction> AmsBackendSnapmaker::step_action_locked() const {
+    // system_info_.action stays the operation's direction, because the frame
+    // parser closes an operation by matching LOADING / UNLOADING; the step
+    // under way is what gets published.
+    return u1_step_action(system_info_.action == AmsAction::UNLOADING,
+                          system_info_.operation_phase);
 }
 
 SlotInfo AmsBackendSnapmaker::get_slot_info(int slot_index) const {
@@ -267,18 +297,18 @@ AmsBackendSnapmaker::get_operation_step_model(StepOperationType op) const {
     // The Heat step (phase 2) shows a live nozzle temperature. All labels are
     // wrapped in lv_tr() so they are translated and picked up by the string tooling.
     const bool unload = (op == StepOperationType::UNLOAD);
-    // Home and Select only position the head, so they project the operation's
-    // direction.
-    const AmsAction direction = unload ? AmsAction::UNLOADING : AmsAction::LOADING;
     OperationStepModel model;
-    model.steps.push_back({lv_tr("Home"), 0, false, false, direction});
-    model.steps.push_back({lv_tr("Select"), 1, false, false, direction});
-    model.steps.push_back({lv_tr("Heat nozzle"), 2, false, /*live_temp=*/true, AmsAction::HEATING});
+    model.steps.push_back({lv_tr("Home"), 0});
+    model.steps.push_back({lv_tr("Select"), 1});
+    model.steps.push_back({lv_tr("Heat nozzle"), 2, false, /*live_temp=*/true});
     if (unload) {
-        model.steps.push_back({lv_tr("Retract"), 3, false, false, AmsAction::UNLOADING});
+        model.steps.push_back({lv_tr("Retract"), 3});
     } else {
-        model.steps.push_back({lv_tr("Feed filament"), 3, false, false, AmsAction::LOADING});
-        model.steps.push_back({lv_tr("Purge"), 4, false, false, AmsAction::PURGING});
+        model.steps.push_back({lv_tr("Feed filament"), 3});
+        model.steps.push_back({lv_tr("Purge"), 4});
+    }
+    for (int i = 0; i < static_cast<int>(model.steps.size()); ++i) {
+        model.steps[static_cast<size_t>(i)].coarse = u1_step_action(unload, i);
     }
     return model;
 }
