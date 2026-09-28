@@ -492,7 +492,7 @@ class AmsBackend {
     [[nodiscard]] virtual OperationStepModel get_operation_step_model(StepOperationType op) const {
         OperationStepModel model;
         for (const auto& p : toolchange_phase_template(op)) {
-            model.steps.push_back({p.label, -1, p.optional, false});
+            model.steps.push_back({p.label, -1, p.optional, false, std::nullopt});
         }
         return model;
     }
