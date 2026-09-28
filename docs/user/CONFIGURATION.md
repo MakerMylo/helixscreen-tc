@@ -172,7 +172,7 @@ Each printer entry contains all printer-specific settings (connection details, h
 
 ### `sounds_enabled`
 **Type:** boolean
-**Default:** `true`
+**Default:** `false`
 **Description:** Master switch for all sound effects. When `false`, no sounds play (UI or event). This is the "mute" toggle — it silences playback but still initializes the audio backend (see `disable_sound` to prevent initialization entirely).
 
 ### `ui_sounds_enabled`
@@ -188,7 +188,7 @@ Each printer entry contains all printer-specific settings (connection details, h
 
 ### `completion_alert`
 **Type:** integer
-**Default:** `1`
+**Default:** `2`
 **Values:** `0` (Off), `1` (Notification), `2` (Alert)
 **Description:** How HelixScreen notifies you when a print completes or is cancelled (while you're on a different screen):
 - `0` — **Off**: No notification (sound still plays if sounds are enabled)

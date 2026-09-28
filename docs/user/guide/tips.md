@@ -18,7 +18,7 @@
 
 | Problem | Quick Fix |
 |---------|-----------|
-| Touchscreen taps in wrong spot | **Settings > Touch & Input** (shown only when recalibration is needed) |
+| Touchscreen taps in wrong spot | **Settings > Touch & Input > Touch Calibration** |
 | Panel shows "Disconnected" | Check Moonraker is running, network is up |
 | Temperature not changing | Verify heater is enabled in Klipper config |
 | Can't extrude | Heat nozzle above minimum temp first |
@@ -40,7 +40,7 @@ For detailed troubleshooting, see [TROUBLESHOOTING.md](../TROUBLESHOOTING.md).
 | Run a custom macro | Advanced, Macros |
 | Check print history | Advanced, Print History |
 | Change theme | Settings > Appearance > Theme Colors |
-| Fix touch calibration | Settings > Touch & Input (shown for any touchscreen) |
+| Fix touch calibration | Settings > Touch & Input > Touch Calibration |
 
 ---
 

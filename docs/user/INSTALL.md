@@ -621,7 +621,7 @@ A problem reproduced at a higher log level gives far more to work with:
 
 1. Set **Settings > System > Log Level** to **Debug**, or **Trace** for touch or display issues (Trace is very verbose). It takes effect immediately; no restart is needed.
 2. Perform the action that misbehaves.
-3. Send a debug bundle: **Settings > Help & About > Upload Debug Bundle** collects the logs (including everything since startup), strips personal data, and gives you a share code to include in your report. See [Debug Bundles](guide/settings/help-about.md#debug-bundles).
+3. Send a debug bundle: **Settings > Help & About > Upload Debug Bundle** collects the logs (including everything since startup), strips personal data, and gives you a share code to include in your report. See [Debug Bundles](guide/settings/help-about.md#upload-debug-bundle).
 4. Turn the log level back to where it was. Debug and trace generate a lot of output; journald rotates and caps itself on systemd hosts, but the printer-hosted platforms write plain log files that nothing rotates.
 
 ### Common Issues
