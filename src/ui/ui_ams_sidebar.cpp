@@ -325,8 +325,10 @@ void AmsOperationSidebar::init_observers() {
             spdlog::debug("[AmsSidebar] Action changed: {} (prev={})", ams_action_to_string(action),
                           ams_action_to_string(self->prev_ams_action_));
 
-            // Detect LOADING -> IDLE or LOADING -> ERROR for post-load cooling
-            if (self->prev_ams_action_ == AmsAction::LOADING &&
+            // A load ends from its feed or, on a backend that purges, from the
+            // purge: either edge into IDLE / ERROR closes it for post-load cooling.
+            if ((self->prev_ams_action_ == AmsAction::LOADING ||
+                 self->prev_ams_action_ == AmsAction::PURGING) &&
                 (action == AmsAction::IDLE || action == AmsAction::ERROR)) {
                 self->handle_load_complete();
             }
@@ -850,6 +852,16 @@ void AmsOperationSidebar::apply_backend_step_index(int index) {
     }
     spdlog::debug("[AmsSidebar] Backend step index {} (op_type={})", index,
                   static_cast<int>(current_operation_type_));
+    // AmsState publishes the action before the phase, so the action read here
+    // is the one this step arrived with.
+    if (const auto projected = current_step_model_.action_at(index)) {
+        const auto assigned = static_cast<AmsAction>(
+            lv_subject_get_int(AmsState::instance().get_ams_action_subject()));
+        if (*projected != assigned) {
+            spdlog::debug("[AmsSidebar] Step {} projects {} but the backend assigned {}", index,
+                          ams_action_to_string(*projected), ams_action_to_string(assigned));
+        }
+    }
     ui_step_progress_set_current(step_progress_, index);
 
     // Refresh the live "<label> X / Y°C" readout on the live-temp step (declared

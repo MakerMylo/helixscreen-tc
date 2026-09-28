@@ -1091,11 +1091,13 @@ float FilamentPanel::keypad_max_for(helix::HeaterType type, int fallback_deg) {
 void FilamentPanel::handle_nozzle_temp_tap() {
     spdlog::debug("[{}] Opening custom nozzle temperature keypad", get_name());
 
+    const std::string title =
+        helix::ui::temperature::heater_keypad_title(helix::HeaterType::Nozzle);
     ui_keypad_config_t config = {
         .initial_value = static_cast<float>(nozzle_target_ > 0 ? nozzle_target_ : 200),
         .min_value = 0.0f,
         .max_value = keypad_max_for(helix::HeaterType::Nozzle, nozzle_max_temp_),
-        .title_label = lv_tr("Nozzle Temperature"),
+        .title_label = title.c_str(),
         .unit_label = "°C",
         .allow_decimal = false,
         .allow_negative = false,
@@ -1108,11 +1110,12 @@ void FilamentPanel::handle_nozzle_temp_tap() {
 void FilamentPanel::handle_bed_temp_tap() {
     spdlog::debug("[{}] Opening custom bed temperature keypad", get_name());
 
+    const std::string title = helix::ui::temperature::heater_keypad_title(helix::HeaterType::Bed);
     ui_keypad_config_t config = {.initial_value =
                                      static_cast<float>(bed_target_ > 0 ? bed_target_ : 60),
                                  .min_value = 0.0f,
                                  .max_value = keypad_max_for(helix::HeaterType::Bed, bed_max_temp_),
-                                 .title_label = lv_tr("Bed Temperature"),
+                                 .title_label = title.c_str(),
                                  .unit_label = "°C",
                                  .allow_decimal = false,
                                  .allow_negative = false,
@@ -1125,12 +1128,14 @@ void FilamentPanel::handle_bed_temp_tap() {
 void FilamentPanel::handle_chamber_temp_tap() {
     spdlog::debug("[{}] Opening custom chamber temperature keypad", get_name());
 
+    const std::string title =
+        helix::ui::temperature::heater_keypad_title(helix::HeaterType::Chamber);
     ui_keypad_config_t config = {
         .initial_value =
             static_cast<float>(chamber_target_ > 0 ? deci_to_degrees(chamber_target_) : 50),
         .min_value = 0.0f,
         .max_value = keypad_max_for(helix::HeaterType::Chamber, chamber_max_temp_),
-        .title_label = lv_tr("Chamber Temperature"),
+        .title_label = title.c_str(),
         .unit_label = "°C",
         .allow_decimal = false,
         .allow_negative = false,
@@ -2112,8 +2117,15 @@ void FilamentPanel::update_filament_op_buttons() {
     // parked short of the nozzle, and the panel's Unload is always the heated
     // toolhead unload. The cold lane ops (Eject / Recover) live on the AMS
     // context menu, not here.
-    state.unload_available =
-        state.slot_is_loaded || backend->slot_filament_parked_in_toolhead(slot);
+    //
+    // The active-head sentinel adds the one target the narrow lane rule above
+    // cannot answer: filament at the toolhead that no lane claims, where the
+    // backend's unaccounted answer is the only evidence. It enables Unload
+    // only - Load keeps its slot-picker redirect for an unresolved slot.
+    state.unload_available = state.slot_is_loaded ||
+                             backend->slot_filament_parked_in_toolhead(slot) ||
+                             (slot == helix::ui::ACTIVE_HEAD_SLOT &&
+                              backend->toolhead_filament_unaccounted().value_or(false));
     state.unload_is_cold_lane_op = false;
 
     const auto gating = helix::ui::compute_op_button_gating(state);
@@ -3099,10 +3111,12 @@ FilamentPanel::UnloadContext FilamentPanel::current_unload_context() const {
     if (backend) {
         sys = backend->get_system_info();
     }
-    // Only `present` matters to plan_unload; the remaining caps answer the
-    // load-vs-swap question, which unload does not ask.
+    // Only `present` and the unaccounted flag matter to plan_unload; the
+    // remaining caps answer the load-vs-swap question, which unload does not
+    // ask.
     helix::ui::BackendCaps caps;
     caps.present = backend != nullptr;
+    caps.toolhead_unaccounted = backend && backend->toolhead_filament_unaccounted().value_or(false);
 
     const bool loaded = helix::ui::read_unload_target_loaded(backend, sys, slot);
     return {helix::ui::plan_live_unload(caps, slot, loaded), loaded};

@@ -229,9 +229,12 @@ firmware 20260608); `classify_channel_state()` maps each to
 conservative prefix/suffix fallback for unknown future states
 (`src/printer/ams_backend_snapmaker.cpp`). That single classification drives:
 
-- **The operation step bar.** LOAD/manual/preload share a 5-step model
-  (Home -> Select -> Heat -> Feed -> Purge); UNLOAD uses 4 steps ending in Retract; the
-  Heat step shows a live nozzle temperature. The current index is published through the
+- **The operation step bar.** LOAD/manual/preload share a 6-step model in
+  the firmware filament_feed.py's own order (Home -> Select -> Feed -> Heat -> Extrude -> Purge:
+  the module pushes filament to the cold toolhead, then the nozzle heats and the extruder
+  pulls it in). A load whose head is already picked skips Select; manual feed has no
+  Feed and preload stops at Feed. UNLOAD uses 4 steps (Home -> Select -> Heat ->
+  Retract). The Heat step shows a live nozzle temperature. The current index is published through the
   shared `ams_operation_phase` subject, which the sidebar consumes generically
   (`src/printer/ams_backend_snapmaker.cpp`).
 - **The per-tool "loaded at toolhead" latch.** Set on `load_finish`; cleared on
@@ -239,7 +242,10 @@ conservative prefix/suffix fallback for unknown future states
   fail states. This latch — not the motion sensor — is the authority for
   `slot_has_filament_at_toolhead()`, `can_unload_from_toolhead()`, and the NOZZLE path
   segment, because the per-tool encoder fails to drop to false after an unload on
-  current firmware (`include/ams_backend_snapmaker.h#AmsBackendSnapmaker`,
+  current firmware. That switch is still true after an unload because the cut tip stays
+  in the toolhead, so every Unload gate also ORs `slot_filament_parked_in_toolhead()`:
+  Unload stays offered on a just-unloaded head, since a heated unload still has filament
+  to act on (`include/ams_backend_snapmaker.h#AmsBackendSnapmaker`,
   `src/printer/ams_backend_snapmaker.cpp#can_unload_from_toolhead`).
 - **Action lifecycle and errors.** `*_fail` states and `channel_error` tokens surface as
   `AmsAction::ERROR` with a direction-aware message ("No filament in Feeder N. Load

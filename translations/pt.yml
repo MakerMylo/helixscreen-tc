@@ -165,6 +165,7 @@ translations:
   Actions: Ações
   Active: Ativo
   Active Spool: Bobina ativa
+  Actual: Atual
   Adaptive Bed Mesh: Malha da Mesa Adaptativa
   Add: Adicionar
   Add Filament: Adicionar Filamento
@@ -564,6 +565,7 @@ translations:
   Check the PTFE tube along the drag chain for kinks, and the bend where it enters the extruder sensor: Verifique se o tubo PTFE ao longo da esteira está dobrado, e a curva na entrada do sensor do extrusor
   Check the RS-485 cable between printer and CFS: Verifique o cabo RS-485 entre a impressora e o CFS
   Check the buffer unit on the back of the printer: Verifique a unidade de buffer na parte de trás da impressora
+  Check the chips, then save: Confira as etiquetas e salve
   Check the filament path and try again.: Verifique o caminho do filamento e tente
     novamente.
   ? Check the path from the slot to the hub for a tangle or drag. If the slot feeds freely, the hub sensor or the feeder motor may have failed
@@ -777,6 +779,7 @@ translations:
   Could not reach Spoolman at: Não foi possível alcançar o Spoolman em
   Could not read the screw adjustments from the printer: Não foi possível ler os ajustes dos parafusos da impressora
   Could not remove the job from the queue: Não foi possível remover o trabalho da fila
+  Could not reset the printer image tags: Falha ao resetar as marcações da imagem
   Could not resolve printer RFCOMM channel: Não foi possível resolver o canal RFCOMM
     da impressora
   Could not save filament: Não foi possível salvar o filamento
@@ -785,6 +788,7 @@ translations:
   'Could not save the drying state: nothing was heated': 'Não foi possível salvar o estado da secagem: nada foi aquecido'
 
   "Could not save the mesh as '{}': {}": "Não foi possível salvar a malha como '{}': {}"
+  Could not save the printer image tags: Falha ao salvar as marcações da imagem
   Could not start Bluetooth discovery: Não foi possível iniciar a descoberta Bluetooth
   Could not update filaments: Não foi possível atualizar os filamentos
   Could not verify Spoolman status. Moonraker may still be restarting.: Não foi possível
@@ -872,6 +876,7 @@ translations:
   Deploy: Implantar
   Describe the issue (optional): Descreva o problema (opcional)
   Detailed: Detalhado
+  Detect automatically: 'Detectar automaticamente'
   'Detect filament tangles': 'Detectar emaranhados de filamento'
   Detecting plate...: Detectando placa...
   Detecting printer type...: Detectando tipo de impressora...
@@ -1491,6 +1496,7 @@ translations:
   Homing Y...: Posicionando Y...
   Homing Z...: Posicionando Z...
   Homing all axes...: Posicionando todos os eixos...
+  Homing and moving the plate...: 'Posicionando e movendo a mesa...'
   Homing axes...: Posicionando eixos...
   Homing complete: Homing concluído
   'Homing failed: ': 'Falha ao referenciar: '
@@ -1741,6 +1747,7 @@ translations:
   Load: Carregar
   Load Cell: 'Célula de carga'
   Load Cells: 'Células de carga'
+  Load Extruder: 'Carregar extrusor'
   Load Failed: 'Falha ao carregar'
   Load Filament: Carregar Filamento
   Load a filament first before trying to unload: Carregue primeiro filamento antes de tentar descarregar
@@ -1888,6 +1895,7 @@ translations:
     de correia
   Measure belt path frequencies: Medir frequências dos caminhos de correia
   Measure every tool's XYZ offset automatically: Mede o offset XYZ de cada ferramenta automaticamente
+  Measure pressure advance automatically: 'Mede o Pressure Advance automaticamente'
   Measured (shaper off): Medido (shaper desligado)
   Measured filament diameter: Diâmetro medido do filamento
   Measured pressure advance: 'Pressure Advance medido'
@@ -2313,6 +2321,7 @@ translations:
   'Preheat: all {} tools + bed set': 'Pré-aquecer: todas as {} ferramentas + mesa
     configurada'
   'Preheat: {} + bed set': 'Pré-aquecer: {} + mesa configurada'
+  Preload: 'Pré-carregar'
   Preload failed: Falha ao pré-carregar
   Prepared: Preparado
   Preparing: Preparando
@@ -2555,6 +2564,7 @@ translations:
   Recording Mode: Modo de Gravação
   Recover: Recuperar
   Recover MMU state?: Recuperar estado do MMU?
+  Recover State: 'Recuperar estado'
   Recovering AFC system...: Recuperando sistema AFC...
   Recovery failed: Recuperação falhou
   'Recovery failed: ': 'A recuperação falhou: '
@@ -2570,6 +2580,7 @@ translations:
   Refresh Interval: Intervalo de Atualização
   Refresh RFID: 'Atualizar RFID'
   Relative vibration: Vibração relativa
+  Refresh Spoolman: 'Atualizar Spoolman'
   Reheating...: Reaquecendo...
   Release all stepper motors. Position will be lost.: Liberar todos os motores de
     passo. A posição será perdida.
@@ -2598,6 +2609,8 @@ translations:
 
   Remove the spools now?: Retirar os carretéis agora?
 
+  Remove your tags for this image?: Remover suas marcações desta imagem?
+  Remove your tags for this image? Its chips go back to the shipped positions.: Remover suas marcações desta imagem? As etiquetas voltam às posições de fábrica.
   Rename: Renomear
   Rename Fan: Renomear Ventoinha
   Rename Mesh Profile: Renomear Perfil de Malha
@@ -2639,6 +2652,7 @@ translations:
   Reset endless spool failed: 'Falha ao resetar o carretel infinito'
   Reset failed: Falha ao redefinir
   Reset motor run-time counter: 'Resetar o contador de horas de funcionamento do motor'
+  Reset tags: Resetar marcações
   Reset to Default: Restaurar Padrão
   Reset to defaults: Restaurar padrões
   Reset to original values: Restaurar valores originais
@@ -2915,6 +2929,7 @@ translations:
   Set up: Configurar
   Set up your label printer in Settings: Configure sua impressora de etiquetas em
     Configurações
+  Set what is really selected and loaded. Nothing moves.: 'Defina o que está realmente selecionado e carregado. Nada se move.'
   Settings: Configurações
   Settings Snapshot: Captura de Configurações
   Settings reset to defaults. Restarting...: Configurações restauradas para os padrões.
@@ -3144,19 +3159,27 @@ translations:
   'TOGGLE: {}': 'ALTERNAR: {}'
   TOOLS: FERRAMENTAS
   TPU: TPU
+  Tag Parts: Marcar Componentes
+  Tag parts: Marcar componentes
   Takes 3-5 min. Do not interrupt.: Leva 3-5 min. Não interrompa.
   'Tangle sensitivity': 'Sensibilidade a emaranhados'
   Tap + to add: Toque em + para adicionar
   Tap Firmware Restart to recover — on K2 this also bounces the rpi MCU bridge: Toque em Reiniciar firmware para recuperar. Na K2 isso também reinicia a ponte MCU rpi
   Tap again to confirm this orientation: Toque novamente para confirmar esta orientação
+  Tap an empty spot inside the enclosure: Toque em um ponto vazio dentro do gabinete
   Tap an object to exclude it | {} objects ({} excluded): 'Toque em um objeto para excluí-lo | {} objetos ({} excluídos)'
   Tap any tile to open its full controls or toggle its state.: Toque em qualquer bloco para abrir seus controles completos ou alternar seu estado.
   Tap anywhere if this text is right-side up: Toque em qualquer lugar se este texto
     estiver correto
   Tap anywhere to begin: Toque em qualquer lugar para começar
   Tap anywhere to begin calibration: Toque em qualquer lugar para iniciar a calibração
+  Tap the bed's front-left corner: Toque no canto frontal esquerdo da mesa
+  Tap the bed's front-right corner: Toque no canto frontal direito da mesa
   Tap the crosshair (point %1$d of 3) — touch %2$d of %3$d: Toque na mira
     (ponto %1$d de 3) — toque %2$d de %3$d
+  Tap the light: Toque na luz
+  Tap the nozzle tip: Toque na ponta do bico
+  Tap the part cooling fan: Toque na ventoinha de resfriamento da peça
   Tap to assign: Toque para atribuir
   Target: 'Alvo'
   Target Frequency: Frequência alvo
@@ -3241,6 +3264,7 @@ translations:
   The nozzle extrudes a few short test moves in a corner, away from the print area, and repeats until it agrees with itself.: 'O bico faz alguns movimentos curtos de teste num canto, longe da área de impressão, e repete até os valores convergirem.'
   The plate and the spools are still hot. Use gloves.: A mesa e os carretéis ainda estão quentes. Use luvas.
 
+  The plate finishes its current move, but drying will not start.: 'A mesa termina o movimento atual, mas a secagem não vai começar.'
   ? The print is paused. Changing tools now moves the toolhead and swaps the filament at the nozzle. Resume the print once the change finishes.
   : A impressão está pausada. Trocar a ferramenta agora move o cabeçote e troca o
     filamento no bico. Retome a impressão assim que a troca terminar.
@@ -3286,6 +3310,8 @@ translations:
   The unit is already running another operation. Wait for it to finish, or reset the CFS if it stays stuck: A unidade já está executando outra operação. Aguarde a conclusão, ou reinicie o CFS se ele continuar travado
   The unit reported a fault with no further detail. Restart the printer if it repeats: A unidade relatou uma falha sem mais detalhes. Reinicie a impressora se repetir
   The unit's onboard storage has failed. The CFS mainboard needs replacing: O armazenamento interno da unidade falhou. A placa-mãe do CFS precisa ser substituída
+  'The unload did not start: unload by hand, then start again': 'A descarga não começou: descarregue à mão e comece de novo'
+  The unload finishes on its own, but the plate will not move.: 'A descarga termina sozinha, mas a mesa não vai se mover.'
   Theme: Tema
   Theme Colors: Cores do Tema
   Theme Preset: Predefinição de Tema
@@ -3490,6 +3516,7 @@ translations:
   Unavailable: Indisponível
   Unavailable on this printer: Não disponível nesta impressora
   Understanding Results: Entender resultados
+  Undo: Desfazer
   ? "Uneven belt tension causes print artifacts like layer shifts, VFAs (vertical fine artifacts), and ringing.\n\nPluck each belt by hand and this tool listens through the accelerometer to measure the belt's frequency. Matched frequencies mean balanced tension.\n\nOn CoreXY, belts A and B should be within a few Hz of each other."
   : "A tensão desigual da correia causa artefatos de impressão como deslocamentos de camada, VFAs (artefatos verticais finos) e ringing.\n\nBelisque cada correia com a mão e esta ferramenta escuta pelo acelerômetro para medir a frequência da correia. Frequências coincidentes significam tensão equilibrada.\n\nPara CoreXY, as correias A e B devem estar a poucos Hz uma da outra."
   Uninstall: Desinstalar
@@ -3512,6 +3539,7 @@ translations:
   Unknown error: Erro desconhecido
   Unload: Descarregar
   Unload Distance: 'Distância de descarregamento'
+  Unload Extruder: 'Descarregar extrusor'
   Unload Failed: 'Falha ao descarregar'
   Unload Filament: Descarregar Filamento
   'Unload at end': 'Descarregar ao terminar'
@@ -3523,10 +3551,12 @@ translations:
   Unload macro not configured: Macro de descarga não configurado
   Unload the CFS filament before enabling bypass: 'Descarregue o filamento do CFS antes de ativar o bypass'
   Unload...: Descarregar...
+  Unloaded: 'Descarregado'
   Unloading: Descarregando
   Unloading Start Speed: 'Velocidade inicial de descarregamento'
   Unloading before bypass...: Descarregando antes do bypass...
   Unloading filament: 'Descarregando filamento'
+  Unloading filament before drying...: 'Descarregando filamento antes da secagem...'
   Unloading filament...: Descarregando filamento...
   Unloads After Print: Descarrega após a impressão
   Unlock: Desbloquear

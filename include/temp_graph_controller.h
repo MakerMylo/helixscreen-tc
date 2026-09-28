@@ -29,6 +29,8 @@
 
 namespace helix {
 
+class IMoonrakerClient;
+
 // ============================================================================
 // Color palette — shared across all temp graph consumers
 // ============================================================================
@@ -168,6 +170,17 @@ class TempGraphController {
      * that already backfilled at construction. Main-thread only (#1124).
      */
     static void refresh_all_from_history();
+
+    /**
+     * @brief Seed the temperature history from Moonraker's cached samples
+     * (server.temperature_store) and re-backfill every graph.
+     *
+     * Without it graphs fill in live over several minutes (#944). The reply
+     * arrives on the client's thread; the seed itself runs on the main thread.
+     * Call once discovery has created the heater and sensor subjects; it re-runs
+     * on reconnect because discovery does.
+     */
+    static void seed_from_moonraker(IMoonrakerClient& client);
 
     /**
      * @brief Tear down and recreate the graph from scratch

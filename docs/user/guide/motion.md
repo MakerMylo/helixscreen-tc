@@ -13,7 +13,7 @@ Open the Motion screen by tapping **Motion** on the Controls panel. It has two t
 The current **X**, **Y**, and **Z** coordinates sit in the header of the Motion screen (in portrait they form a row just under the header). Each axis letter is dimmed while that axis is not homed yet.
 
 - **Tap a coordinate** to open a number pad and send the toolhead straight to that position. Values outside the printer's range are refused with "Value must be between A and B" - nothing moves. If the axis isn't homed yet, the printer homes it first and then makes the move; no extra confirmation is needed.
-- **Tap the swap icon** next to the coordinates to switch what they show: **Commanded** (the position you asked for) or **Actual** (where the nozzle really is, with z-offset, tool offsets and bed mesh correction applied, updating while it moves). The icon lights up while Actual is shown. The choice is remembered separately for each printer.
+- **Tap the Target / Actual chip** next to the coordinates to switch what they show: **Target** (the position you asked for) or **Actual** (where the nozzle really is, with z-offset, tool offsets and bed mesh correction applied, updating while it moves). The chip names the mode on screen and lights up while Actual is shown. The choice is remembered separately for each printer.
 
 The coordinates are greyed out whenever the printer isn't ready - not connected, or still starting up.
 
@@ -87,9 +87,9 @@ The right column has four Z buttons (two large steps and two small steps, up and
 
 ## Move Tab
 
-The **Move** tab replaces the jog pad with a 3x3 grid of named bed positions, laid out like the bed seen from above: the **Rear** row is at the top, the **Front** row at the bottom, and the columns are **Left**, **Center**, and **Right**. The center position is the middle of the bed; the other eight sit about 10% in from the edges, so the toolhead clears the rails and clamps at the extremes. On delta printers the eight outer positions are spread around a circle instead of a rectangle, matching the round bed.
+The **Move** tab replaces the jog pad with a 3x3 grid of named bed positions, laid out like the bed seen from above: the **Rear** row is at the top, the **Front** row at the bottom, and the columns are **Left**, **Center**, and **Right**. The positions cover the print plate, taken from the probing area in your `[bed_mesh]` config, not the full axis travel: many printers can travel past the plate to reach a purge bucket, a wiper or parked tools, and a named position never sends the head there. The center position is the middle of the plate; the other eight sit about 10% in from its edges. Printers with no `[bed_mesh]` section use the axis travel instead. On delta printers the eight outer positions are spread around a circle instead of a rectangle, matching the round bed.
 
-Tap any position and the toolhead moves there in X and Y only - Z is never changed from this grid. If X or Y isn't homed yet, the printer homes first and then makes the move.
+Tap any position and the toolhead moves there in X and Y only - Z is never changed from this grid. If X or Y isn't homed yet, the printer homes first and then makes the move. The positions and **Park** grey out while the toolhead is moving and come back once it stops, so a second tap can't land mid-move; the Z buttons stay live.
 
 Below the grid are two buttons:
 
@@ -105,7 +105,7 @@ Everything on the Move tab is disabled while a print is running or paused, and w
 **Park** moves the toolhead out of the way to a safe spot.
 
 - If your printer has a parking macro (named `PARK`, `PARK_TOOLHEAD`, or `TOOLHEAD_PARK`), HelixScreen runs it - including any park height and retract it defines.
-- If no macro is found, the toolhead is sent to the front-center of the bed.
+- If no macro is found, the nozzle lifts 10mm (on a printer whose bed moves in Z, the bed drops 10mm), then the toolhead moves over the rear of the plate, centered side to side and 10mm inside its back edge. It never goes past the plate.
 - Any axes that aren't homed yet are homed first.
 
 You can point the button at a different macro in **Settings > Printing > Macro Buttons** (the **Park** row) - see [Macro Buttons](settings/printing.md#macro-buttons).
@@ -147,18 +147,22 @@ A status message confirms when homing begins and when it completes, the same way
 
 ## Leveling on the Controls Panel
 
-The Controls panel's **Calibration & Tools** card includes the same leveling actions as the Motion screen, alongside Bed Mesh and Z Calibration:
+The Controls panel's **Calibration & Tools** card holds the calibration actions your printer supports, in a grid that keeps each label on one line:
 
+- **Bed Mesh** and **Z Calibration**
 - **QGL** - Quad Gantry Level (shown only when `quad_gantry_level` is configured)
 - **Z-Tilt** - Z-Tilt Adjust (shown only when `z_tilt_adjust` is configured)
+- **Tool Offsets** - tool changers with the offset calibration macro, while beta features are on
+- **Pressure Adv.** - printers that can measure pressure advance; see [Pressure Advance](calibration.md#pressure-advance)
+- **Bed Screws** - shown only when `screws_tilt_adjust` is configured
 
-Both are disabled during an active print and while another operation is running.
+QGL and Z-Tilt are disabled during an active print and while another operation is running. **Motors Off** sits beside **Motion** on the Position card, and the light switch is one of the Quick Actions choices (see [Quick Buttons](settings/printing.md#quick-buttons)).
 
 ---
 
 ## Motors Off
 
-The **Motors Off** button appears both on the Move tab and on the Controls panel's **Calibration & Tools** card. It releases all stepper motors, letting you move the gantry and bed by hand. On the Controls panel the button shows a lit motor icon when steppers are energized and a dimmed one when they're already off - when the motors are already disabled, the button is greyed out and does nothing.
+The **Motors Off** button appears both on the Move tab and beside **Motion** on the Controls panel's **Position** card. It releases all stepper motors, letting you move the gantry and bed by hand. On the Controls panel the button shows a lit motor icon when steppers are energized and a dimmed one when they're already off; when the motors are already disabled, the button is greyed out and does nothing.
 
 Tapping it asks for confirmation ("Release all stepper motors. Position will be lost.") before disabling the steppers. The button is disabled while a print is running or paused - and if a print starts while the confirmation is open, confirming then only tells you "Motors stay on while a print is active" and leaves the motors alone.
 

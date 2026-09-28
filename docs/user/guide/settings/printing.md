@@ -12,6 +12,18 @@ Looking for how the printer is *drawn* (toolhead picture, G-code preview, Z butt
 
 ---
 
+## Enclosure
+
+Tells HelixScreen whether your printer is enclosed. It decides whether [Dry Filament on the bed](../temperature.md#drying-filament-on-the-bed) is offered, which needs an enclosure.
+
+| Mode | Behavior |
+|------|----------|
+| **Auto** (default) | Enclosed when your printer model is known to ship enclosed, or when a chamber heater is configured |
+| **Enclosed** | Treat the printer as enclosed. Use this if you enclosed it yourself |
+| **Open frame** | Treat the printer as open. Dry Filament stays hidden |
+
+---
+
 ## Machine Limits
 
 Opens sliders for your printer's speed and acceleration limits. Use them to test or troubleshoot motion. A banner at the top reminds you: **Changes are temporary and reset on printer reboot.** To change the limits for good, edit `printer.cfg`.
@@ -175,19 +187,22 @@ Chooses what HelixScreen's quick buttons run, and which of your Klipper macros i
 
 ### Quick Buttons
 
-These power buttons on the Controls and Filament screens:
+The Controls panel's **Quick Actions** card has four quick buttons under the Home row. Each one runs one of the [standard actions](#standard-macros) below, or toggles the printer light:
 
-| Button | Where it appears | What it runs out of the box |
-|--------|------------------|-----------------------------|
-| **Cooldown** | The Preheat widget (while something is heating) and the Filament screen (always shown, dimmed while nothing is heating) | Turns off the nozzle and bed heaters |
-| **Load Filament** | Filament screen | `LOAD_FILAMENT` |
-| **Unload Filament** | Filament screen | `UNLOAD_FILAMENT` |
-| **Custom Macro 1** | Controls screen | `HELIX_CLEAN_NOZZLE`, labeled "Clean Nozzle" |
-| **Custom Macro 2** | Controls screen | `HELIX_BED_LEVEL_IF_NEEDED`, labeled "Bed Level" |
+| Setting | Default |
+|---------|---------|
+| **Quick Button 1** | Clean Nozzle |
+| **Quick Button 2** | Bed Level |
+| **Quick Button 3** | (Empty) |
+| **Quick Button 4** | (Empty) |
 
-After you preheat from the Preheat widget on the Home or Controls screen, its button changes to **Cool Down** while any heater has a target. Tapping it runs your cooldown macro. Change that macro if cooling down should do more than turn off heaters, such as turning off a chamber heater, bed fans or an air filter.
+- **A standard action** runs whatever macro that action is assigned to under Standard Macros. If your printer has no macro for it, the button shows greyed out.
+- **Light** turns the button into an on/off switch for the printer lights, the same one as the home screen's LED Light widget. It hides while no light is controllable.
+- **(Empty)** hides the button.
 
-Each button has a **label** (what the button says) and **G-code** (what it runs). The G-code can be one command or several lines:
+While a light is controllable and no Quick Button is set to **Light**, the first button you have never set that would otherwise be empty shows the light, and its dropdown reads **Light**. Picking **(Empty)** for that button turns the light off there and keeps it off.
+
+**Cool Down** (on the Preheat widget while a heater is on, and on the Filament panel) runs the `cooldown` G-code from `settings.json`. By default it turns off the extruder and bed heaters. Override it when cooling down should do more, such as turning off a chamber heater or bed fans:
 
 ```
 SET_HEATER_TEMPERATURE HEATER=extruder TARGET=0
@@ -195,7 +210,7 @@ SET_HEATER_TEMPERATURE HEATER=heater_bed TARGET=0
 SET_FAN_SPEED FAN=bed_fan SPEED=0
 ```
 
-To set these in `settings.json` instead, see the [default_macros reference](../../CONFIGURATION.md#default_macros).
+See the [default_macros reference](../../CONFIGURATION.md#default_macros) for the format.
 
 ### Standard Macros
 
