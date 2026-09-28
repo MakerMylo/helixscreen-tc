@@ -202,11 +202,12 @@ what gets saved.
   at a purge area or tool dock past the plate; outer positions sit 10% in from the plate
   edges; on a delta the eight outer positions sit
   on a circle instead. Moves are XY only, homing first when needed, and the whole tab is
-  disabled while a print runs or is paused, or while the printer is not ready. Park and
-  Motors Off sit under the grid.
+  disabled while a print runs or is paused, or while the printer is not ready. The
+  positions and Park grey out while the toolhead is moving, so a second tap cannot land
+  mid-move. Park and Motors Off sit under the grid.
 - **Park parks the toolhead** - it runs the printer's own parking macro when one is
-  detected (`PARK`, `PARK_TOOLHEAD` or `TOOLHEAD_PARK`), otherwise sends the toolhead to
-  front-center; unhomed axes are homed first. Point it at a different macro in
+  detected (`PARK`, `PARK_TOOLHEAD` or `TOOLHEAD_PARK`), otherwise lifts the nozzle 10mm
+  and parks over the rear of the plate, never past it; unhomed axes are homed first. Point it at a different macro in
   Settings > Printing > Macro Buttons.
 - **Tap a coordinate in the header to move there** - a number pad opens for that axis, and
   a value outside the printer's range is refused with the allowed range while nothing

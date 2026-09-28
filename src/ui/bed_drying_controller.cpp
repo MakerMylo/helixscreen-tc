@@ -151,13 +151,11 @@ void BedDryingController::prepare(const Material& material, bool with_appliance,
     // G1 takes G-code coordinates, and the park stays over the plate: travel
     // past it can hold tool docks or a purge bucket.
     const AxisBounds b = state_.get_gcode_axis_bounds();
-    const AxisBounds area =
-        preset_area(state_.get_axis_bounds(), b, api_->hardware().build_volume());
-    const double x = (area.x_min + area.x_max) / 2.0;
-    const double y = area.y_max - kParkMarginMm;
+    const auto park =
+        plate_rear_park(preset_area(state_.get_axis_bounds(), b, api_->hardware().build_volume()));
     std::string move = fmt::format("G90\nG1 Z{:.1f} F600", clearance_z(b.z_max));
-    if (b.has_x && b.has_y) {
-        move += fmt::format("\nG1 X{:.1f} Y{:.1f} F6000", x, y);
+    if (park) {
+        move += fmt::format("\nG1 X{:.1f} Y{:.1f} F6000", *park->x, *park->y);
     }
     move += "\nM400";
 
