@@ -207,9 +207,8 @@ What is shared here:
 - **`build/bin/helix-tests` and `helix-screen` can be one inode across worktrees**: whoever linked last set the bytes both trees run. Compare `stat` inodes before trusting a control run against a sibling tree.
 - **The default `ctl` socket is per-user, not per-instance.** Pin it (box above) or you drive a peer's app and it reports success.
 - **One session per physical printer at a time.** Ask who holds a device before pointing anything at it.
-  Take `device:<name>` around a deploy with an EXIT trap that releases it (box below), and
-  never kill a deploy mid-phase: a half-copied install is worse than a slow one. The name is
-  a role, not a box, so put the device's IP in `--note`.
+  Take `device:<name>` around a deploy with an EXIT-trap release (box below), never kill a
+  deploy mid-phase, and put the device's IP in `--note`: the name is a role, not a box.
 - **Claim before you take a shared resource: `scripts/helix-claim`.** Plain shell, no Claude
   dependency — opencode, a human or a script can use it, and `AGENTS.md` is a symlink to this
   file so every agent reads the same rule.
@@ -221,15 +220,12 @@ What is shared here:
   make -j"$(scripts/helix-claim jobs)"           # a fair -j, not a guess
   scripts/helix-claim run heavy:sweep -- make unit-sweep   # on the board while it runs, released on exit
 
-  # In a script: gate on take's exit code, release only what this pid took.
+  # Gate on take's exit code (never `take; work; release`, never pipe it); release only what you took.
   if scripts/helix-claim take device:k2plus "deploy" --pid $$ --note "192.168.1.50"; then
       trap 'scripts/helix-claim release-if-owned-by $$ device:k2plus' EXIT
       make deploy-k2plus
   fi
   ```
-
-  A refused `take` exits 1 and has to stop the work: never write `take; work; release`, and
-  never pipe `take`, since a pipe discards its exit code.
 
   Resource names for worktrees are **derived, not trusted**: `worktree:main`,
   `worktree:helixscreen` and a bare `worktree:` all resolve to the same tree, matched by
