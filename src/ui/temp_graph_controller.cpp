@@ -195,6 +195,11 @@ void TempGraphController::resume() {
     refresh_from_history();
 }
 
+bool TempGraphController::sample_due(int64_t last_ms, int64_t now_ms) {
+    constexpr int64_t slot_ms = UI_TEMP_GRAPH_SAMPLE_INTERVAL_SEC * 1000;
+    return last_ms == 0 || now_ms / slot_ms != last_ms / slot_ms;
+}
+
 void TempGraphController::refresh_from_history() {
     backfill_history();
 }
@@ -613,7 +618,7 @@ bool TempGraphController::attach_series_observers(size_t i) {
                     auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                                       std::chrono::system_clock::now().time_since_epoch())
                                       .count();
-                    if (now_ms - si.last_update_ms < UI_TEMP_GRAPH_SAMPLE_INTERVAL_SEC * 1000)
+                    if (!sample_due(si.last_update_ms, now_ms))
                         return;
                     si.last_update_ms = now_ms;
 

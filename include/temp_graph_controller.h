@@ -182,6 +182,12 @@ class TempGraphController {
      */
     static void seed_from_moonraker(IMoonrakerClient& client);
 
+    /// True when a live reading at now_ms should reach the chart, given the
+    /// series last pushed at last_ms (0 = never). All series share the same
+    /// SAMPLE_INTERVAL_SEC wall-clock slots, so one status notify carrying the
+    /// nozzle and bed readings costs one chart repaint, not two.
+    static bool sample_due(int64_t last_ms, int64_t now_ms);
+
     /**
      * @brief Tear down and recreate the graph from scratch
      *
@@ -240,7 +246,7 @@ class TempGraphController {
         /// Bound to a stand-in subject because the real one is not discovered
         /// yet; must be re-resolved once discovery publishes the real one.
         bool provisional = false;
-        int64_t last_update_ms = 0; ///< Throttle graph updates to 1Hz per series
+        int64_t last_update_ms = 0; ///< Last push; one per sample slot per series
         ObserverGuard temp_obs;
         ObserverGuard target_obs;
         SubjectLifetime lifetime;
