@@ -165,6 +165,10 @@ class SettingsPanel : public PanelBase {
     // init_subjects() cycle) is safely dropped instead of writing stale data.
     std::unique_ptr<EthernetManager> ethernet_manager_;
     helix::AsyncLifetimeGuard lifetime_;
+    // Last resolved Ethernet state, so the provisional (pre-probe) status on a
+    // later refresh reads "Ethernet" instead of guessing "Not connected" on a
+    // wired-only printer until the async probe lands again.
+    bool last_ethernet_up_ = false;
 
     // Note: Machine Limits overlay is now managed by MachineLimitsOverlay class
     // See ui_settings_machine_limits.h

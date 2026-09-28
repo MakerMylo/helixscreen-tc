@@ -532,7 +532,7 @@ void SettingsPanel::refresh_status_lines() {
 
     lv_subject_copy_string(&settings_status_appearance_subject_,
                            appearance(status_int_subject("settings_dark_mode", 0) != 0,
-                                      DisplaySettingsManager::instance().get_theme_name())
+                                      theme_manager_get_active_theme().name)
                                .c_str());
 
     lv_subject_copy_string(&settings_status_sound_subject_,
@@ -549,25 +549,31 @@ void SettingsPanel::refresh_status_lines() {
     // or a blocking netd Unix-socket round-trip on daemon-managed firmwares —
     // see EthernetBackendNetd), so it must go through get_info_async() rather
     // than a synchronous get_info() call on this (the LVGL) thread. Show the
-    // Wi-Fi-only result immediately so the row is never blank, then upgrade it
-    // to Ethernet from the deferred callback once the probe lands.
+    // last resolved Ethernet state immediately so a wired-only printer does not
+    // read "Not connected" on every return to this panel, then refresh it from
+    // the deferred callback once the probe lands.
     auto wifi = get_wifi_manager();
-    bool wifi_connected = wifi->is_connected();
-    std::string ssid = wifi->get_connected_ssid();
-    lv_subject_copy_string(&settings_status_connection_subject_,
-                           connection(/*ethernet_up=*/false, wifi_connected, ssid).c_str());
+    lv_subject_copy_string(
+        &settings_status_connection_subject_,
+        connection(last_ethernet_up_, wifi->is_connected(), wifi->get_connected_ssid()).c_str());
 
     if (!ethernet_manager_) {
         ethernet_manager_ = std::make_unique<EthernetManager>();
     }
     auto tok = lifetime_.token();
-    ethernet_manager_->get_info_async([this, tok, wifi_connected, ssid](const EthernetInfo& info) {
+    // Only ethernet_up crosses the worker thread. Wi-Fi is read fresh inside
+    // the deferred (main-thread) lambda rather than snapshotted here, so a
+    // probe that lands after a later refresh's own probe still applies the
+    // CURRENT Wi-Fi state instead of overwriting it with a stale one.
+    ethernet_manager_->get_info_async([this, tok](const EthernetInfo& info) {
         bool ethernet_up = info.connected;
-        tok.defer("SettingsPanel::apply_connection_status",
-                  [this, ethernet_up, wifi_connected, ssid]() {
-                      lv_subject_copy_string(&settings_status_connection_subject_,
-                                             connection(ethernet_up, wifi_connected, ssid).c_str());
-                  });
+        tok.defer("SettingsPanel::apply_connection_status", [this, ethernet_up]() {
+            last_ethernet_up_ = ethernet_up;
+            auto wifi = get_wifi_manager();
+            lv_subject_copy_string(
+                &settings_status_connection_subject_,
+                connection(ethernet_up, wifi->is_connected(), wifi->get_connected_ssid()).c_str());
+        });
     });
 
     lv_subject_copy_string(

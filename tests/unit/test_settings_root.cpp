@@ -10,6 +10,7 @@
 #include "printer_state.h"
 #include "settings_manager.h"
 #include "system_settings_manager.h"
+#include "theme_manager.h"
 
 #include <string>
 #include <vector>
@@ -169,6 +170,20 @@ TEST_CASE_METHOD(RootFixture,
     REQUIRE(wait_until([&]() { return status_text(root_, "row_connection") == "Ethernet"; }));
 }
 
+TEST_CASE_METHOD(RootFixture,
+                 "settings root: a later refresh's provisional status remembers Ethernet",
+                 "[settings][settings_root]") {
+    // First refresh resolves via the async probe, latching last_ethernet_up_.
+    get_global_settings_panel().refresh_status_lines();
+    REQUIRE(wait_until([&]() { return status_text(root_, "row_connection") == "Ethernet"; }));
+
+    // A second refresh's synchronous, pre-probe write must already read
+    // "Ethernet" from the remembered state rather than guessing "Not
+    // connected" until its own probe lands.
+    get_global_settings_panel().refresh_status_lines();
+    CHECK(status_text(root_, "row_connection") == "Ethernet");
+}
+
 TEST_CASE_METHOD(RootFixture, "settings root: Updates status reads firmware-managed",
                  "[settings][settings_root]") {
     set_int("updates_firmware_managed", 1);
@@ -179,6 +194,22 @@ TEST_CASE_METHOD(RootFixture, "settings root: Updates status reads firmware-mana
 
 TEST_CASE_METHOD(RootFixture, "settings root: refresh reads every stateful row's source",
                  "[settings][settings_root]") {
+    lv_subject_t* brightness = lv_xml_get_subject(nullptr, "settings_brightness");
+    lv_subject_t* sleep = lv_xml_get_subject(nullptr, "settings_display_sleep");
+    lv_subject_t* has_dimming = lv_xml_get_subject(nullptr, "settings_has_dimming");
+    lv_subject_t* dark_mode = lv_xml_get_subject(nullptr, "settings_dark_mode");
+    lv_subject_t* time_format = lv_xml_get_subject(nullptr, "settings_time_format");
+    REQUIRE(brightness != nullptr);
+    REQUIRE(sleep != nullptr);
+    REQUIRE(has_dimming != nullptr);
+    REQUIRE(dark_mode != nullptr);
+    REQUIRE(time_format != nullptr);
+    const int saved_brightness = lv_subject_get_int(brightness);
+    const int saved_sleep = lv_subject_get_int(sleep);
+    const int saved_has_dimming = lv_subject_get_int(has_dimming);
+    const int saved_dark_mode = lv_subject_get_int(dark_mode);
+    const int saved_time_format = lv_subject_get_int(time_format);
+
     set_int("settings_brightness", 65);
     set_int("settings_display_sleep", 600);
     set_int("settings_has_dimming", 1);
@@ -194,11 +225,41 @@ TEST_CASE_METHOD(RootFixture, "settings root: refresh reads every stateful row's
 
     CHECK(status_text(root_, "row_display") == "65% · sleep 10 min");
     CHECK(status_text(root_, "row_appearance") ==
-          "Dark Mode · " + DisplaySettingsManager::instance().get_theme_name());
+          "Dark Mode · " + theme_manager_get_active_theme().name);
     CHECK(status_text(root_, "row_devices") == "Needs attention");
     CHECK(status_text(root_, "row_language_time") == "English · 24-hour");
 
     lv_subject_set_int(hw_level, saved_hw_level);
+    lv_subject_set_int(brightness, saved_brightness);
+    lv_subject_set_int(sleep, saved_sleep);
+    lv_subject_set_int(has_dimming, saved_has_dimming);
+    lv_subject_set_int(dark_mode, saved_dark_mode);
+    lv_subject_set_int(time_format, saved_time_format);
+}
+
+TEST_CASE_METHOD(RootFixture, "settings root: Appearance status shows the theme's display name",
+                 "[settings][settings_root]") {
+    // "onedark" (filename) vs "One Dark" (name) makes the two forms
+    // unambiguous — a regression back to the filename cannot pass by accident.
+    const helix::ThemeData saved_theme = theme_manager_get_active_theme();
+    const bool saved_dark = theme_manager_is_dark_mode();
+
+    helix::ThemeData onedark = helix::load_theme_from_file("onedark");
+    REQUIRE(onedark.is_valid());
+    REQUIRE(onedark.filename == "onedark");
+    REQUIRE(onedark.name == "One Dark");
+
+    theme_manager_apply_theme(onedark, saved_dark);
+    get_global_settings_panel().refresh_status_lines();
+    process_lvgl(5);
+
+    std::string status = status_text(root_, "row_appearance");
+    CHECK(status.find("One Dark") != std::string::npos);
+    CHECK(status.find("onedark") == std::string::npos);
+
+    theme_manager_apply_theme(saved_theme, saved_dark);
+    get_global_settings_panel().refresh_status_lines();
+    process_lvgl(5);
 }
 
 TEST_CASE("SystemSettingsManager names the current language natively",

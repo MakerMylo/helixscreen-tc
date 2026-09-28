@@ -786,8 +786,13 @@ void UpdateChecker::init_subjects() {
 
     UI_MANAGED_SUBJECT_INT(status_subject_, static_cast<int>(Status::Idle), "update_status",
                            subjects_);
-    UI_MANAGED_SUBJECT_STRING(version_text_subject_, version_text_buf_, "", "update_version_text",
-                              subjects_);
+    // The Check for Updates row binds its status line straight to this subject, so an
+    // empty default renders as a blank second line until the first check completes.
+    // Seed it with the same "Version {}" idle text the settings root shows, reusing
+    // that key rather than a printf-style duplicate.
+    UI_MANAGED_SUBJECT_STRING(version_text_subject_, version_text_buf_,
+                              fmt::format(lv_tr("Version {}"), HELIX_VERSION).c_str(),
+                              "update_version_text", subjects_);
     UI_MANAGED_SUBJECT_STRING(new_version_subject_, new_version_buf_, "", "update_new_version",
                               subjects_);
 
