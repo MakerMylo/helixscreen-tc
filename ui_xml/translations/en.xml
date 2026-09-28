@@ -152,7 +152,6 @@
   <translation tag="Accepted Z Position: {:.3f}" en="Accepted Z Position: {:.3f}"/>
   <translation tag="Accessories" en="Accessories"/>
   <translation tag="Accuracy" en="Accuracy"/>
-  <translation tag="Act:" en="Act:"/>
   <translation tag="Action Required" en="Action Required"/>
   <translation tag="Actions" en="Actions"/>
   <translation tag="Active" en="Active"/>
@@ -203,7 +202,7 @@
   <translation tag="An error occurred during probing." en="An error occurred during probing."/>
   <translation tag="An error occurred while loading filament." en="An error occurred while loading filament."/>
   <translation tag="An error occurred." en="An error occurred."/>
-  <translation tag="An internal error occurred. The app continues running — please send a debug bundle from Settings &gt; About if it repeats." en="An internal error occurred. The app continues running — please send a debug bundle from Settings &gt; About if it repeats."/>
+  <translation tag="An internal error occurred. The app continues running — please send a debug bundle from Settings &gt; Help &amp; About if it repeats." en="An internal error occurred. The app continues running — please send a debug bundle from Settings &gt; Help &amp; About if it repeats."/>
   <translation tag="An unexpected printer error occurred." en="An unexpected printer error occurred."/>
   <translation tag="An update is available" en="An update is available"/>
   <translation tag="Analyzing data..." en="Analyzing data..."/>
@@ -400,7 +399,6 @@
   <translation tag="Calibrate X" en="Calibrate X"/>
   <translation tag="Calibrate Y" en="Calibrate Y"/>
   <translation tag="Calibrate all tools" en="Calibrate all tools"/>
-  <translation tag="Calibrate and tune scroll feel" en="Calibrate and tune scroll feel"/>
   <translation tag="Calibrate input shaping to reduce ringing artifacts in prints" en="Calibrate input shaping to reduce ringing artifacts in prints"/>
   <translation tag="Calibrate tool offsets?" en="Calibrate tool offsets?"/>
   <translation tag="Calibrate your touchscreen for accurate input" en="Calibrate your touchscreen for accurate input"/>
@@ -815,7 +813,6 @@
   <translation tag="Discovered Printers" en="Discovered Printers"/>
   <translation tag="Dismiss" en="Dismiss"/>
   <translation tag="Display" en="Display"/>
-  <translation tag="Display &amp; Sound" en="Display &amp; Sound"/>
   <translation tag="Display Mode" en="Display Mode"/>
   <translation tag="Display Sleep" en="Display Sleep"/>
   <translation tag="Display resolution is very high (%dx%d). Text may appear small. Reduce framebuffer resolution in /boot/firmware/config.txt for best results." en="Display resolution is very high (%dx%d). Text may appear small. Reduce framebuffer resolution in /boot/firmware/config.txt for best results."/>
@@ -883,7 +880,6 @@
   <translation tag="Emergency Stop" en="Emergency Stop"/>
   <translation tag="Emergency Stop?" en="Emergency Stop?"/>
   <translation tag="Emergency stop activated" en="Emergency stop activated"/>
-  <translation tag="Emergency stop and print alerts" en="Emergency stop and print alerts"/>
   <translation tag="Emergency stop failed: not connected" en="Emergency stop failed: not connected"/>
   <translation tag="Empty" en="Empty"/>
   <translation tag="Empty slots disable the associated functionality" en="Empty slots disable the associated functionality"/>
@@ -940,7 +936,6 @@
   <translation tag="Error" en="Error"/>
   <translation tag="Error at chunk {} (code={})" en="Error at chunk {} (code={})"/>
   <translation tag="Error loading file" en="Error loading file"/>
-  <translation tag="Error loading printing tips" en="Error loading printing tips"/>
   <translation tag="Error saving printer settings: {}" en="Error saving printer settings: {}"/>
   <translation tag="Error state" en="Error state"/>
   <translation tag="Error: %s" en="Error: %s"/>
@@ -1270,7 +1265,6 @@
   <translation tag="Hang on, we&apos;ll be right back!" en="Hang on, we&apos;ll be right back!"/>
   <translation tag="Happy Hare MMU" en="Happy Hare MMU"/>
   <translation tag="Hardware" en="Hardware"/>
-  <translation tag="Hardware &amp; Devices" en="Hardware &amp; Devices"/>
   <translation tag="Hardware Health" en="Hardware Health"/>
   <translation tag="Hardware Name" en="Hardware Name"/>
   <translation tag="Hardware Profile" en="Hardware Profile"/>
@@ -1526,7 +1520,6 @@
   <translation tag="Lanes" en="Lanes"/>
   <translation tag="Language" en="Language"/>
   <translation tag="Language &amp; Time" en="Language &amp; Time"/>
-  <translation tag="Language, theme, brightness, and sound" en="Language, theme, brightness, and sound"/>
   <translation tag="Last" en="Last"/>
   <translation tag="Last 7 days" en="Last 7 days"/>
   <translation tag="Last measured" en="Last measured"/>
@@ -1550,6 +1543,7 @@
   <translation tag="Library" en="Library"/>
   <translation tag="Lifetime Print Stats" en="Lifetime Print Stats"/>
   <translation tag="Light" en="Light"/>
+  <translation tag="Light Mode" en="Light Mode"/>
   <translation tag="Light will switch when the current operation finishes" en="Light will switch when the current operation finishes"/>
   <translation tag="Line the nozzle up with the purge chute so purged filament drops straight in." en="Line the nozzle up with the purge chute so purged filament drops straight in."/>
   <translation tag="Line {} calls {}, which this printer treats as an emergency stop. Re-slice the file with a profile made for this printer." en="Line {} calls {}, which this printer treats as an emergency stop. Re-slice the file with a profile made for this printer."/>
@@ -1736,7 +1730,6 @@
   <translation tag="Motors Off" en="Motors Off"/>
   <translation tag="Motors disable failed: {}" en="Motors disable failed: {}"/>
   <translation tag="Motors disabled" en="Motors disabled"/>
-  <translation tag="Motors off" en="Motors off"/>
   <translation tag="Motors stay on while a print is active" en="Motors stay on while a print is active"/>
   <translation tag="Mount" en="Mount"/>
   <translation tag="Move" en="Move"/>
@@ -2128,6 +2121,7 @@
   <translation tag="Print Library" en="Print Library"/>
   <translation tag="Print Outcome" en="Print Outcome"/>
   <translation tag="Print Paused" en="Print Paused"/>
+  <translation tag="Print Settings" en="Print Settings"/>
   <translation tag="Print Speed" en="Print Speed"/>
   <translation tag="Print Start" en="Print Start"/>
   <translation tag="Print Stats" en="Print Stats"/>
@@ -2193,7 +2187,6 @@
   <translation tag="Printer: " en="Printer: "/>
   <translation tag="PrinterIdentify" en="PrinterIdentify"/>
   <translation tag="Printers" en="Printers"/>
-  <translation tag="Printers, Multi-Filament System, fans, sensors, and LEDs" en="Printers, Multi-Filament System, fans, sensors, and LEDs"/>
   <translation tag="Printing" en="Printing"/>
   <translation tag="Printing label..." en="Printing label..."/>
   <translation tag="Printing test label..." en="Printing test label..."/>
@@ -2477,7 +2470,6 @@
   <translation tag="SETTINGS" en="SETTINGS"/>
   <translation tag="SHIPPED IMAGES" en="SHIPPED IMAGES"/>
   <translation tag="SOFTWARE" en="SOFTWARE"/>
-  <translation tag="SOUND" en="SOUND"/>
   <translation tag="STANDARD MACROS" en="STANDARD MACROS"/>
   <translation tag="STARTUP" en="STARTUP"/>
   <translation tag="STOP" en="STOP"/>
@@ -2485,7 +2477,6 @@
   <translation tag="SWITCH SENSORS" en="SWITCH SENSORS"/>
   <translation tag="Safe Mode active. The printer connection is disabled because the app kept crashing on startup. Open Settings to fix the issue, then reboot." en="Safe Mode active. The printer connection is disabled because the app kept crashing on startup. Open Settings to fix the issue, then reboot."/>
   <translation tag="Safety &amp; Alerts" en="Safety &amp; Alerts"/>
-  <translation tag="Safety &amp; Notifications" en="Safety &amp; Notifications"/>
   <translation tag="Same spool in {}? Tap Clear if it is a new one." en="Same spool in {}? Tap Clear if it is a new one."/>
   <translation tag="Sample" en="Sample"/>
   <translation tag="Sample %d/%d" en="Sample %d/%d"/>
@@ -2555,7 +2546,6 @@
   <translation tag="Secondary" en="Secondary"/>
   <translation tag="Section Detail" en="Section Detail"/>
   <translation tag="Security" en="Security"/>
-  <translation tag="Security, network, host, and administration" en="Security, network, host, and administration"/>
   <translation tag="See exactly what data will be sent" en="See exactly what data will be sent"/>
   <translation tag="See the log" en="See the log"/>
   <translation tag="See the quick tour of HelixScreen again" en="See the quick tour of HelixScreen again"/>
@@ -2696,7 +2686,6 @@
   <translation tag="Spaghetti Detection" en="Spaghetti Detection"/>
   <translation tag="Spaghetti detected" en="Spaghetti detected"/>
   <translation tag="Spaghetti detected (%d%%)" en="Spaghetti detected (%d%%)"/>
-  <translation tag="Spaghetti detected — print paused" en="Spaghetti detected — print paused"/>
   <translation tag="Speaker" en="Speaker"/>
   <translation tag="Speed" en="Speed"/>
   <translation tag="Speed Settings" en="Speed Settings"/>
@@ -2792,7 +2781,6 @@
   <translation tag="Success Rate" en="Success Rate"/>
   <translation tag="Success!" en="Success!"/>
   <translation tag="Summary" en="Summary"/>
-  <translation tag="Support, documentation, and version info" en="Support, documentation, and version info"/>
   <translation tag="Suppress periodic &apos;T:.../B:...&apos; status lines" en="Suppress periodic &apos;T:.../B:...&apos; status lines"/>
   <translation tag="Suppress periodic temperature status lines" en="Suppress periodic temperature status lines"/>
   <translation tag="Suppress raw debug output from printer firmware modules" en="Suppress raw debug output from printer firmware modules"/>
@@ -3044,7 +3032,6 @@
   <translation tag="Toolhead Y" en="Toolhead Y"/>
   <translation tag="Toolhead jam" en="Toolhead jam"/>
   <translation tag="Toolhead position unknown" en="Toolhead position unknown"/>
-  <translation tag="Toolhead, G-code, limits, and materials" en="Toolhead, G-code, limits, and materials"/>
   <translation tag="Toolheads" en="Toolheads"/>
   <translation tag="Tools" en="Tools"/>
   <translation tag="Tools Used" en="Tools Used"/>

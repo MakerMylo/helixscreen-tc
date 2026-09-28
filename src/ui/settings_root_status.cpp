@@ -25,7 +25,9 @@ std::string display(int brightness_pct, int sleep_sec, bool has_dimming) {
 }
 
 std::string appearance(bool dark, std::string_view theme_name) {
-    const char* mode = dark ? lv_tr("Dark") : lv_tr("Light");
+    // "Light" is already the LED/lamp key (panel_widget_led.xml, controls_panel.xml);
+    // reusing it here would collide two unrelated meanings under one translation.
+    const char* mode = dark ? lv_tr("Dark") : lv_tr("Light Mode");
     if (theme_name.empty()) {
         return mode;
     }

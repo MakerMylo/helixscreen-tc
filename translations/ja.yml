@@ -153,7 +153,6 @@ translations:
   'Accepted Z Position: {:.3f}': '確定したZ位置: {:.3f}'
   Accessories: 'アクセサリー'
   Accuracy: 精度
-  'Act:': '実測:'
   Action Required: 対応が必要です
   Actions: アクション
   Active: アクティブ
@@ -205,8 +204,8 @@ translations:
   An error occurred while loading filament.: フィラメントの装填中にエラーが発生しました。
   # Source: probe_accuracy_modal.xml:90
   An error occurred.: 'エラーが発生しました。'
-  An internal error occurred. The app continues running — please send a debug bundle from Settings > About if it repeats.: 内部エラーが発生しました。アプリは引き続き動作します。問題が繰り返される場合は、設定
-    > バージョン情報 からデバッグバンドルを送信してください。
+  ? An internal error occurred. The app continues running — please send a debug bundle from Settings > Help & About if it repeats.
+  : 内部エラーが発生しました。アプリは引き続き動作します。問題が繰り返される場合は、設定 > ヘルプと情報 からデバッグバンドルを送信してください。
   An unexpected printer error occurred.: 予期しないプリンターエラーが発生しました。
   An update is available: 更新があります
   Analyzing data...: データを解析中...
@@ -407,7 +406,6 @@ translations:
   Calibrate X: X軸をキャリブレート
   Calibrate Y: Y軸をキャリブレート
   Calibrate all tools: すべてのツールをキャリブレート
-  Calibrate and tune scroll feel: "キャリブレーションとスクロール感度の調整"
   Calibrate input shaping to reduce ringing artifacts in prints: 入力シェーピングをキャリブレートして印刷のリンギングを軽減します
   Calibrate tool offsets?: ツールオフセットをキャリブレートしますか？
   Calibrate your touchscreen for accurate input: タッチスクリーンの入力精度をキャリブレートします
@@ -837,7 +835,6 @@ translations:
   Discovered Printers: 検出されたプリンター
   Dismiss: 閉じる
   Display: ディスプレイ
-  Display & Sound: ディスプレイとサウンド
   Display Mode: 表示モード
   Display Sleep: ディスプレイスリープ
   ? Display resolution is very high (%dx%d). Text may appear small. Reduce framebuffer
@@ -914,7 +911,6 @@ translations:
   Emergency Stop: 緊急停止
   Emergency Stop?: 緊急停止しますか？
   Emergency stop activated: 緊急停止が作動しました
-  Emergency stop and print alerts: 緊急停止と印刷アラート
   'Emergency stop failed: not connected': '緊急停止に失敗: 未接続'
   Empty: 空
   Empty slots disable the associated functionality: 空のスロットは関連機能を無効にします
@@ -973,7 +969,6 @@ translations:
   Error: エラー
   Error at chunk {} (code={}): チャンク {} でエラー (code={})
   Error loading file: ファイルの読み込みエラー
-  Error loading printing tips: 印刷ヒントの読み込みエラー
   'Error saving printer settings: {}': 'プリンター設定の保存エラー: {}'
   Error state: エラー状態
   'Error: %s': 'エラー: %s'
@@ -1315,7 +1310,6 @@ translations:
   Hang on, we'll be right back!: しばらくお待ちください。すぐに戻ります！
   Happy Hare MMU: Happy Hare MMU
   Hardware: ハードウェア
-  Hardware & Devices: ハードウェアとデバイス
   Hardware Health: ハードウェア状態
   Hardware Name: ハードウェア名
   Hardware Profile: ハードウェアプロファイル
@@ -1588,7 +1582,6 @@ translations:
   Lanes: レーン
   Language: 言語
   Language & Time: 言語と時刻
-  Language, theme, brightness, and sound: 言語、テーマ、明るさ、サウンド
   Last: 最後
   # Source: history_dashboard_panel.xml:114
   Last 7 days: '過去7日間'
@@ -1614,6 +1607,7 @@ translations:
   Library: ライブラリ
   Lifetime Print Stats: 累計印刷統計
   Light: ライト
+  Light Mode: ライトモード
   Light will switch when the current operation finishes: 現在の操作が完了したらライトを切り替えます
   Line the nozzle up with the purge chute so purged filament drops straight in.: パージシュートにノズルを合わせ、パージされたフィラメントがまっすぐ落ちるようにします。
 
@@ -1802,7 +1796,6 @@ translations:
   Motors Off: モーターオフ
   'Motors disable failed: {}': 'モーターの無効化に失敗しました: {}'
   Motors disabled: モーターを無効化しました
-  Motors off: ''
   Motors stay on while a print is active: 印刷中はモーターを停止できません
   Mount: 装着
   Move: 移動
@@ -2213,6 +2206,7 @@ translations:
   Print Library: 印刷ライブラリ
   Print Outcome: 印刷結果
   Print Paused: 印刷一時停止
+  Print Settings: 印刷設定
   Print Speed: 印刷速度
   Print Start: 印刷開始
   Print Stats: '印刷統計'
@@ -2281,7 +2275,6 @@ translations:
   'Printer: ': 'プリンター: '
   PrinterIdentify: プリンターを識別
   Printers: プリンター
-  Printers, Multi-Filament System, fans, sensors, and LEDs: プリンター、マルチフィラメントシステム、ファン、センサー、LED
   Printing: 印刷中
   Printing label...: ラベル印刷中...
   Printing test label...: テストラベル印刷中...
@@ -2577,7 +2570,6 @@ translations:
   SETTINGS: 設定
   SHIPPED IMAGES: 付属画像
   SOFTWARE: ソフトウェア
-  SOUND: サウンド
   STANDARD MACROS: 標準マクロ
   STARTUP: 起動
   STOP: 停止
@@ -2587,7 +2579,6 @@ translations:
     on startup. Open Settings to fix the issue, then reboot.
   : セーフモードが有効です。起動時にアプリがクラッシュし続けたため、プリンター接続は無効になっています。設定を開いて問題を解決してから再起動してください。
   Safety & Alerts: 安全とアラート
-  Safety & Notifications: 安全と通知
   Same spool in {}? Tap Clear if it is a new one.: '{} は同じスプールですか？新しいスプールならクリアをタップしてください。'
   Sample: サンプル
   Sample %d/%d: サンプル %d/%d
@@ -2661,7 +2652,6 @@ translations:
   Secondary: セカンダリ
   Section Detail: セクション詳細
   Security: セキュリティ
-  Security, network, host, and administration: セキュリティ、ネットワーク、ホスト、管理
   See exactly what data will be sent: 送信されるデータを正確に確認
   See the log: 'ログを確認してください'
   See the quick tour of HelixScreen again: HelixScreen のクイックツアーをもう一度見る
@@ -2806,7 +2796,6 @@ translations:
   Spaghetti Detection: スパゲッティ検出
   Spaghetti detected: スパゲッティを検出しました
   Spaghetti detected (%d%%): スパゲッティを検出しました（%d%%）
-  Spaghetti detected — print paused: スパゲッティを検出しました — 印刷を一時停止しました
   Speaker: スピーカー
   Speed: 速度
   Speed Settings: '速度設定'
@@ -2908,7 +2897,6 @@ translations:
   Success Rate: 成功率
   Success!: 成功！
   Summary: 概要
-  Support, documentation, and version info: サポート、ドキュメント、バージョン情報
   Suppress periodic 'T:.../B:...' status lines: 定期的な 'T:.../B:...' ステータス行を抑制
   Suppress periodic temperature status lines: 定期的な温度ステータス行を抑制
   Suppress raw debug output from printer firmware modules: プリンターファームウェアモジュールからの生のデバッグ出力を抑制
@@ -3200,7 +3188,6 @@ translations:
   Toolhead Y: ツールヘッド Y
   Toolhead jam: ツールヘッドの詰まり
   Toolhead position unknown: ツールヘッドの位置が不明です
-  Toolhead, G-code, limits, and materials: ツールヘッド、Gコード、制限、材料
   Toolheads: ツールヘッド
   Tools: ツール
   Tools Used: 使用したツール

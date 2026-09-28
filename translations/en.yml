@@ -155,7 +155,6 @@ translations:
   'Accepted Z Position: {:.3f}': 'Accepted Z Position: {:.3f}'
   Accessories: Accessories
   Accuracy: Accuracy
-  'Act:': 'Act:'
   Action Required: Action Required
   Actions: Actions
   Active: Active
@@ -214,9 +213,8 @@ translations:
   An error occurred while loading filament.: An error occurred while loading filament.
   # Source: probe_accuracy_modal.xml:90
   An error occurred.: An error occurred.
-  An internal error occurred. The app continues running — please send a debug bundle from Settings > About if it repeats.: An
-    internal error occurred. The app continues running — please send a debug bundle
-    from Settings > About if it repeats.
+  ? An internal error occurred. The app continues running — please send a debug bundle from Settings > Help & About if it repeats.
+  : An internal error occurred. The app continues running — please send a debug bundle from Settings > Help & About if it repeats.
   An unexpected printer error occurred.: An unexpected printer error occurred.
   An update is available: An update is available
   Analyzing data...: Analyzing data...
@@ -423,7 +421,6 @@ translations:
   Calibrate X: Calibrate X
   Calibrate Y: Calibrate Y
   Calibrate all tools: Calibrate all tools
-  Calibrate and tune scroll feel: Calibrate and tune scroll feel
   Calibrate input shaping to reduce ringing artifacts in prints: Calibrate input shaping
     to reduce ringing artifacts in prints
   Calibrate tool offsets?: Calibrate tool offsets?
@@ -875,7 +872,6 @@ translations:
   Discovered Printers: Discovered Printers
   Dismiss: Dismiss
   Display: Display
-  Display & Sound: Display & Sound
   Display Mode: Display Mode
   Display Sleep: Display Sleep
   ? Display resolution is very high (%dx%d). Text may appear small. Reduce framebuffer
@@ -948,7 +944,6 @@ translations:
   Emergency Stop: Emergency Stop
   Emergency Stop?: Emergency Stop?
   Emergency stop activated: Emergency stop activated
-  Emergency stop and print alerts: Emergency stop and print alerts
   'Emergency stop failed: not connected': 'Emergency stop failed: not connected'
   Empty: Empty
   Empty slots disable the associated functionality: Empty slots disable the associated
@@ -1007,7 +1002,6 @@ translations:
   Error: Error
   Error at chunk {} (code={}): Error at chunk {} (code={})
   Error loading file: Error loading file
-  Error loading printing tips: Error loading printing tips
   'Error saving printer settings: {}': 'Error saving printer settings: {}'
   Error state: Error state
   'Error: %s': 'Error: %s'
@@ -1357,7 +1351,6 @@ translations:
   Hang on, we'll be right back!: Hang on, we'll be right back!
   Happy Hare MMU: Happy Hare MMU
   Hardware: Hardware
-  Hardware & Devices: Hardware & Devices
   Hardware Health: Hardware Health
   Hardware Name: Hardware Name
   Hardware Profile: Hardware Profile
@@ -1650,7 +1643,6 @@ translations:
   Lanes: Lanes
   Language: Language
   Language & Time: Language & Time
-  Language, theme, brightness, and sound: Language, theme, brightness, and sound
   Last: Last
   # Source: history_dashboard_panel.xml:114
   Last 7 days: Last 7 days
@@ -1677,6 +1669,7 @@ translations:
   Library: Library
   Lifetime Print Stats: Lifetime Print Stats
   Light: Light
+  Light Mode: Light Mode
   Light will switch when the current operation finishes: Light will switch when the
     current operation finishes
   Line the nozzle up with the purge chute so purged filament drops straight in.: Line the nozzle up with the purge chute so purged filament drops straight in.
@@ -1871,7 +1864,6 @@ translations:
   Motors Off: Motors Off
   'Motors disable failed: {}': 'Motors disable failed: {}'
   Motors disabled: Motors disabled
-  Motors off: Motors off
   Motors stay on while a print is active: Motors stay on while a print is active
   Mount: Mount
   Move: Move
@@ -2289,6 +2281,7 @@ translations:
   Print Library: Print Library
   Print Outcome: Print Outcome
   Print Paused: Print Paused
+  Print Settings: Print Settings
   Print Speed: Print Speed
   Print Start: Print Start
   Print Stats: Print Stats
@@ -2360,8 +2353,6 @@ translations:
   'Printer: ': 'Printer: '
   PrinterIdentify: PrinterIdentify
   Printers: Printers
-  Printers, Multi-Filament System, fans, sensors, and LEDs: Printers, Multi-Filament
-    System, fans, sensors, and LEDs
   Printing: Printing
   Printing label...: Printing label...
   Printing test label...: Printing test label...
@@ -2667,7 +2658,6 @@ translations:
   SETTINGS: SETTINGS
   SHIPPED IMAGES: SHIPPED IMAGES
   SOFTWARE: SOFTWARE
-  SOUND: SOUND
   STANDARD MACROS: STANDARD MACROS
   STARTUP: STARTUP
   STOP: STOP
@@ -2678,7 +2668,6 @@ translations:
   : Safe Mode active. The printer connection is disabled because the app kept crashing
     on startup. Open Settings to fix the issue, then reboot.
   Safety & Alerts: Safety & Alerts
-  Safety & Notifications: Safety & Notifications
   Same spool in {}? Tap Clear if it is a new one.: Same spool in {}? Tap Clear if it is a new one.
   Sample: Sample
   Sample %d/%d: Sample %d/%d
@@ -2757,7 +2746,6 @@ translations:
   Secondary: Secondary
   Section Detail: Section Detail
   Security: Security
-  Security, network, host, and administration: Security, network, host, and administration
   See exactly what data will be sent: See exactly what data will be sent
   See the log: See the log
   See the quick tour of HelixScreen again: See the quick tour of HelixScreen again
@@ -2916,7 +2904,6 @@ translations:
   Spaghetti Detection: Spaghetti Detection
   Spaghetti detected: Spaghetti detected
   Spaghetti detected (%d%%): Spaghetti detected (%d%%)
-  Spaghetti detected — print paused: Spaghetti detected — print paused
   Speaker: Speaker
   Speed: Speed
   Speed Settings: Speed Settings
@@ -3016,7 +3003,6 @@ translations:
   Success Rate: Success Rate
   Success!: Success!
   Summary: Summary
-  Support, documentation, and version info: Support, documentation, and version info
   Suppress periodic 'T:.../B:...' status lines: Suppress periodic 'T:.../B:...' status
     lines
   Suppress periodic temperature status lines: Suppress periodic temperature status lines
@@ -3333,7 +3319,6 @@ translations:
   Toolhead Y: Toolhead Y
   Toolhead jam: Toolhead jam
   Toolhead position unknown: Toolhead position unknown
-  Toolhead, G-code, limits, and materials: Toolhead, G-code, limits, and materials
   Toolheads: Toolheads
   Tools: Tools
   Tools Used: Tools Used

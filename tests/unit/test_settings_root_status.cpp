@@ -14,7 +14,7 @@ TEST_CASE("status::display", "[settings][root_status]") {
 
 TEST_CASE("status::appearance", "[settings][root_status]") {
     CHECK(status::appearance(true, "Ocean") == "Dark · Ocean");
-    CHECK(status::appearance(false, "Ocean") == "Light · Ocean");
+    CHECK(status::appearance(false, "Ocean") == "Light Mode · Ocean");
     CHECK(status::appearance(true, "") == "Dark");
 }
 

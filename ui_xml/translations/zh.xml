@@ -152,7 +152,6 @@
   <translation tag="Accepted Z Position: {:.3f}" zh="已确认 Z 位置：{:.3f}"/>
   <translation tag="Accessories" zh="配件"/>
   <translation tag="Accuracy" zh="精度"/>
-  <translation tag="Act:" zh="实际："/>
   <translation tag="Action Required" zh="需要操作"/>
   <translation tag="Actions" zh="操作"/>
   <translation tag="Active" zh="活动"/>
@@ -203,7 +202,7 @@
   <translation tag="An error occurred during probing." zh="探测过程中发生错误。"/>
   <translation tag="An error occurred while loading filament." zh="加载耗材时发生错误。"/>
   <translation tag="An error occurred." zh="发生错误。"/>
-  <translation tag="An internal error occurred. The app continues running — please send a debug bundle from Settings &gt; About if it repeats." zh="发生了内部错误。应用程序继续运行 — 如果反复出现，请从设置 &gt; 关于发送调试捆绑包。"/>
+  <translation tag="An internal error occurred. The app continues running — please send a debug bundle from Settings &gt; Help &amp; About if it repeats." zh="发生了内部错误。应用程序继续运行 — 如果反复出现，请从设置 &gt; 帮助与关于发送调试捆绑包。"/>
   <translation tag="An unexpected printer error occurred." zh="发生了意外的打印机错误。"/>
   <translation tag="An update is available" zh="有可用更新"/>
   <translation tag="Analyzing data..." zh="正在分析数据..."/>
@@ -400,7 +399,6 @@
   <translation tag="Calibrate X" zh="校准 X 轴"/>
   <translation tag="Calibrate Y" zh="校准 Y 轴"/>
   <translation tag="Calibrate all tools" zh="校准所有工具"/>
-  <translation tag="Calibrate and tune scroll feel" zh="校准并调整滚动手感"/>
   <translation tag="Calibrate input shaping to reduce ringing artifacts in prints" zh="校准输入整形以减少打印中的振纹"/>
   <translation tag="Calibrate tool offsets?" zh="校准工具偏移？"/>
   <translation tag="Calibrate your touchscreen for accurate input" zh="校准触摸屏以确保输入准确"/>
@@ -815,7 +813,6 @@
   <translation tag="Discovered Printers" zh="已发现的打印机"/>
   <translation tag="Dismiss" zh="忽略"/>
   <translation tag="Display" zh="显示"/>
-  <translation tag="Display &amp; Sound" zh="显示与声音"/>
   <translation tag="Display Mode" zh="显示模式"/>
   <translation tag="Display Sleep" zh="显示休眠"/>
   <translation tag="Display resolution is very high (%dx%d). Text may appear small. Reduce framebuffer resolution in /boot/firmware/config.txt for best results." zh="显示分辨率非常高 (%dx%d)。文本可能显得很小。为获得最佳效果，请在 /boot/firmware/config.txt 中降低帧缓冲分辨率。"/>
@@ -883,7 +880,6 @@
   <translation tag="Emergency Stop" zh="紧急停止"/>
   <translation tag="Emergency Stop?" zh="紧急停止？"/>
   <translation tag="Emergency stop activated" zh="紧急停止已激活"/>
-  <translation tag="Emergency stop and print alerts" zh="紧急停止和打印警报"/>
   <translation tag="Emergency stop failed: not connected" zh="紧急停止失败: 未连接"/>
   <translation tag="Empty" zh="空"/>
   <translation tag="Empty slots disable the associated functionality" zh="空槽位将禁用相关功能"/>
@@ -940,7 +936,6 @@
   <translation tag="Error" zh="错误"/>
   <translation tag="Error at chunk {} (code={})" zh="区块 {} 出错 (code={})"/>
   <translation tag="Error loading file" zh="加载文件出错"/>
-  <translation tag="Error loading printing tips" zh="加载打印提示出错"/>
   <translation tag="Error saving printer settings: {}" zh="保存打印机设置出错: {}"/>
   <translation tag="Error state" zh="错误状态"/>
   <translation tag="Error: %s" zh="错误: %s"/>
@@ -1270,7 +1265,6 @@
   <translation tag="Hang on, we&apos;ll be right back!" zh="请稍候，马上回来！"/>
   <translation tag="Happy Hare MMU" zh="Happy Hare MMU"/>
   <translation tag="Hardware" zh="硬件"/>
-  <translation tag="Hardware &amp; Devices" zh="硬件与设备"/>
   <translation tag="Hardware Health" zh="硬件状态"/>
   <translation tag="Hardware Name" zh="硬件名称"/>
   <translation tag="Hardware Profile" zh="硬件配置"/>
@@ -1526,7 +1520,6 @@
   <translation tag="Lanes" zh="耗材通道"/>
   <translation tag="Language" zh="语言"/>
   <translation tag="Language &amp; Time" zh="语言与时间"/>
-  <translation tag="Language, theme, brightness, and sound" zh="语言、主题、亮度和声音"/>
   <translation tag="Last" zh="最近"/>
   <translation tag="Last 7 days" zh="最近 7 天"/>
   <translation tag="Last measured" zh="上次测量"/>
@@ -1550,6 +1543,7 @@
   <translation tag="Library" zh="库"/>
   <translation tag="Lifetime Print Stats" zh="累计打印统计"/>
   <translation tag="Light" zh="浅色"/>
+  <translation tag="Light Mode" zh="浅色模式"/>
   <translation tag="Light will switch when the current operation finishes" zh="灯光将在当前操作完成后切换"/>
   <translation tag="Line the nozzle up with the purge chute so purged filament drops straight in." zh="将喷嘴对准排料口上方，使排出的料丝垂直落入。"/>
   <translation tag="Line {} calls {}, which this printer treats as an emergency stop. Re-slice the file with a profile made for this printer." zh="第 {} 行调用 {}，此打印机将其视为紧急停止。请使用为此打印机制作的配置重新切片该文件。"/>
@@ -1736,7 +1730,6 @@
   <translation tag="Motors Off" zh="关闭电机"/>
   <translation tag="Motors disable failed: {}" zh="禁用电机失败: {}"/>
   <translation tag="Motors disabled" zh="电机已禁用"/>
-  <translation tag="Motors off"/>
   <translation tag="Motors stay on while a print is active" zh="打印期间电机保持开启"/>
   <translation tag="Mount" zh="装上"/>
   <translation tag="Move" zh="移动"/>
@@ -2128,6 +2121,7 @@
   <translation tag="Print Library" zh="打印库"/>
   <translation tag="Print Outcome" zh="打印结果"/>
   <translation tag="Print Paused" zh="打印已暂停"/>
+  <translation tag="Print Settings" zh="打印设置"/>
   <translation tag="Print Speed" zh="打印速度"/>
   <translation tag="Print Start" zh="打印开始"/>
   <translation tag="Print Stats" zh="打印统计"/>
@@ -2193,7 +2187,6 @@
   <translation tag="Printer: " zh="打印机: "/>
   <translation tag="PrinterIdentify" zh="识别打印机"/>
   <translation tag="Printers" zh="打印机"/>
-  <translation tag="Printers, Multi-Filament System, fans, sensors, and LEDs" zh="打印机、多耗材系统、风扇、传感器和LED"/>
   <translation tag="Printing" zh="正在打印"/>
   <translation tag="Printing label..." zh="正在打印标签..."/>
   <translation tag="Printing test label..." zh="正在打印测试标签..."/>
@@ -2477,7 +2470,6 @@
   <translation tag="SETTINGS" zh="设置"/>
   <translation tag="SHIPPED IMAGES" zh="内置图片"/>
   <translation tag="SOFTWARE" zh="软件"/>
-  <translation tag="SOUND" zh="声音"/>
   <translation tag="STANDARD MACROS" zh="标准宏"/>
   <translation tag="STARTUP" zh="启动"/>
   <translation tag="STOP" zh="停止"/>
@@ -2485,7 +2477,6 @@
   <translation tag="SWITCH SENSORS" zh="开关传感器"/>
   <translation tag="Safe Mode active. The printer connection is disabled because the app kept crashing on startup. Open Settings to fix the issue, then reboot." zh="安全模式已激活。由于应用程序在启动时反复崩溃，打印机连接已被禁用。请打开设置以解决问题，然后重启。"/>
   <translation tag="Safety &amp; Alerts" zh="安全与警报"/>
-  <translation tag="Safety &amp; Notifications" zh="安全与通知"/>
   <translation tag="Same spool in {}? Tap Clear if it is a new one." zh="{} 是同一个料盘吗？如果是新料盘，请点击清除。"/>
   <translation tag="Sample" zh="样本"/>
   <translation tag="Sample %d/%d" zh="样本 %d/%d"/>
@@ -2555,7 +2546,6 @@
   <translation tag="Secondary" zh="次要"/>
   <translation tag="Section Detail" zh="区域详情"/>
   <translation tag="Security" zh="安全"/>
-  <translation tag="Security, network, host, and administration" zh="安全、网络、主机和管理"/>
   <translation tag="See exactly what data will be sent" zh="查看将发送的确切数据"/>
   <translation tag="See the log" zh="请查看日志"/>
   <translation tag="See the quick tour of HelixScreen again" zh="再次查看 HelixScreen 的快速漫游"/>
@@ -2696,7 +2686,6 @@
   <translation tag="Spaghetti Detection" zh="拉丝故障检测"/>
   <translation tag="Spaghetti detected" zh="检测到拉丝故障"/>
   <translation tag="Spaghetti detected (%d%%)" zh="检测到拉丝故障（%d%%）"/>
-  <translation tag="Spaghetti detected — print paused" zh="检测到拉丝故障 — 打印已暂停"/>
   <translation tag="Speaker" zh="扬声器"/>
   <translation tag="Speed" zh="速度"/>
   <translation tag="Speed Settings" zh="速度设置"/>
@@ -2792,7 +2781,6 @@
   <translation tag="Success Rate" zh="成功率"/>
   <translation tag="Success!" zh="成功！"/>
   <translation tag="Summary" zh="摘要"/>
-  <translation tag="Support, documentation, and version info" zh="支持、文档和版本信息"/>
   <translation tag="Suppress periodic &apos;T:.../B:...&apos; status lines" zh="抑制周期性 &apos;T:.../B:...&apos; 状态行"/>
   <translation tag="Suppress periodic temperature status lines" zh="抑制周期性温度状态行"/>
   <translation tag="Suppress raw debug output from printer firmware modules" zh="抑制打印机固件模块的原始调试输出"/>
@@ -3044,7 +3032,6 @@
   <translation tag="Toolhead Y" zh="工具头 Y"/>
   <translation tag="Toolhead jam" zh="工具头堵塞"/>
   <translation tag="Toolhead position unknown" zh="工具头位置未知"/>
-  <translation tag="Toolhead, G-code, limits, and materials" zh="打印头、G代码、限制和材料"/>
   <translation tag="Toolheads" zh="工具头"/>
   <translation tag="Tools" zh="工具"/>
   <translation tag="Tools Used" zh="已使用工具"/>

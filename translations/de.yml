@@ -163,7 +163,6 @@ translations:
   'Accepted Z Position: {:.3f}': 'Akzeptierte Z-Position: {:.3f}'
   Accessories: 'Zubehör'
   Accuracy: Genauigkeit
-  'Act:': 'Ist:'
   Action Required: Aktion erforderlich
   Actions: Aktionen
   Active: Aktiv
@@ -224,9 +223,8 @@ translations:
     aufgetreten.
   # Source: probe_accuracy_modal.xml:90
   An error occurred.: 'Ein Fehler ist aufgetreten.'
-  An internal error occurred. The app continues running — please send a debug bundle from Settings > About if it repeats.: Ein
-    interner Fehler ist aufgetreten. Die App läuft weiter – bitte senden Sie ein Debug-Paket
-    über Einstellungen > Über, falls er erneut auftritt.
+  ? An internal error occurred. The app continues running — please send a debug bundle from Settings > Help & About if it repeats.
+  : Ein interner Fehler ist aufgetreten. Die App läuft weiter – bitte senden Sie ein Debug-Paket über Einstellungen > Hilfe & Über, falls er erneut auftritt.
   An unexpected printer error occurred.: Ein unerwarteter Druckerfehler ist aufgetreten.
   An update is available: Eine Aktualisierung ist verfügbar
   Analyzing data...: Analysiere Daten...
@@ -442,7 +440,6 @@ translations:
   Calibrate X: X kalibrieren
   Calibrate Y: Y kalibrieren
   Calibrate all tools: Alle Werkzeuge kalibrieren
-  Calibrate and tune scroll feel: "Kalibrieren und Scroll-Verhalten einstellen"
   Calibrate input shaping to reduce ringing artifacts in prints: Input Shaping kalibrieren,
     um Ringing-Artefakte im Druck zu reduzieren
   Calibrate tool offsets?: Werkzeug-Offsets kalibrieren?
@@ -912,7 +909,6 @@ translations:
   Discovered Printers: Gefundene Drucker
   Dismiss: Verwerfen
   Display: Anzeige
-  Display & Sound: Anzeige & Ton
   Display Mode: Anzeigemodus
   Display Sleep: Bildschirm-Ruhezustand
   ? Display resolution is very high (%dx%d). Text may appear small. Reduce framebuffer
@@ -991,7 +987,6 @@ translations:
   Emergency Stop: Notaus
   Emergency Stop?: Notaus?
   Emergency stop activated: Notaus aktiviert
-  Emergency stop and print alerts: Notstopp und Druckwarnungen
   'Emergency stop failed: not connected': 'Notaus fehlgeschlagen: nicht verbunden'
   Empty: Leer
   Empty slots disable the associated functionality: Leere Slots deaktivieren die zugehörige
@@ -1053,7 +1048,6 @@ translations:
   Error: Fehler
   Error at chunk {} (code={}): Fehler bei Block {} (code={})
   Error loading file: Fehler beim Laden der Datei
-  Error loading printing tips: Fehler beim Laden der Drucktipps
   'Error saving printer settings: {}': 'Fehler beim Speichern der Druckereinstellungen:
     {}'
   Error state: Fehlerzustand
@@ -1416,7 +1410,6 @@ translations:
   Hang on, we'll be right back!: Einen Moment, wir sind gleich wieder da!
   Happy Hare MMU: Happy Hare MMU
   Hardware: Hardware
-  Hardware & Devices: Hardware & Geräte
   Hardware Health: Hardware-Zustand
   Hardware Name: Hardware-Name
   Hardware Profile: Hardware-Profil
@@ -1718,7 +1711,6 @@ translations:
   Lanes: Spuren
   Language: Sprache
   Language & Time: Sprache & Zeit
-  Language, theme, brightness, and sound: Sprache, Thema, Helligkeit und Ton
   Last: Letzte
   # Source: history_dashboard_panel.xml:114
   Last 7 days: 'Letzte 7 Tage'
@@ -1745,6 +1737,7 @@ translations:
   Library: Bibliothek
   Lifetime Print Stats: Gesamte Druckstatistik
   Light: Hell
+  Light Mode: Hellmodus
   Light will switch when the current operation finishes: Das Licht schaltet sich,
     sobald der aktuelle Vorgang abgeschlossen ist.
   Line the nozzle up with the purge chute so purged filament drops straight in.: Richten Sie die Düse über der Entlüftungsrinne aus, damit das entlüftete Filament direkt hineinfällt.
@@ -1941,7 +1934,6 @@ translations:
   Motors Off: Motoren aus
   'Motors disable failed: {}': 'Motoren deaktivieren fehlgeschlagen: {}'
   Motors disabled: Motoren deaktiviert
-  Motors off: ''
   Motors stay on while a print is active: Motoren bleiben an, solange ein Druck läuft
   Mount: Montieren
   Move: Bewegen
@@ -2368,6 +2360,7 @@ translations:
   Print Library: Druckbibliothek
   Print Outcome: Druckergebnis
   Print Paused: Druck pausiert
+  Print Settings: Druckeinstellungen
   Print Speed: Druckgeschwindigkeit
   Print Start: Druckstart
   Print Stats: 'Druckstatistik'
@@ -2442,8 +2435,6 @@ translations:
   'Printer: ': 'Drucker: '
   PrinterIdentify: Drucker identifizieren
   Printers: Drucker
-  Printers, Multi-Filament System, fans, sensors, and LEDs: Drucker, Multi-Filament-System,
-    Lüfter, Sensoren und LEDs
   Printing: Drucken
   Printing label...: Etikett wird gedruckt...
   Printing test label...: Testetikett wird gedruckt...
@@ -2756,7 +2747,6 @@ translations:
   SETTINGS: EINSTELLUNGEN
   SHIPPED IMAGES: MITGELIEFERTE BILDER
   SOFTWARE: SOFTWARE
-  SOUND: TON
   STANDARD MACROS: STANDARD-MAKROS
   STARTUP: START
   STOP: STOPP
@@ -2768,7 +2758,6 @@ translations:
     beim Start wiederholt abgestürzt ist. Öffnen Sie die Einstellungen, um das Problem
     zu beheben, und starten Sie dann neu.
   Safety & Alerts: Sicherheit & Alarme
-  Safety & Notifications: Sicherheit & Benachrichtigungen
   Same spool in {}? Tap Clear if it is a new one.: 'Dieselbe Spule in {}? Tippen Sie auf Löschen, wenn es eine neue ist.'
   Sample: Messung
   Sample %d/%d: Messung %d/%d
@@ -2850,7 +2839,6 @@ translations:
   Secondary: Sekundär
   Section Detail: Abschnittdetails
   Security: Sicherheit
-  Security, network, host, and administration: Sicherheit, Netzwerk, Host und Verwaltung
   See exactly what data will be sent: Genau sehen, welche Daten gesendet werden
   See the log: 'Details im Protokoll'
   See the quick tour of HelixScreen again: Den Kurzrundgang durch HelixScreen erneut
@@ -3014,7 +3002,6 @@ translations:
   Spaghetti Detection: Spaghetti-Erkennung
   Spaghetti detected: Spaghetti erkannt
   Spaghetti detected (%d%%): Spaghetti erkannt (%d%%)
-  Spaghetti detected — print paused: Spaghetti erkannt – Druck pausiert
   Speaker: Lautsprecher
   Speed: Geschwindigkeit
   Speed Settings: 'Geschwindigkeitseinstellungen'
@@ -3119,7 +3106,6 @@ translations:
   Success Rate: Erfolgsrate
   Success!: Erfolg!
   Summary: Zusammenfassung
-  Support, documentation, and version info: Support, Dokumentation und Versionsinfo
   Suppress periodic 'T:.../B:...' status lines: Periodische 'T:.../B:...'-Statuszeilen
     unterdrücken
   Suppress periodic temperature status lines: Periodische Temperatur-Statuszeilen unterdrücken
@@ -3451,7 +3437,6 @@ translations:
   Toolhead Y: Werkzeugkopf Y
   Toolhead jam: Werkzeugkopf-Stau
   Toolhead position unknown: Werkzeugkopfposition unbekannt
-  Toolhead, G-code, limits, and materials: Druckkopf, G-Code, Grenzen und Materialien
   Toolheads: Werkzeugköpfe
   Tools: Werkzeuge
   Tools Used: Verwendete Werkzeuge

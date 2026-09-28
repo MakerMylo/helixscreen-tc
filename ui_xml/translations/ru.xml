@@ -152,7 +152,6 @@
   <translation tag="Accepted Z Position: {:.3f}" ru="Принятая позиция Z: {:.3f}"/>
   <translation tag="Accessories" ru="Аксессуары"/>
   <translation tag="Accuracy" ru="Точность"/>
-  <translation tag="Act:" ru="Факт:"/>
   <translation tag="Action Required" ru="Требуется действие"/>
   <translation tag="Actions" ru="Действия"/>
   <translation tag="Active" ru="Активно"/>
@@ -203,7 +202,7 @@
   <translation tag="An error occurred during probing." ru="Во время зондирования произошла ошибка."/>
   <translation tag="An error occurred while loading filament." ru="Во время загрузки филамента произошла ошибка."/>
   <translation tag="An error occurred." ru="Произошла ошибка."/>
-  <translation tag="An internal error occurred. The app continues running — please send a debug bundle from Settings &gt; About if it repeats." ru="Произошла внутренняя ошибка. Приложение продолжает работать — отправьте отладочный пакет из «Настройки &gt; О программе», если она повторится."/>
+  <translation tag="An internal error occurred. The app continues running — please send a debug bundle from Settings &gt; Help &amp; About if it repeats." ru="Произошла внутренняя ошибка. Приложение продолжает работать — отправьте отладочный пакет из «Настройки &gt; Помощь и о программе», если она повторится."/>
   <translation tag="An unexpected printer error occurred." ru="Произошла непредвиденная ошибка принтера."/>
   <translation tag="An update is available" ru="Доступно обновление"/>
   <translation tag="Analyzing data..." ru="Анализ данных..."/>
@@ -400,7 +399,6 @@
   <translation tag="Calibrate X" ru="Калибровать X"/>
   <translation tag="Calibrate Y" ru="Калибровать Y"/>
   <translation tag="Calibrate all tools" ru="Калибровать все инструменты"/>
-  <translation tag="Calibrate and tune scroll feel" ru="Калибровка и настройка прокрутки"/>
   <translation tag="Calibrate input shaping to reduce ringing artifacts in prints" ru="Калибровка компенсации вибраций для уменьшения артефактов звона"/>
   <translation tag="Calibrate tool offsets?" ru="Калибровать смещения инструментов?"/>
   <translation tag="Calibrate your touchscreen for accurate input" ru="Калибровка сенсорного экрана для точного ввода"/>
@@ -815,7 +813,6 @@
   <translation tag="Discovered Printers" ru="Обнаруженные принтеры"/>
   <translation tag="Dismiss" ru="Отклонить"/>
   <translation tag="Display" ru="Дисплей"/>
-  <translation tag="Display &amp; Sound" ru="Дисплей и звук"/>
   <translation tag="Display Mode" ru="Режим отображения"/>
   <translation tag="Display Sleep" ru="Спящий режим экрана"/>
   <translation tag="Display resolution is very high (%dx%d). Text may appear small. Reduce framebuffer resolution in /boot/firmware/config.txt for best results." ru="Разрешение дисплея очень высокое (%dx%d). Текст может казаться мелким. Для лучшего результата уменьшите разрешение фреймбуфера в /boot/firmware/config.txt."/>
@@ -883,7 +880,6 @@
   <translation tag="Emergency Stop" ru="Аварийная остановка"/>
   <translation tag="Emergency Stop?" ru="Аварийная остановка?"/>
   <translation tag="Emergency stop activated" ru="Аварийная остановка активирована"/>
-  <translation tag="Emergency stop and print alerts" ru="Аварийная остановка и оповещения печати"/>
   <translation tag="Emergency stop failed: not connected" ru="Аварийная остановка не удалась: нет подключения"/>
   <translation tag="Empty" ru="Пусто"/>
   <translation tag="Empty slots disable the associated functionality" ru="Пустые слоты отключают связанный функционал"/>
@@ -940,7 +936,6 @@
   <translation tag="Error" ru="Ошибка"/>
   <translation tag="Error at chunk {} (code={})" ru="Ошибка в блоке {} (код={})"/>
   <translation tag="Error loading file" ru="Ошибка загрузки файла"/>
-  <translation tag="Error loading printing tips" ru="Ошибка загрузки советов по печати"/>
   <translation tag="Error saving printer settings: {}" ru="Ошибка сохранения настроек принтера: {}"/>
   <translation tag="Error state" ru="Состояние ошибки"/>
   <translation tag="Error: %s" ru="Ошибка: %s"/>
@@ -1270,7 +1265,6 @@
   <translation tag="Hang on, we&apos;ll be right back!" ru="Подождите, мы скоро вернёмся!"/>
   <translation tag="Happy Hare MMU" ru="Happy Hare MMU"/>
   <translation tag="Hardware" ru="Оборудование"/>
-  <translation tag="Hardware &amp; Devices" ru="Оборудование и устройства"/>
   <translation tag="Hardware Health" ru="Состояние оборудования"/>
   <translation tag="Hardware Name" ru="Название оборудования"/>
   <translation tag="Hardware Profile" ru="Профиль оборудования"/>
@@ -1526,7 +1520,6 @@
   <translation tag="Lanes" ru="Каналы"/>
   <translation tag="Language" ru="Язык"/>
   <translation tag="Language &amp; Time" ru="Язык и время"/>
-  <translation tag="Language, theme, brightness, and sound" ru="Язык, тема, яркость и звук"/>
   <translation tag="Last" ru="Последняя"/>
   <translation tag="Last 7 days" ru="Последние 7 дней"/>
   <translation tag="Last measured" ru="Последний замер"/>
@@ -1550,6 +1543,7 @@
   <translation tag="Library" ru="Библиотека"/>
   <translation tag="Lifetime Print Stats" ru="Статистика за всё время"/>
   <translation tag="Light" ru="Подсветка"/>
+  <translation tag="Light Mode" ru="Светлый режим"/>
   <translation tag="Light will switch when the current operation finishes" ru="Подсветка переключится после завершения текущей операции"/>
   <translation tag="Line the nozzle up with the purge chute so purged filament drops straight in." ru="Выровняйте сопло над жёлобом продувки, чтобы продутый филамент падал прямо внутрь."/>
   <translation tag="Line {} calls {}, which this printer treats as an emergency stop. Re-slice the file with a profile made for this printer." ru="Строка {} вызывает {}, что этот принтер считает аварийной остановкой. Нарежьте файл заново с профилем для этого принтера."/>
@@ -1736,7 +1730,6 @@
   <translation tag="Motors Off" ru="Отключить моторы"/>
   <translation tag="Motors disable failed: {}" ru="Ошибка отключения моторов: {}"/>
   <translation tag="Motors disabled" ru="Моторы отключены"/>
-  <translation tag="Motors off"/>
   <translation tag="Motors stay on while a print is active" ru="Моторы остаются включены во время печати"/>
   <translation tag="Mount" ru="Установить"/>
   <translation tag="Move" ru="Двигать"/>
@@ -2128,6 +2121,7 @@
   <translation tag="Print Library" ru="Библиотека печати"/>
   <translation tag="Print Outcome" ru="Результат печати"/>
   <translation tag="Print Paused" ru="Печать приостановлена"/>
+  <translation tag="Print Settings" ru="Настройки печати"/>
   <translation tag="Print Speed" ru="Скорость печати"/>
   <translation tag="Print Start" ru="Начало печати"/>
   <translation tag="Print Stats" ru="Статистика печати"/>
@@ -2193,7 +2187,6 @@
   <translation tag="Printer: " ru="Принтер: "/>
   <translation tag="PrinterIdentify" ru="Определить принтер"/>
   <translation tag="Printers" ru="Принтеры"/>
-  <translation tag="Printers, Multi-Filament System, fans, sensors, and LEDs" ru="Принтеры, мультифиламентная система, вентиляторы, датчики и светодиоды"/>
   <translation tag="Printing" ru="Печать"/>
   <translation tag="Printing label..." ru="Печать этикетки..."/>
   <translation tag="Printing test label..." ru="Печать тестовой этикетки..."/>
@@ -2477,7 +2470,6 @@
   <translation tag="SETTINGS" ru="НАСТРОЙКИ"/>
   <translation tag="SHIPPED IMAGES" ru="ВСТРОЕННЫЕ ИЗОБРАЖЕНИЯ"/>
   <translation tag="SOFTWARE" ru="ПО"/>
-  <translation tag="SOUND" ru="ЗВУК"/>
   <translation tag="STANDARD MACROS" ru="СТАНДАРТНЫЕ МАКРОСЫ"/>
   <translation tag="STARTUP" ru="ЗАПУСК"/>
   <translation tag="STOP" ru="СТОП"/>
@@ -2485,7 +2477,6 @@
   <translation tag="SWITCH SENSORS" ru="КОНЦЕВЫЕ ДАТЧИКИ"/>
   <translation tag="Safe Mode active. The printer connection is disabled because the app kept crashing on startup. Open Settings to fix the issue, then reboot." ru="Активен безопасный режим. Подключение к принтеру отключено, так как приложение постоянно аварийно завершалось при запуске. Откройте настройки, чтобы устранить проблему, затем перезагрузите."/>
   <translation tag="Safety &amp; Alerts" ru="Безопасность и оповещения"/>
-  <translation tag="Safety &amp; Notifications" ru="Безопасность и уведомления"/>
   <translation tag="Same spool in {}? Tap Clear if it is a new one." ru="Та же катушка в {}? Нажмите «Очистить», если это новая."/>
   <translation tag="Sample" ru="Образец"/>
   <translation tag="Sample %d/%d" ru="Образец %d/%d"/>
@@ -2555,7 +2546,6 @@
   <translation tag="Secondary" ru="Вторичный"/>
   <translation tag="Section Detail" ru="Детали раздела"/>
   <translation tag="Security" ru="Безопасность"/>
-  <translation tag="Security, network, host, and administration" ru="Безопасность, сеть, хост и администрирование"/>
   <translation tag="See exactly what data will be sent" ru="Посмотрите, какие именно данные будут отправлены"/>
   <translation tag="See the log" ru="Подробности в журнале"/>
   <translation tag="See the quick tour of HelixScreen again" ru="Посмотреть краткий тур по HelixScreen снова"/>
@@ -2696,7 +2686,6 @@
   <translation tag="Spaghetti Detection" ru="Обнаружение «спагетти»"/>
   <translation tag="Spaghetti detected" ru="Обнаружены «спагетти»"/>
   <translation tag="Spaghetti detected (%d%%)" ru="Обнаружены «спагетти» (%d%%)"/>
-  <translation tag="Spaghetti detected — print paused" ru="Обнаружены «спагетти» — печать приостановлена"/>
   <translation tag="Speaker" ru="Динамик"/>
   <translation tag="Speed" ru="Скорость"/>
   <translation tag="Speed Settings" ru="Настройки скорости"/>
@@ -2792,7 +2781,6 @@
   <translation tag="Success Rate" ru="Процент успеха"/>
   <translation tag="Success!" ru="Успешно!"/>
   <translation tag="Summary" ru="Сводка"/>
-  <translation tag="Support, documentation, and version info" ru="Поддержка, документация и информация о версии"/>
   <translation tag="Suppress periodic &apos;T:.../B:...&apos; status lines" ru="Скрывать периодические строки статуса &apos;T:.../B:...&apos;"/>
   <translation tag="Suppress periodic temperature status lines" ru="Скрывать периодические строки статуса температуры"/>
   <translation tag="Suppress raw debug output from printer firmware modules" ru="Скрывать отладочный вывод модулей прошивки принтера"/>
@@ -3044,7 +3032,6 @@
   <translation tag="Toolhead Y" ru="Печатающая головка Y"/>
   <translation tag="Toolhead jam" ru="Замятие в печатающей головке"/>
   <translation tag="Toolhead position unknown" ru="Положение печатающей головки неизвестно"/>
-  <translation tag="Toolhead, G-code, limits, and materials" ru="Печатающая головка, G-code, лимиты и материалы"/>
   <translation tag="Toolheads" ru="Печатающие головки"/>
   <translation tag="Tools" ru="Инструменты"/>
   <translation tag="Tools Used" ru="Использовано инструментов"/>

@@ -152,7 +152,6 @@
   <translation tag="Accepted Z Position: {:.3f}" ja="確定したZ位置: {:.3f}"/>
   <translation tag="Accessories" ja="アクセサリー"/>
   <translation tag="Accuracy" ja="精度"/>
-  <translation tag="Act:" ja="実測:"/>
   <translation tag="Action Required" ja="対応が必要です"/>
   <translation tag="Actions" ja="アクション"/>
   <translation tag="Active" ja="アクティブ"/>
@@ -203,7 +202,7 @@
   <translation tag="An error occurred during probing." ja="プローブ中にエラーが発生しました。"/>
   <translation tag="An error occurred while loading filament." ja="フィラメントの装填中にエラーが発生しました。"/>
   <translation tag="An error occurred." ja="エラーが発生しました。"/>
-  <translation tag="An internal error occurred. The app continues running — please send a debug bundle from Settings &gt; About if it repeats." ja="内部エラーが発生しました。アプリは引き続き動作します。問題が繰り返される場合は、設定 &gt; バージョン情報 からデバッグバンドルを送信してください。"/>
+  <translation tag="An internal error occurred. The app continues running — please send a debug bundle from Settings &gt; Help &amp; About if it repeats." ja="内部エラーが発生しました。アプリは引き続き動作します。問題が繰り返される場合は、設定 &gt; ヘルプと情報 からデバッグバンドルを送信してください。"/>
   <translation tag="An unexpected printer error occurred." ja="予期しないプリンターエラーが発生しました。"/>
   <translation tag="An update is available" ja="更新があります"/>
   <translation tag="Analyzing data..." ja="データを解析中..."/>
@@ -400,7 +399,6 @@
   <translation tag="Calibrate X" ja="X軸をキャリブレート"/>
   <translation tag="Calibrate Y" ja="Y軸をキャリブレート"/>
   <translation tag="Calibrate all tools" ja="すべてのツールをキャリブレート"/>
-  <translation tag="Calibrate and tune scroll feel" ja="キャリブレーションとスクロール感度の調整"/>
   <translation tag="Calibrate input shaping to reduce ringing artifacts in prints" ja="入力シェーピングをキャリブレートして印刷のリンギングを軽減します"/>
   <translation tag="Calibrate tool offsets?" ja="ツールオフセットをキャリブレートしますか？"/>
   <translation tag="Calibrate your touchscreen for accurate input" ja="タッチスクリーンの入力精度をキャリブレートします"/>
@@ -815,7 +813,6 @@
   <translation tag="Discovered Printers" ja="検出されたプリンター"/>
   <translation tag="Dismiss" ja="閉じる"/>
   <translation tag="Display" ja="ディスプレイ"/>
-  <translation tag="Display &amp; Sound" ja="ディスプレイとサウンド"/>
   <translation tag="Display Mode" ja="表示モード"/>
   <translation tag="Display Sleep" ja="ディスプレイスリープ"/>
   <translation tag="Display resolution is very high (%dx%d). Text may appear small. Reduce framebuffer resolution in /boot/firmware/config.txt for best results." ja="ディスプレイ解像度が非常に高くなっています (%dx%d)。テキストが小さく表示される場合があります。最良の結果を得るには、/boot/firmware/config.txt でフレームバッファ解像度を下げてください。"/>
@@ -883,7 +880,6 @@
   <translation tag="Emergency Stop" ja="緊急停止"/>
   <translation tag="Emergency Stop?" ja="緊急停止しますか？"/>
   <translation tag="Emergency stop activated" ja="緊急停止が作動しました"/>
-  <translation tag="Emergency stop and print alerts" ja="緊急停止と印刷アラート"/>
   <translation tag="Emergency stop failed: not connected" ja="緊急停止に失敗: 未接続"/>
   <translation tag="Empty" ja="空"/>
   <translation tag="Empty slots disable the associated functionality" ja="空のスロットは関連機能を無効にします"/>
@@ -940,7 +936,6 @@
   <translation tag="Error" ja="エラー"/>
   <translation tag="Error at chunk {} (code={})" ja="チャンク {} でエラー (code={})"/>
   <translation tag="Error loading file" ja="ファイルの読み込みエラー"/>
-  <translation tag="Error loading printing tips" ja="印刷ヒントの読み込みエラー"/>
   <translation tag="Error saving printer settings: {}" ja="プリンター設定の保存エラー: {}"/>
   <translation tag="Error state" ja="エラー状態"/>
   <translation tag="Error: %s" ja="エラー: %s"/>
@@ -1270,7 +1265,6 @@
   <translation tag="Hang on, we&apos;ll be right back!" ja="しばらくお待ちください。すぐに戻ります！"/>
   <translation tag="Happy Hare MMU" ja="Happy Hare MMU"/>
   <translation tag="Hardware" ja="ハードウェア"/>
-  <translation tag="Hardware &amp; Devices" ja="ハードウェアとデバイス"/>
   <translation tag="Hardware Health" ja="ハードウェア状態"/>
   <translation tag="Hardware Name" ja="ハードウェア名"/>
   <translation tag="Hardware Profile" ja="ハードウェアプロファイル"/>
@@ -1526,7 +1520,6 @@
   <translation tag="Lanes" ja="レーン"/>
   <translation tag="Language" ja="言語"/>
   <translation tag="Language &amp; Time" ja="言語と時刻"/>
-  <translation tag="Language, theme, brightness, and sound" ja="言語、テーマ、明るさ、サウンド"/>
   <translation tag="Last" ja="最後"/>
   <translation tag="Last 7 days" ja="過去7日間"/>
   <translation tag="Last measured" ja="前回の測定値"/>
@@ -1550,6 +1543,7 @@
   <translation tag="Library" ja="ライブラリ"/>
   <translation tag="Lifetime Print Stats" ja="累計印刷統計"/>
   <translation tag="Light" ja="ライト"/>
+  <translation tag="Light Mode" ja="ライトモード"/>
   <translation tag="Light will switch when the current operation finishes" ja="現在の操作が完了したらライトを切り替えます"/>
   <translation tag="Line the nozzle up with the purge chute so purged filament drops straight in." ja="パージシュートにノズルを合わせ、パージされたフィラメントがまっすぐ落ちるようにします。"/>
   <translation tag="Line {} calls {}, which this printer treats as an emergency stop. Re-slice the file with a profile made for this printer." ja="{} 行目で {} を実行します。このプリンターでは緊急停止とみなされます。このプリンター用のプロファイルでファイルを再スライスしてください。"/>
@@ -1736,7 +1730,6 @@
   <translation tag="Motors Off" ja="モーターオフ"/>
   <translation tag="Motors disable failed: {}" ja="モーターの無効化に失敗しました: {}"/>
   <translation tag="Motors disabled" ja="モーターを無効化しました"/>
-  <translation tag="Motors off"/>
   <translation tag="Motors stay on while a print is active" ja="印刷中はモーターを停止できません"/>
   <translation tag="Mount" ja="装着"/>
   <translation tag="Move" ja="移動"/>
@@ -2128,6 +2121,7 @@
   <translation tag="Print Library" ja="印刷ライブラリ"/>
   <translation tag="Print Outcome" ja="印刷結果"/>
   <translation tag="Print Paused" ja="印刷一時停止"/>
+  <translation tag="Print Settings" ja="印刷設定"/>
   <translation tag="Print Speed" ja="印刷速度"/>
   <translation tag="Print Start" ja="印刷開始"/>
   <translation tag="Print Stats" ja="印刷統計"/>
@@ -2193,7 +2187,6 @@
   <translation tag="Printer: " ja="プリンター: "/>
   <translation tag="PrinterIdentify" ja="プリンターを識別"/>
   <translation tag="Printers" ja="プリンター"/>
-  <translation tag="Printers, Multi-Filament System, fans, sensors, and LEDs" ja="プリンター、マルチフィラメントシステム、ファン、センサー、LED"/>
   <translation tag="Printing" ja="印刷中"/>
   <translation tag="Printing label..." ja="ラベル印刷中..."/>
   <translation tag="Printing test label..." ja="テストラベル印刷中..."/>
@@ -2477,7 +2470,6 @@
   <translation tag="SETTINGS" ja="設定"/>
   <translation tag="SHIPPED IMAGES" ja="付属画像"/>
   <translation tag="SOFTWARE" ja="ソフトウェア"/>
-  <translation tag="SOUND" ja="サウンド"/>
   <translation tag="STANDARD MACROS" ja="標準マクロ"/>
   <translation tag="STARTUP" ja="起動"/>
   <translation tag="STOP" ja="停止"/>
@@ -2485,7 +2477,6 @@
   <translation tag="SWITCH SENSORS" ja="スイッチセンサー"/>
   <translation tag="Safe Mode active. The printer connection is disabled because the app kept crashing on startup. Open Settings to fix the issue, then reboot." ja="セーフモードが有効です。起動時にアプリがクラッシュし続けたため、プリンター接続は無効になっています。設定を開いて問題を解決してから再起動してください。"/>
   <translation tag="Safety &amp; Alerts" ja="安全とアラート"/>
-  <translation tag="Safety &amp; Notifications" ja="安全と通知"/>
   <translation tag="Same spool in {}? Tap Clear if it is a new one." ja="{} は同じスプールですか？新しいスプールならクリアをタップしてください。"/>
   <translation tag="Sample" ja="サンプル"/>
   <translation tag="Sample %d/%d" ja="サンプル %d/%d"/>
@@ -2555,7 +2546,6 @@
   <translation tag="Secondary" ja="セカンダリ"/>
   <translation tag="Section Detail" ja="セクション詳細"/>
   <translation tag="Security" ja="セキュリティ"/>
-  <translation tag="Security, network, host, and administration" ja="セキュリティ、ネットワーク、ホスト、管理"/>
   <translation tag="See exactly what data will be sent" ja="送信されるデータを正確に確認"/>
   <translation tag="See the log" ja="ログを確認してください"/>
   <translation tag="See the quick tour of HelixScreen again" ja="HelixScreen のクイックツアーをもう一度見る"/>
@@ -2696,7 +2686,6 @@
   <translation tag="Spaghetti Detection" ja="スパゲッティ検出"/>
   <translation tag="Spaghetti detected" ja="スパゲッティを検出しました"/>
   <translation tag="Spaghetti detected (%d%%)" ja="スパゲッティを検出しました（%d%%）"/>
-  <translation tag="Spaghetti detected — print paused" ja="スパゲッティを検出しました — 印刷を一時停止しました"/>
   <translation tag="Speaker" ja="スピーカー"/>
   <translation tag="Speed" ja="速度"/>
   <translation tag="Speed Settings" ja="速度設定"/>
@@ -2792,7 +2781,6 @@
   <translation tag="Success Rate" ja="成功率"/>
   <translation tag="Success!" ja="成功！"/>
   <translation tag="Summary" ja="概要"/>
-  <translation tag="Support, documentation, and version info" ja="サポート、ドキュメント、バージョン情報"/>
   <translation tag="Suppress periodic &apos;T:.../B:...&apos; status lines" ja="定期的な &apos;T:.../B:...&apos; ステータス行を抑制"/>
   <translation tag="Suppress periodic temperature status lines" ja="定期的な温度ステータス行を抑制"/>
   <translation tag="Suppress raw debug output from printer firmware modules" ja="プリンターファームウェアモジュールからの生のデバッグ出力を抑制"/>
@@ -3044,7 +3032,6 @@
   <translation tag="Toolhead Y" ja="ツールヘッド Y"/>
   <translation tag="Toolhead jam" ja="ツールヘッドの詰まり"/>
   <translation tag="Toolhead position unknown" ja="ツールヘッドの位置が不明です"/>
-  <translation tag="Toolhead, G-code, limits, and materials" ja="ツールヘッド、Gコード、制限、材料"/>
   <translation tag="Toolheads" ja="ツールヘッド"/>
   <translation tag="Tools" ja="ツール"/>
   <translation tag="Tools Used" ja="使用したツール"/>

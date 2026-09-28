@@ -4429,7 +4429,8 @@ int Application::main_loop() {
                 ToastManager::instance().show(
                     ToastSeverity::ERROR,
                     lv_tr("An internal error occurred. The app continues running — "
-                          "please send a debug bundle from Settings > About if it repeats."),
+                          "please send a debug bundle from Settings > Help & About if it "
+                          "repeats."),
                     8000);
             } catch (...) {
                 // Toast subsystem itself in trouble — keep running anyway.

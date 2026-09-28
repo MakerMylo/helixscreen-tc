@@ -158,7 +158,6 @@ translations:
   'Accepted Z Position: {:.3f}': 'Принятая позиция Z: {:.3f}'
   Accessories: 'Аксессуары'
   Accuracy: Точность
-  'Act:': 'Факт:'
   Action Required: Требуется действие
   Actions: Действия
   Active: Активно
@@ -217,9 +216,8 @@ translations:
     ошибка.
   # Source: probe_accuracy_modal.xml:90
   An error occurred.: 'Произошла ошибка.'
-  An internal error occurred. The app continues running — please send a debug bundle from Settings > About if it repeats.: Произошла
-    внутренняя ошибка. Приложение продолжает работать — отправьте отладочный пакет
-    из «Настройки > О программе», если она повторится.
+  ? An internal error occurred. The app continues running — please send a debug bundle from Settings > Help & About if it repeats.
+  : Произошла внутренняя ошибка. Приложение продолжает работать — отправьте отладочный пакет из «Настройки > Помощь и о программе», если она повторится.
   An unexpected printer error occurred.: Произошла непредвиденная ошибка принтера.
   An update is available: Доступно обновление
   Analyzing data...: Анализ данных...
@@ -430,7 +428,6 @@ translations:
   Calibrate X: Калибровать X
   Calibrate Y: Калибровать Y
   Calibrate all tools: Калибровать все инструменты
-  Calibrate and tune scroll feel: "Калибровка и настройка прокрутки"
   Calibrate input shaping to reduce ringing artifacts in prints: Калибровка компенсации
     вибраций для уменьшения артефактов звона
   Calibrate tool offsets?: Калибровать смещения инструментов?
@@ -895,7 +892,6 @@ translations:
   Discovered Printers: Обнаруженные принтеры
   Dismiss: Отклонить
   Display: Дисплей
-  Display & Sound: Дисплей и звук
   Display Mode: Режим отображения
   Display Sleep: Спящий режим экрана
   ? Display resolution is very high (%dx%d). Text may appear small. Reduce framebuffer
@@ -974,7 +970,6 @@ translations:
   Emergency Stop: Аварийная остановка
   Emergency Stop?: Аварийная остановка?
   Emergency stop activated: Аварийная остановка активирована
-  Emergency stop and print alerts: Аварийная остановка и оповещения печати
   'Emergency stop failed: not connected': 'Аварийная остановка не удалась: нет подключения'
   Empty: Пусто
   Empty slots disable the associated functionality: Пустые слоты отключают связанный
@@ -1035,7 +1030,6 @@ translations:
   Error: Ошибка
   Error at chunk {} (code={}): Ошибка в блоке {} (код={})
   Error loading file: Ошибка загрузки файла
-  Error loading printing tips: Ошибка загрузки советов по печати
   'Error saving printer settings: {}': 'Ошибка сохранения настроек принтера: {}'
   Error state: Состояние ошибки
   'Error: %s': 'Ошибка: %s'
@@ -1390,7 +1384,6 @@ translations:
   Hang on, we'll be right back!: Подождите, мы скоро вернёмся!
   Happy Hare MMU: Happy Hare MMU
   Hardware: Оборудование
-  Hardware & Devices: Оборудование и устройства
   Hardware Health: Состояние оборудования
   Hardware Name: Название оборудования
   Hardware Profile: Профиль оборудования
@@ -1689,7 +1682,6 @@ translations:
   Lanes: Каналы
   Language: Язык
   Language & Time: Язык и время
-  Language, theme, brightness, and sound: Язык, тема, яркость и звук
   Last: Последняя
   # Source: history_dashboard_panel.xml:114
   Last 7 days: 'Последние 7 дней'
@@ -1717,6 +1709,7 @@ translations:
   Library: Библиотека
   Lifetime Print Stats: Статистика за всё время
   Light: Подсветка
+  Light Mode: Светлый режим
   Light will switch when the current operation finishes: Подсветка переключится после
     завершения текущей операции
   Line the nozzle up with the purge chute so purged filament drops straight in.: Выровняйте сопло над жёлобом продувки, чтобы продутый филамент падал прямо внутрь.
@@ -1912,7 +1905,6 @@ translations:
   Motors Off: Отключить моторы
   'Motors disable failed: {}': 'Ошибка отключения моторов: {}'
   Motors disabled: Моторы отключены
-  Motors off: ''
   Motors stay on while a print is active: Моторы остаются включены во время печати
   Mount: Установить
   Move: Двигать
@@ -2336,6 +2328,7 @@ translations:
   Print Library: Библиотека печати
   Print Outcome: Результат печати
   Print Paused: Печать приостановлена
+  Print Settings: Настройки печати
   Print Speed: Скорость печати
   Print Start: Начало печати
   Print Stats: 'Статистика печати'
@@ -2409,8 +2402,6 @@ translations:
   'Printer: ': 'Принтер: '
   PrinterIdentify: Определить принтер
   Printers: Принтеры
-  Printers, Multi-Filament System, fans, sensors, and LEDs: Принтеры, мультифиламентная
-    система, вентиляторы, датчики и светодиоды
   Printing: Печать
   Printing label...: Печать этикетки...
   Printing test label...: Печать тестовой этикетки...
@@ -2723,7 +2714,6 @@ translations:
   SETTINGS: НАСТРОЙКИ
   SHIPPED IMAGES: ВСТРОЕННЫЕ ИЗОБРАЖЕНИЯ
   SOFTWARE: ПО
-  SOUND: ЗВУК
   STANDARD MACROS: СТАНДАРТНЫЕ МАКРОСЫ
   STARTUP: ЗАПУСК
   STOP: СТОП
@@ -2735,7 +2725,6 @@ translations:
     постоянно аварийно завершалось при запуске. Откройте настройки, чтобы устранить
     проблему, затем перезагрузите.
   Safety & Alerts: Безопасность и оповещения
-  Safety & Notifications: Безопасность и уведомления
   Same spool in {}? Tap Clear if it is a new one.: 'Та же катушка в {}? Нажмите «Очистить», если это новая.'
   Sample: Образец
   Sample %d/%d: Образец %d/%d
@@ -2815,7 +2804,6 @@ translations:
   Secondary: Вторичный
   Section Detail: Детали раздела
   Security: Безопасность
-  Security, network, host, and administration: Безопасность, сеть, хост и администрирование
   See exactly what data will be sent: Посмотрите, какие именно данные будут отправлены
   See the log: 'Подробности в журнале'
   See the quick tour of HelixScreen again: Посмотреть краткий тур по HelixScreen снова
@@ -2977,7 +2965,6 @@ translations:
   Spaghetti Detection: Обнаружение «спагетти»
   Spaghetti detected: Обнаружены «спагетти»
   Spaghetti detected (%d%%): Обнаружены «спагетти» (%d%%)
-  Spaghetti detected — print paused: Обнаружены «спагетти» — печать приостановлена
   Speaker: Динамик
   Speed: Скорость
   Speed Settings: 'Настройки скорости'
@@ -3082,8 +3069,6 @@ translations:
   Success Rate: Процент успеха
   Success!: Успешно!
   Summary: Сводка
-  Support, documentation, and version info: Поддержка, документация и информация о
-    версии
   Suppress periodic 'T:.../B:...' status lines: Скрывать периодические строки статуса
     'T:.../B:...'
   Suppress periodic temperature status lines: Скрывать периодические строки статуса температуры
@@ -3406,7 +3391,6 @@ translations:
   Toolhead Y: Печатающая головка Y
   Toolhead jam: Замятие в печатающей головке
   Toolhead position unknown: Положение печатающей головки неизвестно
-  Toolhead, G-code, limits, and materials: Печатающая головка, G-code, лимиты и материалы
   Toolheads: Печатающие головки
   Tools: Инструменты
   Tools Used: Использовано инструментов

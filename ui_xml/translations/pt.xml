@@ -152,7 +152,6 @@
   <translation tag="Accepted Z Position: {:.3f}" pt="Posição Z aceita: {:.3f}"/>
   <translation tag="Accessories" pt="Acessórios"/>
   <translation tag="Accuracy" pt="Precisão"/>
-  <translation tag="Act:" pt="Real:"/>
   <translation tag="Action Required" pt="Ação Necessária"/>
   <translation tag="Actions" pt="Ações"/>
   <translation tag="Active" pt="Ativo"/>
@@ -203,7 +202,7 @@
   <translation tag="An error occurred during probing." pt="Ocorreu um erro durante a sondagem."/>
   <translation tag="An error occurred while loading filament." pt="Ocorreu um erro ao carregar o filamento."/>
   <translation tag="An error occurred." pt="Ocorreu um erro."/>
-  <translation tag="An internal error occurred. The app continues running — please send a debug bundle from Settings &gt; About if it repeats." pt="Ocorreu um erro interno. O aplicativo continua em execução — envie um pacote de depuração em Configurações &gt; Sobre se isso se repetir."/>
+  <translation tag="An internal error occurred. The app continues running — please send a debug bundle from Settings &gt; Help &amp; About if it repeats." pt="Ocorreu um erro interno. O aplicativo continua em execução — envie um pacote de depuração em Configurações &gt; Ajuda e sobre se isso se repetir."/>
   <translation tag="An unexpected printer error occurred." pt="Ocorreu um erro inesperado na impressora."/>
   <translation tag="An update is available" pt="Uma atualização está disponível"/>
   <translation tag="Analyzing data..." pt="Analisando dados..."/>
@@ -400,7 +399,6 @@
   <translation tag="Calibrate X" pt="Calibrar X"/>
   <translation tag="Calibrate Y" pt="Calibrar Y"/>
   <translation tag="Calibrate all tools" pt="Calibrar todas as ferramentas"/>
-  <translation tag="Calibrate and tune scroll feel" pt="Calibrar e ajustar a sensação de rolagem"/>
   <translation tag="Calibrate input shaping to reduce ringing artifacts in prints" pt="Calibrar input shaping para reduzir artefatos de ringing nas impressões"/>
   <translation tag="Calibrate tool offsets?" pt="Calibrar os offsets de ferramenta?"/>
   <translation tag="Calibrate your touchscreen for accurate input" pt="Calibrar a tela touch para entrada precisa"/>
@@ -815,7 +813,6 @@
   <translation tag="Discovered Printers" pt="Impressoras Descobertas"/>
   <translation tag="Dismiss" pt="Dispensar"/>
   <translation tag="Display" pt="Tela"/>
-  <translation tag="Display &amp; Sound" pt="Tela e som"/>
   <translation tag="Display Mode" pt="Modo de Exibição"/>
   <translation tag="Display Sleep" pt="Suspensão da Tela"/>
   <translation tag="Display resolution is very high (%dx%d). Text may appear small. Reduce framebuffer resolution in /boot/firmware/config.txt for best results." pt="A resolução da tela é muito alta (%dx%d). O texto pode aparecer pequeno. Reduza a resolução do framebuffer em /boot/firmware/config.txt para melhores resultados."/>
@@ -883,7 +880,6 @@
   <translation tag="Emergency Stop" pt="Parada de Emergência"/>
   <translation tag="Emergency Stop?" pt="Parada de Emergência?"/>
   <translation tag="Emergency stop activated" pt="Parada de emergência ativada"/>
-  <translation tag="Emergency stop and print alerts" pt="Parada de emergência e alertas de impressão"/>
   <translation tag="Emergency stop failed: not connected" pt="Parada de emergência falhou: não conectado"/>
   <translation tag="Empty" pt="Vazio"/>
   <translation tag="Empty slots disable the associated functionality" pt="Slots vazios desabilitam a funcionalidade associada"/>
@@ -940,7 +936,6 @@
   <translation tag="Error" pt="Erro"/>
   <translation tag="Error at chunk {} (code={})" pt="Erro no fragmento {} (code={})"/>
   <translation tag="Error loading file" pt="Erro ao carregar arquivo"/>
-  <translation tag="Error loading printing tips" pt="Erro ao carregar dicas de impressão"/>
   <translation tag="Error saving printer settings: {}" pt="Erro ao salvar configurações da impressora: {}"/>
   <translation tag="Error state" pt="Estado de erro"/>
   <translation tag="Error: %s" pt="Erro: %s"/>
@@ -1270,7 +1265,6 @@
   <translation tag="Hang on, we&apos;ll be right back!" pt="Aguarde, já voltamos!"/>
   <translation tag="Happy Hare MMU" pt="Happy Hare MMU"/>
   <translation tag="Hardware" pt="Hardware"/>
-  <translation tag="Hardware &amp; Devices" pt="Hardware e dispositivos"/>
   <translation tag="Hardware Health" pt="Saúde do Hardware"/>
   <translation tag="Hardware Name" pt="Nome do Hardware"/>
   <translation tag="Hardware Profile" pt="Perfil de Hardware"/>
@@ -1526,7 +1520,6 @@
   <translation tag="Lanes" pt="Lanes"/>
   <translation tag="Language" pt="Idioma"/>
   <translation tag="Language &amp; Time" pt="Idioma e hora"/>
-  <translation tag="Language, theme, brightness, and sound" pt="Idioma, tema, brilho e som"/>
   <translation tag="Last" pt="Última"/>
   <translation tag="Last 7 days" pt="Últimos 7 dias"/>
   <translation tag="Last measured" pt="Última medição"/>
@@ -1550,6 +1543,7 @@
   <translation tag="Library" pt="Biblioteca"/>
   <translation tag="Lifetime Print Stats" pt="Estatísticas de Impressão Totais"/>
   <translation tag="Light" pt="Claro"/>
+  <translation tag="Light Mode" pt="Modo Claro"/>
   <translation tag="Light will switch when the current operation finishes" pt="A luz será alternada quando a operação atual terminar"/>
   <translation tag="Line the nozzle up with the purge chute so purged filament drops straight in." pt="Alinhe o bocal sobre a calha de purga para que o filamento purgado caia direto dentro."/>
   <translation tag="Line {} calls {}, which this printer treats as an emergency stop. Re-slice the file with a profile made for this printer." pt="A linha {} chama {}, que esta impressora trata como uma parada de emergência. Fatie o arquivo novamente com um perfil feito para esta impressora."/>
@@ -1736,7 +1730,6 @@
   <translation tag="Motors Off" pt="Desligar Motores"/>
   <translation tag="Motors disable failed: {}" pt="Falha ao desativar motores: {}"/>
   <translation tag="Motors disabled" pt="Motores desativados"/>
-  <translation tag="Motors off"/>
   <translation tag="Motors stay on while a print is active" pt="Os motores permanecem ativos durante uma impressão"/>
   <translation tag="Mount" pt="Montar"/>
   <translation tag="Move" pt="Mover"/>
@@ -2128,6 +2121,7 @@
   <translation tag="Print Library" pt="Biblioteca de impressão"/>
   <translation tag="Print Outcome" pt="Resultado da Impressão"/>
   <translation tag="Print Paused" pt="Impressão Pausada"/>
+  <translation tag="Print Settings" pt="Configurações de impressão"/>
   <translation tag="Print Speed" pt="Velocidade de Impressão"/>
   <translation tag="Print Start" pt="Início da Impressão"/>
   <translation tag="Print Stats" pt="Estatísticas de impressão"/>
@@ -2193,7 +2187,6 @@
   <translation tag="Printer: " pt="Impressora: "/>
   <translation tag="PrinterIdentify" pt="Identificar Impressora"/>
   <translation tag="Printers" pt="Impressoras"/>
-  <translation tag="Printers, Multi-Filament System, fans, sensors, and LEDs" pt="Impressoras, sistema multi-filamento, ventoinhas, sensores e LEDs"/>
   <translation tag="Printing" pt="Imprimindo"/>
   <translation tag="Printing label..." pt="Imprimindo etiqueta..."/>
   <translation tag="Printing test label..." pt="Imprimindo etiqueta de teste..."/>
@@ -2477,7 +2470,6 @@
   <translation tag="SETTINGS" pt="CONFIGURAÇÕES"/>
   <translation tag="SHIPPED IMAGES" pt="IMAGENS INCLUÍDAS"/>
   <translation tag="SOFTWARE" pt="SOFTWARE"/>
-  <translation tag="SOUND" pt="SOM"/>
   <translation tag="STANDARD MACROS" pt="MACROS PADRÃO"/>
   <translation tag="STARTUP" pt="INICIALIZAÇÃO"/>
   <translation tag="STOP" pt="PARAR"/>
@@ -2485,7 +2477,6 @@
   <translation tag="SWITCH SENSORS" pt="SENSORES DE CHAVE"/>
   <translation tag="Safe Mode active. The printer connection is disabled because the app kept crashing on startup. Open Settings to fix the issue, then reboot." pt="Modo Seguro ativo. A conexão com a impressora está desativada porque o aplicativo continuou travando na inicialização. Abra as Configurações para corrigir o problema e reinicie."/>
   <translation tag="Safety &amp; Alerts" pt="Segurança e alertas"/>
-  <translation tag="Safety &amp; Notifications" pt="Segurança e notificações"/>
   <translation tag="Same spool in {}? Tap Clear if it is a new one." pt="Mesmo carretel em {}? Toque em Limpar se for um novo."/>
   <translation tag="Sample" pt="Amostra"/>
   <translation tag="Sample %d/%d" pt="Amostra %d/%d"/>
@@ -2555,7 +2546,6 @@
   <translation tag="Secondary" pt="Secundário"/>
   <translation tag="Section Detail" pt="Detalhe da Seção"/>
   <translation tag="Security" pt="Segurança"/>
-  <translation tag="Security, network, host, and administration" pt="Segurança, rede, host e administração"/>
   <translation tag="See exactly what data will be sent" pt="Veja exatamente quais dados serão enviados"/>
   <translation tag="See the log" pt="Verifique o registro"/>
   <translation tag="See the quick tour of HelixScreen again" pt="Veja novamente o tour rápido do HelixScreen"/>
@@ -2696,7 +2686,6 @@
   <translation tag="Spaghetti Detection" pt="Detecção de espaguete"/>
   <translation tag="Spaghetti detected" pt="Espaguete detectado"/>
   <translation tag="Spaghetti detected (%d%%)" pt="Espaguete detectado (%d%%)"/>
-  <translation tag="Spaghetti detected — print paused" pt="Espaguete detectado — impressão pausada"/>
   <translation tag="Speaker" pt="Alto-falante"/>
   <translation tag="Speed" pt="Velocidade"/>
   <translation tag="Speed Settings" pt="Configurações de velocidade"/>
@@ -2792,7 +2781,6 @@
   <translation tag="Success Rate" pt="Taxa de Sucesso"/>
   <translation tag="Success!" pt="Sucesso!"/>
   <translation tag="Summary" pt="Resumo"/>
-  <translation tag="Support, documentation, and version info" pt="Suporte, documentação e informações de versão"/>
   <translation tag="Suppress periodic &apos;T:.../B:...&apos; status lines" pt="Suprimir linhas de status periódicas &apos;T:.../B:...&apos;"/>
   <translation tag="Suppress periodic temperature status lines" pt="Suprimir linhas de status periódicas de temperatura"/>
   <translation tag="Suppress raw debug output from printer firmware modules" pt="Suprimir saída bruta de depuração dos módulos de firmware da impressora"/>
@@ -3044,7 +3032,6 @@
   <translation tag="Toolhead Y" pt="Cabeçote Y"/>
   <translation tag="Toolhead jam" pt="Atolamento do cabeçote"/>
   <translation tag="Toolhead position unknown" pt="Posição do cabeçote desconhecida"/>
-  <translation tag="Toolhead, G-code, limits, and materials" pt="Cabeçote, G-code, limites e materiais"/>
   <translation tag="Toolheads" pt="Cabeçotes"/>
   <translation tag="Tools" pt="Ferramentas"/>
   <translation tag="Tools Used" pt="Ferramentas Usadas"/>

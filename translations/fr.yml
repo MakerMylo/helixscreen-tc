@@ -163,7 +163,6 @@ translations:
   'Accepted Z Position: {:.3f}': 'Position Z acceptée : {:.3f}'
   Accessories: 'Accessoires'
   Accuracy: Précision
-  'Act:': 'Réel :'
   Action Required: Action requise
   Actions: Actions
   Active: Actif
@@ -224,9 +223,8 @@ translations:
     du filament.
   # Source: probe_accuracy_modal.xml:90
   An error occurred.: 'Une erreur s''est produite.'
-  An internal error occurred. The app continues running — please send a debug bundle from Settings > About if it repeats.: Une
-    erreur interne s'est produite. L'application continue de fonctionner — veuillez
-    envoyer un paquet de débogage depuis Paramètres > À propos si cela se reproduit.
+  ? An internal error occurred. The app continues running — please send a debug bundle from Settings > Help & About if it repeats.
+  : Une erreur interne s'est produite. L'application continue de fonctionner — veuillez envoyer un paquet de débogage depuis Paramètres > Aide et à propos si cela se reproduit.
   An unexpected printer error occurred.: Une erreur inattendue de l'imprimante s'est
     produite.
   An update is available: Une mise à jour est disponible
@@ -441,7 +439,6 @@ translations:
   Calibrate X: Calibrer X
   Calibrate Y: Calibrer Y
   Calibrate all tools: Calibrer tous les outils
-  Calibrate and tune scroll feel: "Calibrer et ajuster le défilement"
   Calibrate input shaping to reduce ringing artifacts in prints: Calibrer l'input
     shaping pour réduire les artefacts d'ondulation
   Calibrate tool offsets?: Calibrer les offsets d'outil ?
@@ -913,7 +910,6 @@ translations:
   Discovered Printers: Imprimantes découvertes
   Dismiss: Ignorer
   Display: Affichage
-  Display & Sound: Affichage et son
   Display Mode: Mode d'affichage
   Display Sleep: Veille de l'écran
   ? Display resolution is very high (%dx%d). Text may appear small. Reduce framebuffer
@@ -994,7 +990,6 @@ translations:
   Emergency Stop: Arrêt d'urgence
   Emergency Stop?: Arrêt d'urgence ?
   Emergency stop activated: Arrêt d'urgence activé
-  Emergency stop and print alerts: Arrêt d'urgence et alertes d'impression
   'Emergency stop failed: not connected': 'Échec de l''arrêt d''urgence : non connecté'
   Empty: Vide
   Empty slots disable the associated functionality: Les slots vides désactivent la
@@ -1056,7 +1051,6 @@ translations:
   Error: Erreur
   Error at chunk {} (code={}): Erreur au bloc {} (code={})
   Error loading file: Erreur lors du chargement du fichier
-  Error loading printing tips: Erreur lors du chargement des conseils d'impression
   'Error saving printer settings: {}': 'Erreur lors de l''enregistrement des paramètres
     : {}'
   Error state: État d'erreur
@@ -1420,7 +1414,6 @@ translations:
   Hang on, we'll be right back!: Patientez, nous revenons tout de suite !
   Happy Hare MMU: Happy Hare MMU
   Hardware: Matériel
-  Hardware & Devices: Matériel et périphériques
   Hardware Health: État du matériel
   Hardware Name: Nom du matériel
   Hardware Profile: Profil matériel
@@ -1721,7 +1714,6 @@ translations:
   Lanes: Voies
   Language: Langue
   Language & Time: Langue et heure
-  Language, theme, brightness, and sound: Langue, thème, luminosité et son
   Last: Dernière
   # Source: history_dashboard_panel.xml:114
   Last 7 days: '7 derniers jours'
@@ -1749,6 +1741,7 @@ translations:
   Library: Bibliothèque
   Lifetime Print Stats: Statistiques d'impression totales
   Light: Clair
+  Light Mode: Mode clair
   Light will switch when the current operation finishes: La lumière basculera dès
     que l'opération en cours sera terminée.
   Line the nozzle up with the purge chute so purged filament drops straight in.: Alignez la buse au-dessus de la goulotte de purge pour que le filament purgé tombe droit dedans.
@@ -1947,7 +1940,6 @@ translations:
   Motors Off: Moteurs éteints
   'Motors disable failed: {}': 'Échec de la désactivation des moteurs : {}'
   Motors disabled: Moteurs désactivés
-  Motors off: ''
   Motors stay on while a print is active: Les moteurs restent actifs pendant une impression
   Mount: Monter
   Move: Déplacer
@@ -2376,6 +2368,7 @@ translations:
   Print Library: Bibliothèque d'impression
   Print Outcome: Résultat de l'impression
   Print Paused: Impression en pause
+  Print Settings: Paramètres d'impression
   Print Speed: Vitesse d'impression
   Print Start: Début de l'impression
   Print Stats: 'Statistiques d''impression'
@@ -2451,8 +2444,6 @@ translations:
   'Printer: ': 'Imprimante : '
   PrinterIdentify: Identifier l'imprimante
   Printers: Imprimantes
-  Printers, Multi-Filament System, fans, sensors, and LEDs: Imprimantes, système multi-filament,
-    ventilateurs, capteurs et LEDs
   Printing: Impression
   Printing label...: Impression de l'étiquette...
   Printing test label...: Impression de l'étiquette de test...
@@ -2768,7 +2759,6 @@ translations:
   SETTINGS: PARAMÈTRES
   SHIPPED IMAGES: IMAGES FOURNIES
   SOFTWARE: LOGICIEL
-  SOUND: SON
   STANDARD MACROS: MACROS STANDARD
   STARTUP: DÉMARRAGE
   STOP: ARRÊT
@@ -2779,7 +2769,6 @@ translations:
   : Mode sans échec actif. La connexion à l'imprimante est désactivée car l'application
     plantait au démarrage. Ouvrez les Paramètres pour résoudre le problème, puis redémarrez.
   Safety & Alerts: Sécurité et alertes
-  Safety & Notifications: Sécurité et notifications
   Same spool in {}? Tap Clear if it is a new one.: 'Même bobine dans {} ? Touchez Effacer s''il s''agit d''une nouvelle.'
   Sample: Échantillon
   Sample %d/%d: Échantillon %d/%d
@@ -2862,7 +2851,6 @@ translations:
   Secondary: Secondaire
   Section Detail: Détail de section
   Security: Sécurité
-  Security, network, host, and administration: Sécurité, réseau, hôte et administration
   See exactly what data will be sent: Voir exactement quelles données seront envoyées
   See the log: 'Consultez le journal'
   See the quick tour of HelixScreen again: Revoir la visite rapide de HelixScreen
@@ -3029,7 +3017,6 @@ translations:
   Spaghetti Detection: Détection de spaghettis
   Spaghetti detected: Spaghetti détecté
   Spaghetti detected (%d%%): Spaghetti détecté (%d%%)
-  Spaghetti detected — print paused: Spaghetti détecté — impression en pause
   Speaker: Haut-parleur
   Speed: Vitesse
   Speed Settings: 'Paramètres de vitesse'
@@ -3137,7 +3124,6 @@ translations:
   Success Rate: Taux de réussite
   Success!: Succès !
   Summary: Résumé
-  Support, documentation, and version info: Support, documentation et infos de version
   Suppress periodic 'T:.../B:...' status lines: Supprimer les lignes d'état périodiques
     'T:.../B:...'
   Suppress periodic temperature status lines: Supprimer les lignes d'état périodiques de température
@@ -3476,7 +3462,6 @@ translations:
   Toolhead Y: Tête d'outil Y
   Toolhead jam: Bourrage de la tête d'outil
   Toolhead position unknown: 'Position de la tête d''outil inconnue'
-  Toolhead, G-code, limits, and materials: Tête d'outil, G-code, limites et matériaux
   Toolheads: 'Têtes d''outil'
   Tools: Outils
   Tools Used: Outils utilisés
