@@ -362,6 +362,9 @@ class PrinterCapabilitiesState {
     /// 1 if the printer can calibrate its tool offsets automatically (a tool
     /// changer with the CALIBRATE_TOOL_OFFSETS macro, see
     /// include/tool_offset_calibration.h)
+    lv_subject_t* get_printer_has_tool_changer_subject() const {
+        return const_cast<lv_subject_t*>(&printer_has_tool_changer_);
+    }
     lv_subject_t* get_printer_has_tool_offset_cal_subject() const {
         return const_cast<lv_subject_t*>(&printer_has_tool_offset_cal_);
     }
@@ -497,6 +500,7 @@ class PrinterCapabilitiesState {
     lv_subject_t printer_has_timelapse_{};           // moonraker-timelapse plugin
     lv_subject_t printer_has_job_queue_{};           // Moonraker job_queue component
     lv_subject_t printer_has_tool_offset_cal_{};     // automatic tool offset calibration
+    lv_subject_t printer_has_tool_changer_{};        // physical tool changer (Tools panel)
     lv_subject_t hide_manual_z_calibration_{};       // ...and it covers the reference tool's Z
     lv_subject_t printer_has_purge_line_{};          // purge/priming capability
     lv_subject_t printer_has_firmware_retraction_{}; // firmware retraction (G10/G11)

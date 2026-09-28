@@ -38,6 +38,7 @@
 #include "sensor_state.h"
 #include "tool_offsets.h"
 #include "toolchanger_addon.h"
+#include "toolchanger_vars.h"
 #include "unit_conversions.h"
 #include "webcam_service_health.h"
 #include "z_offset_persistence.h"
@@ -1595,6 +1596,12 @@ json MoonrakerDiscoverySequence::build_subscription_objects(
     // Tool-changer add-ons (dock sensors, feeder). The module owns which
     // machines have them and what their objects are called.
     for (const auto& object : helix::toolchanger_addon::required_status_objects(hw)) {
+        subscription_objects[object] = nullptr;
+    }
+
+    // The tool changer's saved variables (pickup statistics, which tools hold
+    // filament). The module owns which printers keep them and where.
+    for (const auto& object : helix::toolchanger_vars::required_status_objects(hw)) {
         subscription_objects[object] = nullptr;
     }
 

@@ -1930,6 +1930,20 @@
     "pluck_animation": {
       "attributes": {},
       "inherits": "lv_obj"
+    },
+    "tool_path": {
+      "attributes": {
+        "tool_index": {
+          "type": "string"
+        },
+        "tool_subject": {
+          "type": "string"
+        },
+        "mode": {
+          "type": "string"
+        }
+      },
+      "inherits": "lv_obj"
     }
   },
   "enums": {
@@ -2883,7 +2897,8 @@
     "ams_lane_spool",
     "belt_trace",
     "leader_line",
-    "pluck_animation"
+    "pluck_animation",
+    "tool_path"
   ],
   "runtime_constants": [
     "accent_bar_gap",
@@ -3732,6 +3747,30 @@
     "theme_swatch_size",
     "thumbnail_height",
     "toolhead_body",
+    "tools_path_h",
+    "tools_path_h_large",
+    "tools_path_h_medium",
+    "tools_path_h_micro",
+    "tools_path_h_small",
+    "tools_path_h_tiny",
+    "tools_path_h_xlarge",
+    "tools_path_h_xxlarge",
+    "tools_swatch_h",
+    "tools_swatch_h_large",
+    "tools_swatch_h_medium",
+    "tools_swatch_h_micro",
+    "tools_swatch_h_small",
+    "tools_swatch_h_tiny",
+    "tools_swatch_h_xlarge",
+    "tools_swatch_h_xxlarge",
+    "tools_swatch_w",
+    "tools_swatch_w_large",
+    "tools_swatch_w_medium",
+    "tools_swatch_w_micro",
+    "tools_swatch_w_small",
+    "tools_swatch_w_tiny",
+    "tools_swatch_w_xlarge",
+    "tools_swatch_w_xxlarge",
     "tray_bg",
     "tray_border",
     "tray_default_height",

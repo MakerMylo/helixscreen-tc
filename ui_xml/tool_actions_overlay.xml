@@ -1,0 +1,82 @@
+<?xml version="1.0"?>
+<!-- Copyright (C) 2025-2026 356C LLC -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- Tool actions overlay: one tool of a tool changer, opened from its column -->
+<!-- on the Tools panel. Title is the tool; below it the pickup/drop-off -->
+<!-- record the printer's macros keep, the same path drawn sideways, the -->
+<!-- actions, and what filament the slot says is in it. The tool the overlay -->
+<!-- shows is the tool_act_index subject; the path widget and every label -->
+<!-- follow it, so one overlay serves every tool. -->
+<component>
+  <view name="tool_actions_overlay"
+        extends="overlay_panel" title="Tool" title_subject="tool_act_title" bg_color="#screen_bg">
+    <lv_obj name="overlay_content"
+            width="100%" flex_grow="1" style_pad_all="#space_md" style_pad_gap="#space_sm" flex_flow="column"
+            scrollable="true">
+      <bind_state_if_not_eq subject="nav_buttons_enabled" state="disabled" ref_value="1"/>
+
+      <!-- Pickup / drop-off record: PU PD FPU FPD REC RATE, as the console table. -->
+      <lv_obj name="tool_act_stats_row"
+              width="100%" height="content" flex_flow="row" style_flex_cross_place="center"
+              style_pad_all="#space_sm" style_pad_gap="#space_md" style_bg_color="#card_bg" style_bg_opa="255"
+              style_radius="#border_radius_small" style_border_width="1" style_border_color="#border"
+              scrollable="false">
+        <text_small text="Changes" translation_tag="Changes" style_text_color="#text_muted"/>
+        <text_body name="tool_act_stats" flex_grow="1" long_mode="wrap" bind_text="tool_act_stats"/>
+      </lv_obj>
+
+      <!-- Bowden in from the left, sensors, toolhead, nozzle. -->
+      <tool_path name="tool_act_path" tool_subject="tool_act_index" mode="horizontal" width="100%" height="#tools_path_h"/>
+
+      <!-- Mount/dock is the tool change itself; the rest drive the tool's
+           extruder through the printer's macros. All of them move the
+           machine, so they are refused while a job holds it. -->
+      <lv_obj name="tool_act_buttons"
+              width="100%" height="content" flex_flow="row_wrap" style_pad_all="0" style_pad_gap="#space_sm"
+              style_bg_opa="0" style_border_width="0" scrollable="false">
+        <ui_button name="tool_act_mount"
+                   flex_grow="1" bind_text="tool_act_mount_label" variant="primary" moves_machine="true">
+          <event_cb trigger="clicked" callback="on_tool_act_mount"/>
+          <bind_state_if_eq subject="tool_act_busy" state="disabled" ref_value="1"/>
+        </ui_button>
+        <ui_button name="tool_act_load"
+                   flex_grow="1" text="Load" translation_tag="Load" icon="arrow_down" moves_machine="true">
+          <event_cb trigger="clicked" callback="on_tool_act_load"/>
+          <bind_state_if_eq subject="tool_act_busy" state="disabled" ref_value="1"/>
+        </ui_button>
+        <ui_button name="tool_act_unload"
+                   flex_grow="1" text="Unload" translation_tag="Unload" icon="arrow_up" moves_machine="true">
+          <event_cb trigger="clicked" callback="on_tool_act_unload"/>
+          <bind_state_if_eq subject="tool_act_busy" state="disabled" ref_value="1"/>
+        </ui_button>
+        <ui_button name="tool_act_extrude"
+                   flex_grow="1" text="Extrude" translation_tag="Extrude" icon="arrow_down_bold" moves_machine="true">
+          <event_cb trigger="clicked" callback="on_tool_act_extrude"/>
+          <bind_state_if_eq subject="tool_act_busy" state="disabled" ref_value="1"/>
+        </ui_button>
+        <ui_button name="tool_act_retract"
+                   flex_grow="1" text="Retract" translation_tag="Retract" icon="arrow_up_bold_circle" moves_machine="true">
+          <event_cb trigger="clicked" callback="on_tool_act_retract"/>
+          <bind_state_if_eq subject="tool_act_busy" state="disabled" ref_value="1"/>
+        </ui_button>
+      </lv_obj>
+
+      <!-- What the slot says is loaded, and the door to the slot editor. -->
+      <lv_obj name="tool_act_filament_row"
+              width="100%" height="content" flex_flow="row" style_flex_cross_place="center"
+              style_pad_all="#space_sm" style_pad_gap="#space_sm" style_bg_color="#card_bg" style_bg_opa="255"
+              style_radius="#border_radius_small" style_border_width="1" style_border_color="#border"
+              scrollable="false">
+        <text_small text="Filament" translation_tag="Filament" style_text_color="#text_muted"/>
+        <text_body name="tool_act_material" bind_text="tool_act_material"/>
+        <tool_path name="tool_act_swatch" tool_subject="tool_act_index" mode="swatch" width="#tools_swatch_w" height="#tools_swatch_h"/>
+        <text_small name="tool_act_loaded" flex_grow="1" bind_text="tool_act_loaded" style_text_color="#text_muted"/>
+        <ui_button name="tool_act_change" text="Change" translation_tag="Change" variant="secondary" icon="palette">
+          <event_cb trigger="clicked" callback="on_tool_act_change"/>
+        </ui_button>
+      </lv_obj>
+
+      <text_small name="tool_act_status" width="100%" long_mode="wrap" bind_text="tool_act_status" style_text_color="#text_muted"/>
+    </lv_obj>
+  </view>
+</component>

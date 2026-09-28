@@ -344,6 +344,26 @@ class FilamentSensorManager : public helix::sensors::ISensorManager {
     get_sensor_state(FilamentSensorRole role) const;
 
     /**
+     * @brief Get current state for a sensor by its full Klipper name
+     *        (e.g. "filament_switch_sensor T0_entry"), thread-safe copy.
+     *
+     * For surfaces that show individual sensors rather than roles - a tool
+     * changer's per-tool entry/toolhead pips. Empty when no such sensor was
+     * discovered or it has not reported yet.
+     */
+    [[nodiscard]] std::optional<FilamentSensorState>
+    get_sensor_state_by_name(const std::string& klipper_name) const;
+
+    /**
+     * @brief Subject that bumps whenever any sensor's reading changed
+     *        (`filament_sensor_states_version`)
+     *
+     * The per-role subjects say only what each role reads; a view of several
+     * named sensors observes this instead and re-reads them by name.
+     */
+    [[nodiscard]] lv_subject_t* get_states_version_subject();
+
+    /**
      * @brief Check if any sensor reports runout (no filament)
      *
      * Only checks enabled sensors with assigned roles.
@@ -715,6 +735,7 @@ class FilamentSensorManager : public helix::sensors::ISensorManager {
     lv_subject_t motion_active_;
     lv_subject_t master_enabled_subject_;
     lv_subject_t sensor_count_;
+    lv_subject_t states_version_; ///< bumps on any per-sensor reading change
 };
 
 } // namespace helix

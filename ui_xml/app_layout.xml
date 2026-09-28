@@ -46,6 +46,8 @@
         <settings_panel name="settings_panel"/>
         <!-- Panel 5: Advanced (hidden by default) -->
         <advanced_panel name="advanced_panel"/>
+        <!-- Panel 6: Tools (hidden by default; nav button shown on tool changers) -->
+        <tools_panel name="tools_panel"/>
       </lv_obj>
     </lv_obj>
   </view>

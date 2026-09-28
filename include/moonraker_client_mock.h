@@ -450,6 +450,12 @@ class MoonrakerClientMock : public helix::MoonrakerClient {
      * Static because AmsBackend decides before any client instance exists.
      */
     static bool mock_toolchanger_selected();
+    /// HELIX_MOCK_TOOL_COUNT: tools (and extruders) the toolchanger mock
+    /// presents, 1..8, default 4.
+    static int mock_tool_count();
+    /// The toolchanger mock's save_variables frame: tc_stats / tc_loaded /
+    /// tc_last_tool as a klipper-toolchanger printer's macros record them.
+    static nlohmann::json toolchanger_vars_json();
 
     /**
      * @brief Whether the selected persona is mock HARDWARE, not a mock backend.

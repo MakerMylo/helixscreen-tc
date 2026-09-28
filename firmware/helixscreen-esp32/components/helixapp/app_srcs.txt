@@ -202,6 +202,8 @@ src/printer/plr_backend.cpp
 src/printer/plr_offer.cpp
 src/printer/standard_macros.cpp
 src/printer/toolchanger_addon.cpp
+src/printer/toolchanger_vars.cpp
+src/printer/tool_filament_sensors.cpp
 src/printer/zmod_color_status.cpp
 src/printer/toolhead_homing.cpp
 src/printer/tool_offset_calibration.cpp
@@ -460,6 +462,9 @@ src/ui/ui_overlay_printer_type.cpp
 src/ui/ui_overlay_retraction_settings.cpp
 src/ui/ui_overlay_temp_graph.cpp
 src/ui/ui_panel_advanced.cpp
+src/ui/ui_panel_tools.cpp
+src/ui/ui_overlay_tool_actions.cpp
+src/ui/ui_tool_path.cpp
 src/ui/ui_panel_ams.cpp
 src/ui/ui_panel_ams_overview.cpp
 src/ui/ui_panel_base.cpp

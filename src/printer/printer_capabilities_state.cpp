@@ -59,6 +59,7 @@ void PrinterCapabilitiesState::init_subjects(bool register_xml) {
     INIT_SUBJECT_INT(printer_has_chamber, 0, subjects_, register_xml);
     INIT_SUBJECT_INT(printer_has_screws_tilt, 0, subjects_, register_xml);
     INIT_SUBJECT_INT(printer_has_tool_offset_cal, 0, subjects_, register_xml);
+    INIT_SUBJECT_INT(printer_has_tool_changer, 0, subjects_, register_xml);
     INIT_SUBJECT_INT(hide_manual_z_calibration, 0, subjects_, register_xml);
     INIT_SUBJECT_INT(printer_has_pa_cal, 0, subjects_, register_xml);
     INIT_SUBJECT_INT(printer_has_webcam, 0, subjects_, register_xml);
@@ -190,6 +191,10 @@ void PrinterCapabilitiesState::set_hardware(const PrinterDiscovery& hardware,
 
     // Screws tilt adjust capability
     set_capability_int(printer_has_screws_tilt_, hardware.has_screws_tilt() ? 1 : 0);
+
+    // A physical tool changer: klipper-toolchanger's objects, or a changer
+    // extra of its own. What the Tools panel's nav button shows on.
+    set_capability_int(printer_has_tool_changer_, hardware.has_tool_changer() ? 1 : 0);
 
     // Automatic tool offset calibration: the module owns what "can" means.
     set_capability_int(printer_has_tool_offset_cal_,

@@ -79,6 +79,7 @@
 #include "ui_ams_environment_overlay.h"
 #include "ui_ams_loading_error_modal.h"
 #include "ui_ams_mini_status.h"
+#include "ui_tool_path.h"
 #include "ui_ams_tool_text.h"
 #include "ui_bed_mesh.h"
 #include "ui_card.h"
@@ -1858,6 +1859,7 @@ bool Application::register_widgets() {
     setting_group_register();
     ui_temp_display_init();
     ui_ams_mini_status_init();
+    helix::ui::ui_tool_path_register();
     ui_severity_card_register();
     ui_dialog_register();
     ui_bed_mesh_register();

@@ -183,6 +183,34 @@
         <bind_flag_if_eq subject="nav_buttons_enabled" flag="hidden" ref_value="1"/>
       </icon>
     </ui_button>
+    <!-- Tools Button (Panel 6) - tool changer only, CONNECTION + KLIPPY READY REQUIRED -->
+    <ui_button name="nav_btn_tools"
+               width="100%" height="100%" flex_grow="1" variant="ghost" flex_flow="column"
+               style_flex_main_place="center" style_flex_cross_place="center" style_flex_track_place="center"
+               style_border_width="0">
+      <!-- Only a tool changer has a Tools panel worth a button -->
+      <bind_flag_if_eq subject="printer_has_tool_changer" flag="hidden" ref_value="0"/>
+      <bind_state_if_not_eq subject="nav_buttons_enabled" state="disabled" ref_value="1"/>
+      <bind_state_if_eq subject="home_edit_mode" state="disabled" ref_value="1"/>
+      <lv_obj name="nav_tools_icons" width="100%" height="100%" clickable="false" style_pad_all="0">
+        <bind_flag_if_eq subject="nav_buttons_enabled" flag="hidden" ref_value="0"/>
+        <icon name="nav_icon_tools_active"
+              src="toolbox_outline" size="#icon_size" variant="primary" floating="true" align="center">
+          <style name="nav_icon_fade"/>
+          <style name="nav_icon_fade_on" selector="checked"/>
+          <bind_state_if_eq subject="active_panel" state="checked" ref_value="6"/>
+        </icon>
+        <icon name="nav_icon_tools_inactive"
+              src="toolbox_outline" size="#icon_size_nav_inactive" variant="secondary" floating="true" align="center">
+          <style name="nav_icon_fade"/>
+          <style name="nav_icon_fade_on" selector="checked"/>
+          <bind_state_if_not_eq subject="active_panel" state="checked" ref_value="6"/>
+        </icon>
+      </lv_obj>
+      <icon name="nav_icon_tools_disabled" src="toolbox_outline" size="#icon_size" variant="disabled">
+        <bind_flag_if_eq subject="nav_buttons_enabled" flag="hidden" ref_value="1"/>
+      </icon>
+    </ui_button>
     <!-- Settings Button (Panel 4) -->
     <ui_button name="nav_btn_settings"
                width="100%" height="100%" flex_grow="1" variant="ghost" flex_flow="column"

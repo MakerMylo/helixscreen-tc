@@ -825,6 +825,9 @@ void register_xml_components() {
 
     // Additional panels
     register_xml("advanced_panel.xml");
+    // Tools panel (tool changer per-tool view) and its actions overlay
+    register_xml("tool_actions_overlay.xml");
+    register_xml("tools_panel.xml");
     register_xml("print_select_panel.xml");
 
     // Developer-only showcase panels (ENABLE_DEV_PANELS). Their C++ classes are
