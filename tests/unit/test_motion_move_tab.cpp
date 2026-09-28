@@ -240,6 +240,42 @@ TEST_CASE_METHOD(MoveTabFixture,
     CHECK(scripts.find("Y23.5") == std::string::npos);
 }
 
+TEST_CASE_METHOD(MoveTabFixture, "park that has to home leaves Z where homing put it",
+                 "[motion][move-tab]") {
+    StandardMacros::instance().reset();
+    helix::PrinterDiscovery hardware;
+    hardware.parse_objects(nlohmann::json{"extruder"});
+    StandardMacros::instance().init(hardware);
+
+    get_global_motion_panel().set_motion_tab(1);
+    drain();
+    get_printer_state().update_from_status(ready_status(""));
+    drain();
+
+    client_.clear_gcode_script_history();
+    click(panel_widget("move_park"));
+
+    // The commanded Z the panel holds predates the G28, so a lift from it
+    // could command a descent; homing already leaves Z at a safe height.
+    bool homed = false;
+    bool parked = false;
+    bool z_moved = false;
+    for (const auto& line : client_.gcode_script_history()) {
+        if (line.rfind("G28", 0) == 0) {
+            homed = true;
+        }
+        if (line.find("Y225") != std::string::npos) {
+            parked = true;
+        }
+        if (homed && line.rfind("G0", 0) == 0 && line.find('Z') != std::string::npos) {
+            z_moved = true;
+        }
+    }
+    CHECK(homed);
+    CHECK(parked);
+    CHECK_FALSE(z_moved);
+}
+
 TEST_CASE_METHOD(MoveTabFixture, "the grid greys out while the toolhead is busy, Z stays live",
                  "[motion][move-tab]") {
     auto& ps = get_printer_state();

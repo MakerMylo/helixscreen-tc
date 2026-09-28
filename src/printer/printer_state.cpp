@@ -1117,7 +1117,7 @@ bool PrinterState::is_external_blocking_operation_active() {
     }
     // idle_timeout == "Printing" during any move, including our own jog. If the
     // app has motion in flight, acked within the grace window, or started this
-    // busy episode itself, the busy-ness is self-inflicted — let discretionary
+    // busy episode itself, the busy-ness is self-inflicted: let discretionary
     // gcode through so jogs don't self-block.
     return !app_motion_activity_.recently_active() &&
            !app_motion_activity_.owns_busy_episode(

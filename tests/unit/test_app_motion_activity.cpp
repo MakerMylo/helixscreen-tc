@@ -86,3 +86,31 @@ TEST_CASE("AppMotionActivity: ownership of a busy episode is capped", "[motion][
     CHECK(a.owns_busy_episode(t0, t0 + std::chrono::seconds(29)));
     CHECK_FALSE(a.owns_busy_episode(t0, t0 + std::chrono::seconds(31)));
 }
+
+TEST_CASE("AppMotionActivity: a later send never adopts someone else's episode",
+          "[motion][busy_guard]") {
+    AppMotionActivity a;
+    const auto t0 = clock_t_::now();
+    a.note_sent(t0);
+    a.note_done(t0);
+    // Another UI starts a long operation; the app's last move settled 10s ago.
+    const auto foreign = t0 + std::chrono::seconds(10);
+    CHECK_FALSE(a.owns_busy_episode(foreign, foreign + std::chrono::seconds(1)));
+    // A send slipping through afterwards must not make the episode the app's.
+    a.note_sent(foreign + std::chrono::seconds(2));
+    a.note_done(foreign + std::chrono::seconds(2));
+    CHECK_FALSE(a.owns_busy_episode(foreign, foreign + std::chrono::seconds(5)));
+}
+
+TEST_CASE("AppMotionActivity: follow-up sends keep an episode the app started",
+          "[motion][busy_guard]") {
+    AppMotionActivity a;
+    const auto t0 = clock_t_::now();
+    a.note_sent(t0);
+    a.note_done(t0);
+    const auto episode = t0 + std::chrono::milliseconds(30);
+    CHECK(a.owns_busy_episode(episode, t0 + std::chrono::seconds(4)));
+    a.note_sent(t0 + std::chrono::seconds(4));
+    a.note_done(t0 + std::chrono::seconds(4));
+    CHECK(a.owns_busy_episode(episode, t0 + std::chrono::seconds(8)));
+}

@@ -1291,8 +1291,12 @@ void MotionPanel::handle_park() {
     const auto info = StandardMacros::instance().get(StandardMacroSlot::ParkToolhead);
     // Both paths may lift Z, so they need every axis homed.
     if (info.is_empty()) {
+        // The commanded Z the panel holds predates a G28 that runs first, so a
+        // lift computed from it could be a descent; homing already leaves Z at
+        // a safe height, so the lift only applies to a machine already homed.
+        const bool lift_z = helix::toolhead_is_homed(get_printer_state());
         helix::ensure_homed_then(
-            api, lifetime_, [this]() { park_over_plate(); },
+            api, lifetime_, [this, lift_z]() { park_over_plate(lift_z); },
             lifetime_.bg_cb("MotionPanel::park_home_failed", [](const MoonrakerError& err) {
                 NOTIFY_ERROR(lv_tr("Homing failed: {}"), clean_gcode_error(err.user_message()));
             }));
@@ -1318,7 +1322,7 @@ void MotionPanel::handle_park() {
         }));
 }
 
-void MotionPanel::park_over_plate() {
+void MotionPanel::park_over_plate(bool lift_z) {
     IMoonrakerAPI* api = get_moonraker_api();
     if (!api) {
         return;
@@ -1331,7 +1335,7 @@ void MotionPanel::park_over_plate() {
         NOTIFY_INFO(lv_tr("Axis limits unknown"));
         return;
     }
-    if (gcode.has_z) {
+    if (lift_z && gcode.has_z) {
         target->z = std::min(static_cast<double>(current_z_) + PARK_Z_LIFT_MM,
                              static_cast<double>(gcode.z_max));
     }
