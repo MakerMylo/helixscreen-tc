@@ -175,6 +175,14 @@ Steps 1 and 2 are worth doing even if the rest stalls. Both are on
 `feature/ams-action-from-phases`: step 1 is the vocabulary above, step 2 is `coarse`,
 `action_at()` and the sidebar's debug line.
 
+## Decided: the U1 shows Heating while it heats
+
+**Decision (Preston, 2026-09-27):** the Snapmaker U1's Heat step projects `HEATING` in
+both directions, and migrating the U1 takes the visible change: "Heating..." and the heat
+glow for that step where the hand assignment reports LOADING or UNLOADING today. The
+one-frame tool changer disagreements (closing Grip, opening Release) take the projection
+as they fall out.
+
 ## Decided: PURGING starts an operation
 
 `f6e866600` unified two action lists that had drifted apart. They disagreed about
