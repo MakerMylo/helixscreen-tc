@@ -12,7 +12,8 @@ shape of a multi-material printer's filament display:
   tube and the extrudate below the nozzle are drawn in the slot's filament colour where
   filament is known to be, and as an empty tube otherwise.
 - **Material** and the extruder's **temperature** (`182 / 250°` while it heats).
-- **Options** opens the tool's actions.
+
+Tap the toolhead drawing to open the tool's actions.
 
 ## Where "filament is here" comes from
 

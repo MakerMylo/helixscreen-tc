@@ -39,7 +39,7 @@ settings           navigate settings
 advanced           navigate advanced
 print-select       navigate print-select
 tools              navigate tools
-tool-actions       navigate tools; click tools_opts_1
+tool-actions       navigate tools; click tools_path_1
 tools-settings     navigate settings; click row_devices; click row_tools_settings
 
 # Printer image callouts (home widget, prestonbrown/helixscreen#1397).

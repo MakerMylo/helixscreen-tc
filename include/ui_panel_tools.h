@@ -19,8 +19,8 @@
  * The tool changer's own view of its tools, in the shape of a multi-material
  * printer's filament display: a column per tool with the tool's name (tap it
  * to pick the tool up), its filament path drawn live by <tool_path>, the
- * slot's material and the extruder's temperature, and an actions button that
- * opens ToolActionsOverlay for that tool.
+ * slot's material and the extruder's temperature. Tapping the path opens
+ * ToolActionsOverlay for that tool.
  *
  * What the columns bind to (all pools, sized before tools_count is published):
  * - tools_count          (int)    number of columns (ToolConfig's override,
@@ -55,7 +55,7 @@ class ToolsPanel : public PanelBase {
     }
     void on_activate() override;
 
-    /// Open the actions overlay for a tool (also the Options button's path).
+    /// Open the actions overlay for a tool (tapping its path drawing).
     void open_actions(int tool);
     /// Pick a tool up (the tool-name button's path).
     void select_tool(int tool);
@@ -76,7 +76,7 @@ class ToolsPanel : public PanelBase {
 
     static void on_select_clicked(lv_event_t* e);
     static void on_opts_clicked(lv_event_t* e);
-    /// The tool index encoded in a repeated widget's name ("tools_opts_3").
+    /// The tool index encoded in a repeated widget's name ("tools_path_3").
     static int tool_from_event(lv_event_t* e);
 
     bool ui_alive_ = false;

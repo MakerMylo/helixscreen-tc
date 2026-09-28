@@ -272,6 +272,7 @@ void ToolsPanel::select_tool(int tool) {
 }
 
 void ToolsPanel::open_actions(int tool) {
+    // Reached by tapping the tool's path drawing.
     if (!parent_screen_) {
         return;
     }
@@ -284,7 +285,7 @@ int ToolsPanel::tool_from_event(lv_event_t* e) {
     if (!name) {
         return -1;
     }
-    // "tools_select_3" / "tools_opts_3": the index is what follows the last '_'.
+    // "tools_select_3" / "tools_path_3": the index is what follows the last '_'.
     const char* us = std::strrchr(name, '_');
     if (!us || !us[1]) {
         return -1;

@@ -4,8 +4,8 @@
 <!-- Tools panel: one column per tool changer tool. -->
 <!-- The tool button selects (picks up) the tool; the path below it shows the -->
 <!-- reverse bowden, the sensors the printer has, the toolhead and the nozzle, -->
-<!-- coloured with the slot's filament wherever it is known to be; the actions -->
-<!-- button opens the per-tool overlay. Everything per column binds to the -->
+<!-- coloured with the slot's filament wherever it is known to be; tapping the -->
+<!-- path opens the per-tool overlay. Everything per column binds to the -->
 <!-- tools_*_${i} pools the panel sizes before it publishes tools_count. -->
 <component>
   <styles>
@@ -51,16 +51,14 @@
             <bind_state_if_eq subject="active_tool" state="checked" ref_value="${i}"/>
           </ui_button>
 
-          <!-- Bowden in, sensors, toolhead, nozzle. Draws itself live. -->
-          <tool_path name="tools_path_${i}" tool_index="${i}" width="100%" flex_grow="1"/>
+          <!-- Bowden in, sensors, toolhead, nozzle. Draws itself live; tap it
+               to open the tool's actions page. -->
+          <tool_path name="tools_path_${i}" tool_index="${i}" width="100%" flex_grow="1" clickable="true">
+            <event_cb trigger="clicked" callback="on_tools_opts"/>
+          </tool_path>
 
           <text_small name="tools_material_${i}" bind_text="tools_material_${i}" style_text_color="#text_muted"/>
           <text_small name="tools_temp_${i}" bind_text="tools_temp_${i}"/>
-
-          <ui_button name="tools_opts_${i}"
-                     width="100%" text="Options" translation_tag="Options" variant="ghost" icon="dots_vertical">
-            <event_cb trigger="clicked" callback="on_tools_opts"/>
-          </ui_button>
         </lv_obj>
       </repeat>
     </lv_obj>
