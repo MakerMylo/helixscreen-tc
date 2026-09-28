@@ -8,6 +8,15 @@ load helpers
 
 setup() {
     cd "$BATS_TEST_DIRNAME/../.." || return 1
+    HELIX_ADVISOR_HOSTS=$(hostname -s)
+    export HELIX_ADVISOR_HOSTS
+}
+
+@test "on a host the rules are not about it adds nothing" {
+    export HELIX_ADVISOR_HOSTS="some-other-box"
+    run bash -c 'echo "{}" | scripts/subagent-brief.sh'
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
 }
 
 @test "the block is a SubagentStart context entry" {
@@ -40,4 +49,15 @@ setup() {
         c=${c#\"\$CLAUDE_PROJECT_DIR\"/}
         [ -x "${c%% *}" ]
     done <<< "$output"
+}
+
+@test "without jq it adds nothing and exits 0" {
+    local bin
+    bin=$(mktemp -d)
+    local t
+    for t in bash cat hostname; do ln -s "$(command -v "$t")" "$bin/$t"; done
+    run env PATH="$bin" HELIX_ADVISOR_HOSTS="$HELIX_ADVISOR_HOSTS" bash scripts/subagent-brief.sh
+    rm -rf "$bin"
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
 }

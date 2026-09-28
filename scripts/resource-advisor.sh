@@ -23,6 +23,7 @@
 # touching jq, /proc or helix-claim. Never ssh from here.
 #
 # Env:
+#   HELIX_ADVISOR_HOSTS       hosts the advice is about (default: thelio); elsewhere it is silent
 #   HELIX_ADVISOR_JOBS_CMD    command printing the `jobs -v` line (default: helix-claim jobs)
 #   HELIX_ADVISOR_MIN_SHARE   share at or below which thelio is tight (default 8)
 #   HELIX_ADVISOR_MIN_GB      availGB below which thelio is tight (default 16)
@@ -36,7 +37,13 @@ case "$input" in
     *) exit 0 ;;
 esac
 
-command -v jq >/dev/null 2>&1 || exit 0
+# The advice names thelio and zeus; a cloud session or a Mac has neither.
+host=$(hostname -s 2>/dev/null)
+case " ${HELIX_ADVISOR_HOSTS:-thelio} " in
+    *" $host "*) ;;
+    *) exit 0 ;;
+esac
+
 cmd=$(printf '%s' "$input" | jq -r '.tool_input.command // empty' 2>/dev/null) || exit 0
 [ -n "$cmd" ] || exit 0
 # bash regex matching goes quadratic on long input; a heavy command names itself early.
@@ -155,8 +162,12 @@ fi
 # Reading the box costs a pgrep sweep; skip it when nothing below could fire.
 [ -n "$jobs_asked$want_container$want_loop" ] || exit 0
 
-jobs_cmd=${HELIX_ADVISOR_JOBS_CMD:-"$here/helix-claim jobs"}
-line=$($jobs_cmd -v 2>&1 >/dev/null) || exit 0
+# jobs sweeps /proc; a hang here would stall the command until the hook times out.
+if [ -n "${HELIX_ADVISOR_JOBS_CMD:-}" ]; then
+    line=$(timeout 2 "$HELIX_ADVISOR_JOBS_CMD" -v 2>&1 >/dev/null) || exit 0
+else
+    line=$(timeout 2 "$here/helix-claim" jobs -v 2>&1 >/dev/null) || exit 0
+fi
 share=$(printf '%s' "$line" | sed -n 's/.*-> -j\([0-9][0-9]*\).*/\1/p')
 avail=$(printf '%s' "$line" | sed -n 's/.*availGB=\([0-9][0-9]*\).*/\1/p')
 [ -n "$share" ] && [ -n "$avail" ] || exit 0

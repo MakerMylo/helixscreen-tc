@@ -15,6 +15,8 @@ setup() {
     TEST_DIR="$(mktemp -d)"
     export HELIX_ADVISOR_JOBS_CMD="$TEST_DIR/jobs"
     export JOBS_CALLED="$TEST_DIR/jobs.called"
+    HELIX_ADVISOR_HOSTS=$(hostname -s)
+    export HELIX_ADVISOR_HOSTS
     roomy
 }
 
@@ -185,6 +187,76 @@ context() {
 @test "garbage on stdin exits 0 with no output" {
     run bash -c "printf 'not json' | $ADVISOR"
     [ "$status" -eq 0 ]
+    [ -z "$output" ]
+    # Past the fast path, so jq itself sees the broken input.
+    run bash -c "printf 'mutate-diff {' | $ADVISOR"
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+}
+
+@test "without jq it exits 0 with no output" {
+    mkdir -p "$TEST_DIR/bin"
+    local t
+    for t in bash cat sed grep hostname dirname nproc timeout; do
+        ln -s "$(command -v "$t")" "$TEST_DIR/bin/$t"
+    done
+    run env PATH="$TEST_DIR/bin" bash "$ADVISOR" <<< '{"tool_input":{"command":"make mutate-diff"}}'
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+}
+
+@test "on a host the advice is not about it is silent" {
+    export HELIX_ADVISOR_HOSTS="some-other-box"
+    advise "make mutate-diff"
+    [ -z "$output" ]
+}
+
+@test "a hung helix-claim is cut off and fails open" {
+    printf '#!/usr/bin/env bash\nsleep 30\n' > "$HELIX_ADVISOR_JOBS_CMD"
+    local start=$SECONDS
+    advise "make -j40 x"
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+    [ $((SECONDS - start)) -lt 6 ] || fail "took $((SECONDS - start))s"
+}
+
+@test "the jobs line is read the same from a path with spaces" {
+    mkdir -p "$TEST_DIR/a b"
+    export HELIX_ADVISOR_JOBS_CMD="$TEST_DIR/a b/jobs"
+    stub_jobs 6 60
+    advise "make -j40 x"
+    contains "fair share, -j6" "$(context)"
+}
+
+# ---------------------------------------------------------------------------
+# Boundaries
+# ---------------------------------------------------------------------------
+
+@test "-j equal to the share is fine and one above is flagged" {
+    tight_share
+    advise "make -j6 x"
+    [ -z "$output" ]
+    advise "make -j7 x"
+    contains "fair share, -j6" "$(context)"
+}
+
+@test "a share of 8 is tight and 9 is not" {
+    local loop='for i in 1 2; do ./build/bin/helix-tests x; done'
+    stub_jobs 8 60
+    advise "$loop"
+    contains "loop" "$(context)"
+    stub_jobs 9 60
+    advise "$loop"
+    [ -z "$output" ]
+}
+
+@test "15GB available is tight and 16GB is not" {
+    local loop='for i in 1 2; do ./build/bin/helix-tests x; done'
+    stub_jobs 16 15
+    advise "$loop"
+    contains "15GB" "$(context)"
+    stub_jobs 16 16
+    advise "$loop"
     [ -z "$output" ]
 }
 

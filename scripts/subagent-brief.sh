@@ -6,6 +6,13 @@
 # reads none of its parent's memory and briefs already run long, so the block
 # carries only the rules whose breach costs the other sessions on this box.
 
+# The rules name thelio and zeus; a cloud session or a Mac has neither.
+case " ${HELIX_ADVISOR_HOSTS:-thelio} " in
+    *" $(hostname -s 2>/dev/null) "*) ;;
+    *) exit 0 ;;
+esac
+command -v jq >/dev/null 2>&1 || exit 0
+
 block=$(cat <<'EOF'
 Shared machine: thelio (32 threads) is used by several sessions at once; zeus has 2x the RAM and is usually idle.
 - Claims: you run inside your lead's session, so its claims are yours too. Before building, `scripts/helix-claim check build:<tree>`: FREE means take it (`take build:<tree> "<why>"`) and release it when done; LIVE means build under it only if your brief says your lead holds it, otherwise stop and report. Never release a claim you did not take.
