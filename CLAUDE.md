@@ -187,8 +187,7 @@ What is shared here:
 
 - **The main working tree is live.** Other sessions commit in it. Never let git autostash
   (`-c merge.autoStash=false`), and commit your own edits promptly, with explicit pathspecs.
-  Pushing shared main pushes peers' unpushed commits too: run `git log origin/main..main`
-  first, and push only when every commit listed has its gates green.
+  Pushing main pushes peers' commits too: read `git log origin/main..main` and push only when their gates are green.
 - **`MM` does not mean a peer is mid-commit.** It is ambiguous, and one command settles it:
   `git diff HEAD -- <path>`. Empty means the committed content is what is on disk, only the
   INDEX holds an older copy, and nothing is in flight. A `git commit -- <paths>` whose
@@ -197,7 +196,7 @@ What is shared here:
   for a peer to sweep, and it discards nothing. A non-empty `git diff HEAD` is the case worth
   waiting on; confirm with `pgrep -x git` plus each pid's cwd and `helix-claim check
   worktree:main` before concluding anything about who owns it.
-- **Do not `git add` in this tree: commit the pathspec directly.** `git add` then `git commit` is not atomic: your change sits in the *shared* index for however long your hook runs (20s for a script, minutes for a staged header), and a peer committing in that window takes it into their commit. Measured twice in twenty minutes on 2026-09-10. `git commit -- <paths>` commits those paths' current content without going through the index, so there is no window. It commits the WHOLE file, so run `git diff HEAD -- <path>` first: a hunk you did not write is a peer's, and it goes out under your message. A brand-new file is unknown to `git commit -- <path>`, so stage and commit it in ONE command: `git add <path> && git commit -- <path>`. The other exception is the stale-index case above, where the content is already in HEAD and staging it exposes nothing.
+- **Do not `git add` in this tree: commit the pathspec directly.** `git add` then `git commit` is not atomic: your change sits in the *shared* index for however long your hook runs (20s for a script, minutes for a staged header), and a peer committing in that window takes it into their commit. Measured twice in twenty minutes on 2026-09-10. `git commit -- <paths>` commits those paths' current content without going through the index, so there is no window, though it takes a peer's hunks in the same file too (check `git diff HEAD -- <path>`), and a new file needs `git add <path> && git commit -- <path>` in one command. The one exception is the stale-index case above, where the content is already in HEAD and staging it exposes nothing.
 - **A live merge and an abandoned one look identical from outside.** `MERGE_HEAD` present, zero `UU` entries, and an index mtime minutes old and not moving describe a `git commit` whose hook is *building* — the index stops the moment the hook starts, and a staged header takes the full-build path. An absent `ListAgents` row is not evidence either. The only discriminator is process state:
   ```bash
   pgrep -x git | while read p; do echo "$p $(readlink /proc/$p/cwd)"; done
@@ -206,25 +205,19 @@ What is shared here:
   Run that before concluding anything about a foreign index. Completing someone's merge is non-destructive and aborting is destructive, but both are theirs to run.
 - **`build/bin/helix-tests` and `helix-screen` can be one inode across worktrees**: whoever linked last set the bytes both trees run. Compare `stat` inodes before trusting a control run against a sibling tree.
 - **The default `ctl` socket is per-user, not per-instance.** Pin it (box above) or you drive a peer's app and it reports success.
-- **One session per physical printer at a time.** Ask who holds a device before pointing anything at it.
-  Take `device:<name>` around a deploy with an EXIT-trap release (box below), never kill a
-  deploy mid-phase, and put the device's IP in `--note`: the name is a role, not a box.
+- **One session per physical printer at a time.** Ask who holds a device before pointing anything at it. Claim `device:` around a deploy with an EXIT trap (box below) and never kill a deploy mid-phase; the name is a role, so put the IP in `--note`.
 - **Claim before you take a shared resource: `scripts/helix-claim`.** Plain shell, no Claude
   dependency — opencode, a human or a script can use it, and `AGENTS.md` is a symlink to this
   file so every agent reads the same rule.
 
   ```bash
   scripts/helix-claim check worktree:main        # FREE | LIVE | STALE  (exit 1 if LIVE)
+  if scripts/helix-claim take device:k2plus deploy --pid $$ --note 192.168.1.50; then  # gate on the exit code; never pipe take
+      trap 'scripts/helix-claim release-if-owned-by $$ device:k2plus' EXIT; make deploy-k2plus; fi
   scripts/helix-claim list                       # everything, with derived liveness
-  scripts/helix-claim resources                  # memory, load, claims, top RSS, zeus: read before heavy work
+  scripts/helix-claim resources                  # memory, load, claims, top RSS, zeus: before heavy work
+  scripts/helix-claim run heavy:sweep -- make unit-sweep   # claimed while it runs
   make -j"$(scripts/helix-claim jobs)"           # a fair -j, not a guess
-  scripts/helix-claim run heavy:sweep -- make unit-sweep   # on the board while it runs, released on exit
-
-  # Gate on take's exit code (never `take; work; release`, never pipe it); release only what you took.
-  if scripts/helix-claim take device:k2plus "deploy" --pid $$ --note "192.168.1.50"; then
-      trap 'scripts/helix-claim release-if-owned-by $$ device:k2plus' EXIT
-      make deploy-k2plus
-  fi
   ```
 
   Resource names for worktrees are **derived, not trusted**: `worktree:main`,
@@ -243,14 +236,13 @@ What is shared here:
   from your FIRST edit until the commit lands - not merely for a merge, rebase or long
   commit: uncommitted files with no claim and an old mtime are indistinguishable from
   abandoned work, and `build:<name>` reserves nothing),
-  `build:<name>`, `device:<printer>`, `heavy:<what>`, `socket:<path>`, and `gh:issue:<n>`
-  for an issue you are working (`check` it before you start one).
+  `build:<name>`, `device:<printer>`, `heavy:<what>`, `gh:issue:<n>` (check it first), `socket:<path>`.
 
   **Before concluding anything about someone else's work, run `check`.** A merge mid-commit
   and an abandoned one look identical in the tree — same `MERGE_HEAD`, same resolved index,
   same frozen mtime. A `git commit` here can hold the shared tree for 40 minutes while its
-  hook builds. FREE is not proof either: also look for a `make` whose cwd is that tree, and
-  treat uncommitted work with no claim as someone's until they answer.
+  hook builds. FREE is not proof: look for a `make` whose cwd is the tree too.
+  A missing claim does not make work free: uncommitted work is someone's until they answer.
 
   **What the git hooks now do** (`core.hooksPath` is `.githooks`, tracked, so this reaches
   every worktree and every tool — opencode, plain `git`, a human — with no install step):
@@ -264,14 +256,14 @@ What is shared here:
   design; `HELIX_CLAIM_STRICT=1` makes `pre-commit` refuse instead of warn. `--no-verify`
   bypasses both, as before.
 
-  A merge here can hold the tree for **40 minutes** while the hook builds. Its owner claims
-  it, messages peers before starting one expected to run long, and releases when done.
+  A merge here can hold the tree for **40 minutes** while the hook builds. Its owner claims it,
+  announces a long one to peers, and releases when done.
 
 - **`scripts/helix-claim jobs` is where every default `-j` comes from.** It counts distinct
   trees with live compilers (a raw `cc1plus` count is just one build's `-j`), folds in live
   `build:` claims so an unclaimed builder still counts, skips the makes it was called from so
   a build never counts itself, and caps by `MemAvailable`.
-- **Never `pkill helix-screen`**, nor `pkill -x helix-screen`, nor `pkill -f`. The name is shared, so it reaps every other session's instance, not yours. The victim sees only `[Application] SIGTERM — fast exit` with no cause, so a long mock or `ctl` run dies looking like a crash. Resolve the PID from your own socket rather than trusting `$!`, which can name a parent that forked and exited: `for p in $(pgrep -x helix-screen); do grep -qz "$HELIX_SOCK" /proc/$p/cmdline && echo $p; done`.
+- **Never `pkill helix-screen`**, nor `pkill -x helix-screen`, nor `pkill -f`. The name is shared, so it reaps every other session's instance, not yours. The victim sees only `[Application] SIGTERM — fast exit` with no cause, so a long mock or `ctl` run dies looking like a crash. `$!` can name a parent that forked, so resolve the PID from your own socket: `for p in $(pgrep -x helix-screen); do grep -qz "$HELIX_SOCK" /proc/$p/cmdline && echo $p; done`.
 
 ---
 
