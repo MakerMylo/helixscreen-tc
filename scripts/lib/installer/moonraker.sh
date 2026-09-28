@@ -199,7 +199,7 @@ generate_update_manager_config() {
 [update_manager helixscreen]
 type: web
 channel: stable
-repo: prestonbrown/helixscreen
+repo: MakerMylo/helixscreen-tc
 path: ${INSTALL_DIR}
 EOF
 }

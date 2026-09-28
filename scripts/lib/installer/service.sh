@@ -272,7 +272,7 @@ install_procd_shim_k2() {
         log_error "K2 procd shim source missing: $shim_src"
         log_error "The release package may be incomplete."
         log_error "Recovery: re-run the installer to download a fresh copy:"
-        log_error "  curl -fsSL https://releases.helixscreen.org/install.sh | sh -s -- --update"
+        log_error "  curl -fsSL https://github.com/MakerMylo/helixscreen-tc/releases/latest/download/install.sh | sh -s -- --update"
         return 1
     fi
 
@@ -395,7 +395,7 @@ install_service_snapmaker_u1() {
         log_error "Snapmaker U1 autostart script not found at ${INSTALL_DIR}/scripts/snapmaker-u1-setup-autostart.sh"
         log_error "The release package may be incomplete."
         log_error "Recovery: re-run the installer to download a fresh copy:"
-        log_error "  curl -fsSL https://releases.helixscreen.org/install.sh | sh -s -- --update"
+        log_error "  curl -fsSL https://github.com/MakerMylo/helixscreen-tc/releases/latest/download/install.sh | sh -s -- --update"
         exit 1
     fi
 }
@@ -422,7 +422,7 @@ install_service_systemd() {
         log_error "Service file not found: $service_src"
         log_error "The release package may be incomplete."
         log_error "Recovery: re-run the installer to download a fresh copy:"
-        log_error "  curl -fsSL https://releases.helixscreen.org/install.sh | sh -s -- --update"
+        log_error "  curl -fsSL https://github.com/MakerMylo/helixscreen-tc/releases/latest/download/install.sh | sh -s -- --update"
         exit 1
     fi
 
@@ -603,7 +603,7 @@ install_service_sysv() {
         log_error "Init script not found: $init_src"
         log_error "The release package may be incomplete."
         log_error "Recovery: re-run the installer to download a fresh copy:"
-        log_error "  curl -fsSL https://releases.helixscreen.org/install.sh | sh -s -- --update"
+        log_error "  curl -fsSL https://github.com/MakerMylo/helixscreen-tc/releases/latest/download/install.sh | sh -s -- --update"
         exit 1
     fi
 
@@ -668,7 +668,7 @@ start_service_snapmaker_u1() {
         log_error "Init script not found or not executable: $init_src"
         log_error "The release package may be incomplete."
         log_error "Recovery: re-run the installer to download a fresh copy:"
-        log_error "  curl -fsSL https://releases.helixscreen.org/install.sh | sh -s -- --update"
+        log_error "  curl -fsSL https://github.com/MakerMylo/helixscreen-tc/releases/latest/download/install.sh | sh -s -- --update"
         exit 1
     fi
 

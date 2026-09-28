@@ -11,7 +11,7 @@
 _HELIX_COMMON_SOURCED=1
 
 # Default configuration (can be overridden before sourcing)
-: "${GITHUB_REPO:=prestonbrown/helixscreen}"
+: "${GITHUB_REPO:=MakerMylo/helixscreen-tc}"
 : "${INSTALL_DIR:=/opt/helixscreen}"
 : "${SERVICE_NAME:=helixscreen}"
 

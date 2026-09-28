@@ -75,11 +75,11 @@ namespace {
 
 /// GitHub API URL for latest release
 constexpr const char* GITHUB_API_URL =
-    "https://api.github.com/repos/prestonbrown/helixscreen/releases/latest";
+    "https://api.github.com/repos/MakerMylo/helixscreen-tc/releases/latest";
 
 /// GitHub API URL for all releases (beta channel uses this)
 constexpr const char* GITHUB_RELEASES_URL =
-    "https://api.github.com/repos/prestonbrown/helixscreen/releases";
+    "https://api.github.com/repos/MakerMylo/helixscreen-tc/releases";
 
 /// HTTP request timeout in seconds
 constexpr int HTTP_TIMEOUT_SECONDS = 30;

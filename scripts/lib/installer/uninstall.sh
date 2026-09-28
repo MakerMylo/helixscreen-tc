@@ -898,7 +898,7 @@ confirm_clean_install() {
     log_error "stdin is not a terminal (a piped 'curl ... | sh' has the script on"
     log_error "stdin), so the y/N prompt cannot be answered."
     log_error "Re-run with --yes to confirm the deletions listed above:"
-    log_error "  curl -sSL https://releases.helixscreen.org/install.sh | sh -s -- --clean --yes"
+    log_error "  curl -sSL https://github.com/MakerMylo/helixscreen-tc/releases/latest/download/install.sh | sh -s -- --clean --yes"
     exit 1
 }
 

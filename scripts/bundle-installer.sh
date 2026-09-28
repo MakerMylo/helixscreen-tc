@@ -79,7 +79,7 @@ set -eu
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin:${PATH:-}"
 
 # Configuration
-GITHUB_REPO="prestonbrown/helixscreen"
+GITHUB_REPO="MakerMylo/helixscreen-tc"
 SERVICE_NAME="helixscreen"
 
 HEADER

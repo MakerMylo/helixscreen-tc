@@ -81,7 +81,9 @@ ChannelVersionRelation compare_channel_version(const std::string& installed,
  */
 class UpdateChecker {
   public:
-    static constexpr const char* DEFAULT_R2_BASE_URL = "https://releases.helixscreen.org";
+    // This fork has no CDN; .invalid never resolves, so the GitHub fallback is
+    // what serves updates (see release.yml).
+    static constexpr const char* DEFAULT_R2_BASE_URL = "https://releases.invalid";
 
     /**
      * @brief Release information from GitHub

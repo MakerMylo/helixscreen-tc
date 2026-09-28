@@ -540,7 +540,7 @@ print_k2_stock_ai_notice() {
     log_warn "  choices start from those settings (switch / pausePrint) and then live in"
     log_warn "  Settings > Safety & Alerts."
     log_warn "  To get the stock detector back, uninstall HelixScreen:"
-    log_warn "    curl -sSL https://releases.helixscreen.org/install.sh | sh -s -- --uninstall"
+    log_warn "    curl -sSL https://github.com/MakerMylo/helixscreen-tc/releases/latest/download/install.sh | sh -s -- --uninstall"
     log_warn "  Uninstalling re-enables both the stock UI service and the stock camera."
 }
 

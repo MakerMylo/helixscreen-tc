@@ -12,11 +12,13 @@
 _HELIX_RELEASE_SOURCED=1
 
 # R2 CDN configuration (overridable via environment)
-: "${R2_BASE_URL:=https://releases.helixscreen.org}"
+# This fork publishes only to GitHub Releases; the upstream CDN would serve
+# upstream builds. .invalid never resolves, so lookups fall through to GitHub.
+: "${R2_BASE_URL:=https://releases.invalid}"
 : "${R2_CHANNEL:=stable}"
 
 # Plain HTTP endpoint for systems without SSL (K1, AD5M BusyBox wget)
-: "${HTTP_BASE_URL:=http://dl.helixscreen.org}"
+: "${HTTP_BASE_URL:=http://dl.invalid}"
 
 # Cached manifest from R2 (set by get_latest_version, consumed by download_release)
 _R2_MANIFEST=""
@@ -1673,7 +1675,7 @@ extract_release() {
                 log_error "Cannot write to ${INSTALL_DIR} (read-only under ProtectSystem)."
                 log_error "The systemd service file needs updating to allow self-updates."
                 log_error "Fix: re-run the installer once with:"
-                log_error "  curl -fsSL https://releases.helixscreen.org/install.sh | sh -s -- --update"
+                log_error "  curl -fsSL https://github.com/MakerMylo/helixscreen-tc/releases/latest/download/install.sh | sh -s -- --update"
                 rm -rf "$extract_dir"
                 exit 1
             fi
@@ -1717,7 +1719,7 @@ extract_release() {
 
                 if [ "$_inplace_failed" = true ]; then
                     log_error "In-place update failed. Install may be in a broken state."
-                    log_error "Fix: re-run the installer: curl -fsSL https://releases.helixscreen.org/install.sh | sh -s -- --update"
+                    log_error "Fix: re-run the installer: curl -fsSL https://github.com/MakerMylo/helixscreen-tc/releases/latest/download/install.sh | sh -s -- --update"
                     rm -rf "$extract_dir"
                     exit 1
                 fi
