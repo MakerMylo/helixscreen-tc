@@ -71,16 +71,25 @@ pid                navigate advanced; click row_pid_tuning
 ams                demo ams
 
 # Settings overlays (settings panel groups leaves under category rows)
-display            navigate settings; click row_display_sound
-theme              navigate settings; click row_display_sound; click row_theme_settings
-sensors            navigate settings; click row_hardware; click row_filament_sensors
-network            navigate settings; click row_system; click row_network
-hardware-health    navigate settings; click row_hardware; click row_hardware_health
-fan-settings       navigate settings; click row_hardware; click row_fan_settings
-barcode-scanner    navigate settings; click row_hardware; click row_spoolman_settings; click row_barcode_scanner
-label-printer      navigate settings; click row_hardware; click row_spoolman_settings; click row_label_printer
-security           navigate settings; click row_system; click row_security
+display            navigate settings; click row_display
+appearance         navigate settings; click row_appearance
+theme              navigate settings; click row_appearance; click row_theme_settings
+touch-input        navigate settings; click row_touch_input
+sound              navigate settings; click row_sound
+printing           navigate settings; click row_printing
+devices            navigate settings; click row_devices
+sensors            navigate settings; click row_devices; click row_filament_sensors
+hardware-health    navigate settings; click row_devices; click row_hardware_health
+fan-settings       navigate settings; click row_devices; click row_fan_settings
+barcode-scanner    navigate settings; click row_devices; click row_spoolman_settings; click row_barcode_scanner
+label-printer      navigate settings; click row_devices; click row_spoolman_settings; click row_label_printer
 safety             navigate settings; click row_safety
+connection         navigate settings; click row_connection
+network            navigate settings; click row_connection; click row_network
+language-time      navigate settings; click row_language_time
+system             navigate settings; click row_system
+security           navigate settings; click row_system; click row_security
+updates            navigate settings; click row_updates
 help-about         navigate settings; click row_help
 help-qr            navigate settings; click row_help; click row_discord; click btn_ok
 
