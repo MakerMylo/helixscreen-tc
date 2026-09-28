@@ -5303,3 +5303,39 @@ TEST_CASE_METHOD(LVGLUITestFixture, "An unrelated firmware prompt survives the H
     process_lvgl(20);
     helix::ActionPromptManager::set_instance(nullptr);
 }
+
+TEST_CASE("Happy Hare recovery: a standalone fault offers no Resume and leads with Recover",
+          "[ams][happy_hare][error-center][1323]") {
+    helix::test::RegisteredBackend<AmsBackendHappyHareTestHelper> hh_reg;
+    AmsBackendHappyHareTestHelper& hh = *hh_reg;
+    hh.initialize_test_gates(4);
+
+    helix::ClassifyContext ctx; // a failed MMU_LOAD / MMU_HOME outside a print
+    auto ev = hh.classify_error("!! MMU issue: Gate 2 is empty!", ctx);
+    REQUIRE(ev.has_value());
+    REQUIRE_FALSE(ev->recovery_actions.empty());
+    CHECK_FALSE(has_recovery(*ev, "hh::resume"));
+    CHECK(ev->recovery_actions.front().log_tag == "hh::recover");
+    CHECK(ev->recovery_actions.front().style == "primary");
+}
+
+TEST_CASE("Happy Hare recovery: a paused fault still leads with Resume",
+          "[ams][happy_hare][error-center][1323]") {
+    helix::test::RegisteredBackend<AmsBackendHappyHareTestHelper> hh_reg;
+    AmsBackendHappyHareTestHelper& hh = *hh_reg;
+    hh.initialize_test_gates(4);
+
+    hh.test_parse_mmu_state(
+        {{"print_state", "pause_locked"}, {"reason_for_pause", "Gate 2 is empty!"}});
+    helix::ClassifyContext ctx;
+    ctx.is_paused = true;
+    auto ev = hh.classify_error(
+        "!! MMU issue detected. Print will be paused\nReason: Gate 2 is empty!", ctx);
+    REQUIRE(ev.has_value());
+    REQUIRE_FALSE(ev->recovery_actions.empty());
+    CHECK(ev->recovery_actions.front().log_tag == "hh::resume");
+    CHECK(ev->recovery_actions.front().style == "primary");
+    for (const auto& a : ev->recovery_actions)
+        if (a.log_tag == "hh::recover")
+            CHECK(a.style.empty());
+}

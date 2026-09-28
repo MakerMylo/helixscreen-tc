@@ -424,6 +424,9 @@ class AmsBackendHappyHare : public AmsSubscriptionBackend {
     // (the base declares that contract; mutex_ is non-recursive, so this must not
     // lock).
     [[nodiscard]] std::vector<helix::RecoveryAction> build_recovery_actions() const override;
+    /// The one HH recovery list. Resume only while a print is paused.
+    [[nodiscard]] std::vector<helix::RecoveryAction>
+    recovery_actions_locked(bool print_paused) const;
 
     // Synthesize a toolchange step index from the current AmsAction and push it
     // to AmsState's step subject (deferred to the main thread). Happy Hare emits

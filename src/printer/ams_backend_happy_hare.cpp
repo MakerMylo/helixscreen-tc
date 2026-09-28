@@ -1378,20 +1378,29 @@ void AmsBackendHappyHare::refresh_gate_statuses_locked() {
 // ============================================================================
 
 std::vector<helix::RecoveryAction> AmsBackendHappyHare::build_recovery_actions() const {
+    return recovery_actions_locked(/*print_paused=*/true);
+}
+
+std::vector<helix::RecoveryAction>
+AmsBackendHappyHare::recovery_actions_locked(bool print_paused) const {
     // Caller holds mutex_.
     std::vector<helix::RecoveryAction> actions;
 
-    // Resume after the user clears the fault (always offered, primary). Resuming
-    // a paused print extrudes on the next move, so it needs the hotend up.
-    actions.push_back({lv_tr("Resume"), "RESUME", "hh::resume", "primary",
-                       /*needs_hot_nozzle=*/true});
+    // Resume after the user clears the fault, primary while a print is paused.
+    // A fault outside a print (a failed load or home) has nothing to resume, so
+    // Recover leads there. Resuming extrudes on the next move: needs the hotend.
+    if (print_paused) {
+        actions.push_back({lv_tr("Resume"), "RESUME", "hh::resume", "primary",
+                           /*needs_hot_nozzle=*/true});
+    }
 
     // Bare MMU_RECOVER: HH detects the filament position with its own
     // sensors. Our loaded flag reads false for every position HH reports as
     // Unknown, so asserting it would tell HH "unloaded" about filament stuck
     // mid-bowden. State-only, so it stays available on a cold nozzle.
     const bool loaded = system_info_.filament_loaded;
-    actions.push_back({lv_tr("Recover"), "MMU_RECOVER", "hh::recover", ""});
+    actions.push_back(
+        {lv_tr("Recover"), "MMU_RECOVER", "hh::recover", print_paused ? "" : "primary"});
 
     // If filament is at the toolhead, offer an explicit unload. Pulls filament
     // back out through the melt zone, so it needs heat.
@@ -1440,7 +1449,7 @@ AmsBackendHappyHare::classify_error(const std::string& raw_line,
                                        helix::contains_ci(detail, "runout")
                                            ? lv_tr("Filament runout")
                                            : lv_tr("Filament System Error"),
-                                       detail, build_recovery_actions());
+                                       detail, recovery_actions_locked(ctx.is_paused));
 }
 
 bool AmsBackendHappyHare::duplicates_firmware_prompt(const std::string& title) const {
