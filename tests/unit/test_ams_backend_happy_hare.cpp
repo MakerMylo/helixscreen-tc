@@ -1360,7 +1360,8 @@ TEST_CASE("Happy Hare error-popup Recover lets HH detect the filament position",
     };
     const Pos pos = GENERATE(Pos{8, "Loaded"}, Pos{0, "Unloaded"}, Pos{3, "Unknown"});
     nlohmann::json mmu;
-    mmu["action"] = "Error";
+    mmu["action"] = "Idle";
+    mmu["print_state"] = "pause_locked";
     mmu["filament_pos"] = pos.filament_pos;
     mmu["filament"] = pos.filament;
     mmu["reason_for_pause"] = "Clog detected";
@@ -4228,9 +4229,12 @@ TEST_CASE("Happy Hare classify_error: runout pause is CRITICAL with recovery",
     AmsBackendHappyHareTestHelper& hh = *hh_reg;
     hh.initialize_test_gates(4);
 
-    // Firmware reports a runout pause via reason_for_pause + action ERROR.
+    // Happy Hare's real fault shape: print_state "pause_locked" and a
+    // reason_for_pause, with action still naming the last operation. HH's
+    // action string has no "Error" value, so the reason is what has to carry it.
     nlohmann::json mmu;
-    mmu["action"] = "Error";
+    mmu["action"] = "Idle";
+    mmu["print_state"] = "pause_locked";
     mmu["filament_pos"] = 8; // loaded at toolhead
     mmu["reason_for_pause"] =
         "Runout detected on gate 0  EndlessSpool mode is off - manual intervention is required";
@@ -4271,9 +4275,11 @@ TEST_CASE("Happy Hare classify_error: stale reason_for_pause does not fire when 
     AmsBackendHappyHareTestHelper& hh = *hh_reg;
     hh.initialize_test_gates(4);
 
-    // Populate reason_for_pause_ with a recognized keyword and put HH in ERROR.
+    // Populate reason_for_pause_ with a recognized keyword, in HH's real
+    // pause_locked shape.
     nlohmann::json mmu;
-    mmu["action"] = "Error";
+    mmu["action"] = "Idle";
+    mmu["print_state"] = "pause_locked";
     mmu["reason_for_pause"] = "Clog detected on gate 0";
     hh.test_parse_mmu_state(mmu);
 
