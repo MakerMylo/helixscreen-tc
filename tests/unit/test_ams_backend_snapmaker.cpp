@@ -251,6 +251,35 @@ TEST_CASE_METHOD(SnapmakerFixture, "AmsBackendSnapmaker construction", "[ams][sn
 }
 
 // ============================================================================
+// The U1's own sequence homes and heats
+//
+// FEED_AUTO walks load_homing -> load_feeding -> load_heating -> ... and
+// unload_homing -> unload_picking -> unload_heating -> ..., setting its own
+// nozzle target from the lane's material. A UI preheat or G28 in front of it
+// is a second wait the firmware repeats anyway.
+// ============================================================================
+
+TEST_CASE_METHOD(SnapmakerFixture, "The U1 homes and heats for its own loads",
+                 "[ams][snapmaker][homing][preheat]") {
+    helix::test::RegisteredBackend<AmsBackendSnapmaker> backend_reg(nullptr, nullptr);
+    AmsBackendSnapmaker& backend = *backend_reg;
+
+    helix::ui::FilamentOpPlan load;
+    load.tier = helix::ui::FilamentTier::AmsBackend;
+    load.ams_call = helix::ui::AmsCall::Load;
+    load.ams_arg = 1;
+    CHECK(helix::ui::preheat_skip_reason(load, StandardMacroSlot::LoadFilament, &backend) ==
+          helix::ui::PreheatSkip::BackendSelfHeats);
+    CHECK_FALSE(helix::ui::needs_prerequisite_home(load, StandardMacroSlot::LoadFilament, &backend,
+                                                   /*toolhead_homed=*/false));
+
+    helix::ui::FilamentOpPlan unload = load;
+    unload.ams_call = helix::ui::AmsCall::Unload;
+    CHECK_FALSE(helix::ui::needs_prerequisite_home(unload, StandardMacroSlot::UnloadFilament,
+                                                   &backend, /*toolhead_homed=*/false));
+}
+
+// ============================================================================
 // Feeder / Toolhead noun tests
 //
 // The U1's own firmware UI binary spells filament entry "Feeder 1".."Feeder 4"

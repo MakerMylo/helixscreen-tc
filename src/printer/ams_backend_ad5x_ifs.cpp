@@ -1981,15 +1981,9 @@ AmsError AmsBackendAd5xIfs::do_load_filament(int slot_index) {
     // timeout flips to ERROR (raza616 stuck-on-Purging). on_complete fires on a
     // bg thread, so hop to the main thread before touching state.
     //
-    // ensure_homed_then() WITHOUT skip_homing is deliberate (#1248 proposed
-    // skip_homing=true on the theory that this double-homes; it does not). The
+    // ensure_homed_then() WITHOUT skip_homing does not double-home (#1248): the
     // macro's leading _G28 is conditional on homed_axes, so once our G28 has
-    // run it falls through - one home either way. What ensure_homed_then() buys
-    // over letting the macro home itself is the "Home printer first?" prompt:
-    // on a loadcell-Z AD5X the load is about to run a full probing home plus a
-    // trash-drop and nozzle wipe, and the user gets told before the toolhead
-    // moves. Unlike the unload above, which the user reaches only from an
-    // already-loaded head, Load is the entry point from a cold idle printer.
+    // run it falls through - one home either way.
     auto token = lifetime_.token();
     if (ifs_module_live_.load()) {
         // Standalone module: IFS_LOAD SLOT=n is the whole choreography - heat
@@ -2127,11 +2121,9 @@ AmsError AmsBackendAd5xIfs::do_unload_filament(int slot_index) {
     // device cfg and ZMOD v1.7.1.
     //
     // Raw rather than ensure_homed_then() because the macro's own _G28 already
-    // covers the unhomed case, so our G28 would add nothing but a "Home printer
-    // first?" prompt in front of a home the user cannot decline anyway. It is
-    // NOT to avoid a double home: _G28 is conditional on homed_axes and no-ops
-    // once we have homed (see filament_ops_self_home() in the header). The load
-    // path below deliberately makes the opposite call - see do_load_filament().
+    // covers the unhomed case, so our G28 would add nothing. _G28 is conditional
+    // on homed_axes and no-ops once we have homed (see filament_ops_self_home()
+    // in the header).
     spdlog::info("{} Unloading filament from toolhead (slot {}, current_slot {}, seated_slot {}, "
                  "head_empty {})",
                  backend_log_tag(), slot_index, current_slot, seated_slot, head_empty);
@@ -6716,22 +6708,6 @@ void AmsBackendAd5xIfs::persist_seated_slot_locked(int slot0) {
 }
 
 // ensure_homed_then() provided by AmsSubscriptionBackend
-
-void AmsBackendAd5xIfs::on_home_confirmation_declined() {
-    // load_filament()/unload_filament() arm HEATING + begin_phase_tracking_locked()
-    // before ever reaching ensure_homed_then(); undo that half here, then let the
-    // base implementation reset the action to IDLE and emit. Without this the
-    // phase tracker stays active, apply_phase_action_locked() has no `!= IDLE`
-    // guard, and the next extruder-temp frame flips IDLE -> HEATING again with a
-    // fresh action_start_time_ -- 300s later check_action_timeout() latches ERROR
-    // on an operation the user already declined.
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        end_phase_tracking_locked();
-        set_operation_detail_locked("");
-    }
-    AmsSubscriptionBackend::on_home_confirmation_declined();
-}
 
 void AmsBackendAd5xIfs::check_action_timeout() {
     // Indeterminate ("Working…") detector (#1065 row 14). While a phase-tracked

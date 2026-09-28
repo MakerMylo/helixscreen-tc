@@ -373,6 +373,7 @@ Extended Firmware endpoint that 404s on stock firmware; the override still persi
 | Dryer | No | Not supported |
 | Recover / Reset / Cancel | No | All three return `not_supported` (`src/printer/ams_backend_snapmaker.cpp#recover`) |
 | Operation step bar | Yes | Firmware-driven per-direction steps via `ams_operation_phase`; Heat step live |
+| Homing and heating | Firmware | `FEED_AUTO` homes and sets its own nozzle target (`load_homing` / `load_heating`, `unload_homing` / `unload_heating`), so `delegates_homing_to_printer()` and `supports_auto_heat_on_load()` are true: no G28 and no UI preheat from us |
 | Batch load/unload | Yes | The only backend with `supports_batch_filament_ops() = true`; see Batch Load/Unload above |
 | Per-slot loaded authority | Override | `slot_is_actively_loaded()` returns `status == LOADED` verbatim (hub table, `src/printer/ams_backend_snapmaker.cpp#slot_is_actively_loaded`) |
 | Path visualization | Yes | NOZZLE when the latch is set, OUTPUT when port/motion sensor still sees filament, NONE otherwise (`src/printer/ams_backend_snapmaker.cpp#get_slot_filament_segment`) |
