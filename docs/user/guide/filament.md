@@ -157,7 +157,7 @@ Some steps only apply to how your machine is set up. A step your system never re
 |--------|--------|
 | **Bypass** (toggle) | Feed filament directly to the extruder, bypassing the AMS. Shown when your hardware supports bypass, or when you turn on **Enable Bypass Controls** - see [When Bypass Doesn't Appear](#when-bypass-doesnt-appear). The toggle is guarded: it can't be changed while a job holds the machine (a "Bypass cannot be changed while printing" warning appears), if a lane's filament is loaded it is unloaded first before bypass engages, and where a hardware sensor owns the bypass the toggle only reports that the sensor is in control. |
 | **Load** | Load a slot's filament into the toolhead. On the Snapmaker U1 it opens a picker instead - see below |
-| **Unload** | Retract the currently loaded filament back to its slot. On the Snapmaker U1 it opens a picker instead - see below |
+| **Unload** | Retract the currently loaded filament back to its slot. It also works when filament is stuck in the toolhead and no slot claims it, on systems that can tell. On the Snapmaker U1 it opens a picker instead - see below |
 | **Reset** | Reset the AMS system state (useful after jams or errors) |
 | **Settings** | Open the AMS Management overlay for advanced controls |
 
@@ -210,7 +210,7 @@ Both entries grey out for the same reasons the Filament panel's buttons do: whil
 | Action | Description |
 |--------|-------------|
 | **Load** | Feed filament from this slot to the toolhead. Disabled if the slot is empty. |
-| **Unload** | Retract filament from this slot. Only available if this slot is currently loaded. |
+| **Unload** | Retract filament from this slot. Only available if this slot is currently loaded. Greyed out while filament sits in the toolhead that no slot claims, because the slot this menu names may not be the one holding it: use **Unload** in the filament sidebar instead. |
 | **Eject** | Push filament fully out of the lane to release the spool, when the slot has filament in its lane but **not** loaded into the toolhead. Replaces the Unload button in that state. Only on backends that support per-lane eject (AFC and Happy Hare). |
 | **Recover** | Pull filament that is stranded partway down the tube back toward its slot, without heating the nozzle. Takes the place of **Unload** when the system can tell that this slot's filament is stuck past the hub. |
 | **Preload** | Happy Hare only. Feed filament from the spool into its gate, ready for a later load. Greyed out during a print, while any filament is loaded, or while the MMU is busy. |
