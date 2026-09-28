@@ -175,7 +175,7 @@ Steps 1 and 2 are worth doing even if the rest stalls. Both are on
 `feature/ams-action-from-phases`: step 1 is the vocabulary above, step 2 is `coarse`,
 `action_at()` and the sidebar's debug line.
 
-## Open item carried over: the PURGING behavior change
+## Decided: PURGING starts an operation
 
 `f6e866600` unified two action lists that had drifted apart. They disagreed about
 **`PURGING`** as well as `SELECTING`, and unifying meant picking one:
@@ -194,10 +194,10 @@ designed, but it is a real behavior change for filament systems that was inherit
 than intended. The full suite is green, which means no test covered it, not that no user
 notices it.
 
-**Decide deliberately during this work** rather than leaving it as an accident of a
-refactor: either keep it (a purge is an operation, showing the bar is right) or make
-`PURGING` a non-start action explicitly, with a comment saying why. Both are defensible;
-what is not defensible is it staying an unexamined side effect.
+**Decision (Preston, 2026-09-27): keep it.** A purge is an operation, so an
+externally-started operation whose first action is `PURGING` shows the step bar. The
+reason is stated at `include/ams_types.h#ams_action_is_filament_operation`, and the
+migration projects Purge steps to `PURGING` on that basis.
 
 Relevant if a report arrives about a step bar appearing during an AFC or Happy Hare purge.
 
