@@ -4,6 +4,7 @@
 #include "esp_moonraker_client.h"
 
 #include "esp_log.h"
+#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "helix_version.h" // HELIX_VERSION for server.connection.identify
@@ -26,6 +27,7 @@ int64_t now_us() {
 // pong, close) is handled by the component or ignored.
 constexpr uint8_t OP_TEXT = 0x01;
 constexpr uint8_t OP_CONTINUATION = 0x00;
+constexpr uint8_t OP_PONG = 0x0A;
 } // namespace
 
 EspMoonrakerClient::EspMoonrakerClient() {
@@ -364,6 +366,9 @@ void EspMoonrakerClient::ws_event_trampoline(void* arg, esp_event_base_t /*base*
 
 void EspMoonrakerClient::on_ws_connected() {
     ESP_LOGI(TAG, "connected to %s", url_.c_str());
+    pongs_this_connection_ = 0;
+    last_pong_us_ = 0;
+    connected_us_ = esp_timer_get_time();
     // Reset exponential backoff for the next disconnect.
     next_reconnect_delay_ms_ = reconnect_min_delay_ms_;
     // shrink the reassembly buffer back down after a session's peak.
@@ -400,7 +405,13 @@ void EspMoonrakerClient::on_ws_connected() {
 }
 
 void EspMoonrakerClient::on_ws_disconnected() {
-    ESP_LOGW(TAG, "disconnected from %s", url_.c_str());
+    // A ping/pong timeout with zero pongs means none reached this client at all;
+    // pongs that stopped partway point at the link instead.
+    const int64_t now_us = esp_timer_get_time();
+    ESP_LOGW(TAG, "disconnected from %s (%u pongs this connection, last %llds ago, up %llds)",
+             url_.c_str(), pongs_this_connection_,
+             last_pong_us_ ? static_cast<long long>((now_us - last_pong_us_) / 1000000) : -1LL,
+             static_cast<long long>((now_us - connected_us_) / 1000000));
 
     // Any discovery chain in flight is now invalid: its pending requests are about
     // to be failed with connection_lost below. Clear the guard so the next
@@ -453,6 +464,11 @@ void EspMoonrakerClient::on_ws_data(const esp_websocket_event_data_t* d) {
     if (!d) {
         return;
     }
+    if (d->op_code == OP_PONG) {
+        ++pongs_this_connection_;
+        last_pong_us_ = esp_timer_get_time();
+        return;
+    }
     // Only text (0x01) and its continuation frames (0x00) carry JSON-RPC.
     if (d->op_code != OP_TEXT && d->op_code != OP_CONTINUATION) {
         return;
@@ -476,7 +492,16 @@ void EspMoonrakerClient::on_ws_data(const esp_websocket_event_data_t* d) {
     const bool complete = (d->payload_offset + d->data_len) >= d->payload_len;
     if (complete) {
         if (!rx_skip_ && !rx_buf_.empty()) {
+            // Every callback runs on this task, and the component reads the
+            // next frame (a PONG included) only after this returns: a slow
+            // handler here reads as a dead link at the 20s ping/pong timeout.
+            const int64_t t0 = esp_timer_get_time();
             dispatch_message(rx_buf_.data(), rx_buf_.size());
+            const int64_t ms = (esp_timer_get_time() - t0) / 1000;
+            if (ms >= SLOW_DISPATCH_LOG_MS) {
+                ESP_LOGW(TAG, "slow dispatch: %lldms for a %u-byte message: %.60s", ms,
+                         static_cast<unsigned>(rx_buf_.size()), rx_buf_.c_str());
+            }
         }
         rx_buf_.clear();
         rx_skip_ = false;

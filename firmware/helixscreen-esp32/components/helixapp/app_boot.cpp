@@ -86,6 +86,7 @@
 #include "src/xml/lv_xml.h"
 #include "subject_initializer.h"
 #include "system/afc_message_dedup.h"
+#include "temp_graph_controller.h"
 #include "temperature_sensor_manager.h"
 #include "text_io.h"
 #include "theme_manager.h"
@@ -469,6 +470,10 @@ void setup_discovery_callbacks_esp(MoonrakerManager& manager) {
                 }
                 helix::ToolState::instance().init_tools(*snapshot);
                 helix::ToolState::instance().load_spool_assignments(api);
+                if (c) {
+                    // Graphs start from Moonraker's cached history, as on desktop.
+                    helix::TempGraphController::seed_from_moonraker(*c);
+                }
 
                 // Dispatch the initial subscription status LAST, after the
                 // fan/sensor/extruder/AMS subjects exist. dispatch_status_update
