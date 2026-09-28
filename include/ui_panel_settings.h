@@ -96,6 +96,8 @@ class SettingsPanel : public PanelBase {
         return "settings_panel";
     }
 
+    friend class SettingsPanelTestAccess;
+
   private:
     //
     // === Widget References ===
