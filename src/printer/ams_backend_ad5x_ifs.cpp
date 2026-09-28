@@ -37,6 +37,7 @@
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <cerrno>
 #include <cstdio>
@@ -205,6 +206,12 @@ namespace {
 constexpr const char* ZMOD_CHANGE_MACRO = "gcode_macro END_CHANGE_FILAMENT";
 /// last_data.channel when no change is running.
 constexpr int ZMOD_CHANGE_IDLE_CHANNEL = 99;
+
+/// What each synthesized phase projects to, by the phase index the tracker
+/// publishes. The step model and the tracker's action both read these, so the
+/// two cannot disagree.
+constexpr std::array kIfsUnloadPhases{AmsAction::HEATING, AmsAction::CUTTING, AmsAction::UNLOADING};
+constexpr std::array kIfsLoadPhases{AmsAction::HEATING, AmsAction::LOADING, AmsAction::PURGING};
 } // namespace
 
 std::vector<std::string>
@@ -2765,14 +2772,15 @@ AmsBackendAd5xIfs::get_operation_step_model(StepOperationType op) const {
     // nozzle temperature. Labels are wrapped in lv_tr() so they are translated
     // and picked up by the string-extraction tooling (mirrors Snapmaker).
     const bool unload = (op == StepOperationType::UNLOAD);
+    const auto& phases = unload ? kIfsUnloadPhases : kIfsLoadPhases;
     OperationStepModel model;
-    model.steps.push_back({lv_tr("Heat nozzle"), 0, false, /*live_temp=*/true, AmsAction::HEATING});
+    model.steps.push_back({lv_tr("Heat nozzle"), 0, false, /*live_temp=*/true, phases[0]});
     if (unload) {
-        model.steps.push_back({lv_tr("Cut filament"), 1, false, false, AmsAction::CUTTING});
-        model.steps.push_back({lv_tr("Retract"), 2, false, false, AmsAction::UNLOADING});
+        model.steps.push_back({lv_tr("Cut filament"), 1, false, false, phases[1]});
+        model.steps.push_back({lv_tr("Retract"), 2, false, false, phases[2]});
     } else {
-        model.steps.push_back({lv_tr("Feed filament"), 1, false, false, AmsAction::LOADING});
-        model.steps.push_back({lv_tr("Purge"), 2, false, false, AmsAction::PURGING});
+        model.steps.push_back({lv_tr("Feed filament"), 1, false, false, phases[1]});
+        model.steps.push_back({lv_tr("Purge"), 2, false, false, phases[2]});
     }
     return model;
 }
@@ -6214,41 +6222,24 @@ bool AmsBackendAd5xIfs::apply_phase_action_locked() {
         return false;
     }
 
-    AmsAction synth;
     std::string detail;
-    // Step index for the right-side vertical operation tracker. Mirrors the
-    // phase_id values get_operation_step_model() emits: unload
-    // HEATING→0 / CUTTING→1 / UNLOADING→2 ; load HEATING→0 / LOADING→1 / PURGING→2.
-    // AmsState::sync_from_backend() copies this into the ams_operation_phase
-    // subject the tracker observes.
-    int phase_index;
+    // Step index for the right-side vertical operation tracker, the phase_id
+    // get_operation_step_model() emits. AmsState::sync_from_backend() copies it
+    // into the ams_operation_phase subject the tracker observes, and the action
+    // is that step's projection.
     const int tgt = phase_tracker_.target_deci;
-
-    if (phase_tracker_.is_unload) {
-        // HEATING → CUTTING → UNLOADING
-        if (!phase_tracker_.reached_target_once) {
-            synth = AmsAction::HEATING;
-            phase_index = 0;
-        } else if (!phase_tracker_.seen_head_drop) {
-            synth = AmsAction::CUTTING;
-            phase_index = 1;
-        } else {
-            synth = AmsAction::UNLOADING;
-            phase_index = 2;
-        }
+    int phase_index;
+    if (!phase_tracker_.reached_target_once) {
+        phase_index = 0;
+    } else if (!(phase_tracker_.is_unload ? phase_tracker_.seen_head_drop
+                                          : phase_tracker_.seen_head_rise)) {
+        phase_index = 1;
     } else {
-        // HEATING → LOADING → PURGING
-        if (!phase_tracker_.reached_target_once) {
-            synth = AmsAction::HEATING;
-            phase_index = 0;
-        } else if (!phase_tracker_.seen_head_rise) {
-            synth = AmsAction::LOADING;
-            phase_index = 1;
-        } else {
-            synth = AmsAction::PURGING;
-            phase_index = 2;
-        }
+        phase_index = 2;
     }
+    const AmsAction synth =
+        (phase_tracker_.is_unload ? kIfsUnloadPhases
+                                  : kIfsLoadPhases)[static_cast<size_t>(phase_index)];
     system_info_.operation_phase = phase_index;
 
     // Build the per-phase operation_detail. Dynamic (contains live temps), so it
