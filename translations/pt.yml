@@ -1493,6 +1493,7 @@ translations:
   Homing Y...: Posicionando Y...
   Homing Z...: Posicionando Z...
   Homing all axes...: Posicionando todos os eixos...
+  Homing and moving the plate...: 'Posicionando e movendo a mesa...'
   Homing axes...: Posicionando eixos...
   Homing complete: Homing concluído
   'Homing failed: ': 'Falha ao referenciar: '
@@ -3254,6 +3255,7 @@ translations:
   The nozzle extrudes a few short test moves in a corner, away from the print area, and repeats until it agrees with itself.: 'O bico faz alguns movimentos curtos de teste num canto, longe da área de impressão, e repete até os valores convergirem.'
   The plate and the spools are still hot. Use gloves.: A mesa e os carretéis ainda estão quentes. Use luvas.
 
+  The plate finishes its current move, but drying will not start.: 'A mesa termina o movimento atual, mas a secagem não vai começar.'
   ? The print is paused. Changing tools now moves the toolhead and swaps the filament at the nozzle. Resume the print once the change finishes.
   : A impressão está pausada. Trocar a ferramenta agora move o cabeçote e troca o
     filamento no bico. Retome a impressão assim que a troca terminar.
@@ -3300,6 +3302,7 @@ translations:
   The unit reported a fault with no further detail. Restart the printer if it repeats: A unidade relatou uma falha sem mais detalhes. Reinicie a impressora se repetir
   The unit's onboard storage has failed. The CFS mainboard needs replacing: O armazenamento interno da unidade falhou. A placa-mãe do CFS precisa ser substituída
   'The unload did not start: unload by hand, then start again': 'A descarga não começou: descarregue à mão e comece de novo'
+  The unload finishes on its own, but the plate will not move.: 'A descarga termina sozinha, mas a mesa não vai se mover.'
   Theme: Tema
   Theme Colors: Cores do Tema
   Theme Preset: Predefinição de Tema
@@ -3545,6 +3548,7 @@ translations:
   Unloading Start Speed: 'Velocidade inicial de descarregamento'
   Unloading before bypass...: Descarregando antes do bypass...
   Unloading filament: 'Descarregando filamento'
+  Unloading filament before drying...: 'Descarregando filamento antes da secagem...'
   Unloading filament...: Descarregando filamento...
   Unloads After Print: Descarrega após a impressão
   Unlock: Desbloquear

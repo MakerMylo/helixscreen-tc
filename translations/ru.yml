@@ -1473,6 +1473,7 @@ translations:
   Homing Y...: Парковка Y...
   Homing Z...: Парковка Z...
   Homing all axes...: Парковка всех осей...
+  Homing and moving the plate...: 'Парковка и перемещение стола...'
   Homing axes...: Парковка осей...
   Homing complete: Парковка завершена
   'Homing failed: ': 'Парковка не удалась: '
@@ -3217,6 +3218,7 @@ translations:
   The nozzle extrudes a few short test moves in a corner, away from the print area, and repeats until it agrees with itself.: 'Сопло делает несколько коротких тестовых перемещений в углу, в стороне от зоны печати, и повторяет их до сходимости.'
   The plate and the spools are still hot. Use gloves.: Стол и катушки ещё горячие. Используйте перчатки.
 
+  The plate finishes its current move, but drying will not start.: 'Стол завершит текущее перемещение, но сушка не начнётся.'
   ? The print is paused. Changing tools now moves the toolhead and swaps the filament at the nozzle. Resume the print once the change finishes.
   : Печать на паузе. Смена инструмента сейчас переместит печатающую головку и заменит филамент в сопле. Возобновите печать после завершения смены.
   The printer applied this value and keeps it for this tool.: 'Принтер применил это значение и сохранил его для этого инструмента.'
@@ -3259,6 +3261,7 @@ translations:
   The unit reported a fault with no further detail. Restart the printer if it repeats: Блок сообщил о неисправности без подробностей. Если повторится, перезапустите принтер
   The unit's onboard storage has failed. The CFS mainboard needs replacing: Встроенная память блока вышла из строя. Требуется замена материнской платы CFS
   'The unload did not start: unload by hand, then start again': 'Выгрузка не началась: выгрузите вручную и начните заново'
+  The unload finishes on its own, but the plate will not move.: 'Выгрузка завершится сама, но стол не будет перемещаться.'
   Theme: Тема
   Theme Colors: Цвета темы
   Theme Preset: Пресет темы
@@ -3500,6 +3503,7 @@ translations:
   Unloading Start Speed: 'Начальная скорость выгрузки'
   Unloading before bypass...: Выгрузка перед байпасом...
   Unloading filament: 'Выгрузка филамента'
+  Unloading filament before drying...: 'Выгрузка филамента перед сушкой...'
   Unloading filament...: Выгрузка филамента...
   Unloads After Print: Выгрузка после печати
   Unlock: Разблокировать

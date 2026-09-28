@@ -1344,6 +1344,7 @@
   <translation tag="Homing Y..." fr="Référence Y..."/>
   <translation tag="Homing Z..." fr="Référence Z..."/>
   <translation tag="Homing all axes..." fr="Référence de tous les axes..."/>
+  <translation tag="Homing and moving the plate..." fr="Référence et déplacement du plateau..."/>
   <translation tag="Homing axes..." fr="Référence des axes..."/>
   <translation tag="Homing complete" fr="Référence terminée"/>
   <translation tag="Homing failed: " fr="Échec de la prise d&apos;origine : "/>
@@ -2901,6 +2902,7 @@
   <translation tag="The loaded spool is {}, but this file was sliced for {}. Filled filament runs at a lower flow rate and needs a hardened nozzle." fr="La bobine chargée est {}, mais ce fichier a été tranché pour {}. Un filament chargé fonctionne à un débit plus faible et nécessite une buse durcie."/>
   <translation tag="The nozzle extrudes a few short test moves in a corner, away from the print area, and repeats until it agrees with itself." fr="La buse fait quelques mouvements de test dans un coin, à l&apos;écart de la zone d&apos;impression, et répète jusqu&apos;à convergence."/>
   <translation tag="The plate and the spools are still hot. Use gloves." fr="Le plateau et les bobines sont encore chauds. Portez des gants."/>
+  <translation tag="The plate finishes its current move, but drying will not start." fr="Le plateau termine son déplacement en cours, mais le séchage ne démarrera pas."/>
   <translation tag="The print is paused. Changing tools now moves the toolhead and swaps the filament at the nozzle. Resume the print once the change finishes." fr="L&apos;impression est en pause. Changer d&apos;outil maintenant déplace la tête d&apos;impression et remplace le filament au niveau de la buse. Reprenez l&apos;impression une fois le changement terminé."/>
   <translation tag="The printer applied this value and keeps it for this tool." fr="L&apos;imprimante a appliqué cette valeur et la conserve pour cet outil."/>
   <translation tag="The printer extrudes in a corner and repeats until the readings agree. You do not judge anything by eye." fr="L&apos;imprimante extrude dans un coin et répète jusqu&apos;à ce que les mesures concordent. Vous ne jugez rien à l&apos;œil."/>
@@ -2930,6 +2932,7 @@
   <translation tag="The unit reported a fault with no further detail. Restart the printer if it repeats" fr="L&apos;unité a signalé une panne sans plus de détails. Redémarrez l&apos;imprimante si cela se reproduit"/>
   <translation tag="The unit&apos;s onboard storage has failed. The CFS mainboard needs replacing" fr="La mémoire interne de l&apos;unité est défaillante. La carte mère du CFS doit être remplacée"/>
   <translation tag="The unload did not start: unload by hand, then start again" fr="Le déchargement n&apos;a pas démarré : déchargez à la main, puis recommencez"/>
+  <translation tag="The unload finishes on its own, but the plate will not move." fr="Le déchargement se termine de lui-même, mais le plateau ne bougera pas."/>
   <translation tag="Theme" fr="Thème"/>
   <translation tag="Theme Colors" fr="Couleurs du thème"/>
   <translation tag="Theme Preset" fr="Préréglage du thème"/>
@@ -3131,6 +3134,7 @@
   <translation tag="Unloading Start Speed" fr="Vitesse initiale de déchargement"/>
   <translation tag="Unloading before bypass..." fr="Déchargement avant bypass..."/>
   <translation tag="Unloading filament" fr="Déchargement du filament"/>
+  <translation tag="Unloading filament before drying..." fr="Déchargement du filament avant le séchage..."/>
   <translation tag="Unloading filament..." fr="Déchargement du filament..."/>
   <translation tag="Unloads After Print" fr="Décharge après l&apos;impression"/>
   <translation tag="Unlock" fr="Déverrouiller"/>

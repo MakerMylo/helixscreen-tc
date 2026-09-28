@@ -39,7 +39,17 @@ class TemperatureController;
  */
 class BedDryingController {
   public:
-    enum class State { Idle = 0, Running = 1, Cooling = 2, ReadyToRemove = 3, Placing = 4 };
+    /// Unloading and Preparing come before the latch: the toolhead is being
+    /// cleared, then the plate homed and moved, and no spools are on it yet.
+    enum class State {
+        Idle = 0,
+        Running = 1,
+        Cooling = 2,
+        ReadyToRemove = 3,
+        Placing = 4,
+        Unloading = 5,
+        Preparing = 6
+    };
 
     using Clock = std::function<long long()>;
 
@@ -93,6 +103,11 @@ class BedDryingController {
     /// Drop the wait without running either callback.
     void cancel_unload_wait();
 
+    /// Stop the flow before the spools go on: the unload wait is dropped and a
+    /// plate move in flight no longer leads to the place prompt. A move or an
+    /// unload the printer is already running finishes on its own.
+    void cancel_preparation();
+
     /// Advance the run to @p now_s (wall clock seconds). Driven by a 1 s timer.
     void tick(long long now_s);
 
@@ -132,6 +147,10 @@ class BedDryingController {
     void set_latch(bool on);
     void cancel_timer();
     void finish_unload_wait(bool done);
+    void drop_unload_wait();
+
+    enum class PreRun { None, Unloading, Preparing };
+    void set_pre_run(PreRun p);
 
     PrinterState& state_;
     IMoonrakerAPI* api_;
@@ -143,6 +162,8 @@ class BedDryingController {
     bool pending_appliance_ = false;
     bool bed_target_seen_ = false;
     bool removal_prompted_ = false;
+    PreRun pre_run_ = PreRun::None;
+    unsigned prep_gen_ = 0; ///< bumped when a preparation is dropped
 
     SubjectManager subjects_;
     bool subjects_initialized_ = false;

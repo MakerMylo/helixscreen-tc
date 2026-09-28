@@ -50,7 +50,8 @@ BedDryingController::BedDryingController(PrinterState& state, IMoonrakerAPI* api
     : state_(state), api_(api), tc_(tc), clock_(clock ? std::move(clock) : Clock(wall_clock_s)) {}
 
 BedDryingController::~BedDryingController() {
-    cancel_unload_wait();
+    pre_run_ = PreRun::None;
+    drop_unload_wait();
     cancel_timer();
     lifetime_.invalidate();
     if (subjects_initialized_) {
@@ -71,10 +72,11 @@ void BedDryingController::init_subjects() {
 
 void BedDryingController::await_unload(std::function<void()> on_done,
                                        std::function<void(bool started)> on_failed) {
-    cancel_unload_wait();
+    drop_unload_wait();
     unload_done_ = std::move(on_done);
     unload_failed_ = std::move(on_failed);
     unload_seen_busy_ = false;
+    set_pre_run(PreRun::Unloading);
     auto& ams = AmsState::instance();
     unload_watch_ = ui::observe_int_sync<BedDryingController>(
         ams.get_ams_action_subject(), this,
@@ -103,6 +105,30 @@ void BedDryingController::await_unload(std::function<void()> on_done,
 }
 
 void BedDryingController::cancel_unload_wait() {
+    drop_unload_wait();
+    if (pre_run_ == PreRun::Unloading) {
+        set_pre_run(PreRun::None);
+    }
+}
+
+void BedDryingController::cancel_preparation() {
+    if (pre_run_ == PreRun::None) {
+        return;
+    }
+    spdlog::info("[BedDrying] Stopped before the spools went on");
+    drop_unload_wait();
+    ++prep_gen_;
+    set_pre_run(PreRun::None);
+}
+
+void BedDryingController::set_pre_run(PreRun p) {
+    if (pre_run_ != p) {
+        pre_run_ = p;
+        publish();
+    }
+}
+
+void BedDryingController::drop_unload_wait() {
     unload_watch_.reset();
     if (unload_timer_) {
         ui::lv_timer_cancel_safe(unload_timer_);
@@ -151,7 +177,14 @@ int BedDryingController::bed_temp_for(const Material& material) const {
 
 BedDryingController::State BedDryingController::state() const {
     if (!record_.latched) {
-        return State::Idle;
+        switch (pre_run_) {
+        case PreRun::Unloading:
+            return State::Unloading;
+        case PreRun::Preparing:
+            return State::Preparing;
+        case PreRun::None:
+            return State::Idle;
+        }
     }
     if (record_.placing) {
         return State::Placing;
@@ -197,7 +230,7 @@ void BedDryingController::restore() {
 void BedDryingController::prepare(const Material& material, bool with_appliance,
                                   std::function<void()> on_ready,
                                   std::function<void(const std::string&)> on_error) {
-    if (!api_ || record_.latched) {
+    if (!api_ || record_.latched || pre_run_ == PreRun::Preparing) {
         if (on_error) {
             on_error(lv_tr("Drying is already running"));
         }
@@ -205,6 +238,8 @@ void BedDryingController::prepare(const Material& material, bool with_appliance,
     }
     pending_material_ = material;
     pending_appliance_ = with_appliance;
+    set_pre_run(PreRun::Preparing);
+    const unsigned gen = prep_gen_;
 
     // G1 takes G-code coordinates, and the park stays over the plate: travel
     // past it can hold tool docks or a purge bucket.
@@ -218,24 +253,32 @@ void BedDryingController::prepare(const Material& material, bool with_appliance,
     move += "\nM400";
 
     auto tok = lifetime_.token();
-    auto fail = [tok, on_error](const MoonrakerError& err) {
+    auto fail = [this, tok, gen, on_error](const MoonrakerError& err) {
         if (tok.expired()) {
             return;
         }
-        tok.defer("BedDrying::prepare_failed", [on_error, msg = err.message]() {
+        tok.defer("BedDrying::prepare_failed", [this, gen, on_error, msg = err.message]() {
+            if (gen != prep_gen_) {
+                return;
+            }
+            set_pre_run(PreRun::None);
             if (on_error) {
                 on_error(msg);
             }
         });
     };
-    auto do_move = [this, tok, move, on_ready, on_error, fail]() {
+    auto do_move = [this, tok, gen, move, on_ready, on_error, fail]() {
         api_->execute_gcode(
             move,
-            [this, tok, on_ready, on_error]() {
+            [this, tok, gen, on_ready, on_error]() {
                 if (tok.expired()) {
                     return;
                 }
-                tok.defer("BedDrying::placed_ready", [this, on_ready, on_error]() {
+                tok.defer("BedDrying::placed_ready", [this, gen, on_ready, on_error]() {
+                    if (gen != prep_gen_) {
+                        return;
+                    }
+                    set_pre_run(PreRun::None);
                     if (!begin_placement()) {
                         if (on_error) {
                             on_error(lv_tr("Could not save the drying state"));
@@ -261,11 +304,15 @@ void BedDryingController::prepare(const Material& material, bool with_appliance,
     }
     api_->motion().home_axes(
         "",
-        [tok, do_move]() {
+        [this, tok, gen, do_move]() {
             if (tok.expired()) {
                 return;
             }
-            tok.defer("BedDrying::homed", [do_move]() { do_move(); });
+            tok.defer("BedDrying::homed", [this, gen, do_move]() {
+                if (gen == prep_gen_) {
+                    do_move();
+                }
+            });
         },
         fail);
 }
@@ -483,6 +530,12 @@ void BedDryingController::publish() {
         break;
     case State::Placing:
         text = lv_tr("Spools on the bed: start drying, or confirm none were placed");
+        break;
+    case State::Unloading:
+        text = lv_tr("Unloading filament before drying...");
+        break;
+    case State::Preparing:
+        text = lv_tr("Homing and moving the plate...");
         break;
     case State::Idle:
         break;

@@ -1505,6 +1505,7 @@ translations:
   Homing Y...: Référence Y...
   Homing Z...: Référence Z...
   Homing all axes...: Référence de tous les axes...
+  Homing and moving the plate...: 'Référence et déplacement du plateau...'
   Homing axes...: Référence des axes...
   Homing complete: Référence terminée
   'Homing failed: ': 'Échec de la prise d''origine : '
@@ -3272,6 +3273,7 @@ translations:
   The nozzle extrudes a few short test moves in a corner, away from the print area, and repeats until it agrees with itself.: 'La buse fait quelques mouvements de test dans un coin, à l''écart de la zone d''impression, et répète jusqu''à convergence.'
   The plate and the spools are still hot. Use gloves.: Le plateau et les bobines sont encore chauds. Portez des gants.
 
+  The plate finishes its current move, but drying will not start.: 'Le plateau termine son déplacement en cours, mais le séchage ne démarrera pas.'
   ? The print is paused. Changing tools now moves the toolhead and swaps the filament at the nozzle. Resume the print once the change finishes.
   : L'impression est en pause. Changer d'outil maintenant déplace la tête d'impression et remplace le filament au niveau de la buse. Reprenez l'impression une fois le changement terminé.
   The printer applied this value and keeps it for this tool.: 'L''imprimante a appliqué cette valeur et la conserve pour cet outil.'
@@ -3320,6 +3322,7 @@ translations:
   The unit reported a fault with no further detail. Restart the printer if it repeats: L'unité a signalé une panne sans plus de détails. Redémarrez l'imprimante si cela se reproduit
   The unit's onboard storage has failed. The CFS mainboard needs replacing: La mémoire interne de l'unité est défaillante. La carte mère du CFS doit être remplacée
   'The unload did not start: unload by hand, then start again': 'Le déchargement n''a pas démarré : déchargez à la main, puis recommencez'
+  The unload finishes on its own, but the plate will not move.: 'Le déchargement se termine de lui-même, mais le plateau ne bougera pas.'
   Theme: Thème
   Theme Colors: Couleurs du thème
   Theme Preset: Préréglage du thème
@@ -3570,6 +3573,7 @@ translations:
   Unloading Start Speed: 'Vitesse initiale de déchargement'
   Unloading before bypass...: Déchargement avant bypass...
   Unloading filament: 'Déchargement du filament'
+  Unloading filament before drying...: 'Déchargement du filament avant le séchage...'
   Unloading filament...: Déchargement du filament...
   Unloads After Print: Décharge après l'impression
   Unlock: Déverrouiller

@@ -109,7 +109,6 @@ void prepare_plate(const Material& material, bool with_appliance) {
     if (!ctrl) {
         return;
     }
-    ToastManager::instance().show(ToastSeverity::INFO, lv_tr("Moving the plate..."), 3000);
     ctrl->prepare(material, with_appliance, show_place_prompt, [](const std::string& msg) {
         ToastManager::instance().show(
             ToastSeverity::ERROR,
@@ -160,7 +159,7 @@ void unload_before_drying(BedDryingController& ctrl, std::function<void()> then)
 
 void start_bed_drying_flow(const Material& material, bool with_appliance) {
     auto* ctrl = get_bed_drying_controller();
-    if (!ctrl) {
+    if (!ctrl || ctrl->state() != BedDryingController::State::Idle) {
         return;
     }
     const UnloadOffer offer = unload_offer(ctrl->toolhead_loaded());
@@ -229,6 +228,19 @@ void on_bed_drying_banner_clicked() {
     case BedDryingController::State::Placing:
         show_place_prompt();
         break;
+    case BedDryingController::State::Unloading:
+    case BedDryingController::State::Preparing:
+        modal_confirm(
+            lv_tr("Stop drying?"),
+            ctrl->state() == BedDryingController::State::Unloading
+                ? lv_tr("The unload finishes on its own, but the plate will not move.")
+                : lv_tr("The plate finishes its current move, but drying will not start."),
+            ModalSeverity::Warning, lv_tr("Stop"), [] {
+                if (auto* c = get_bed_drying_controller()) {
+                    c->cancel_preparation();
+                }
+            });
+        break;
     case BedDryingController::State::Idle:
         break;
     }
@@ -244,7 +256,14 @@ void on_bed_drying_banner_clicked_cb(lv_event_t* /*e*/) {
 
 void on_bed_drying_start_clicked_cb(lv_event_t* /*e*/) {
     LVGL_SAFE_EVENT_CB_BEGIN("[BedDrying] start clicked");
-    BedDryingModal::show_owned();
+    // A flow already under way is the banner's to answer; a second start would
+    // race it for the plate.
+    auto* ctrl = get_bed_drying_controller();
+    if (ctrl && ctrl->state() != BedDryingController::State::Idle) {
+        on_bed_drying_banner_clicked();
+    } else {
+        BedDryingModal::show_owned();
+    }
     LVGL_SAFE_EVENT_CB_END();
 }
 
