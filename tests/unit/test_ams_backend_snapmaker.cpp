@@ -754,6 +754,48 @@ TEST_CASE_METHOD(SnapmakerFixture, "Snapmaker channel_state maps to granular ope
     }
 }
 
+TEST_CASE_METHOD(SnapmakerFixture,
+                 "Snapmaker steps project Heat and Purge by kind, positioning by direction",
+                 "[ams][snapmaker][coarse]") {
+    helix::test::RegisteredBackend<AmsBackendSnapmaker> backend_reg(nullptr, nullptr);
+    AmsBackendSnapmaker& backend = *backend_reg;
+
+    const auto load = backend.get_operation_step_model(StepOperationType::LOAD_FRESH);
+    CHECK(load.action_at(0) == AmsAction::LOADING);
+    CHECK(load.action_at(1) == AmsAction::LOADING);
+    CHECK(load.action_at(2) == AmsAction::HEATING);
+    CHECK(load.action_at(3) == AmsAction::LOADING);
+    CHECK(load.action_at(4) == AmsAction::PURGING);
+    CHECK_FALSE(load.action_at(-1).has_value());
+    CHECK_FALSE(load.action_at(5).has_value());
+
+    const auto unload = backend.get_operation_step_model(StepOperationType::UNLOAD);
+    CHECK(unload.action_at(0) == AmsAction::UNLOADING);
+    CHECK(unload.action_at(1) == AmsAction::UNLOADING);
+    CHECK(unload.action_at(2) == AmsAction::HEATING);
+    CHECK(unload.action_at(3) == AmsAction::UNLOADING);
+}
+
+TEST_CASE_METHOD(SnapmakerFixture,
+                 "Snapmaker keeps its assigned action where the step projects another",
+                 "[ams][snapmaker][coarse]") {
+    // The projection is declared beside the step but nothing reads it for the
+    // action yet: the classifier's LOADING still stands on the Heat step.
+    helix::test::RegisteredBackend<AmsBackendSnapmaker> backend_reg(nullptr, nullptr);
+    AmsBackendSnapmaker& backend = *backend_reg;
+    json status =
+        json{{"filament_feed left", json{{"extruder2", json{{"filament_detected", true},
+                                                            {"channel_state", "load_heating"},
+                                                            {"channel_error", "ok"}}}}}};
+    SnapmakerTestAccess::handle_status(backend, status);
+
+    const auto info = backend.get_system_info();
+    REQUIRE(info.operation_phase == 2);
+    CHECK(backend.get_operation_step_model(StepOperationType::LOAD_FRESH)
+              .action_at(info.operation_phase) == AmsAction::HEATING);
+    CHECK(info.action == AmsAction::LOADING);
+}
+
 TEST_CASE_METHOD(SnapmakerFixture, "Snapmaker unload_finish resolves UNLOADING to IDLE",
                  "[ams][snapmaker][unload]") {
     helix::test::RegisteredBackend<AmsBackendSnapmaker> backend_reg(nullptr, nullptr);

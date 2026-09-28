@@ -850,6 +850,16 @@ void AmsOperationSidebar::apply_backend_step_index(int index) {
     }
     spdlog::debug("[AmsSidebar] Backend step index {} (op_type={})", index,
                   static_cast<int>(current_operation_type_));
+    // AmsState publishes the action before the phase, so the action read here
+    // is the one this step arrived with.
+    if (const auto projected = current_step_model_.action_at(index)) {
+        const auto assigned = static_cast<AmsAction>(
+            lv_subject_get_int(AmsState::instance().get_ams_action_subject()));
+        if (*projected != assigned) {
+            spdlog::debug("[AmsSidebar] Step {} projects {} but the backend assigned {}", index,
+                          ams_action_to_string(*projected), ams_action_to_string(assigned));
+        }
+    }
     ui_step_progress_set_current(step_progress_, index);
 
     // Refresh the live "<label> X / Y°C" readout on the live-temp step (declared
