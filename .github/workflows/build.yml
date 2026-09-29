@@ -504,6 +504,9 @@ jobs:
   build-android:
     name: Build (Android)
     runs-on: ubuntu-22.04
+    # Fork: no Android release, and the version-code parser refuses the
+    # fork's -tc.N suffix, so this only ever goes red here.
+    if: github.repository == 'prestonbrown/helixscreen'
     # Gated on the two jobs that need no build. A shell, gate or lint failure is
     # knowable in minutes; this job runs for well over an hour, so starting it
     # anyway spends a runner to re-learn what the fast suite already said. The
@@ -773,7 +776,8 @@ jobs:
         [ "${{ needs.compile-ubuntu.result }}" = "success" ]        || failed+=("Ubuntu compile")
         [ "${{ needs.test-ubuntu.result }}" = "success" ]           || failed+=("Ubuntu tests")
         [ "${{ needs.build-macos.result }}" = "success" ]           || failed+=("macOS build")
-        [ "${{ needs.build-android.result }}" = "success" ]         || failed+=("Android build")
+        # Skipped on the fork (see build-android's if:), which is not a failure.
+        case "${{ needs.build-android.result }}" in success|skipped) ;; *) failed+=("Android build");; esac
         [ "${{ needs.test-shell.result }}" = "success" ]            || failed+=("Shell tests")
         [ "${{ needs.test-telemetry-worker.result }}" = "success" ] || failed+=("Telemetry worker tests")
         [ "${{ needs.link-aux-binaries.result }}" = "success" ]     || failed+=("splash/watchdog link check")
