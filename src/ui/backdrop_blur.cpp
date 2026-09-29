@@ -208,6 +208,41 @@ struct GpuBlurState {
 
 static GpuBlurState s_gpu;
 
+// The blur shares the main thread with the display driver, and on an EGL
+// display (the Pi's DRM build renders through GBM/EGL) that driver keeps its own
+// context current for the whole run and swaps without re-binding it. Every
+// eglMakeCurrent the blur makes therefore has to be undone before returning, or
+// the display's eglSwapBuffers fails silently on every later frame and the
+// screen stops updating while the app runs on. This guard records whatever is
+// current when it is built and puts it back when it goes out of scope.
+class EglCurrentGuard {
+  public:
+    EglCurrentGuard()
+        : display_(eglGetCurrentDisplay()), context_(eglGetCurrentContext()),
+          draw_(eglGetCurrentSurface(EGL_DRAW)), read_(eglGetCurrentSurface(EGL_READ)) {}
+    ~EglCurrentGuard() {
+        if (context_ != EGL_NO_CONTEXT && display_ != EGL_NO_DISPLAY) {
+            eglMakeCurrent(display_, draw_, read_, context_);
+        }
+    }
+    EglCurrentGuard(const EglCurrentGuard&) = delete;
+    EglCurrentGuard& operator=(const EglCurrentGuard&) = delete;
+
+    /// Unbind the saved context so another display's context can be made
+    /// current on this thread (Mesa refuses two displays' contexts at once).
+    void release() const {
+        if (context_ != EGL_NO_CONTEXT && display_ != EGL_NO_DISPLAY) {
+            eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+        }
+    }
+
+  private:
+    EGLDisplay display_;
+    EGLContext context_;
+    EGLSurface draw_;
+    EGLSurface read_;
+};
+
 static const char* BLUR_VERTEX_SHADER = R"(
     attribute vec2 a_position;
     varying vec2 v_uv;
@@ -311,6 +346,11 @@ static bool init_gpu_blur() {
             hfs::remove(path);
         }
     } guard_cleaner{guard_path};
+
+    // Everything below binds the blur's own context; the display's comes back
+    // when this function returns, whichever way it returns.
+    EglCurrentGuard restore_display_context;
+    restore_display_context.release();
 
     for (const char* path : DRM_DEVICES) {
         int fd = open(path, O_RDWR | O_CLOEXEC);
@@ -510,6 +550,8 @@ static void destroy_gpu_blur() {
         return;
 
     // Acquire context for cleanup
+    EglCurrentGuard restore_display_context;
+    restore_display_context.release();
     auto surface = s_gpu.surface != EGL_NO_SURFACE ? s_gpu.surface : EGL_NO_SURFACE;
     eglMakeCurrent(s_gpu.display, surface, surface, s_gpu.context);
 
@@ -546,21 +588,12 @@ static bool gpu_blur(uint8_t* data, int width, int height) {
         return false;
     }
 
-    // Save and restore previous EGL context
-    auto saved_display = eglGetCurrentDisplay();
-    auto saved_context = eglGetCurrentContext();
-    auto saved_draw = eglGetCurrentSurface(EGL_DRAW);
-    auto saved_read = eglGetCurrentSurface(EGL_READ);
-
-    if (saved_context != EGL_NO_CONTEXT) {
-        eglMakeCurrent(saved_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-    }
+    EglCurrentGuard restore_display_context;
+    restore_display_context.release();
 
     auto egl_surface = s_gpu.surface != EGL_NO_SURFACE ? s_gpu.surface : EGL_NO_SURFACE;
     if (!eglMakeCurrent(s_gpu.display, egl_surface, egl_surface, s_gpu.context)) {
         spdlog::error("[Backdrop Blur] Failed to acquire EGL context for blur");
-        if (saved_context != EGL_NO_CONTEXT)
-            eglMakeCurrent(saved_display, saved_draw, saved_read, saved_context);
         return false;
     }
 
@@ -611,11 +644,8 @@ static bool gpu_blur(uint8_t* data, int width, int height) {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    // Restore previous EGL context
+    // Unbind ours; the guard rebinds the display's on return.
     eglMakeCurrent(s_gpu.display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-    if (saved_context != EGL_NO_CONTEXT) {
-        eglMakeCurrent(saved_display, saved_draw, saved_read, saved_context);
-    }
 
     return ok;
 }
