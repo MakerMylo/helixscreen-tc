@@ -230,7 +230,10 @@ void draw_path(lv_layer_t* layer, const lv_area_t& a, const Snapshot& s, const P
     } else {
         glyph_cx = a.x1 + w / 2;
         glyph_cy = a.y1 + h * 62 / 100;
-        run.fixed = glyph_cx;
+        // On the isometric styles the nozzle hangs off a front face drawn left
+        // of centre; the tube runs down that same line so it and the extrudate
+        // below the tip are collinear.
+        run.fixed = fpath::toolhead_tip_x(glyph_cx, scale);
         run.from = a.y1 + pip_r;
         run.to = glyph_cy - scale * 2; // the block's top
     }
@@ -297,10 +300,11 @@ void draw_path(lv_layer_t* layer, const lv_area_t& a, const Snapshot& s, const P
     // Below the nozzle tip: the extrudate run, coloured when filament is at
     // the toolhead.
     const int32_t tip_y = fpath::toolhead_tip_y(glyph_cy, scale);
+    const int32_t tip_x = fpath::toolhead_tip_x(glyph_cx, scale);
     const int32_t bottom = horizontal ? LV_MIN(a.y2 - 2, tip_y + 2 + scale * 2) : a.y2 - pip_r;
     if (bottom > tip_y + 4) {
         LaneStyle st = lane_style(s.at_toolhead, fil, p.idle, p.bg, LV_MAX(2, line_w - 1));
-        draw_lane_vline(layer, glyph_cx, tip_y + 2, bottom, st);
+        draw_lane_vline(layer, tip_x, tip_y + 2, bottom, st);
     }
 }
 

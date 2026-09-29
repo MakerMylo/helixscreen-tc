@@ -63,7 +63,8 @@ void ToolActionsOverlay::init_subjects() {
     }
     UI_MANAGED_SUBJECT_INT(index_, 0, "tool_act_index", subjects_);
     UI_MANAGED_SUBJECT_STRING(title_, title_buf_, "", "tool_act_title", subjects_);
-    UI_MANAGED_SUBJECT_STRING(stats_, stats_buf_, "", "tool_act_stats", subjects_);
+    UI_MANAGED_SUBJECT_STRING(pickups_, pickups_buf_, "", "tool_act_pickups", subjects_);
+    UI_MANAGED_SUBJECT_STRING(dropoffs_, dropoffs_buf_, "", "tool_act_dropoffs", subjects_);
     UI_MANAGED_SUBJECT_STRING(rate_, rate_buf_, "--", "tool_act_rate", subjects_);
     UI_MANAGED_SUBJECT_INT(rate_state_, 0, "tool_act_rate_state", subjects_);
     UI_MANAGED_SUBJECT_INT(mounted_, 0, "tool_act_mounted", subjects_);
@@ -192,11 +193,12 @@ void ToolActionsOverlay::refresh() {
     auto& vars = helix::ToolchangerVars::instance();
     if (auto st = vars.stats_for(name)) {
         const int rate = st->success_rate_pct();
-        lv_subject_copy_string(&stats_,
-                               fmt::format("{} {}/{} · {} {}/{}", lv_tr("Pick up"),
-                                           st->ups - st->ups_failed, st->ups, lv_tr("Drop off"),
-                                           st->downs - st->downs_failed, st->downs)
-                                   .c_str());
+        lv_subject_copy_string(
+            &pickups_,
+            fmt::format("{} {}/{}", lv_tr("Pick up"), st->ups - st->ups_failed, st->ups).c_str());
+        lv_subject_copy_string(&dropoffs_, fmt::format("{} {}/{}", lv_tr("Drop off"),
+                                                       st->downs - st->downs_failed, st->downs)
+                                               .c_str());
         if (rate < 0) {
             lv_subject_copy_string(&rate_, "--");
             lv_subject_set_int(&rate_state_, 0);
@@ -205,7 +207,8 @@ void ToolActionsOverlay::refresh() {
             lv_subject_set_int(&rate_state_, rate > kToolRateGoodPct ? 1 : 2);
         }
     } else {
-        lv_subject_copy_string(&stats_, lv_tr("No changes recorded yet"));
+        lv_subject_copy_string(&pickups_, lv_tr("No changes recorded yet"));
+        lv_subject_copy_string(&dropoffs_, "");
         lv_subject_copy_string(&rate_, "--");
         lv_subject_set_int(&rate_state_, 0);
     }

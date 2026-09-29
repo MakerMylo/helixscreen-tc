@@ -39,7 +39,8 @@
  * Subjects:
  * - tool_act_index        (int)    the tool shown; <tool_path> follows it
  * - tool_act_title        (string) "T3"
- * - tool_act_stats        (string) "Pick up 10/10 · Drop off 9/10"
+ * - tool_act_pickups      (string) "Pick up 10/10"
+ * - tool_act_dropoffs     (string) "Drop off 9/10"
  * - tool_act_rate         (string) "95%" or "--"
  * - tool_act_rate_state   (int)    0 unknown, 1 good (> 95%), 2 needs a look
  * - tool_act_mounted      (int)    1 while the tool is on the carriage (Dock shows, else Pick up)
@@ -136,14 +137,16 @@ class ToolActionsOverlay : public OverlayBase {
     std::unique_ptr<ColorPicker> color_picker_;
 
     char title_buf_[32] = "";
-    char stats_buf_[96] = "";
+    char pickups_buf_[48] = "";
+    char dropoffs_buf_[48] = "";
     char rate_buf_[16] = "";
     char color_name_buf_[48] = "";
     char loaded_buf_[32] = "";
     char status_buf_[160] = "";
     lv_subject_t index_;
     lv_subject_t title_;
-    lv_subject_t stats_;
+    lv_subject_t pickups_;
+    lv_subject_t dropoffs_;
     lv_subject_t rate_;
     lv_subject_t rate_state_;
     lv_subject_t mounted_;

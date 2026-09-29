@@ -400,6 +400,23 @@ int32_t toolhead_tip_y(int32_t nozzle_y, int32_t extruder_scale) {
     }
 }
 
+// Nozzle tip X for the configured style. The isometric styles draw their
+// front face half a body depth left of the centre they are given, and the tip
+// hangs off that face, so an extrudate line at cx would sit beside the point.
+int32_t toolhead_tip_x(int32_t cx, int32_t extruder_scale) {
+    switch (helix::SettingsManager::instance().get_effective_toolhead_style()) {
+    case helix::ToolheadStyle::CREALITY_K2:
+        return cx - (extruder_scale * 5) / 10 / 2;
+    case helix::ToolheadStyle::A4T:
+    case helix::ToolheadStyle::ANTHEAD:
+    case helix::ToolheadStyle::JABBERWOCKY:
+    case helix::ToolheadStyle::STEALTHBURNER:
+        return cx;
+    default: // the Bambu-style default and the K1 share one isometric body
+        return cx - (extruder_scale * 6) / 10 / 2;
+    }
+}
+
 // Tool badge (T0, T1, …) below a nozzle — matches system_path_canvas style.
 void draw_tool_badge(const RenderCtx& ctx, int32_t cx, int32_t badge_top, const char* label,
                      lv_color_t text_color, lv_opa_t opa) {

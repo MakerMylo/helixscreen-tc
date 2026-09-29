@@ -40,13 +40,15 @@
                   style_radius="#border_radius_small" style_border_width="1" style_border_color="#border"
                   scrollable="false">
             <text_small text="Change success" translation_tag="Change success" style_text_color="#text_muted"/>
-            <lv_label name="tool_act_rate" bind_text="tool_act_rate" style_text_font="#font_xl">
+            <lv_label name="tool_act_rate" bind_text="tool_act_rate" style_text_font="#font_display">
               <bind_style_if_eq name="tools_rate_unknown" subject="tool_act_rate_state" ref_value="0"/>
               <bind_style_if_eq name="tools_rate_good" subject="tool_act_rate_state" ref_value="1"/>
               <bind_style_if_eq name="tools_rate_warn" subject="tool_act_rate_state" ref_value="2"/>
             </lv_label>
-            <text_small name="tool_act_stats" width="100%" long_mode="wrap" style_text_align="center"
-                        bind_text="tool_act_stats" style_text_color="#text_muted"/>
+            <text_body name="tool_act_pickups" width="100%" style_text_align="center"
+                       bind_text="tool_act_pickups"/>
+            <text_body name="tool_act_dropoffs" width="100%" style_text_align="center"
+                       bind_text="tool_act_dropoffs"/>
           </lv_obj>
 
           <!-- The filament in this tool: edited here, saved with the button. -->

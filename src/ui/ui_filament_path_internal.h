@@ -445,6 +445,10 @@ void draw_toolhead(lv_layer_t* layer, int32_t cx, int32_t cy, lv_color_t color, 
 /// Y of the nozzle tip for the configured toolhead style (heat glow anchor).
 int32_t toolhead_tip_y(int32_t nozzle_y, int32_t extruder_scale);
 
+/// X of the nozzle tip for the configured toolhead style: the isometric styles
+/// hang it off a front face drawn left of the given centre.
+int32_t toolhead_tip_x(int32_t cx, int32_t extruder_scale);
+
 /// Tool badge ("T0", "T1", …) beneath a nozzle: rounded rect + centered label.
 void draw_tool_badge(const RenderCtx& ctx, int32_t cx, int32_t badge_top, const char* label,
                      lv_color_t text_color, lv_opa_t opa);
