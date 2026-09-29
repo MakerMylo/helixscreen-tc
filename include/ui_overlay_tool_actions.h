@@ -42,7 +42,7 @@
  * - tool_act_stats        (string) "Pick up 10/10 · Drop off 9/10"
  * - tool_act_rate         (string) "95%" or "--"
  * - tool_act_rate_state   (int)    0 unknown, 1 good (> 95%), 2 needs a look
- * - tool_act_mount_label  (string) "Pick up" or "Dock"
+ * - tool_act_mounted      (int)    1 while the tool is on the carriage (Dock shows, else Pick up)
  * - tool_act_color_name   (string) the form's colour, by name
  * - tool_act_loaded       (string) "loaded" / "empty" / "" by memory
  * - tool_act_dirty        (int)    the form differs from the slot (Save enabled)
@@ -138,7 +138,6 @@ class ToolActionsOverlay : public OverlayBase {
     char title_buf_[32] = "";
     char stats_buf_[96] = "";
     char rate_buf_[16] = "";
-    char mount_buf_[32] = "";
     char color_name_buf_[48] = "";
     char loaded_buf_[32] = "";
     char status_buf_[160] = "";
@@ -147,7 +146,7 @@ class ToolActionsOverlay : public OverlayBase {
     lv_subject_t stats_;
     lv_subject_t rate_;
     lv_subject_t rate_state_;
-    lv_subject_t mount_label_;
+    lv_subject_t mounted_;
     lv_subject_t color_name_;
     lv_subject_t loaded_;
     lv_subject_t dirty_;

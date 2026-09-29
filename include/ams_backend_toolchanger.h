@@ -413,6 +413,11 @@ class AmsBackendToolChanger : public AmsSubscriptionBackend {
     /// last known tool: current_slot stays >= 0 through the fault and names a
     /// tool that may not be there.
     bool sensor_error_ = false;
+    /// toolchanger.status was "uninitialized" on its last frame: the changer
+    /// has not run INITIALIZE_TOOLCHANGER since Klipper started (on
+    /// initialize_on: home that is every restart until the first G28). A
+    /// dispatch initialises first rather than being refused as busy.
+    bool uninitialized_ = false;
     /// The gripper has been open at some point during the operation currently
     /// running. Cleared when it ends.
     ///

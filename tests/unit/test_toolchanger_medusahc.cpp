@@ -17,7 +17,7 @@
  *       if self.status != STATUS_READY:
  *           raise gcmd.error("Cannot select tool, toolchanger status is %s, ...")
  *
- * 1. 'uninitialized' mapped to RESETTING, which is_busy(). Every tool changer
+ * 1. 'uninitialized' maps to IDLE with the dispatch initialising first. Every tool changer
  *    boots uninitialized, so check_preconditions() refused the first tap on
  *    every klipper-toolchanger printer. On the DEFAULT initialize_on: first-use
  *    that refusal is self-inflicted: the tap is what would have triggered
@@ -71,31 +71,30 @@ PrinterDiscovery plain_toolchanger_discovery() {
 // Init states
 // ============================================================================
 
-TEST_CASE("A cold-boot toolchanger refuses the tool tap", "[ams][toolchanger][coldstart]") {
+TEST_CASE("A cold-boot toolchanger initialises ahead of the tool tap",
+          "[ams][toolchanger][coldstart]") {
     ToolChangerHelper h(4);
     h.feed_status("uninitialized", -1);
 
-    // Refusing is the lesser evil, not a clean answer. On the default
-    // initialize_on: first-use, select_tool() would have auto-initialized and
-    // this tap is what would have cleared the state, so the refusal costs the
-    // user a Reset they should not have needed.
-    //
-    // Letting it through is worse. On initialize_on: manual (what MedusaHC
-    // ships) Klipper raises "Cannot select tool, toolchanger status is
-    // uninitialized". That rejection reaches execute_gcode()'s error callback,
-    // which only logs: on_complete never fires, so the optimistic SELECTING that
-    // dispatch_operation() stamped is never unwound, and execute_gcode() returns
-    // success() so the `if (!result)` net misses it too. is_busy() would then
-    // refuse every later op, and Moonraker only republishes CHANGED fields, so
-    // no second 'uninitialized' frame arrives to reset it. A latched SELECTING
-    // is unrecoverable without a restart; a refusal clears with Reset, which
-    // sends INITIALIZE_TOOLCHANGER.
-    CHECK(h.get_system_info().is_busy());
-    CHECK(h.get_current_action() == AmsAction::RESETTING);
+    // Nothing is moving on an uninitialized changer, so it is not busy: on
+    // initialize_on: home that state lasts from every Klipper restart until
+    // the first G28, and refusing everything as busy left the filament UI
+    // dead until then. The tap goes through with INITIALIZE_TOOLCHANGER in
+    // front of the swap, the way a T<n> would have auto-initialised on
+    // initialize_on: first-use; Klipper stops the script at the first error,
+    // so a failed initialisation never reaches the swap.
+    CHECK_FALSE(h.get_system_info().is_busy());
+    CHECK(h.get_current_action() == AmsAction::IDLE);
 
     auto err = h.change_tool(2);
-    CHECK_FALSE(err.success());
-    CHECK(h.sent().empty());
+    CHECK(err.success());
+    REQUIRE_FALSE(h.sent().empty());
+    CHECK(h.sent().back().rfind("INITIALIZE_TOOLCHANGER\n", 0) == 0);
+
+    // Once the changer reports ready the prefix is gone.
+    h.feed_status("ready", 2);
+    h.change_tool(1);
+    CHECK(h.sent().back().rfind("INITIALIZE_TOOLCHANGER", 0) == std::string::npos);
 }
 
 TEST_CASE("An initializing toolchanger IS busy", "[ams][toolchanger][coldstart]") {

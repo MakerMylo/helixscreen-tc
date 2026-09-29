@@ -348,7 +348,7 @@ constexpr GuardedFile kGuardedFiles[] = {
     {"ui_xml/probe_bltouch_panel.xml", 2},
     {"ui_xml/probe_beacon_panel.xml", 2},
     {"ui_xml/temp_graph_overlay.xml", 2},
-    {"ui_xml/tool_actions_overlay.xml", 5},
+    {"ui_xml/tool_actions_overlay.xml", 6},
     {"ui_xml/tools_panel.xml", 1},
 };
 

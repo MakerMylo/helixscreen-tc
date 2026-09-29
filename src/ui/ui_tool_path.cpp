@@ -80,10 +80,11 @@ Snapshot take_snapshot(int tool) {
     s.body = lv_color_hex(helix::ToolConfig::instance().color(tool));
 
     // Tool identity
-    const auto& tools = helix::ToolState::instance().tools();
+    auto& state = helix::ToolState::instance();
+    const auto& tools = state.tools();
     if (tool < static_cast<int>(tools.size())) {
         s.tool_exists = true;
-        s.mounted = tools[static_cast<size_t>(tool)].active;
+        s.mounted = state.active_tool_index() == tool || tools[static_cast<size_t>(tool)].active;
     }
 
     // Slot colour and status: on a tool changer slot == tool.
@@ -201,8 +202,11 @@ void draw_path(lv_layer_t* layer, const lv_area_t& a, const Snapshot& s, const P
     // of the glyph.
     // Horizontal (the actions overlay) has a whole column to itself, so it
     // may grow larger than a column glyph; it is bounded by both axes.
-    const int32_t scale =
-        horizontal ? LV_CLAMP(LV_MIN(h / 8, w / 10), 6, 40) : LV_CLAMP(w / 7, 6, 22);
+    // Either orientation may have a whole column to itself (the actions
+    // overlay), so both grow past a panel column's glyph; both are bounded by
+    // the axis the drawing runs along as well as the one it sits across.
+    const int32_t scale = horizontal ? LV_CLAMP(LV_MIN(h / 8, w / 10), 6, 40)
+                                     : LV_CLAMP(LV_MIN(w / 7, h / 16), 6, 40);
     const int32_t line_w = LV_CLAMP(scale / 2, 3, 10);
     const int32_t pip_r = LV_CLAMP(scale / 2 + 1, 4, 9);
 

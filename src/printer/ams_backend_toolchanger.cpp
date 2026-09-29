@@ -766,6 +766,7 @@ void AmsBackendToolChanger::parse_toolchanger_state(const nlohmann::json& tc_dat
         std::string status_str = tc_data["status"].get<std::string>();
         system_info_.action = status_to_action(status_str);
         system_info_.operation_detail = status_str;
+        uninitialized_ = status_str == "uninitialized";
         spdlog::trace("[AMS ToolChanger] Status: {} -> {}", status_str,
                       ams_action_to_string(system_info_.action));
 
@@ -915,28 +916,14 @@ AmsAction AmsBackendToolChanger::status_to_action(const std::string& status) {
     if (status == "initializing") {
         return AmsAction::RESETTING;
     }
-    // 'uninitialized' stays busy, which refuses the tap at the gate.
-    //
-    // That refusal is imperfect: on the default initialize_on: first-use,
-    // select_tool() would have auto-initialized, so the tap is what would have
-    // cleared the state. But letting it through is worse. On initialize_on:
-    // manual (what MedusaHC ships) Klipper raises "Cannot select tool,
-    // toolchanger status is uninitialized", and that rejection reaches the
-    // error callback of execute_gcode(), which only logs -- it never fires
-    // on_complete and never unwinds the optimistic SELECTING that
-    // dispatch_operation() already stamped. execute_gcode() also returns
-    // success(), so the `if (!result)` net does not catch it either. The action
-    // would latch on SELECTING, is_busy() would refuse every later op, and
-    // Moonraker only republishes CHANGED fields, so no second 'uninitialized'
-    // frame ever arrives to reset it (the #1183 shape, one state over).
-    //
-    // Refusing is recoverable -- the Reset button sends INITIALIZE_TOOLCHANGER.
-    // A latched SELECTING is not. Fixing this properly means unwinding the
-    // dispatch from the gcode error callback, which is shared with AFC/HH/CFS
-    // and wants its own change.
-    if (status == "uninitialized") {
-        return AmsAction::RESETTING;
-    }
+    // 'uninitialized' is a changer that has not run INITIALIZE_TOOLCHANGER
+    // since Klipper started: on initialize_on: home that is every restart
+    // until the first G28, and on initialize_on: manual it is until someone
+    // sends the command. Nothing is moving, so it is not busy. Refusing every
+    // operation as busy here made the whole filament UI dead after a restart;
+    // instead dispatch_operation() sends INITIALIZE_TOOLCHANGER ahead of the
+    // operation (see uninitialized_), which is what a T<n> would have done on
+    // initialize_on: first-use.
     return AmsAction::IDLE;
 }
 
@@ -1118,6 +1105,13 @@ AmsError AmsBackendToolChanger::dispatch_operation(std::string gcode, AmsAction 
     {
         std::lock_guard<std::mutex> lock(mutex_);
         generation = begin_dispatch_locked(action);
+        // Klipper runs a multi-line script in order and stops at the first
+        // error, so a failed initialisation never reaches the swap.
+        if (uninitialized_) {
+            spdlog::info("{} Toolchanger uninitialized: initialising before {}", backend_log_tag(),
+                         gcode);
+            gcode = "INITIALIZE_TOOLCHANGER\n" + gcode;
+        }
     }
     // Publish the optimistic action immediately, and OUTSIDE mutex_: the
     // filament panel's completion observer has to see the operation start

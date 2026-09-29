@@ -41,9 +41,11 @@ The tool's name is the title. Below it, three columns:
   dropdown), the colour (tap the block to pick one) and whether the printer's memory says
   the tool is loaded. **Save** is enabled once something differs from what the slot holds
   and writes the slot through the filament system, as the slot editor would.
-- **Middle**: the same **path drawn sideways**, and the last action's result under it.
-- **Right**: **Pick up / Dock**, **Load**, **Unload**, **Extrude**, **Retract**. Pick up
-  runs the tool change; Dock sends `UNSELECT_TOOL`. The others run the printer's
+- **Middle**: the same **path drawn upright**, filament entering from the top, and the
+  last action's result under it.
+- **Right**, in three pairs: **Pick up** or **Dock** (whichever applies), **Load** and
+  **Unload**, **Extrude** and **Retract**. Pick up runs the tool change; Dock sends
+  `UNSELECT_TOOL`. The others run the printer's
   `LOAD_TOOL`, `UNLOAD_TOOL`, `TOOL_EXTRUDE` and `TOOL_RETRACT` macros with `TOOL=<n>`,
   so a docked tool can be loaded or purged where it sits. All five are refused while a
   print holds the machine.
@@ -61,6 +63,14 @@ Settings > Devices > **Tool Changer** (shown on a tool changer):
 
 Both are stored per printer in `helixconfig.json` (`toolchanger/tool_count`,
 `toolchanger/tool_colors`) and apply at once.
+
+## After a Klipper restart
+
+klipper-toolchanger reports `uninitialized` from every Klipper restart until it has run
+`INITIALIZE_TOOLCHANGER` (on `initialize_on: home`, until the first homing). HelixScreen
+treats that as idle rather than busy: a tool change or filament operation started from
+the screen sends `INITIALIZE_TOOLCHANGER` ahead of itself, so nothing is refused with
+"AMS is busy" just because the printer has not homed yet.
 
 ## Klipper side
 

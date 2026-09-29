@@ -261,7 +261,8 @@ void ToolsPanel::select_tool(int tool) {
     if (tool < 0 || tool >= static_cast<int>(tools.size())) {
         return;
     }
-    if (tools[static_cast<size_t>(tool)].active) {
+    if (helix::ToolState::instance().active_tool_index() == tool ||
+        tools[static_cast<size_t>(tool)].active) {
         NOTIFY_INFO(lv_tr("{} is already on the carriage"), tools[static_cast<size_t>(tool)].name);
         return;
     }

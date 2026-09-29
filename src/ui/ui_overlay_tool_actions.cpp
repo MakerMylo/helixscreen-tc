@@ -66,7 +66,7 @@ void ToolActionsOverlay::init_subjects() {
     UI_MANAGED_SUBJECT_STRING(stats_, stats_buf_, "", "tool_act_stats", subjects_);
     UI_MANAGED_SUBJECT_STRING(rate_, rate_buf_, "--", "tool_act_rate", subjects_);
     UI_MANAGED_SUBJECT_INT(rate_state_, 0, "tool_act_rate_state", subjects_);
-    UI_MANAGED_SUBJECT_STRING(mount_label_, mount_buf_, "", "tool_act_mount_label", subjects_);
+    UI_MANAGED_SUBJECT_INT(mounted_, 0, "tool_act_mounted", subjects_);
     UI_MANAGED_SUBJECT_STRING(color_name_, color_name_buf_, "", "tool_act_color_name", subjects_);
     UI_MANAGED_SUBJECT_STRING(loaded_, loaded_buf_, "", "tool_act_loaded", subjects_);
     UI_MANAGED_SUBJECT_INT(dirty_, 0, "tool_act_dirty", subjects_);
@@ -177,10 +177,14 @@ void ToolActionsOverlay::refresh() {
     const auto& list = tools.tools();
     const bool exists = tool_ >= 0 && tool_ < static_cast<int>(list.size());
     const std::string name = exists ? list[static_cast<size_t>(tool_)].name : tool_label(tool_);
-    const bool mounted = exists && list[static_cast<size_t>(tool_)].active;
+    // active_tool_index() is what the panel highlights; the per-tool flag only
+    // arrives when Klipper publishes `tool T<n>.active`, which the AMS topology
+    // path does not feed.
+    const bool mounted =
+        exists && (tools.active_tool_index() == tool_ || list[static_cast<size_t>(tool_)].active);
 
     lv_subject_copy_string(&title_, name.c_str());
-    lv_subject_copy_string(&mount_label_, mounted ? lv_tr("Dock") : lv_tr("Pick up"));
+    lv_subject_set_int(&mounted_, mounted ? 1 : 0);
 
     // The macros' record: clean pickups and drop-offs out of those attempted,
     // and the two together as one rate. Above kToolRateGoodPct it reads as
@@ -416,8 +420,9 @@ void ToolActionsOverlay::send(const std::string& gcode, const char* what) {
 void ToolActionsOverlay::mount_or_dock() {
     auto& tools = helix::ToolState::instance();
     const auto& list = tools.tools();
-    const bool mounted = tool_ >= 0 && tool_ < static_cast<int>(list.size()) &&
-                         list[static_cast<size_t>(tool_)].active;
+    const bool mounted =
+        tool_ >= 0 && tool_ < static_cast<int>(list.size()) &&
+        (tools.active_tool_index() == tool_ || list[static_cast<size_t>(tool_)].active);
     if (mounted) {
         send(tool_macros::kDock, lv_tr("Dock"));
         return;
