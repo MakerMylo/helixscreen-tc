@@ -591,6 +591,8 @@ constexpr const char* kNoMachineControlFiles[] = {
     "ui_xml/timelapse_video_card.xml",
     "ui_xml/timelapse_videos_overlay.xml",
     "ui_xml/toast_notification.xml",
+    "ui_xml/tools_settings_overlay.xml",
+    "ui_xml/tools_settings_row.xml",
     "ui_xml/touch_calibration_overlay.xml",
     "ui_xml/tour_tooltip_card.xml",
     "ui_xml/update_download_modal.xml",
