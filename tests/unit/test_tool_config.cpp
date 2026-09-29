@@ -11,6 +11,7 @@
 
 #include "../catch_amalgamated.hpp"
 
+using helix::Config;
 using helix::ToolConfig;
 
 namespace {
