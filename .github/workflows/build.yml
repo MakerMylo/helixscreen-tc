@@ -720,13 +720,10 @@ jobs:
     - name: Setup Python venv for translation and XML gates
       run: make venv-setup
 
-    # Fork: the suites that pin upstream's release machinery (its multi-platform
-    # release.yml, the R2 CDN, Android version codes, changelog generation, the
-    # -j advisor's workflow scan) describe a pipeline this fork replaced with a
-    # Pi-only release; they are skipped so the rest of the suite still gates.
+    # Fork: the suites that pin upstream's release machinery are skipped by
+    # SHELL_TEST_SKIP in mk/tests.mk, which every bats runner reads.
     - name: Run shell tests
-      run: |
-        bats $(ls tests/shell/*.bats | grep -v -E 'test_(android_version_code|generate_whatsnew|r2_installer|resource_advisor|symbol_ci|update_platform_coverage|version_compare)\.bats$')
+      run: make test-shell
 
   test-telemetry-worker:
     name: Telemetry Worker Tests (vitest)

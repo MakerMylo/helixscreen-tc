@@ -635,6 +635,17 @@ test-kiauh:
 # Shell/Bats Tests
 # ============================================================================
 
+# Fork: these suites pin upstream's release machinery (its multi-platform
+# release.yml, the R2 CDN, Android version codes, changelog generation, the
+# -j advisor's workflow scan), a pipeline this fork replaced with a Pi-only
+# release. Every bats runner (this target, both CI jobs, full-test-run) takes
+# the list from here so the rest of the suite still gates everywhere.
+SHELL_TEST_SKIP := test_android_version_code test_generate_whatsnew test_r2_installer \
+                   test_resource_advisor test_symbol_ci test_update_platform_coverage \
+                   test_version_compare
+SHELL_TEST_FILES := $(filter-out $(addprefix tests/shell/,$(addsuffix .bats,$(SHELL_TEST_SKIP))), \
+                    $(sort $(wildcard tests/shell/*.bats)))
+
 # Run shell/bats tests for platform hooks and installer scripts
 test-shell:
 	$(ECHO) "$(CYAN)$(BOLD)Running shell tests (bats)...$(RESET)"
@@ -642,9 +653,9 @@ test-shell:
 		START_TIME=$$(date +%s); \
 		if command -v parallel >/dev/null 2>&1; then \
 			NPROC=$$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4); \
-			bats --jobs "$$NPROC" --no-parallelize-within-files tests/shell/; \
+			bats --jobs "$$NPROC" --no-parallelize-within-files $(SHELL_TEST_FILES); \
 		else \
-			bats tests/shell/; \
+			bats $(SHELL_TEST_FILES); \
 		fi; \
 		STATUS=$$?; \
 		END_TIME=$$(date +%s); \
