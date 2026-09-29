@@ -253,6 +253,7 @@ translations:
   Auto Bed Mesh: Auto Bed Mesh
   Auto Cal: Auto Cal
   Auto Fans: Auto Fans
+  Auto shows the tools Klipper reports. Set a number to show that many columns.: Auto shows the tools Klipper reports. Set a number to show that many columns.
   Auto-Detect: Auto-Detect
   Auto-Heat on Load: Auto-Heat on Load
   Auto-detect: Auto-detect
@@ -522,6 +523,7 @@ translations:
   Change Tool: Change Tool
   Change Tool While Paused: Change Tool While Paused
   Change heater control?: Change heater control?
+  Change success: Change success
   Change tool: Change tool
   Changes apply immediately. Adjust during print for tuning.: Changes apply immediately.
     Adjust during print for tuning.
@@ -907,6 +909,7 @@ translations:
   Draw a ripple at each touch — helps diagnose offsets: Draw a ripple at each touch
     — helps diagnose offsets
   Drive Cal: Drive Cal
+  Drop off: Drop off
   Drop shadow strength (0 = disabled): Drop shadow strength (0 = disabled)
   Dry Filament: Dry Filament
   Dry Filament on the Bed: Dry Filament on the Bed
@@ -1615,6 +1618,7 @@ translations:
   Klipper has entered shutdown state. This may be due to an emergency stop, thermal runaway, or configuration error.: Klipper
     has entered shutdown state. This may be due to an emergency stop, thermal runaway,
     or configuration error.
+  Klipper reports {} tools: Klipper reports {} tools
   Klipper reserves 'default' for new calibrations. Choose another name.: Klipper reserves 'default' for new calibrations. Choose another name.
   Klipper restarting - macros activating: Klipper restarting - macros activating
   Klipper will restart to apply changes: Klipper will restart to apply changes
@@ -1961,6 +1965,7 @@ translations:
   No buffer data available: No buffer data available
   No camera — use USB barcode scanner: No camera — use USB barcode scanner
   No chamber temperature sensor detected: No chamber temperature sensor detected
+  No changes recorded yet: No changes recorded yet
   ? "No changes selected.\n\nClick Cancel to close."
   : "No changes selected.\n\nClick Cancel to close."
   No changes to revert: No changes to revert
@@ -1974,6 +1979,7 @@ translations:
   No filament environment sensors: No filament environment sensors
   No filament loaded to unload: No filament loaded to unload
   No filament sensor detected: No filament sensor detected
+  No filament system to edit: No filament system to edit
   No filament. Load filament and retry.: No filament. Load filament and retry.
   No filaments found: No filaments found
   No file loaded: No file loaded
@@ -2017,6 +2023,8 @@ translations:
   No target printer configured: No target printer configured
   No temperature sensors detected: No temperature sensors detected
   No timelapse videos found: No timelapse videos found
+  No tools reported: No tools reported
+  No tools reported yet: No tools reported yet
   No tools to calibrate: No tools to calibrate
   'No unload macro found: unload by hand, then start again': 'No unload macro found: unload by hand, then start again'
   No vendors found: No vendors found
@@ -2079,6 +2087,8 @@ translations:
   Nozzle temp must be 100-%d°C: Nozzle temp must be 100-%d°C
   Nozzle, bed, and chamber in one widget: Nozzle, bed, and chamber in one widget
   'Nozzle:': 'Nozzle:'
+  Number of tools: Number of tools
+  Number of tools and toolhead colours: Number of tools and toolhead colours
   OD: OD
   'OFF': 'OFF'
   OK: OK
@@ -2194,7 +2204,10 @@ translations:
   Phomemo M110: Phomemo M110
   Pick: Pick
   Pick Color: Pick Color
+  Pick a colour: Pick a colour
+  Pick up: Pick up
   Pick up tool: Pick up tool
+  Picking up: Picking up
   Picking up tool: Picking up tool
   Pill: Pill
   Pixels before a press becomes a scroll (lower = scrolls engage sooner): Pixels before
@@ -3054,6 +3067,7 @@ translations:
   TEMPERATURE SENSORS: TEMPERATURE SENSORS
   THEME COLORS: THEME COLORS
   'TOGGLE: {}': 'TOGGLE: {}'
+  TOOLHEAD COLOURS: TOOLHEAD COLOURS
   TOOLS: TOOLS
   TPU: TPU
   Tag Parts: Tag Parts
@@ -3143,6 +3157,7 @@ translations:
   The bed was reported dirty, so this print cannot resume.: The bed was reported dirty, so this print cannot resume.
   The buffer may be disconnected, stuck, or faulty. Check it before retrying: The buffer may be disconnected, stuck, or faulty. Check it before retrying
   The buffer saw no movement for 16 seconds. Check for a blockage between the CFS and the extruder, or a stuck buffer: The buffer saw no movement for 16 seconds. Check for a blockage between the CFS and the extruder, or a stuck buffer
+  The colour of each physical toolhead, used for its glyph and column. The filament keeps its own colour.: The colour of each physical toolhead, used for its glyph and column. The filament keeps its own colour.
   The cutter blade didn't return — check for filament wrapped around the cutting mechanism: The cutter blade didn't return — check for filament wrapped around the cutting mechanism
   The cutter is out of alignment — recalibrate with CALIBRATE_CUT_POS: The cutter is out of alignment — recalibrate with CALIBRATE_CUT_POS
   The extruder cannot pull it smoothly. Check the spool for a tangle or knot, and the PTFE tube for a severe bend: The extruder cannot pull it smoothly. Check the spool for a tangle or knot, and the PTFE tube for a severe bend
@@ -3331,6 +3346,7 @@ translations:
   Tool Changer: Tool Changer
   Tool Offsets: Tool Offsets
   Tool Switcher: Tool Switcher
+  Tool change done: Tool change done
   'Tool change failed: {}': 'Tool change failed: {}'
   Tool change to T{}: Tool change to T{}
   Tool mapping failed: Tool mapping failed
@@ -3338,6 +3354,7 @@ translations:
   Tool offsets saved: Tool offsets saved
   Tool swap: Tool swap
   Toolhead: Toolhead
+  Toolhead Colours: Toolhead Colours
   Toolhead LED: Toolhead LED
   Toolhead Sensor: Toolhead Sensor
   Toolhead Style: Toolhead Style
@@ -3664,9 +3681,11 @@ translations:
   chamber heater: chamber heater
   complete: complete
   cores: cores
+  default: default
   direct drive: direct drive
   disable: disable
   disabled: disabled
+  done: done
   e.g. Jet Black: e.g. Jet Black
   e.g. NAME=my_var VALUE=123: e.g. NAME=my_var VALUE=123
   e.g. Polymaker: e.g. Polymaker
@@ -3683,6 +3702,7 @@ translations:
   fans: fans
   feeder error: feeder error
   feeder not in automatic mode: feeder not in automatic mode
+  filament saved: filament saved
   filament sensor disabled: filament sensor disabled
   heated bed: heated bed
   'helixscreen.env ignored: owned by uid {}': 'helixscreen.env ignored: owned by uid {}'
@@ -3740,6 +3760,7 @@ translations:
   '{} filament sensors available': '{} filament sensors available'
   '{} filament • {}': '{} filament • {}'
   '{} heater turned off': '{} heater turned off'
+  '{} is already on the carriage': '{} is already on the carriage'
   '{} is asking to connect to this printer.': '{} is asking to connect to this printer.'
   '{} is blocked — manual intervention required': '{} is blocked — manual intervention required'
   '{} is feeding the current print. Clear it after the print ends.': '{} is feeding the current print. Clear it after the print ends.'

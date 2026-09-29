@@ -241,6 +241,7 @@ translations:
   Auto Bed Mesh: 自動ベッドメッシュ
   Auto Cal: 自動キャリブレーション
   Auto Fans: 自動ファン
+  Auto shows the tools Klipper reports. Set a number to show that many columns.: 自動ではKlipperが報告するツールを表示します。数を指定するとその列数を表示します。
   Auto-Detect: 自動検出
   Auto-Heat on Load: 装填時に自動加熱
   Auto-detect: 自動検出
@@ -496,6 +497,7 @@ translations:
   Change Tool: ツール交換
   Change Tool While Paused: 一時停止中のツール交換
   Change heater control?: ヒーターの制御を変更しますか？
+  Change success: 交換成功率
   Change tool: ツールを交換
   Changes apply immediately. Adjust during print for tuning.: 変更は即座に適用されます。印刷中に調整して最適化できます。
   Changes are temporary and reset on printer reboot: 変更は一時的で、プリンター再起動時にリセットされます
@@ -869,6 +871,7 @@ translations:
   Downloading... {:.1f}/{:.1f} MB: ダウンロード中... {:.1f}/{:.1f} MB
   Draw a ripple at each touch — helps diagnose offsets: タッチごとに波紋を描画 — ズレの診断に役立ちます
   Drive Cal: ドライブキャリブレーション
+  Drop off: ドロップオフ
   Drop shadow strength (0 = disabled): 影の強さ (0 = 無効)
   Dry Filament: フィラメントを乾燥
 
@@ -1554,6 +1557,7 @@ translations:
   : Klipper がエラー状態になりました。これは通常、MCU 接続の失敗または設定エラーが原因です。ファームウェア再起動を試してください。
   Klipper has entered shutdown state. This may be due to an emergency stop, thermal runaway, or configuration error.: Klipper
     がシャットダウン状態になりました。緊急停止、熱暴走、または設定エラーが原因の可能性があります。
+  Klipper reports {} tools: 'Klipperは{}個のツールを報告しています'
   Klipper reserves 'default' for new calibrations. Choose another name.: "Klipper は 'default' を新しいキャリブレーション用に予約しています。別の名前を選んでください。"
   Klipper restarting - macros activating: 'Klipper を再起動しています - マクロを有効化中'
   Klipper will restart to apply changes: 変更を適用するために Klipper が再起動します
@@ -1891,6 +1895,7 @@ translations:
   No buffer data available: バッファーデータがありません
   No camera — use USB barcode scanner: カメラなし — USB バーコードスキャナーを使用してください
   No chamber temperature sensor detected: 'チャンバー温度センサーが検出されません'
+  No changes recorded yet: まだ交換の記録がありません
   ? "No changes selected.\n\nClick Cancel to close."
   : "変更が選択されていません。\n\n「キャンセル」をクリックして閉じてください。"
   No changes to revert: 元に戻す変更はありません
@@ -1903,6 +1908,7 @@ translations:
   No filament environment sensors: フィラメント環境センサーがありません
   No filament loaded to unload: 取出すフィラメントが装填されていません
   No filament sensor detected: 'フィラメントセンサーが検出されません'
+  No filament system to edit: 編集できるフィラメントシステムがありません
   No filament. Load filament and retry.: フィラメントがありません。フィラメントを装填して再試行してください。
   No filaments found: フィラメントが見つかりません
   No file loaded: ファイルが読み込まれていません
@@ -1945,6 +1951,8 @@ translations:
   No target printer configured: 対象プリンターが設定されていません
   No temperature sensors detected: '温度センサーが検出されません'
   No timelapse videos found: タイムラプス動画が見つかりません
+  No tools reported: ツールが報告されていません
+  No tools reported yet: まだツールが報告されていません
   No tools to calibrate: キャリブレートするツールがありません
   'No unload macro found: unload by hand, then start again': '排出マクロが見つかりません: 手で排出してから、もう一度始めてください'
 
@@ -2008,6 +2016,8 @@ translations:
   Nozzle temp must be 100-%d°C: ノズル温度は 100〜%d°C にしてください
   Nozzle, bed, and chamber in one widget: ノズル、ベッド、チャンバーをまとめて表示
   'Nozzle:': 'ノズル:'
+  Number of tools: ツールの数
+  Number of tools and toolhead colours: ツールの数とツールヘッドの色
   OD: OD
   'OFF': 'OFF'
   OK: OK
@@ -2121,7 +2131,10 @@ translations:
   Phomemo M110: Phomemo M110
   Pick: 選択
   Pick Color: 色を選択
+  Pick a colour: 色を選択
+  Pick up: ピックアップ
   Pick up tool: ツールを取得
+  Picking up: ピックアップ中
   Picking up tool: ツールを取得中
   Pill: ピル
   Pixels before a press becomes a scroll (lower = scrolls engage sooner): 押下がスクロールに変わるまでのピクセル数
@@ -2943,6 +2956,7 @@ translations:
   TEMPERATURE SENSORS: 温度センサー
   THEME COLORS: テーマカラー
   'TOGGLE: {}': '切り替え: {}'
+  TOOLHEAD COLOURS: ツールヘッドの色
   TOOLS: ツール
   TPU: TPU
   Tag Parts: 部位をタグ付け
@@ -3030,6 +3044,7 @@ translations:
   The bed was reported dirty, so this print cannot resume.: 'ベッドが汚れていると報告されたため、この印刷を再開できません。'
   The buffer may be disconnected, stuck, or faulty. Check it before retrying: バッファーが未接続、固着、または故障している可能性があります。再試行前に確認してください
   The buffer saw no movement for 16 seconds. Check for a blockage between the CFS and the extruder, or a stuck buffer: バッファーが 16 秒間動きを検出しませんでした。CFS とエクストルーダーの間の詰まり、またはバッファーの固着を確認してください
+  The colour of each physical toolhead, used for its glyph and column. The filament keeps its own colour.: 各物理ツールヘッドの色。アイコンと列に使われます。フィラメントは独自の色を保ちます。
   The cutter blade didn't return — check for filament wrapped around the cutting mechanism: カッターの刃が戻りませんでした。切断機構にフィラメントが巻き付いていないか確認してください
   The cutter is out of alignment — recalibrate with CALIBRATE_CUT_POS: カッターの位置がずれています。CALIBRATE_CUT_POS で再校正してください
   The extruder cannot pull it smoothly. Check the spool for a tangle or knot, and the PTFE tube for a severe bend: エクストルーダーがスムーズに引き込めません。スプールの絡まりや結び目、PTFE チューブの急な曲がりを確認してください
@@ -3200,6 +3215,7 @@ translations:
   Tool Changer: ツールチェンジャー
   Tool Offsets: ツールオフセット
   Tool Switcher: 'ツール切り替え'
+  Tool change done: ツール交換完了
   'Tool change failed: {}': 'ツール変更に失敗しました: {}'
   Tool change to T{}: 'ツールを T{} に変更しています'
   Tool mapping failed: ツールマッピングに失敗しました
@@ -3207,6 +3223,7 @@ translations:
   Tool offsets saved: ツールオフセットを保存しました
   Tool swap: ツール交換
   Toolhead: 'ツールヘッド'
+  Toolhead Colours: ツールヘッドの色
   Toolhead LED: 'ツールヘッドLED'
   Toolhead Sensor: ツールヘッドセンサー
   Toolhead Style: ツールヘッドスタイル
@@ -3517,9 +3534,11 @@ translations:
   chamber heater: チャンバーヒーター
   complete: 完了
   cores: コア
+  default: デフォルト
   direct drive: ダイレクトドライブ
   disable: 無効化
   disabled: 無効
+  done: 完了
   e.g. Jet Black: 例：ジェットブラック
   e.g. NAME=my_var VALUE=123: '例: NAME=my_var VALUE=123'
   e.g. Polymaker: 例：Polymaker
@@ -3536,6 +3555,7 @@ translations:
   fans: ファン
   feeder error: 'フィーダーエラー'
   feeder not in automatic mode: 'フィーダーが自動モードではありません'
+  filament saved: フィラメントを保存しました
   filament sensor disabled: 'フィラメントセンサーが無効'
   heated bed: ヒートベッド
   'helixscreen.env ignored: owned by uid {}': 'helixscreen.env は無視されました：uid {} が所有しています'
@@ -3598,6 +3618,7 @@ translations:
   '{} filament sensors available': '{} 個のフィラメントセンサーが利用可能です'
   '{} filament • {}': 'フィラメント {} • {}'
   '{} heater turned off': '{} ヒーターをオフにしました'
+  '{} is already on the carriage': '{}はすでにキャリッジに載っています'
   '{} is asking to connect to this printer.': '{} がこのプリンターへの接続を求めています。'
   '{} is blocked — manual intervention required': '{} がブロックされています — 手動での対応が必要です'
   '{} is feeding the current print. Clear it after the print ends.': '{} は現在の印刷に給紙中です。印刷終了後にクリアしてください。'

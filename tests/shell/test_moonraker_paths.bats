@@ -330,7 +330,7 @@ setup() {
     INSTALL_DIR="/opt/helixscreen"
     local config
     config=$(generate_update_manager_config)
-    echo "$config" | grep -q "repo: prestonbrown/helixscreen"
+    echo "$config" | grep -q "repo: MakerMylo/helixscreen-tc"
 }
 
 @test "generate_update_manager_config path equals INSTALL_DIR" {

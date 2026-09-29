@@ -263,6 +263,7 @@ translations:
   Auto Bed Mesh: Mesh piano automatica
   Auto Cal: Cal. auto
   Auto Fans: Ventilatori automatici
+  Auto shows the tools Klipper reports. Set a number to show that many columns.: Auto mostra gli utensili segnalati da Klipper. Un numero mostra altrettante colonne.
   Auto-Detect: Rilevamento auto
   Auto-Heat on Load: Riscaldamento automatico al caricamento
   Auto-detect: Rilevamento auto
@@ -539,6 +540,7 @@ translations:
   Change Tool: Cambia utensile
   Change Tool While Paused: Cambia utensile in pausa
   Change heater control?: Cambiare il controllo del riscaldatore?
+  Change success: Cambi riusciti
   Change tool: Cambia utensile
   Changes apply immediately. Adjust during print for tuning.: Le modifiche si applicano
     immediatamente. Regolare durante la stampa per la messa a punto.
@@ -937,6 +939,7 @@ translations:
   Draw a ripple at each touch — helps diagnose offsets: Disegna un'onda a ogni tocco
     — aiuta a diagnosticare gli scostamenti
   Drive Cal: Cal. drive
+  Drop off: Rilascia
   Drop shadow strength (0 = disabled): Intensità ombra (0 = disabilitata)
   Dry Filament: Essicca filamento
 
@@ -1669,6 +1672,7 @@ translations:
   Klipper has entered shutdown state. This may be due to an emergency stop, thermal runaway, or configuration error.: Klipper
     è entrato in stato di arresto. Questo potrebbe essere dovuto a un arresto di emergenza,
     fuga termica o errore di configurazione.
+  Klipper reports {} tools: 'Klipper segnala {} utensili'
   Klipper reserves 'default' for new calibrations. Choose another name.: "Klipper riserva 'default' alle nuove calibrazioni. Scegli un altro nome."
   Klipper restarting - macros activating: 'Riavvio di Klipper - attivazione delle macro'
   Klipper will restart to apply changes: Klipper si riavvierà per applicare le modifiche
@@ -2025,6 +2029,7 @@ translations:
   No camera — use USB barcode scanner: Nessuna telecamera — usa scanner USB per codici
     a barre
   No chamber temperature sensor detected: 'Nessun sensore di temperatura della camera rilevato'
+  No changes recorded yet: Nessun cambio registrato finora
   ? "No changes selected.\n\nClick Cancel to close."
   : "Nessuna modifica selezionata.\n\nClicca Annulla per chiudere."
   No changes to revert: Nessuna modifica da annullare
@@ -2039,6 +2044,7 @@ translations:
   No filament environment sensors: Nessun sensore ambientale del filamento
   No filament loaded to unload: Nessun filamento caricato da scaricare
   No filament sensor detected: 'Nessun sensore filamento rilevato'
+  No filament system to edit: Nessun sistema filamento da modificare
   No filament. Load filament and retry.: Nessun filamento. Carica il filamento e riprova.
   No filaments found: Nessun filamento trovato
   No file loaded: Nessun file caricato
@@ -2083,6 +2089,8 @@ translations:
   No target printer configured: Nessuna stampante di destinazione configurata
   No temperature sensors detected: 'Nessun sensore di temperatura rilevato'
   No timelapse videos found: Nessun video timelapse trovato
+  No tools reported: Nessun utensile segnalato
+  No tools reported yet: Nessun utensile segnalato finora
   No tools to calibrate: Nessuno strumento da calibrare
   'No unload macro found: unload by hand, then start again': 'Nessuna macro di scarico trovata: scarica a mano, poi ricomincia'
 
@@ -2146,6 +2154,8 @@ translations:
   Nozzle temp must be 100-%d°C: La temperatura dell’ugello deve essere 100-%d°C
   Nozzle, bed, and chamber in one widget: Ugello, piano e camera in un widget
   'Nozzle:': 'Ugello:'
+  Number of tools: Numero di utensili
+  Number of tools and toolhead colours: Numero di utensili e colori delle teste
   OD: OD
   'OFF': 'OFF'
   OK: OK
@@ -2263,7 +2273,10 @@ translations:
   Phomemo M110: Phomemo M110
   Pick: Scegli
   Pick Color: Scegli colore
+  Pick a colour: Scegli un colore
+  Pick up: Preleva
   Pick up tool: Preleva utensile
+  Picking up: Prelievo in corso
   Picking up tool: Prelievo utensile
   Pill: Pillola
   Pixels before a press becomes a scroll (lower = scrolls engage sooner): Pixel prima
@@ -3151,6 +3164,7 @@ translations:
   TEMPERATURE SENSORS: SENSORI DI TEMPERATURA
   THEME COLORS: COLORI TEMA
   'TOGGLE: {}': 'COMMUTA: {}'
+  TOOLHEAD COLOURS: COLORI DELLE TESTE
   TOOLS: STRUMENTI
   TPU: TPU
   Tag Parts: Contrassegna componenti
@@ -3241,6 +3255,7 @@ translations:
   The bed was reported dirty, so this print cannot resume.: 'Il piano è stato segnalato come sporco, quindi questa stampa non può riprendere.'
   The buffer may be disconnected, stuck, or faulty. Check it before retrying: Il buffer potrebbe essere scollegato, bloccato o guasto. Controllarlo prima di riprovare
   The buffer saw no movement for 16 seconds. Check for a blockage between the CFS and the extruder, or a stuck buffer: Il buffer non ha rilevato movimento per 16 secondi. Verificare un'ostruzione tra CFS ed estrusore, o un buffer bloccato
+  The colour of each physical toolhead, used for its glyph and column. The filament keeps its own colour.: Il colore di ogni testa fisica, usato per la sua icona e la sua colonna. Il filamento mantiene il proprio colore.
   The cutter blade didn't return — check for filament wrapped around the cutting mechanism: La lama non è rientrata. Verificare che non ci sia filamento avvolto attorno al meccanismo di taglio
   The cutter is out of alignment — recalibrate with CALIBRATE_CUT_POS: La taglierina è disallineata. Ricalibrare con CALIBRATE_CUT_POS
   The extruder cannot pull it smoothly. Check the spool for a tangle or knot, and the PTFE tube for a severe bend: L'estrusore non riesce a tirare in modo uniforme. Controllare la bobina per aggrovigliamenti o nodi e il tubo PTFE per curve troppo strette
@@ -3443,6 +3458,7 @@ translations:
   Tool Changer: Cambia utensile
   Tool Offsets: Offset strumenti
   Tool Switcher: 'Selettore utensile'
+  Tool change done: Cambio utensile completato
   'Tool change failed: {}': 'Cambio utensile fallito: {}'
   Tool change to T{}: 'Cambio utensile su T{}'
   Tool mapping failed: Mappatura utensile fallita
@@ -3450,6 +3466,7 @@ translations:
   Tool offsets saved: Offset strumenti salvati
   Tool swap: Cambio utensile
   Toolhead: 'Testina'
+  Toolhead Colours: Colori delle teste
   Toolhead LED: 'LED della testina'
   Toolhead Sensor: Sensore testina
   Toolhead Style: Stile testina
@@ -3780,9 +3797,11 @@ translations:
   chamber heater: riscaldatore camera
   complete: completato
   cores: core
+  default: predefinito
   direct drive: direct drive
   disable: disabilita
   disabled: disabilitato
+  done: fatto
   e.g. Jet Black: es. Nero intenso
   e.g. NAME=my_var VALUE=123: es. NAME=mia_var VALUE=123
   e.g. Polymaker: es. Polymaker
@@ -3799,6 +3818,7 @@ translations:
   fans: ventole
   feeder error: 'errore alimentatore'
   feeder not in automatic mode: 'alimentatore non in modalità automatica'
+  filament saved: filamento salvato
   filament sensor disabled: 'sensore filamento disattivato'
   heated bed: piano riscaldato
   'helixscreen.env ignored: owned by uid {}': 'helixscreen.env ignorato: di proprietà dell''uid {}'
@@ -3862,6 +3882,7 @@ translations:
   '{} filament sensors available': '{} sensori filamento disponibili'
   '{} filament • {}': '{} di filamento • {}'
   '{} heater turned off': Riscaldatore {} spento
+  '{} is already on the carriage': '{} è già sul carrello'
   '{} is asking to connect to this printer.': '{} chiede di connettersi a questa stampante.'
   '{} is blocked — manual intervention required': '{}: blocco — intervento manuale richiesto'
   '{} is feeding the current print. Clear it after the print ends.': '{}: alimenta la stampa in corso. Rimuovi la bobina al termine della stampa.'

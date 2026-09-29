@@ -27,8 +27,8 @@
         <lv_obj width="100%"
                 height="content" style_pad_left="#space_lg" style_pad_right="#space_lg" style_pad_top="0"
                 style_pad_bottom="#space_sm" scrollable="false">
-          <text_small name="tools_cfg_detected" width="100%" long_mode="wrap" bind_text="tools_cfg_detected"
-                      style_text_color="#text_muted"/>
+          <text_small name="tools_cfg_detected"
+                      width="100%" long_mode="wrap" bind_text="tools_cfg_detected" style_text_color="#text_muted"/>
         </lv_obj>
       </setting_group>
 
@@ -40,7 +40,8 @@
         <lv_obj width="100%"
                 height="content" style_pad_left="#space_lg" style_pad_right="#space_lg" style_pad_top="0"
                 style_pad_bottom="0" scrollable="false">
-          <text_small width="100%" long_mode="wrap" style_text_color="#text_muted"
+          <text_small width="100%"
+                      long_mode="wrap" style_text_color="#text_muted"
                       text="The colour of each physical toolhead, used for its glyph and column. The filament keeps its own colour."
                       translation_tag="The colour of each physical toolhead, used for its glyph and column. The filament keeps its own colour."/>
         </lv_obj>

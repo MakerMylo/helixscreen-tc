@@ -21,8 +21,8 @@
         style_flex_cross_place="center" style_pad_column="#space_md" scrollable="false" clickable="true">
 
     <tool_path name="color_block"
-               tool_index="$tool_index" mode="hue" width="#tools_act_color" height="#tools_act_color"
-               clickable="false" event_bubble="true"/>
+               width="#tools_act_color" height="#tools_act_color" tool_index="$tool_index" mode="hue" clickable="false"
+               event_bubble="true"/>
 
     <lv_obj height="content"
             flex_flow="column" flex_grow="1" style_pad_gap="2" style_bg_opa="0" style_border_width="0"
@@ -33,7 +33,7 @@
                   event_bubble="true"/>
     </lv_obj>
 
-    <ui_button name="reset_button" text="Reset" translation_tag="Reset" variant="ghost" icon="restore"
-               event_bubble="false"/>
+    <ui_button name="reset_button"
+               text="Reset" translation_tag="Reset" variant="ghost" icon="restore" event_bubble="false"/>
   </view>
 </component>

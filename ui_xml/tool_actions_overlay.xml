@@ -21,42 +21,38 @@
       <bind_state_if_not_eq subject="nav_buttons_enabled" state="disabled" ref_value="1"/>
 
       <lv_obj name="tool_act_columns"
-              width="100%" flex_grow="1" flex_flow="row" style_pad_all="0" style_pad_gap="#space_md"
-              style_bg_opa="0" style_border_width="0" scrollable="false">
+              width="100%" flex_grow="1" flex_flow="row" style_pad_all="0" style_pad_gap="#space_md" style_bg_opa="0"
+              style_border_width="0" scrollable="false">
 
         <!-- ============================================================ -->
         <!-- LEFT: success rate, then the filament form                    -->
         <!-- ============================================================ -->
         <lv_obj name="tool_act_left"
-                width="#tools_act_side_w" height="100%" flex_flow="column" style_pad_all="0"
-                style_pad_gap="#space_sm" style_bg_opa="0" style_border_width="0" scrollable="true">
+                width="#tools_act_side_w" height="100%" flex_flow="column" style_pad_all="0" style_pad_gap="#space_sm"
+                style_bg_opa="0" style_border_width="0" scrollable="true">
 
           <!-- Pick-up / drop-off record as one number. Takes whatever height
                the form leaves, so the column fills the page. -->
           <lv_obj name="tool_act_rate_card"
                   width="100%" flex_grow="1" flex_flow="column" style_flex_main_place="center"
                   style_flex_cross_place="center" style_pad_all="#space_sm" style_pad_gap="#space_xxs"
-                  style_bg_color="#card_bg" style_bg_opa="255"
-                  style_radius="#border_radius_small" style_border_width="1" style_border_color="#border"
-                  scrollable="false">
+                  style_bg_color="#card_bg" style_bg_opa="255" style_radius="#border_radius_small"
+                  style_border_width="1" style_border_color="#border" scrollable="false">
             <text_small text="Change success" translation_tag="Change success" style_text_color="#text_muted"/>
             <lv_label name="tool_act_rate" bind_text="tool_act_rate" style_text_font="#font_display">
               <bind_style_if_eq name="tools_rate_unknown" subject="tool_act_rate_state" ref_value="0"/>
               <bind_style_if_eq name="tools_rate_good" subject="tool_act_rate_state" ref_value="1"/>
               <bind_style_if_eq name="tools_rate_warn" subject="tool_act_rate_state" ref_value="2"/>
             </lv_label>
-            <text_body name="tool_act_pickups" width="100%" style_text_align="center"
-                       bind_text="tool_act_pickups"/>
-            <text_body name="tool_act_dropoffs" width="100%" style_text_align="center"
-                       bind_text="tool_act_dropoffs"/>
+            <text_body name="tool_act_pickups" width="100%" style_text_align="center" bind_text="tool_act_pickups"/>
+            <text_body name="tool_act_dropoffs" width="100%" style_text_align="center" bind_text="tool_act_dropoffs"/>
           </lv_obj>
 
           <!-- The filament in this tool: edited here, saved with the button. -->
           <lv_obj name="tool_act_filament_form"
-                  width="100%" height="content" flex_flow="column" style_pad_all="#space_sm"
-                  style_pad_gap="#space_xs" style_bg_color="#card_bg" style_bg_opa="255"
-                  style_radius="#border_radius_small" style_border_width="1" style_border_color="#border"
-                  scrollable="false">
+                  width="100%" height="content" flex_flow="column" style_pad_all="#space_sm" style_pad_gap="#space_xs"
+                  style_bg_color="#card_bg" style_bg_opa="255" style_radius="#border_radius_small"
+                  style_border_width="1" style_border_color="#border" scrollable="false">
             <lv_obj width="100%"
                     height="content" flex_flow="row" style_flex_cross_place="center" style_pad_all="0"
                     style_pad_gap="#space_xs" style_bg_opa="0" style_border_width="0" scrollable="false">
@@ -83,8 +79,8 @@
                          event_bubble="true"/>
               <icon src="pencil" size="sm" variant="muted" clickable="false" event_bubble="true"/>
             </lv_obj>
-            <ui_button name="tool_act_save" width="100%" text="Save" translation_tag="Save" variant="primary"
-                       icon="content_save">
+            <ui_button name="tool_act_save"
+                       width="100%" text="Save" translation_tag="Save" variant="primary" icon="content_save">
               <event_cb trigger="clicked" callback="on_tool_act_save"/>
               <bind_state_if_eq subject="tool_act_dirty" state="disabled" ref_value="0"/>
             </ui_button>
@@ -95,13 +91,13 @@
         <!-- MIDDLE: bowden in from the top, sensors, toolhead, nozzle      -->
         <!-- ============================================================ -->
         <lv_obj name="tool_act_middle"
-                flex_grow="1" height="100%" flex_flow="column" style_flex_main_place="center"
+                height="100%" flex_grow="1" flex_flow="column" style_flex_main_place="center"
                 style_flex_cross_place="center" style_pad_all="0" style_bg_opa="0" style_border_width="0"
                 scrollable="false">
-          <tool_path name="tool_act_path" tool_subject="tool_act_index" mode="vertical" width="100%"
-                     flex_grow="1"/>
-          <text_small name="tool_act_status" width="100%" long_mode="wrap" style_text_align="center"
-                      bind_text="tool_act_status" style_text_color="#text_muted"/>
+          <tool_path name="tool_act_path" width="100%" tool_subject="tool_act_index" mode="vertical" flex_grow="1"/>
+          <text_small name="tool_act_status"
+                      width="100%" long_mode="wrap" style_text_align="center" bind_text="tool_act_status"
+                      style_text_color="#text_muted"/>
         </lv_obj>
 
         <!-- ============================================================ -->
@@ -110,8 +106,8 @@
         <!-- All of them move the machine, so a job holding it refuses them. -->
         <!-- ============================================================ -->
         <lv_obj name="tool_act_buttons"
-                width="#tools_act_side_w" height="100%" flex_flow="column" style_pad_all="0"
-                style_pad_gap="#space_lg" style_bg_opa="0" style_border_width="0" scrollable="false">
+                width="#tools_act_side_w" height="100%" flex_flow="column" style_pad_all="0" style_pad_gap="#space_lg"
+                style_bg_opa="0" style_border_width="0" scrollable="false">
           <!-- Tool change: one of the pair shows, by whether the tool is on the carriage. -->
           <lv_obj name="tool_act_group_change"
                   width="100%" flex_grow="1" flex_flow="column" style_pad_all="0" style_pad_gap="#space_sm"
@@ -159,8 +155,8 @@
               <bind_state_if_eq subject="tool_act_busy" state="disabled" ref_value="1"/>
             </ui_button>
             <ui_button name="tool_act_retract"
-                       width="100%" flex_grow="1" text="Retract" translation_tag="Retract"
-                       icon="arrow_up_bold_circle" moves_machine="true">
+                       width="100%" flex_grow="1" text="Retract" translation_tag="Retract" icon="arrow_up_bold_circle"
+                       moves_machine="true">
               <event_cb trigger="clicked" callback="on_tool_act_retract"/>
               <bind_state_if_eq subject="tool_act_busy" state="disabled" ref_value="1"/>
             </ui_button>

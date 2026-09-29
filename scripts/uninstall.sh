@@ -39,7 +39,7 @@ PREVIOUS_UIS="guppyscreen GuppyScreen featherscreen FeatherScreen klipperscreen 
 
 #
 # Default configuration (can be overridden before sourcing)
-: "${GITHUB_REPO:=prestonbrown/helixscreen}"
+: "${GITHUB_REPO:=MakerMylo/helixscreen-tc}"
 : "${INSTALL_DIR:=/opt/helixscreen}"
 : "${SERVICE_NAME:=helixscreen}"
 
@@ -2994,11 +2994,11 @@ install_permission_rules() {
     if _has_no_new_privs; then
         if command -v nmcli >/dev/null 2>&1 && ! _polkit_rule_exists; then
             log_warn "NetworkManager polkit rule is MISSING — Wi-Fi will not work as non-root."
-            log_warn "Fix by re-running the installer:  curl -fsSL https://releases.helixscreen.org/install.sh | sh -s -- --update"
+            log_warn "Fix by re-running the installer:  curl -fsSL https://github.com/MakerMylo/helixscreen-tc/releases/latest/download/install.sh | sh -s -- --update"
         elif _permission_rules_need_repair "$helix_user"; then
             log_warn "Permission rules need repair (pkla/polkit file has un-substituted template)."
             log_warn "Wi-Fi may not work. Fix with:  sudo sed -i 's|@@HELIX_USER@@|${helix_user}|g' /etc/polkit-1/localauthority/50-local.d/helixscreen-network.pkla"
-            log_warn "Or re-run the installer:  curl -fsSL https://releases.helixscreen.org/install.sh | sh -s -- --update"
+            log_warn "Or re-run the installer:  curl -fsSL https://github.com/MakerMylo/helixscreen-tc/releases/latest/download/install.sh | sh -s -- --update"
         else
             log_info "Skipping permission rules (NoNewPrivileges; already installed)"
         fi
@@ -4841,7 +4841,7 @@ install_procd_shim_k2() {
         log_error "K2 procd shim source missing: $shim_src"
         log_error "The release package may be incomplete."
         log_error "Recovery: re-run the installer to download a fresh copy:"
-        log_error "  curl -fsSL https://releases.helixscreen.org/install.sh | sh -s -- --update"
+        log_error "  curl -fsSL https://github.com/MakerMylo/helixscreen-tc/releases/latest/download/install.sh | sh -s -- --update"
         return 1
     fi
 
@@ -4964,7 +4964,7 @@ install_service_snapmaker_u1() {
         log_error "Snapmaker U1 autostart script not found at ${INSTALL_DIR}/scripts/snapmaker-u1-setup-autostart.sh"
         log_error "The release package may be incomplete."
         log_error "Recovery: re-run the installer to download a fresh copy:"
-        log_error "  curl -fsSL https://releases.helixscreen.org/install.sh | sh -s -- --update"
+        log_error "  curl -fsSL https://github.com/MakerMylo/helixscreen-tc/releases/latest/download/install.sh | sh -s -- --update"
         exit 1
     fi
 }
@@ -4991,7 +4991,7 @@ install_service_systemd() {
         log_error "Service file not found: $service_src"
         log_error "The release package may be incomplete."
         log_error "Recovery: re-run the installer to download a fresh copy:"
-        log_error "  curl -fsSL https://releases.helixscreen.org/install.sh | sh -s -- --update"
+        log_error "  curl -fsSL https://github.com/MakerMylo/helixscreen-tc/releases/latest/download/install.sh | sh -s -- --update"
         exit 1
     fi
 
@@ -5172,7 +5172,7 @@ install_service_sysv() {
         log_error "Init script not found: $init_src"
         log_error "The release package may be incomplete."
         log_error "Recovery: re-run the installer to download a fresh copy:"
-        log_error "  curl -fsSL https://releases.helixscreen.org/install.sh | sh -s -- --update"
+        log_error "  curl -fsSL https://github.com/MakerMylo/helixscreen-tc/releases/latest/download/install.sh | sh -s -- --update"
         exit 1
     fi
 
@@ -5237,7 +5237,7 @@ start_service_snapmaker_u1() {
         log_error "Init script not found or not executable: $init_src"
         log_error "The release package may be incomplete."
         log_error "Recovery: re-run the installer to download a fresh copy:"
-        log_error "  curl -fsSL https://releases.helixscreen.org/install.sh | sh -s -- --update"
+        log_error "  curl -fsSL https://github.com/MakerMylo/helixscreen-tc/releases/latest/download/install.sh | sh -s -- --update"
         exit 1
     fi
 
@@ -5677,7 +5677,7 @@ generate_update_manager_config() {
 [update_manager helixscreen]
 type: web
 channel: stable
-repo: prestonbrown/helixscreen
+repo: MakerMylo/helixscreen-tc
 path: ${INSTALL_DIR}
 EOF
 }
@@ -8250,7 +8250,7 @@ confirm_clean_install() {
     log_error "stdin is not a terminal (a piped 'curl ... | sh' has the script on"
     log_error "stdin), so the y/N prompt cannot be answered."
     log_error "Re-run with --yes to confirm the deletions listed above:"
-    log_error "  curl -sSL https://releases.helixscreen.org/install.sh | sh -s -- --clean --yes"
+    log_error "  curl -sSL https://github.com/MakerMylo/helixscreen-tc/releases/latest/download/install.sh | sh -s -- --clean --yes"
     exit 1
 }
 

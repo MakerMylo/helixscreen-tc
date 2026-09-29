@@ -240,6 +240,7 @@ translations:
   Auto Bed Mesh: 自动热床网格
   Auto Cal: 自动校准
   Auto Fans: 自动风扇
+  Auto shows the tools Klipper reports. Set a number to show that many columns.: 自动模式显示 Klipper 报告的工具。设置数字则显示相应数量的列。
   Auto-Detect: 自动检测
   Auto-Heat on Load: 加载时自动加热
   Auto-detect: 自动检测
@@ -495,6 +496,7 @@ translations:
   Change Tool: 切换工具
   Change Tool While Paused: 暂停时切换工具
   Change heater control?: 更改加热器控制？
+  Change success: 换刀成功率
   Change tool: 切换工具
   Changes apply immediately. Adjust during print for tuning.: 更改立即生效。可在打印时调整进行调优。
   Changes are temporary and reset on printer reboot: 更改是临时的，打印机重启后会重置
@@ -866,6 +868,7 @@ translations:
   Downloading... {:.1f}/{:.1f} MB: 下载中... {:.1f}/{:.1f} MB
   Draw a ripple at each touch — helps diagnose offsets: 在每次触摸时绘制涟漪 — 有助于诊断偏移
   Drive Cal: 驱动校准
+  Drop off: 放下
   Drop shadow strength (0 = disabled): 阴影强度（0 = 禁用）
   Dry Filament: 烘干耗材
 
@@ -1549,6 +1552,7 @@ translations:
   : Klipper 已进入错误状态。这通常是由 MCU 连接失败或配置错误引起的。请尝试固件重启。
   Klipper has entered shutdown state. This may be due to an emergency stop, thermal runaway, or configuration error.: Klipper
     已进入关机状态。这可能是由于紧急停止、热失控或配置错误引起的。
+  Klipper reports {} tools: 'Klipper 报告了 {} 个工具'
   Klipper reserves 'default' for new calibrations. Choose another name.: "Klipper 将 'default' 保留用于新的校准。请选择其他名称。"
   Klipper restarting - macros activating: '正在重启 Klipper - 正在启用宏'
   Klipper will restart to apply changes: Klipper 将重启以应用更改
@@ -1884,6 +1888,7 @@ translations:
   No buffer data available: 无可用缓冲区数据
   No camera — use USB barcode scanner: 无摄像头 — 请使用 USB 条码扫描器
   No chamber temperature sensor detected: '未检测到腔体温度传感器'
+  No changes recorded yet: 尚未记录换刀
   ? "No changes selected.\n\nClick Cancel to close."
   : "未选择任何更改。\n\n点击取消以关闭。"
   No changes to revert: 没有可撤销的更改
@@ -1896,6 +1901,7 @@ translations:
   No filament environment sensors: 无耗材环境传感器
   No filament loaded to unload: 没有已加载的耗材可卸载
   No filament sensor detected: '未检测到耗材传感器'
+  No filament system to edit: 没有可编辑的耗材系统
   No filament. Load filament and retry.: 无耗材。请装载耗材后重试。
   No filaments found: 未找到耗材
   No file loaded: 未加载文件
@@ -1938,6 +1944,8 @@ translations:
   No target printer configured: 未配置目标打印机
   No temperature sensors detected: '未检测到温度传感器'
   No timelapse videos found: 未找到延时视频
+  No tools reported: 未报告工具
+  No tools reported yet: 尚未报告工具
   No tools to calibrate: 没有可校准的工具
   'No unload macro found: unload by hand, then start again': 未找到卸载宏:请手动卸载,然后重新开始
 
@@ -2001,6 +2009,8 @@ translations:
   Nozzle temp must be 100-%d°C: 喷嘴温度必须为 100-%d°C
   Nozzle, bed, and chamber in one widget: 喷嘴、热床和腔体合为一个小组件
   'Nozzle:': 喷嘴：
+  Number of tools: 工具数量
+  Number of tools and toolhead colours: 工具数量和工具头颜色
   OD: OD
   'OFF': 关
   OK: 确定
@@ -2114,7 +2124,10 @@ translations:
   Phomemo M110: Phomemo M110
   Pick: 选取
   Pick Color: 选择颜色
+  Pick a colour: 选择颜色
+  Pick up: 拾取
   Pick up tool: 取出工具
+  Picking up: 正在拾取
   Picking up tool: 正在取用工具
   Pill: 胶囊
   Pixels before a press becomes a scroll (lower = scrolls engage sooner): 按下转为滚动前的像素数(越低
@@ -2935,6 +2948,7 @@ translations:
   TEMPERATURE SENSORS: 温度传感器
   THEME COLORS: 主题颜色
   'TOGGLE: {}': '切换: {}'
+  TOOLHEAD COLOURS: 工具头颜色
   TOOLS: 工具
   TPU: TPU
   Tag Parts: 标记部件
@@ -3021,6 +3035,7 @@ translations:
   The bed was reported dirty, so this print cannot resume.: '热床被报告为脏污，因此无法恢复此次打印。'
   The buffer may be disconnected, stuck, or faulty. Check it before retrying: 缓冲器可能未连接、卡住或损坏。请检查后重试
   The buffer saw no movement for 16 seconds. Check for a blockage between the CFS and the extruder, or a stuck buffer: 缓冲器已 16 秒未检测到运动。请检查 CFS 与挤出机之间是否堵塞，或缓冲器是否卡住
+  The colour of each physical toolhead, used for its glyph and column. The filament keeps its own colour.: 每个物理工具头的颜色，用于其图标和列。耗材保留自己的颜色。
   The cutter blade didn't return — check for filament wrapped around the cutting mechanism: 切刀未复位。请检查切刀机构上是否缠绕耗材
   The cutter is out of alignment — recalibrate with CALIBRATE_CUT_POS: 切刀未对准。请使用 CALIBRATE_CUT_POS 重新校准
   The extruder cannot pull it smoothly. Check the spool for a tangle or knot, and the PTFE tube for a severe bend: 挤出机无法顺畅拉动。请检查料盘是否缠绕或打结，以及 PTFE 管是否严重弯折
@@ -3190,6 +3205,7 @@ translations:
   Tool Changer: 换刀器
   Tool Offsets: 工具偏移
   Tool Switcher: '工具切换器'
+  Tool change done: 换刀完成
   'Tool change failed: {}': '工具切换失败: {}'
   Tool change to T{}: '切换工具到 T{}'
   Tool mapping failed: 工具映射失败
@@ -3197,6 +3213,7 @@ translations:
   Tool offsets saved: 工具偏移已保存
   Tool swap: 工具切换
   Toolhead: '工具头'
+  Toolhead Colours: 工具头颜色
   Toolhead LED: '工具头 LED'
   Toolhead Sensor: 工具头传感器
   Toolhead Style: 工具头样式
@@ -3506,9 +3523,11 @@ translations:
   chamber heater: 腔体加热器
   complete: 完成
   cores: 核心
+  default: 默认
   direct drive: 直驱
   disable: 禁用
   disabled: 已禁用
+  done: 完成
   e.g. Jet Black: 例如 炭黑
   e.g. NAME=my_var VALUE=123: 例如 NAME=my_var VALUE=123
   e.g. Polymaker: 例如 Polymaker
@@ -3525,6 +3544,7 @@ translations:
   fans: 风扇
   feeder error: '送料器错误'
   feeder not in automatic mode: '送料器未处于自动模式'
+  filament saved: 耗材已保存
   filament sensor disabled: '耗材传感器已禁用'
   heated bed: 热床
   'helixscreen.env ignored: owned by uid {}': '已忽略 helixscreen.env：属主为 uid {}'
@@ -3587,6 +3607,7 @@ translations:
   '{} filament sensors available': '{} 个耗材传感器可用'
   '{} filament • {}': '耗材 {} • {}'
   '{} heater turned off': '{} 加热器已关闭'
+  '{} is already on the carriage': '{} 已在滑车上'
   '{} is asking to connect to this printer.': '{} 请求连接到此打印机。'
   '{} is blocked — manual intervention required': '{} 被阻塞 — 需要手动干预'
   '{} is feeding the current print. Clear it after the print ends.': '{} 正在为当前打印供料。请在打印结束后清除。'

@@ -13,15 +13,15 @@
     <style name="tools_col_active" bg_color="#card_bg" bg_opa="255" border_color="#primary" border_width="2"/>
   </styles>
   <view name="tools_panel"
-        extends="lv_obj" width="100%" height="100%" style_pad_all="#space_sm" style_border_width="0"
-        flex_flow="column" style_bg_color="#screen_bg" style_pad_gap="#space_xs" scrollable="false">
+        extends="lv_obj" width="100%" height="100%" style_pad_all="#space_sm" style_border_width="0" flex_flow="column"
+        style_bg_color="#screen_bg" style_pad_gap="#space_xs" scrollable="false">
     <bind_state_if_not_eq subject="nav_buttons_enabled" state="disabled" ref_value="1"/>
 
     <!-- Shown until the printer reports its tools (not a tool changer, or not
          connected yet). Hidden the moment there is a column to show. -->
     <lv_obj name="tools_empty"
-            width="100%" flex_grow="1" style_pad_all="0" style_bg_opa="0" style_border_width="0"
-            flex_flow="column" style_flex_main_place="center" style_flex_cross_place="center" scrollable="false">
+            width="100%" flex_grow="1" style_pad_all="0" style_bg_opa="0" style_border_width="0" flex_flow="column"
+            style_flex_main_place="center" style_flex_cross_place="center" scrollable="false">
       <bind_flag_if_gt subject="tools_count" flag="hidden" ref_value="0"/>
       <icon src="toolbox_outline" size="#icon_size" variant="secondary"/>
       <text_body text="No tools reported" translation_tag="No tools reported" style_text_color="#text_muted"/>
@@ -30,18 +30,18 @@
     <!-- One column per tool. A subject-bound repeat must be the only child of
          its container. -->
     <lv_obj name="tools_columns"
-            width="100%" flex_grow="1" style_pad_all="0" style_pad_gap="#space_xs" flex_flow="row"
-            style_bg_opa="0" style_border_width="0" scrollable="false">
+            width="100%" flex_grow="1" style_pad_all="0" style_pad_gap="#space_xs" flex_flow="row" style_bg_opa="0"
+            style_border_width="0" scrollable="false">
       <bind_flag_if_eq subject="tools_count" flag="hidden" ref_value="0"/>
       <repeat count="tools_count">
         <lv_obj name="tools_col_${i}"
-                flex_grow="1" height="100%" flex_flow="column" style_flex_cross_place="center"
-                style_pad_all="#space_xs" style_pad_gap="#space_xs" style_radius="#border_radius" scrollable="false">
+                height="100%" flex_grow="1" flex_flow="column" style_flex_cross_place="center" style_pad_all="#space_xs"
+                style_pad_gap="#space_xs" style_radius="#border_radius" scrollable="false">
           <bind_style_if name="tools_col_idle" cond="active_tool ne ${i}"/>
           <bind_style_if name="tools_col_active" cond="active_tool eq ${i}"/>
 
           <!-- The toolhead's own colour (Settings > Devices > Tool Changer). -->
-          <tool_path name="tools_hue_${i}" tool_index="${i}" mode="hue" width="100%" height="#tools_hue_h"/>
+          <tool_path name="tools_hue_${i}" width="100%" height="#tools_hue_h" tool_index="${i}" mode="hue"/>
 
           <!-- Tap the name to pick the tool up. Highlighted while it is the
                one on the carriage. -->
@@ -53,7 +53,7 @@
 
           <!-- Bowden in, sensors, toolhead, nozzle. Draws itself live; tap it
                to open the tool's actions page. -->
-          <tool_path name="tools_path_${i}" tool_index="${i}" width="100%" flex_grow="1" clickable="true">
+          <tool_path name="tools_path_${i}" width="100%" tool_index="${i}" flex_grow="1" clickable="true">
             <event_cb trigger="clicked" callback="on_tools_opts"/>
           </tool_path>
 
